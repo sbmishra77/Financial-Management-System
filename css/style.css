@@ -1,50 +1,3908 @@
-body{
-    margin:0;
-    padding:0;
-    background:#f4f7fc;
-    font-family:Arial, Helvetica, sans-serif;
+* {
+    box-sizing: border-box;
 }
 
-.container{
-    width:80%;
-    margin:auto;
-    text-align:center;
-    margin-top:80px;
+body {
+    margin: 0;
+    padding: 0;
+    background: #f4f7fc;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333;
 }
 
-h1{
-    color:#0d47a1;
-    font-size:42px;
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    text-align: center;
 }
 
-h2{
-    color:#333;
+h1 {
+    color: #0d47a1;
+    font-size: 40px;
+    margin-bottom: 10px;
 }
 
-p{
-    font-size:22px;
-    color:#555;
+h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 8px;
 }
 
-button{
+.container > p {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 35px;
+}
 
-    background:#1976d2;
-    color:white;
+/* Dashboard Cards */
 
-    padding:15px 35px;
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 25px;
+}
 
-    border:none;
+/* ===============================
+   MAIN TRANSACTIONS OPERATION
+   =============================== */
 
-    border-radius:8px;
+.transaction-section {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    padding: 28px 30px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0d47a1, #1976d2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    color: white;
+}
 
-    font-size:20px;
+.transaction-section .section-header {
+    margin-bottom: 18px;
+}
 
-    cursor:pointer;
+.transaction-section h2 {
+    margin: 0;
+    color: white;
+    font-size: 26px;
+}
+
+.transaction-section #addTransactionButton {
+    background: white;
+    color: #0d47a1;
+    border: none;
+    padding: 13px 25px;
+    border-radius: 9px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.transaction-section #addTransactionButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+    background: white;
+    border-radius: 14px;
+    padding: 25px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.card h3 {
+    margin: 0 0 15px;
+    color: #0d47a1;
+    font-size: 20px;
+}
+
+.card p {
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    color: #222;
+}
+
+/* Logout Button */
+
+#logoutButton {
+    margin-top: 35px;
+    background: #d32f2f;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 17px;
+    cursor: pointer;
+}
+
+#logoutButton:hover {
+    background: #b71c1c;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+
+    .container {
+        width: 94%;
+        margin: 25px auto;
+    }
+
+    h1 {
+        font-size: 30px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .card {
+        padding: 20px;
+    }
+
+    .card p {
+        font-size: 25px;
+    }
+}
+/* =============================== */
+/* PROFESSIONAL FD TABLE */
+/* =============================== */
+
+.fd-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+
+.fd-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+
+.fd-table thead {
+    background: #123b63;
+    color: #ffffff;
+}
+
+
+.fd-table th {
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+
+.fd-table td {
+    padding: 13px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+
+.fd-table tbody tr:hover {
+    background: #f5f9ff;
+}
+
+
+.fd-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* FD Name */
+
+.fd-table .fd-name {
+    font-weight: 700;
+    color: #123b63;
+}
+
+
+/* Amount */
+
+.fd-table .fd-amount {
+    font-weight: 700;
+}
+
+
+/* Status */
+
+.fd-status-active {
+    color: #15803d;
+    font-weight: 700;
+}
+
+
+/* Days */
+
+.fd-days-danger {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+
+.fd-days-warning {
+    color: #ea580c;
+    font-weight: 700;
+}
+
+
+.fd-days-safe {
+    color: #15803d;
+    font-weight: 700;
+}
+
+
+/* Buttons */
+
+.fd-table-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+
+.fd-table-buttons button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 9px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+
+.fd-table-buttons .edit-fd-button {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+
+.fd-table-buttons .renew-fd-button {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+
+.fd-table-buttons .delete-fd-button {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
+/* Mobile */
+
+@media (max-width: 900px) {
+
+    .fd-table {
+        min-width: 1050px;
+    }
+
+}
+/* =============================== */
+/* FD TABLE POLISH */
+/* =============================== */
+
+.fd-table th:first-child {
+    min-width: 120px;
+}
+
+.fd-table th:nth-child(2) {
+    min-width: 90px;
+}
+
+.fd-table th:nth-child(3),
+.fd-table th:nth-child(7) {
+    text-align: right;
+}
+
+.fd-table td:nth-child(3),
+.fd-table td:nth-child(7) {
+    text-align: right;
+}
+
+
+.fd-table td:nth-child(4),
+.fd-table td:nth-child(5),
+.fd-table td:nth-child(6),
+.fd-table td:nth-child(8) {
+    text-align: center;
+}
+
+
+.fd-table-buttons {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+
+.fd-table-buttons button {
+    padding: 5px 8px;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+
+/* Table heading */
+
+.fd-table thead th {
+    vertical-align: middle;
+}
+
+
+/* Alternate rows */
+
+.fd-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+
+/* Keep hover effect */
+
+.fd-table tbody tr:hover {
+    background: #eef6ff;
+}
+
+/* =============================== */
+/* PROFESSIONAL ACCOUNT CARDS */
+/* =============================== */
+
+.accounts-container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+/* =========================================
+   ALL ACCOUNTS TABLE - FULL GRID WIDTH
+   ========================================= */
+
+#allAccountsContainer {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
+
+.accounts-container .account-card {
+    width: auto;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+
+/* Tablet */
+
+@media (max-width: 1000px) {
+
+    .accounts-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
 }
 
-button:hover{
 
-    background:#0d47a1;
+/* Mobile */
+
+@media (max-width: 600px) {
+
+    .accounts-container {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+/* =============================== */
+/* ACCOUNT CARD PROFESSIONAL STYLE */
+/* =============================== */
+
+.accounts-container .account-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.accounts-container .account-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.10);
+}
+
+
+.accounts-container .account-info {
+    min-width: 0;
+}
+
+
+.accounts-container .account-info h3 {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+
+
+.accounts-container .account-info p {
+    margin: 3px 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+
+.accounts-container .account-info strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 18px;
+}
+
+
+.accounts-container .edit-account-button {
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+/* =============================== */
+/* BANK BRAND COLORS */
+/* =============================== */
+
+.account-sbi {
+    border-left: 5px solid #2563eb;
+}
+
+.account-pnb {
+    border-left: 5px solid #dc2626;
+}
+
+.account-icici {
+    border-left: 5px solid #f97316;
+}
+
+.account-kotak {
+    border-left: 5px solid #dc2626;
+}
+
+.account-cash {
+    border-left: 5px solid #16a34a;
+}
+
+.account-credit-card {
+    border-left: 5px solid #7c3aed;
+}
+
+.account-cashback {
+    border-left: 5px solid #f59e0b;
+}
+
+.bank-default {
+    border-left: 5px solid #64748b;
+}
+
+/* =============================== */
+/* ACCOUNT BRAND BADGE */
+/* =============================== */
+
+.account-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 48px;
+    height: 48px;
+
+    padding: 0 8px;
+
+    border-radius: 12px;
+
+    background: #f1f5f9;
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+
+    border: 1px solid #e2e8f0;
+}
+
+.account-brand-badge {
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.account-brand-badge small {
+    margin-top: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    opacity: 0.75;
+}
+
+/* =============================== */
+/* INSURANCE TABLE */
+/* =============================== */
+
+.insurance-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 16px;
+    border-radius: 10px;
+}
+
+
+/* =============================== */
+/* INSURANCE TABLE */
+/* =============================== */
+
+.insurance-table {
+    width: 100%;
+    min-width: 1200px;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+
+.insurance-table thead {
+    background: #1e4d7b;
+}
+
+
+.insurance-table th {
+    padding: 12px 14px;
+    text-align: left;
+
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+.insurance-table td {
+    padding: 12px 14px;
+
+    border-bottom: 1px solid #e5e7eb;
+
+    color: #334155;
+
+    font-size: 14px;
+
+    vertical-align: middle;
+
+    white-space: nowrap;
+}
+
+
+/* =============================== */
+/* INSURANCE TABLE ROWS */
+/* =============================== */
+
+.insurance-table tbody tr {
+    background: #ffffff;
+}
+
+
+.insurance-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+/* =============================== */
+/* INSURANCE NAME */
+/* =============================== */
+
+.insurance-table td:first-child {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+
+/* =============================== */
+/* RENEWAL ALERTS */
+/* =============================== */
+
+.insurance-days-safe {
+    color: #15803d;
+    font-weight: 700;
+}
+
+
+.insurance-days-warning {
+    color: #d97706;
+    font-weight: 700;
+}
+
+
+.insurance-days-danger {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+
+.insurance-days-expired {
+    color: #475569;
+    font-weight: 700;
+}
+
+
+/* =============================== */
+/* INSURANCE STATUS */
+/* =============================== */
+
+.insurance-status-active {
+    color: #15803d;
+    font-weight: 700;
+}
+
+
+.insurance-status-warning {
+    color: #d97706;
+    font-weight: 700;
+}
+
+
+.insurance-status-danger {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+
+.insurance-status-expired {
+    color: #475569;
+    font-weight: 700;
+}
+
+
+/* =============================== */
+/* INSURANCE TABLE BUTTONS */
+/* =============================== */
+
+.insurance-table-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+
+.edit-insurance-button,
+.delete-insurance-button {
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px 11px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+}
+
+
+.edit-insurance-button {
+    color: #334155;
+}
+
+
+.delete-insurance-button {
+    color: #dc2626;
+}
+
+
+/* =============================== */
+/* ALL INSURANCE HEADER */
+/* =============================== */
+
+.all-insurance-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+}
+
+
+.all-insurance-header h2 {
+    margin: 0;
+}
+
+
+#backToInsuranceDashboardButton {
+
+    padding: 8px 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+/* =========================================
+   INSURANCE HEADER ALIGNMENT
+   ========================================= */
+
+.insurance-section .section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-start;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+/* Keep Insurance heading aligned
+   with other module headings */
+
+.insurance-section .section-header h2 {
+
+    min-width: 299px;
+
+    margin: 0;
+
+}
+
+.insurance-section {
+
+    margin-top: 20px;
+
+}
+
+/* =========================================
+   INSURANCE HEADER BUTTON AREA
+   ========================================= */
+
+.insurance-section
+.section-header-buttons {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+/* =========================================
+   ALL THREE INSURANCE BUTTONS
+   ========================================= */
+
+.insurance-section
+#insuranceSummaryButton,
+.insurance-section
+#addInsuranceButton,
+.insurance-section
+#viewAllInsuranceButton {
+
+    border: none;
+
+    padding: 9px 14px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+/* =========================================
+   INSURANCE SUMMARY BUTTON
+   ========================================= */
+
+.insurance-section
+#insuranceSummaryButton {
+
+    background: #dbeafe;
+
+    color: #174a8b;
+
+    border: 1px solid #9fc2ef;
+
+}
+
+
+.insurance-section
+#insuranceSummaryButton:hover {
+
+    background: #c5ddfa;
+
+    box-shadow:
+        0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+.insurance-section
+#insuranceSummaryButton:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   ADD INSURANCE BUTTON
+   ========================================= */
+
+.insurance-section
+#addInsuranceButton {
+
+    background: #d9f2df;
+
+    color: #176b2c;
+
+    border: 1px solid #9ed3aa;
+
+}
+
+
+.insurance-section
+#addInsuranceButton:hover {
+
+    background: #c2e8ca;
+
+    box-shadow:
+        0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+.insurance-section
+#addInsuranceButton:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   VIEW ALL INSURANCE BUTTON
+   ========================================= */
+
+.insurance-section
+#viewAllInsuranceButton {
+
+    background: #fff0d5;
+
+    color: #8a5700;
+
+    border: 1px solid #e3bd72;
+
+}
+
+
+.insurance-section
+#viewAllInsuranceButton:hover {
+
+    background: #ffe4b5;
+
+    box-shadow:
+        0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+.insurance-section
+#viewAllInsuranceButton:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+/* =============================== */
+/* MOBILE TABLE */
+/* =============================== */
+
+@media (max-width: 800px) {
+
+    .insurance-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .insurance-table {
+        min-width: 1200px;
+    }
+
+}
+
+
+/* =============================== */
+/* MOBILE HEADER */
+/* =============================== */
+
+@media (max-width: 600px) {
+
+    .all-insurance-header {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+}
+
+/* =============================== */
+/* INVESTMENTS TABLE */
+/* =============================== */
+
+.investment-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+
+.investment-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+
+.investment-table th,
+.investment-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
+
+
+.investment-table th {
+    font-weight: 600;
+}
+
+
+.investment-table td {
+    vertical-align: middle;
+}
+
+
+/* =============================== */
+/* INVESTMENT NAME */
+/* =============================== */
+
+.investment-table th:first-child,
+.investment-table td:first-child {
+    min-width: 180px;
+}
+
+
+/* =============================== */
+/* CATEGORY */
+/* =============================== */
+
+.investment-table th:nth-child(2),
+.investment-table td:nth-child(2) {
+    min-width: 150px;
+}
+
+
+/* =============================== */
+/* AMOUNT COLUMNS */
+/* =============================== */
+
+.investment-table th:nth-child(3),
+.investment-table td:nth-child(3),
+.investment-table th:nth-child(4),
+.investment-table td:nth-child(4) {
+    min-width: 150px;
+}
+
+
+/* =============================== */
+/* INVESTMENT DATE */
+/* =============================== */
+
+.investment-table th:nth-child(7),
+.investment-table td:nth-child(7) {
+    min-width: 140px;
+}
+
+
+/* =============================== */
+/* LAST UPDATED */
+/* =============================== */
+
+.investment-table th:nth-child(8),
+.investment-table td:nth-child(8) {
+    min-width: 140px;
+}
+
+
+/* =============================== */
+/* ACTIONS COLUMN */
+/* =============================== */
+
+.investment-table th:nth-child(9),
+.investment-table td:nth-child(9) {
+    width: 150px;
+    min-width: 150px;
+    max-width: 150px;
+    padding: 12px 10px;
+    text-align: left;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+
+/* =============================== */
+/* ACTION BUTTONS */
+/* =============================== */
+
+.investment-table td:nth-child(9) button {
+    position: static;
+    float: none;
+    transform: none;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 4px 0 0;
+}
+
+/* =============================== */
+/* INVESTMENT TABLE STYLE */
+/* =============================== */
+
+.investment-table th {
+    background: #1e88e5;
+    color: white;
+    font-weight: 600;
+}
+
+
+.investment-table td {
+    color: #222;
+    background: white;
+}
+
+
+/* Hover effect */
+
+.investment-table tbody tr:hover {
+    background: #f5f5f5;
+}
+
+
+/* Action buttons */
+
+.investment-table .edit-investment-button,
+.investment-table .delete-investment-button {
+    padding: 6px 10px;
+    margin: 2px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* ===============================
+   INVESTMENT PROFIT / LOSS
+   =============================== */
+
+.investment-profit {
+    color: green !important;
+    font-weight: 700;
+}
+
+.investment-loss {
+    color: red !important;
+    font-weight: 700;
+}
+
+/* ===============================
+   INVESTMENT SUMMARY ROW
+   =============================== */
+
+.investment-summary {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin: 10px 0 15px;
+}
+
+.investment-summary-card {
+    padding: 12px;
+    box-sizing: border-box;
+}
+
+.investment-summary-card h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+}
+
+.investment-summary-card strong {
+    display: block;
+    font-size: 20px;
+}
+
+/* =========================================
+   MASTER TRANSACTION GRID
+   ========================================= */
+
+.transaction-grid-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+
+.transaction-entry-table {
+    width: 100%;
+    min-width: 1500px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+.transaction-entry-table th {
+    padding: 12px 10px;
+    background: #0d47a1;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+
+.transaction-entry-table td {
+    padding: 8px;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: middle;
+    background: #fff;
+}
+
+
+.transaction-entry-table tbody tr:hover td {
+    background: #f8fbff;
+}
+
+
+/* =========================================
+   INPUTS / SELECTS
+   ========================================= */
+
+.transaction-entry-table input,
+.transaction-entry-table select {
+    width: 100%;
+    min-width: 120px;
+    box-sizing: border-box;
+
+    padding: 9px 10px;
+
+    border: 1px solid #ccc;
+    border-radius: 7px;
+
+    background: white;
+
+    font-size: 14px;
+    outline: none;
+}
+
+
+.transaction-entry-table input:focus,
+.transaction-entry-table select:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+
+/* =========================================
+   COLUMN WIDTHS
+   ========================================= */
+
+.transaction-entry-table th:nth-child(1),
+.transaction-entry-table td:nth-child(1) {
+    min-width: 125px;
+}
+
+
+.transaction-entry-table th:nth-child(2),
+.transaction-entry-table td:nth-child(2) {
+    min-width: 150px;
+}
+
+
+.transaction-entry-table th:nth-child(3),
+.transaction-entry-table td:nth-child(3) {
+    min-width: 170px;
+}
+
+
+.transaction-entry-table th:nth-child(4),
+.transaction-entry-table td:nth-child(4) {
+    min-width: 190px;
+}
+
+
+.transaction-entry-table th:nth-child(5),
+.transaction-entry-table td:nth-child(5) {
+    min-width: 130px;
+}
+
+
+.transaction-entry-table th:nth-child(6),
+.transaction-entry-table td:nth-child(6) {
+    min-width: 170px;
+}
+
+
+.transaction-entry-table th:nth-child(7),
+.transaction-entry-table td:nth-child(7) {
+    min-width: 170px;
+}
+
+
+.transaction-entry-table th:nth-child(8),
+.transaction-entry-table td:nth-child(8) {
+    min-width: 160px;
+}
+
+
+.transaction-entry-table th:nth-child(9),
+.transaction-entry-table td:nth-child(9) {
+    min-width: 170px;
+}
+
+
+.transaction-entry-table th:nth-child(10),
+.transaction-entry-table td:nth-child(10) {
+    min-width: 180px;
+}
+
+
+.transaction-entry-table th:nth-child(11),
+.transaction-entry-table td:nth-child(11) {
+    min-width: 95px;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+   ========================================= */
+
+.transaction-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+
+.edit-transaction-button,
+.delete-transaction-button {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-size: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.edit-transaction-button {
+    background: #e3f2fd;
+}
+
+
+.delete-transaction-button {
+    background: #ffebee;
+}
+
+
+.edit-transaction-button:hover {
+    background: #bbdefb;
+}
+
+
+.delete-transaction-button:hover {
+    background: #ffcdd2;
+}
+
+
+/* =========================================
+   NEW ENTRY BUTTON
+   ========================================= */
+
+.transaction-entry-controls {
+    margin-top: 15px;
+}
+
+
+#newTransactionEntryButton {
+    padding: 10px 18px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #1976d2;
+    color: white;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+#newTransactionEntryButton:hover {
+    background: #0d47a1;
+}
+
+
+/* =========================================
+   CATEGORY BUTTON
+   ========================================= */
+
+.transaction-category-controls {
+    margin-top: 12px;
+}
+
+
+#addCategoryButton {
+    padding: 9px 16px;
+
+    border: 1px solid #1976d2;
+    border-radius: 8px;
+
+    background: white;
+    color: #0d47a1;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+#addCategoryButton:hover {
+    background: #e3f2fd;
+}
+
+
+/* =========================================
+   MAIN TRANSACTION ACTIONS
+   ========================================= */
+
+.transaction-main-actions {
+    display: flex;
+    gap: 12px;
+
+    margin-top: 20px;
+}
+
+
+#saveAllTransactionsButton {
+    padding: 12px 24px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #2e7d32;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+#saveAllTransactionsButton:hover {
+    background: #1b5e20;
+}
+
+
+#cancelTransactionButton {
+    padding: 12px 24px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #d32f2f;
+    color: white;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+
+#cancelTransactionButton:hover {
+    background: #b71c1c;
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    .transaction-grid-wrapper {
+        overflow-x: auto;
+    }
+
+
+    .transaction-entry-table {
+        min-width: 1500px;
+    }
+
+
+    .transaction-main-actions {
+        flex-direction: column;
+    }
+
+
+    #saveAllTransactionsButton,
+    #cancelTransactionButton {
+        width: 100%;
+    }
+
+}
+
+/* =========================================
+   PARTY / MERCHANT / PERSON
+   ========================================= */
+
+.transaction-party-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+}
+
+
+.transaction-party-wrapper .transaction-party {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.add-party-button {
+    flex: 0 0 34px;
+
+    width: 34px;
+    height: 34px;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #e3f2fd;
+    color: #0d47a1;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.add-party-button:hover {
+    background: #bbdefb;
+    transform: scale(1.05);
+}
+
+/* =========================================
+   PARTY SEARCH SUGGESTIONS
+   ========================================= */
+
+.transaction-party-input-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+
+.transaction-party-input-wrapper
+.transaction-party {
+    width: 100%;
+}
+
+
+.party-suggestions {
+    position: absolute;
+
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+
+    z-index: 1000;
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+
+.party-suggestion-item {
+    width: 100%;
+
+    padding: 9px 11px;
+
+    border: none;
+    border-bottom: 1px solid #eee;
+
+    background: white;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+
+.party-suggestion-item:hover {
+    background: #f3f7fb;
+}
+
+
+.party-suggestion-item strong {
+    font-size: 14px;
+}
+
+
+.party-suggestion-item small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* =========================================
+   INVESTMENT SEARCH SUGGESTIONS
+   ========================================= */
+
+.transaction-investment-wrapper {
+    position: relative;
+    min-width: 180px;
+}
+
+
+.transaction-investment {
+    width: 100%;
+}
+
+
+.investment-suggestions {
+    position: absolute;
+
+    top: calc(100% + 3px);
+    left: 0;
+    right: 0;
+
+    z-index: 1000;
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(0, 0, 0, 0.12);
+
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+
+.investment-suggestion-item {
+    width: 100%;
+
+    padding: 9px 11px;
+
+    border: none;
+    border-bottom: 1px solid #eee;
+
+    background: white;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+
+.investment-suggestion-item:hover {
+    background: #f3f7fb;
+}
+
+
+.investment-suggestion-item strong {
+    font-size: 14px;
+}
+
+
+.investment-suggestion-item small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* =========================================
+   TRANSACTION HISTORY TABLE
+   ========================================= */
+
+.transaction-history-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+
+.transaction-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+/* =========================================
+   TABLE CELLS
+   ========================================= */
+
+.transaction-history-table th,
+.transaction-history-table td {
+    padding: 8px 10px;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   ACTION COLUMN
+   ========================================= */
+
+.transaction-history-table th:last-child,
+.transaction-history-table td:last-child {
+    min-width: 150px;
+    width: 150px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+   ========================================= */
+
+.transaction-history-table td:last-child button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 2px 3px;
+
+    white-space: nowrap;
+}
+
+/* =========================================
+   PROPERTIES TABLE
+   ========================================= */
+
+#propertiesTable {
+
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+
+#propertiesTable th {
+
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid #ddd;
+}
+
+
+#propertiesTable td {
+
+    padding: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: middle;
+}
+
+
+#propertiesTable tbody tr:hover {
+
+    background: #f7f7f7;
+}
+
+
+/* =========================================
+   PROPERTY ACTION BUTTONS
+   ========================================= */
+
+#propertiesTable
+.edit-property-button,
+#propertiesTable
+.delete-property-button {
+
+    padding: 6px 10px;
+    margin-right: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+
+/* =========================================
+   TABLE RESPONSIVE
+   ========================================= */
+
+.properties-container {
+
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+#propertiesTable {
+
+    min-width: 1100px;
+}
+
+/* =========================================
+   PROPERTIES TABLE - COLOR THEME
+   ========================================= */
+
+#propertiesTable thead {
+
+    background: #e8f0fe;
+}
+
+
+#propertiesTable th {
+
+    color: #1f3a5f;
+    font-weight: 700;
+    border-bottom: 2px solid #b7c9e2;
+}
+
+
+/* Alternate rows */
+
+#propertiesTable tbody tr:nth-child(even) {
+
+    background: #f8fbff;
+}
+
+
+#propertiesTable tbody tr:nth-child(odd) {
+
+    background: #ffffff;
+}
+
+
+/* Hover */
+
+#propertiesTable tbody tr:hover {
+
+    background: #eaf4ff;
+}
+
+
+/* =========================================
+   STATUS
+   ========================================= */
+
+#propertiesTable td:nth-child(9) {
+
+    font-weight: 600;
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+   ========================================= */
+
+#propertiesTable .edit-property-button {
+
+    background: #fff3cd;
+    border: 1px solid #e0b84c;
+    color: #664d03;
+}
+
+
+#propertiesTable .edit-property-button:hover {
+
+    background: #ffe69c;
+}
+
+
+#propertiesTable .delete-property-button {
+
+    background: #f8d7da;
+    border: 1px solid #dc6b75;
+    color: #842029;
+}
+
+
+#propertiesTable .delete-property-button:hover {
+
+    background: #f1aeb5;
+}
+
+/* =========================================
+   INVESTMENTS HEADER - PROFESSIONAL ROW
+   ========================================= */
+
+#investmentsSection .investment-section-header {
+
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    flex-wrap: nowrap;
+}
+
+
+/* My Investments title */
+
+#investmentsSection .section-title-area {
+
+    flex: 1;
+    min-width: 180px;
+}
+
+
+/* Summary button */
+
+#investmentsSection .section-summary-button {
+
+    white-space: nowrap;
+}
+
+
+/* Add / View buttons */
+
+#investmentsSection .section-header-buttons {
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+
+#investmentsSection
+.section-header-buttons
+button {
+
+    white-space: nowrap;
+}
+
+/* =========================================
+   MY INVESTMENTS - PROFESSIONAL SECTION
+   ========================================= */
+
+#investmentsSection {
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 18px 20px;
+
+    margin-top: 20px;
+
+    background: #eef5ff;
+
+    border: 1px solid #c9d9ee;
+
+    border-radius: 12px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* =========================================
+   INVESTMENT HEADER ROW
+   ========================================= */
+
+#investmentsSection
+.investment-section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    gap: 20px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+/* =========================================
+   INVESTMENT TITLE
+   ========================================= */
+
+#investmentsSection
+.section-title-area {
+
+    flex: 0 0 190px;
+
+    min-width: 180px;
+
+}
+
+
+#investmentsSection
+.section-title-area h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+}
+
+
+/* =========================================
+   HEADER BUTTON AREA
+   ========================================= */
+
+#investmentsSection
+.section-header-buttons {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+/* =========================================
+   ALL THREE BUTTONS
+   ========================================= */
+
+#investmentsSection
+.section-summary-button,
+#investmentsSection
+.add-module-button,
+#investmentsSection
+.view-module-button {
+
+    border: none;
+
+    padding: 9px 14px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+/* =========================================
+   SUMMARY BUTTON
+   ========================================= */
+
+#investmentsSection
+.section-summary-button {
+
+    background: #dbeafe;
+
+    color: #174a8b;
+
+    border: 1px solid #9fc2ef;
+
+}
+
+
+#investmentsSection
+.section-summary-button:hover {
+
+    background: #c5ddfa;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#investmentsSection
+.section-summary-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   ADD INVESTMENT BUTTON
+   ========================================= */
+
+#investmentsSection
+.add-module-button {
+
+    background: #d9f2df;
+
+    color: #176b2c;
+
+    border: 1px solid #9ed3aa;
+
+}
+
+
+#investmentsSection
+.add-module-button:hover {
+
+    background: #c2e8ca;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#investmentsSection
+.add-module-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   VIEW ALL INVESTMENTS BUTTON
+   ========================================= */
+
+#investmentsSection
+.view-module-button {
+
+    background: #fff0d5;
+
+    color: #8a5700;
+
+    border: 1px solid #e3bd72;
+
+}
+
+
+#investmentsSection
+.view-module-button:hover {
+
+    background: #ffe4b5;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#investmentsSection
+.view-module-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   INVESTMENT SUMMARY PANEL
+   ========================================= */
+
+#investmentsSection
+.investment-summary {
+
+    display: flex;
+
+    gap: 14px;
+
+    flex-wrap: wrap;
+
+    margin-top: 20px;
+
+    padding: 15px;
+
+    background: #ffffff;
+
+    border: 1px solid #d5e2f2;
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================
+   SUMMARY CARDS
+   ========================================= */
+
+#investmentsSection
+.investment-summary-card {
+
+    flex: 1;
+
+    min-width: 140px;
+
+    padding: 12px 14px;
+
+    background: #f8fbff;
+
+    border: 1px solid #d9e5f3;
+
+    border-radius: 8px;
+
+    box-sizing: border-box;
+
+}
+
+
+#investmentsSection
+.investment-summary-card h3 {
+
+    margin: 0 0 7px 0;
+
+    font-size: 14px;
+
+}
+
+
+#investmentsSection
+.investment-summary-card strong {
+
+    font-size: 18px;
+
+}
+
+
+/* =========================================
+   MOBILE / SMALL SCREEN
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    #investmentsSection
+    .investment-section-header {
+
+        flex-wrap: wrap;
+
+    }
+
+
+    #investmentsSection
+    .section-title-area {
+
+        width: 100%;
+
+    }
+
+
+    #investmentsSection
+    .section-header-buttons {
+
+        width: 100%;
+
+        flex-wrap: wrap;
+
+    }
+
+}
+
+/* =========================================
+   MY ACCOUNTS - PROFESSIONAL SECTION
+   ========================================= */
+
+#accountsSection {
+
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 18px 20px;
+
+    margin-top: 20px;
+
+    background: #eef8f3;
+
+    border: 1px solid #c7e1d3;
+
+    border-radius: 12px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+
+}
+
+
+/* =========================================
+   ACCOUNTS HEADER
+   ========================================= */
+
+#accountsSection
+.accounts-section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    gap: 20px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+#accountsSection
+.section-title-area {
+
+    flex: 0 0 180px;
+
+    min-width: 180px;
+
+}
+
+
+#accountsSection
+.section-title-area h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+}
+
+
+/* =========================================
+   ACCOUNT BUTTON AREA
+   ========================================= */
+
+#accountsSection
+.section-header-buttons {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+#accountsSection
+.section-summary-button,
+#accountsSection
+.add-module-button,
+#accountsSection
+.view-module-button {
+
+    border: none;
+
+    padding: 9px 14px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+/* =========================================
+   SUMMARY BUTTON
+   ========================================= */
+
+#accountsSection
+.section-summary-button {
+
+    background: #dff3e8;
+
+    color: #176b3a;
+
+    border: 1px solid #9ed3b4;
+
+}
+
+
+#accountsSection
+.section-summary-button:hover {
+
+    background: #c9ead8;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#accountsSection
+.section-summary-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   ADD ACCOUNT
+   ========================================= */
+
+#accountsSection
+.add-module-button {
+
+    background: #d9f2df;
+
+    color: #176b2c;
+
+    border: 1px solid #9ed3aa;
+
+}
+
+
+#accountsSection
+.add-module-button:hover {
+
+    background: #c2e8ca;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#accountsSection
+.add-module-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   VIEW ALL ACCOUNTS
+   ========================================= */
+
+#accountsSection
+.view-module-button {
+
+    background: #e1ecff;
+
+    color: #174a8b;
+
+    border: 1px solid #a9c4ed;
+
+}
+
+
+#accountsSection
+.view-module-button:hover {
+
+    background: #cbdcff;
+
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+
+}
+
+
+#accountsSection
+.view-module-button:active {
+
+    transform: translateY(2px);
+
+    box-shadow: none;
+
+}
+
+
+/* =========================================
+   SMALL SCREEN
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    #accountsSection
+    .accounts-section-header {
+
+        flex-wrap: wrap;
+
+    }
+
+
+    #accountsSection
+    .section-title-area {
+
+        width: 100%;
+
+    }
+
+
+    #accountsSection
+    .section-header-buttons {
+
+        width: 100%;
+
+        flex-wrap: wrap;
+
+    }
+
+}
+
+/* =========================================
+   ACCOUNTS SUMMARY
+   ========================================= */
+
+#accountsSection .account-summary {
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 14px;
+
+    flex-wrap: wrap;
+
+    margin-top: 18px;
+
+    padding: 15px;
+
+    background: #ffffff;
+
+    border: 1px solid #cfe2d8;
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================
+   ACCOUNT SUMMARY CARDS
+   ========================================= */
+
+#accountsSection .account-summary-card {
+
+    flex: 1;
+
+    min-width: 150px;
+
+    padding: 12px 15px;
+
+    background: #f7fcf9;
+
+    border: 1px solid #d5e8dc;
+
+    border-radius: 8px;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   SUMMARY CARD TITLE
+   ========================================= */
+
+#accountsSection .account-summary-card h3 {
+
+    margin: 0 0 8px 0;
+
+    font-size: 15px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   ACCOUNT COUNT
+   ========================================= */
+
+#accountsSection .account-summary-card h3 span {
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================
+   SUMMARY AMOUNT
+   ========================================= */
+
+#accountsSection .account-summary-card p {
+
+    margin: 0;
+
+    font-size: 17px;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================
+   SMALL SCREEN
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    #accountsSection .account-summary {
+
+        flex-wrap: wrap;
+
+    }
+
+
+    #accountsSection .account-summary-card {
+
+        min-width: 200px;
+
+    }
+
+}
+
+/* =========================================
+   ALL ACCOUNTS TABLE
+   ========================================= */
+
+#accountsSection .accounts-table-wrapper {
+
+    width: 100%;
+
+    overflow-x: hidden;
+
+    margin-top: 15px;
+
+}
+
+
+#accountsSection .accounts-table {
+
+    width: 100%;
+
+    min-width: 100%;
+
+    border-collapse: separate;
+
+    border-spacing: 0;
+
+    background: #ffffff;
+
+    border: 1px solid #cfe2d8;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+
+}
+
+
+/* TABLE HEADER */
+
+#accountsSection .accounts-table thead {
+
+    background: #dff3e8;
+
+}
+
+
+#accountsSection .accounts-table th {
+
+    padding: 12px 14px;
+
+    text-align: left;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    border-bottom: 1px solid #cfe2d8;
+
+}
+
+
+/* TABLE BODY */
+
+#accountsSection .accounts-table td {
+
+    padding: 11px 14px;
+
+    font-size: 14px;
+
+    border-bottom: 1px solid #e5eee9;
+
+    white-space: nowrap;
+
+}
+
+
+/* ALTERNATE ROW */
+
+#accountsSection .accounts-table tbody tr:nth-child(even) {
+
+    background: #f7fcf9;
+
+}
+
+
+/* HOVER */
+
+#accountsSection .accounts-table tbody tr:hover {
+
+    background: #edf8f1;
+
+}
+
+
+/* LAST ROW */
+
+#accountsSection .accounts-table tbody tr:last-child td {
+
+    border-bottom: none;
+
+}
+
+
+/* ACTION BUTTONS */
+
+#accountsSection .accounts-table button {
+
+    border: none;
+
+    padding: 6px 10px;
+
+    margin-right: 6px;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+    transition:
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
+
+}
+
+
+#accountsSection .accounts-table button:hover {
+
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.15);
+
+}
+
+
+#accountsSection .accounts-table button:active {
+
+    transform: translateY(2px);
+
+}
+
+/* =============================== */
+/* PROPERTIES HEADER FINAL */
+/* =============================== */
+
+.properties-section-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 28px !important;
+    width: 100%;
+    flex-wrap: nowrap !important;
+}
+
+
+.properties-section-header .section-title-area {
+    flex: 0 0 auto !important;
+    min-width: 190px;
+    white-space: nowrap !important;
+}
+
+
+.properties-section-header .section-title-area h2 {
+    white-space: nowrap !important;
+    margin: 0;
+}
+
+
+.properties-section-header .section-summary-button {
+    flex: 0 0 auto !important;
+}
+
+
+.properties-section-header .section-header-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex: 0 0 auto !important;
+}
+
+/* =============================== */
+/* ALL DASHBOARD SECTION HEADERS */
+/* SAME BUTTON COLUMN ALIGNMENT */
+/* =============================== */
+
+.accounts-section-header,
+.investment-section-header,
+.properties-section-header {
+
+    display: grid !important;
+
+    grid-template-columns:
+        280px
+        220px
+        1fr;
+
+    align-items: center;
+
+    column-gap: 20px;
+
+    width: 100%;
+
+}
+
+
+/* =============================== */
+/* SECTION TITLES */
+/* =============================== */
+
+.accounts-section-header .section-title-area,
+.investment-section-header .section-title-area,
+.properties-section-header .section-title-area {
+
+    width: 280px;
+
+    min-width: 280px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =============================== */
+/* SUMMARY BUTTON */
+/* =============================== */
+
+.accounts-section-header .section-summary-button,
+.investment-section-header .section-summary-button,
+.properties-section-header .section-summary-button {
+
+    justify-self: start;
+
+    white-space: nowrap;
+
+}
+
+
+/* =============================== */
+/* ADD + VIEW BUTTONS */
+/* =============================== */
+
+.accounts-section-header .section-header-buttons,
+.investment-section-header .section-header-buttons,
+.properties-section-header .section-header-buttons {
+
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center;
+
+    gap: 14px;
+
+    white-space: nowrap;
+
+}
+
+/* =============================== */
+/* PROPERTIES SUMMARY */
+/* =============================== */
+
+.property-summary {
+
+    display: flex;
+
+    align-items: stretch;
+
+    gap: 14px;
+
+    width: 100%;
+
+    margin-top: 14px;
+
+    padding: 16px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #dbe5f1;
+
+    border-radius: 10px;
+}
+
+
+/* =============================== */
+/* PROPERTY SUMMARY CARDS */
+/* =============================== */
+
+.property-summary-card {
+
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 14px;
+
+    box-sizing: border-box;
+
+    background: #f8fbff;
+
+    border: 1px solid #d5e2f2;
+
+    border-radius: 8px;
+
+}
+
+
+/* CARD TITLE */
+
+.property-summary-card h3 {
+
+    margin: 0 0 8px 0;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+
+}
+
+
+/* CARD VALUE */
+
+.property-summary-card strong {
+
+    display: block;
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 900px) {
+
+    .property-summary {
+
+        flex-wrap: wrap;
+
+    }
+
+    .property-summary-card {
+
+        flex: 1 1 30%;
+
+    }
+
+}
+
+/* =========================================
+   COMMON FINANCE SECTION HEADER ALIGNMENT
+   ========================================= */
+
+.finance-section .section-header {
+
+    display: grid;
+
+    grid-template-columns: 320px auto;
+
+    align-items: center;
+
+    column-gap: 14px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   FINANCE MODULE HEADER - FINAL ALIGNMENT
+   ========================================= */
+
+/* INVESTMENTS */
+
+#investmentsSection .section-header,
+#propertiesSection .section-header,
+.insurance-section .section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+/* =========================================
+   FINAL HEADER TITLE ALIGNMENT
+   ========================================= */
+
+#investmentsSection .section-header h2,
+#propertiesSection .section-header h2,
+.insurance-section .section-header h2 {
+
+    width: 320px !important;
+
+    min-width: 320px !important;
+
+    max-width: 320px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* Properties has an extra title wrapper */
+
+#propertiesSection .section-title-area {
+
+    width: 320px !important;
+
+    min-width: 320px !important;
+
+    max-width: 320px !important;
+
+    flex: 0 0 320px !important;
+
+    margin: 0 !important;
+
+}
+
+
+/* Keep all button groups together */
+
+#investmentsSection .section-header-buttons,
+#propertiesSection .section-header-buttons,
+.insurance-section .section-header-buttons {
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    flex: 0 0 auto !important;
+
+}
+
+/* =========================================
+   SAME TITLE WIDTH
+   ========================================= */
+
+#investmentsSection .section-header h2,
+#propertiesSection .section-header h2,
+.insurance-section .section-header h2 {
+
+    width: 320px;
+
+    min-width: 320px;
+
+    margin: 0;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   SAME BUTTON START POSITION
+   ========================================= */
+
+#investmentsSection .section-header-buttons,
+#propertiesSection .section-header-buttons,
+.insurance-section .section-header-buttons {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+/* =========================================
+   PROPERTIES + INSURANCE SPACING
+   ========================================= */
+
+#propertiesSection {
+    margin-bottom: 18px;
+}
+
+
+.insurance-section {
+    margin-top: 0;
+}
+
+/* =========================================
+   PROPERTIES HEADER - FORCE SINGLE LINE
+   ========================================= */
+
+#propertiesSection .section-header {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    gap: 12px !important;
+
+    flex-wrap: nowrap !important;
+
+    width: 100% !important;
+
+}
+
+
+#propertiesSection .section-header h2 {
+
+    flex: 0 0 320px !important;
+
+    width: 320px !important;
+
+    min-width: 320px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+#propertiesSection .section-header-buttons {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    flex-wrap: nowrap !important;
+
+    width: auto !important;
+
+}
+
+/* =========================================
+   HIDE OLD FIXED DEPOSIT DASHBOARD HEADER
+   ========================================= */
+
+#oldFixedDepositDashboardHeader {
+    display: none !important;
+}
+
+
+/* =========================================
+   REMOVE EMPTY OLD FD DASHBOARD SPACE
+   ========================================= */
+
+.fd-section {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* Keep hidden forms from creating space */
+
+.fd-section .fd-summary {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* =========================================
+   FINAL FINANCE HEADER ALIGNMENT
+   ========================================= */
+
+/* सभी तीन sections का header एक जैसा */
+
+#investmentsSection .section-header,
+#propertiesSection .section-header,
+.insurance-section .section-header {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    flex-wrap: nowrap !important;
+
+    gap: 0 !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* =========================================
+   INVESTMENTS TITLE
+   ========================================= */
+
+#investmentsSection .section-header > h2 {
+
+    flex: 0 0 346px !important;
+
+    width: 346px !important;
+
+    min-width: 346px !important;
+
+    max-width: 346px !important;
+
+    margin: 0 !important;
+
+}
+
+
+/* =========================================
+   PROPERTIES TITLE AREA
+   ========================================= */
+
+#propertiesSection .section-title-area {
+
+    flex: 0 0 346px !important;
+
+    width: 346px !important;
+
+    min-width: 346px !important;
+
+    max-width: 346px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+#propertiesSection .section-title-area h2 {
+
+    width: auto !important;
+
+    min-width: 0 !important;
+
+    max-width: none !important;
+
+    margin: 0 !important;
+
+}
+
+
+/* =========================================
+   INSURANCE TITLE
+   ========================================= */
+
+.insurance-section .section-header > h2 {
+
+    flex: 0 0 346px !important;
+
+    width: 346px !important;
+
+    min-width: 346px !important;
+
+    max-width: 346px !important;
+
+    margin: 0 !important;
+
+}
+
+
+/* =========================================
+   ALL BUTTON GROUPS
+   ========================================= */
+
+#investmentsSection .section-header-buttons,
+#propertiesSection .section-header-buttons,
+.insurance-section .section-header-buttons {
+
+    flex: 0 0 auto !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    flex-wrap: nowrap !important;
+
+}
+
+
+/* =========================================
+   SECTION SPACING
+   ========================================= */
+
+#investmentsSection {
+
+    margin-bottom: 18px !important;
+
+}
+
+
+#propertiesSection {
+
+    margin-bottom: 18px !important;
+
+}
+
+
+.insurance-section {
+
+    margin-top: 0 !important;
+
+}
+
+/* =========================================
+   HIDE OLD FIXED DEPOSIT DASHBOARD HEADER
+   ========================================= */
+
+#oldFixedDepositDashboardHeader {
+    display: none !important;
+}
+
+/* =========================================
+   HIDE OLD FD DASHBOARD ROW
+   ========================================= */
+
+.fd-section > .section-header {
+    display: none !important;
+}
+
+/* =========================================
+   FINAL ALIGNMENT - INVESTMENTS
+   PROPERTIES & INSURANCE
+   ========================================= */
+
+
+/* -----------------------------------------
+   COMMON SECTION HEADER
+   ----------------------------------------- */
+
+#investmentsSection .section-header,
+.properties-section .section-header,
+.insurance-section .section-header {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    flex-wrap: nowrap !important;
+
+    gap: 0 !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* -----------------------------------------
+   INVESTMENTS TITLE
+   ----------------------------------------- */
+
+#investmentsSection .section-header > h2 {
+
+    flex: 0 0 340px !important;
+
+    width: 340px !important;
+
+    min-width: 340px !important;
+
+    max-width: 340px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* -----------------------------------------
+   PROPERTIES TITLE
+   ----------------------------------------- */
+
+.properties-section .section-title-area {
+
+    flex: 0 0 340px !important;
+
+    width: 340px !important;
+
+    min-width: 340px !important;
+
+    max-width: 340px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+.properties-section .section-title-area h2 {
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* -----------------------------------------
+   INSURANCE TITLE
+   ----------------------------------------- */
+
+.insurance-section .section-header > h2 {
+
+    flex: 0 0 340px !important;
+
+    width: 340px !important;
+
+    min-width: 340px !important;
+
+    max-width: 340px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* -----------------------------------------
+   ALL THREE BUTTON GROUPS
+   ----------------------------------------- */
+
+#investmentsSection .section-header-buttons,
+.properties-section .section-header-buttons,
+.insurance-section .section-header-buttons {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    flex-wrap: nowrap !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    flex: 0 0 auto !important;
+
+}
+
+
+/* -----------------------------------------
+   SECTION SPACING
+   ----------------------------------------- */
+
+#investmentsSection {
+
+    margin-bottom: 18px !important;
+
+}
+
+
+.properties-section {
+
+    margin-bottom: 18px !important;
+
+}
+
+
+.insurance-section {
+
+    margin-top: 0 !important;
+
+}
+
+/* =========================================
+   FIX MY INVESTMENTS HEADER ALIGNMENT
+   ========================================= */
+
+.investment-section-header {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    flex-wrap: nowrap !important;
+
+    gap: 0 !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* Same title space as Properties */
+
+.investment-section-header .section-title-area {
+
+    flex: 0 0 340px !important;
+
+    width: 340px !important;
+
+    min-width: 340px !important;
+
+    max-width: 340px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* Investment title */
+
+.investment-section-header .section-title-area h2 {
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* Investment action buttons */
+
+.investment-section-header .section-header-buttons {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    flex-wrap: nowrap !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+}
+
+
+/* Summary button */
+
+.investment-section-header > .section-summary-button {
+
+    flex: 0 0 auto !important;
+
+    margin: 0 !important;
+
+}
+
+/* =========================================
+   FINAL POLISH - MODULE HEADER ALIGNMENT
+   ========================================= */
+
+/* My Investments buttons को बाकी modules के बराबर लाना */
+
+.investment-section-header > .section-summary-button,
+.investment-section-header > .section-header-buttons {
+
+    transform: translateX(19px);
+
+}
+
+
+/* Investments के buttons के बीच proper spacing */
+
+.investment-section-header {
+
+    align-items: center !important;
+
+}
+
+
+/* Properties और Insurance के बीच समान spacing */
+
+.properties-section {
+    margin-bottom: 18px !important;
+}
+
+.insurance-section {
+    margin-top: 0 !important;
+}
+
+/* =========================================
+   FINAL POLISH - MY ACCOUNTS ALIGNMENT
+   ========================================= */
+
+.accounts-section-header {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    flex-wrap: nowrap !important;
+
+    gap: 0 !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* Same title width as other modules */
+
+.accounts-section-header .section-title-area {
+
+    flex: 0 0 340px !important;
+
+    width: 340px !important;
+
+    min-width: 340px !important;
+
+    max-width: 340px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+}
+
+
+/* Account title */
+
+.accounts-section-header .section-title-area h2 {
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* Account buttons */
+
+.accounts-section-header .section-header-buttons {
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    flex-wrap: nowrap !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+}
+
+/* =========================================
+   INSURANCE SUMMARY
+   ========================================= */
+
+.insurance-summary {
+
+    display: flex;
+
+    gap: 14px;
+
+    flex-wrap: wrap;
+
+    margin-top: 18px;
+
+    margin-bottom: 18px;
+
+    padding: 15px;
+
+    background: #ffffff;
+
+    border: 1px solid #d5e2f2;
+
+    border-radius: 10px;
+
+}
+
+
+/* =========================================
+   INSURANCE SUMMARY CARD
+   ========================================= */
+
+.insurance-summary-card {
+
+    flex: 1;
+
+    min-width: 160px;
+
+    padding: 12px 14px;
+
+    background: #f8fbff;
+
+    border: 1px solid #d9e5f3;
+
+    border-radius: 8px;
+
+    box-sizing: border-box;
+
+}
+
+
+.insurance-summary-card h3 {
+
+    margin: 0 0 7px 0;
+
+    font-size: 14px;
+
+}
+
+
+.insurance-summary-card strong {
+
+    font-size: 18px;
+
+}
+
+/* =========================================
+   RENTAL MANAGEMENT HEADER — FINAL ALIGNMENT
+   ========================================= */
+
+#rentalManagementView .section-header {
+
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    justify-content: flex-start !important;
+
+    flex-wrap: nowrap !important;
+
+    gap: 20px !important;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   RENTAL MANAGEMENT TITLE
+   ========================================= */
+
+#rentalManagementView .section-header h2 {
+
+    display: block !important;
+
+    flex: 0 0 auto !important;
+
+    width: max-content !important;
+
+    max-width: none !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+}
+
+
+/* =========================================
+   BACK TO PROPERTIES BUTTON
+   ========================================= */
+
+#rentalManagementView
+#backToPropertiesFromRentalButton {
+
+    position: static !important;
+
+    flex: 0 0 auto !important;
+
+    width: auto !important;
+
+    margin: 0 !important;
+
+    padding: 8px 14px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #1e293b;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+    white-space: nowrap;
 
 }

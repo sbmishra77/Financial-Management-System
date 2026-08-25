@@ -3,22 +3,4192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SB Financial Management System</title>
+    <title>SBM Wealth Manager</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-<div class="container">
+    <div class="container">
 
-<h1>S.B. Mishra Wealth Management (SBM-WM)</h1>
+        <h1>SBM Wealth Manager</h1>
 
-<h2>Welcome Dr. S. B. Mishra 👋</h2>
+        <h2 id="welcomeMessage">Welcome</h2>
 
-<p>My First Professional Web Application</p>
+        <p>Your Personal Financial Management System</p>
 
-<button>Get Started</button>
+    <!-- ===============================
+     INCOME SECTION
+     =============================== -->
+
+<div class="transaction-section">
+
+    <div class="section-header">
+
+        <h2>💳 Transactions</h2>
+
+    </div>
+
+    <button
+        type="button"
+         id="addTransactionButton">
+       ➕ Add Transaction
+    </button>
+
+<!-- ===============================
+   ADD TRANSACTION FORM
+=============================== -->
+
+<div
+    id="transactionFormContainer"
+    style="display: none;">
+
+ <form id="transactionForm">
+
+    <!-- =========================================
+         MASTER TRANSACTION ENTRY GRID
+         ========================================= -->
+
+    <div class="transaction-grid-wrapper">
+
+        <table class="transaction-entry-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>📅 Date</th>
+
+                    <th>🔘 Type</th>
+
+                    <th>📂 Category</th>
+
+                    <th>👤 Party / Merchant / Person</th>
+
+                    <th>📈 Investment / Asset</th>
+
+                    <th>💰 Amount</th>
+
+                    <th>🏦 From Account</th>
+
+                    <th>🏦 To Account</th>
+
+                    <th>💳 Payment Method</th>
+
+                    <th>🔗 Linked Module</th>
+
+                    <th>📝 Notes</th>
+
+                    <th>⚙️ Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="transactionEntryBody">
+
+                <!-- =================================
+                     FIRST TRANSACTION ROW
+                     ================================= -->
+
+                <tr class="transaction-entry-row">
+
+                    <!-- DATE -->
+
+                    <td>
+
+                        <input
+                            type="date"
+                            class="transaction-date"
+                            required>
+
+                    </td>
+
+
+                    <!-- TRANSACTION TYPE -->
+
+                    <td>
+
+                        <select
+                            class="transaction-type"
+                            required>
+
+                            <option value="">
+                                Select Type
+                            </option>
+
+                            <option value="income">
+                                💵 Income
+                            </option>
+
+                            <option value="expense">
+                                🛒 Expense
+                            </option>
+
+                            <option value="investment">
+                                📈 Investment
+                            </option>
+
+                            <option value="transfer">
+                                🔄 Transfer
+                            </option>
+
+                            <option value="wallet_payment">
+                                👛 Wallet Payment
+                            </option>
+
+                            <option value="cashback">
+                                🎁 Cashback
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- CATEGORY -->
+
+                    <td>
+
+                        <select
+                             class="transaction-category">
+
+                            <option value="">
+                                Select Category
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+ <!-- =================================
+     PARTY / MERCHANT / PERSON
+     ================================= -->
+
+<td>
+
+    <div class="transaction-party-wrapper">
+
+        <div class="transaction-party-input-wrapper">
+
+            <input
+                type="text"
+                class="transaction-party"
+                placeholder="Party / Merchant / Person"
+                autocomplete="off">
+
+            <div
+                class="party-suggestions"
+                style="display: none;">
+            </div>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="add-party-button"
+            title="Add New Party">
+            ➕
+        </button>
+
+    </div>
+
+</td>
+
+<!-- =================================
+     INVESTMENT / ASSET
+     ================================= -->
+
+<td class="investment-asset-cell">
+
+    <div class="transaction-investment-wrapper">
+
+        <input
+            type="text"
+            class="transaction-investment"
+            placeholder="Investment / Asset"
+            autocomplete="off">
+
+        <div
+            class="investment-suggestions"
+            style="display: none;">
+        </div>
+
+    </div>
+
+</td>
+
+                    <!-- AMOUNT -->
+
+                    <td>
+
+                        <input
+                            type="number"
+                            class="transaction-amount"
+                            min="0"
+                            step="0.01"
+                            placeholder="₹ 0.00"
+                            required>
+
+                    </td>
+
+
+                    <!-- FROM ACCOUNT -->
+
+                    <td>
+
+                        <select
+                            class="transaction-from-account">
+
+                            <option value="">
+                                From Account
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- TO ACCOUNT -->
+
+                    <td>
+
+                        <select
+                            class="transaction-to-account">
+
+                            <option value="">
+                                To Account
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- PAYMENT METHOD -->
+
+                    <td>
+
+                        <select
+                            class="transaction-payment-method">
+
+                            <option value="">
+                                Payment Method
+                            </option>
+
+                            <option value="bank_transfer">
+                                🏦 Bank Transfer
+                            </option>
+
+                            <option value="upi">
+                                📱 UPI
+                            </option>
+
+                            <option value="cash">
+                                💵 Cash
+                            </option>
+
+                            <option value="credit_card">
+                                💳 Credit Card
+                            </option>
+
+                            <option value="debit_card">
+                                💳 Debit Card
+                            </option>
+
+                            <option value="cheque">
+                                🧾 Cheque
+                            </option>
+
+                            <option value="wallet">
+                                👛 Wallet
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- LINKED MODULE -->
+
+                    <td>
+
+                        <select
+                            class="transaction-linked-module">
+
+                            <option value="">
+                                None
+                            </option>
+
+                            <option value="home_loan">
+                                🏠 Home Loan
+                            </option>
+
+                            <option value="fixed_deposit">
+                                🏦 Fixed Deposit
+                            </option>
+
+                            <option value="shares">
+                                📈 Shares
+                            </option>
+
+                            <option value="sip">
+                                📊 SIP / Mutual Fund
+                            </option>
+
+                            <option value="rental">
+                                🏠 Rental
+                            </option>
+
+                            <option value="credit_card">
+                                💳 Credit Card
+                            </option>
+
+                        </select>
+
+                    </td>
+
+
+                    <!-- NOTES -->
+
+                    <td>
+
+                        <input
+                            type="text"
+                            class="transaction-notes"
+                            placeholder="Notes">
+
+                    </td>
+
+
+                    <!-- ACTION -->
+
+                    <td>
+
+                        <div class="transaction-row-actions">
+
+                            <button
+                                type="button"
+                                class="edit-transaction-button"
+                                title="Edit">
+                                ✏️
+                            </button>
+
+                            <button
+                                type="button"
+                                class="delete-transaction-button"
+                                title="Delete">
+                                🗑️
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =========================================
+         ADD NEW ENTRY
+         ========================================= -->
+
+    <div class="transaction-entry-controls">
+
+        <button
+            type="button"
+            id="newTransactionEntryButton">
+            ➕ New Entry
+        </button>
+
+    </div>
+
+
+    <!-- =========================================
+         ADD NEW CATEGORY
+         ========================================= -->
+
+    <div class="transaction-category-controls">
+
+        <button
+            type="button"
+            id="addCategoryButton">
+            ➕ Add New Category
+        </button>
+
+    </div>
+
+
+    <!-- =========================================
+         ADD NEW CATEGORY FORM
+         ========================================= -->
+
+    <div
+        id="categoryFormContainer"
+        style="display: none;">
+
+        <div class="form-group">
+
+            <label for="newCategoryName">
+                📂 Category Name
+            </label>
+
+            <input
+                type="text"
+                id="newCategoryName"
+                placeholder="Enter category name">
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="newCategoryType">
+                🔘 Transaction Type
+            </label>
+
+            <select id="newCategoryType">
+
+                <option value="">
+                    Select Transaction Type
+                </option>
+
+                <option value="income">
+                    💵 Income
+                </option>
+
+                <option value="expense">
+                    🛒 Expense
+                </option>
+
+                <option value="investment">
+                    📈 Investment
+                </option>
+
+                <option value="transfer">
+                    🔄 Transfer
+                </option>
+
+                <option value="wallet_payment">
+                    👛 Wallet Payment
+                </option>
+
+                <option value="cashback">
+                    🎁 Cashback
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="button"
+                id="saveCategoryButton">
+                💾 Save Category
+            </button>
+
+            <button
+                type="button"
+                id="cancelCategoryButton">
+                ❌ Cancel
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+     TRANSACTION HISTORY
+     ========================================= -->
+
+<section
+    id="transactionHistorySection"
+    class="transaction-history-section">
+
+    <div class="transaction-history-header">
+
+        <h2>
+            📋 Transaction History
+        </h2>
+
+        <span id="transactionHistoryCount">
+            0 Transactions
+        </span>
+
+    </div>
+
+
+    <div class="transaction-history-table-wrapper">
+
+        <table
+            class="transaction-history-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>📅 Date</th>
+
+                    <th>🔘 Type</th>
+
+                    <th>📂 Category</th>
+
+                    <th>👤 Party / Merchant / Person</th>
+
+                    <th>📈 Investment / Asset</th>
+
+                    <th>💰 Amount</th>
+
+                    <th>🏦 From Account</th>
+
+                    <th>🏦 To Account</th>
+
+                    <th>💳 Payment Method</th>
+
+                    <th>🔗 Linked Module</th>
+
+                    <th>📝 Notes</th>
+                    
+                    <th>⚙️ Action</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="transactionHistoryBody">
+
+            </tbody>
+
+        </table>
+
+
+        <div
+            id="noTransactionHistoryMessage"
+            class="no-transaction-history-message">
+
+            अभी कोई Transaction Saved नहीं है।
+
+        </div>
+
+    </div>
+
+</section>
+
+    <!-- =========================================
+     ADD NEW PARTY FORM
+     ========================================= -->
+
+<div
+    id="partyFormContainer"
+    style="display: none;">
+
+    <div class="form-group">
+
+        <label for="newPartyName">
+            👤 Party / Merchant / Person Name
+        </label>
+
+        <input
+            type="text"
+            id="newPartyName"
+            placeholder="Enter party / merchant / person name">
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="newPartyType">
+            🔘 Party Type
+        </label>
+
+        <select id="newPartyType">
+
+            <option value="">
+                Select Party Type
+            </option>
+
+            <option value="person">
+                👤 Person
+            </option>
+
+            <option value="merchant">
+                🛒 Merchant
+            </option>
+
+            <option value="company">
+                🏢 Company
+            </option>
+
+            <option value="tenant">
+                🏠 Tenant
+            </option>
+
+            <option value="family">
+                👨‍👩‍👧 Family Member
+            </option>
+
+            <option value="bank">
+                🏦 Bank / Financial Institution
+            </option>
+
+            <option value="other">
+                📌 Other
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="form-group">
+
+        <label for="newPartyNotes">
+            📝 Notes
+        </label>
+
+        <input
+            type="text"
+            id="newPartyNotes"
+            placeholder="Optional notes">
+
+    </div>
+
+
+    <div class="form-actions">
+
+        <button
+            type="button"
+            id="savePartyButton">
+            💾 Save Party
+        </button>
+
+        <button
+            type="button"
+            id="cancelPartyButton">
+            ❌ Cancel
+        </button>
+
+    </div>
 
 </div>
-<script src="js/script.js"></script>
+
+    <!-- =========================================
+         FORM ACTIONS
+         ========================================= -->
+
+    <div class="transaction-main-actions">
+
+        <button
+            type="submit"
+            id="saveAllTransactionsButton">
+            💾 Save All Transactions
+        </button>
+
+        <button
+            type="button"
+            id="cancelTransactionButton">
+            ❌ Cancel
+        </button>
+
+    </div>
+
+</form>
+
+</div>
+
+</div>
+
+
+  <div class="dashboard-grid">
+
+    <div class="card">
+        <h3>💰 Total Assets</h3>
+        <p id="totalAssetsAmount">₹ 0</p>
+    </div>
+
+
+    <div class="card">
+        <h3>💳 Total Liabilities</h3>
+        <p id="totalLiabilitiesAmount">₹ 0</p>
+    </div>
+
+
+    <div class="card">
+        <h3>📈 Net Worth</h3>
+        <p id="netWorthAmount">₹ 0</p>
+    </div>
+
+
+    <div class="card">
+        <h3>💵 Monthly Income</h3>
+        <p id="monthlyIncomeAmount">₹ 0</p>
+    </div>
+
+
+    <div class="card">
+        <h3>🛒 Monthly Expenses</h3>
+        <p id="monthlyExpensesAmount">₹ 0</p>
+    </div>
+
+
+    <div class="card">
+        <h3>🏠 Rental Income</h3>
+        <p id="rentalIncomeAmount">₹ 0</p>
+    </div>
+
+</div>
+
+        <button id="logoutButton">Logout</button>
+
+    </div>
+    
+<section
+    id="accountsSection"
+    class="accounts-section">
+
+<!-- =============================== -->
+<!-- ACCOUNTS HEADER -->
+<!-- =============================== -->
+
+<div class="section-header accounts-section-header">
+
+
+    <!-- ACCOUNT TITLE -->
+
+    <div class="section-title-area">
+
+        <h2>
+            🏦 My Accounts
+        </h2>
+
+    </div>
+
+
+    <!-- ACCOUNT BUTTONS -->
+
+    <div class="section-header-buttons">
+
+
+        <!-- SUMMARY -->
+
+        <button
+            type="button"
+            id="accountSummaryButton"
+            class="section-summary-button">
+
+            📊 Summary of Accounts
+
+        </button>
+
+
+        <!-- ADD ACCOUNT -->
+
+        <button
+            type="button"
+            id="addAccountButton"
+            class="add-module-button">
+
+            ➕ Add Account
+
+        </button>
+
+
+        <!-- VIEW ALL ACCOUNTS -->
+
+        <button
+            type="button"
+            id="viewAllAccountsButton"
+            class="view-module-button">
+
+            View All Accounts →
+
+        </button>
+
+
+    </div>
+
+</div>
+
+<!-- =============================== -->
+<!-- ACCOUNTS SUMMARY -->
+<!-- =============================== -->
+
+<div
+    id="accountSummary"
+    class="account-summary"
+    style="display: none;">
+
+<div class="account-summary-card">
+
+    <h3>
+        🏦 Bank Accounts
+        <span id="summaryBankCount">(0)</span>
+    </h3>
+
+    <p id="summaryBankBalance">
+        ₹0
+    </p>
+
+</div>
+
+    <div class="account-summary-card">
+
+    <h3>
+        💵 Cash
+        <span id="summaryCashCount">(0)</span>
+    </h3>
+
+    <p id="summaryCashBalance">
+        ₹0
+    </p>
+
+</div>
+
+<div class="account-summary-card">
+
+    <h3>
+        💳 Credit Cards
+        <span id="summaryCreditCardCount">(0)</span>
+    </h3>
+
+    <p id="summaryCreditCardBalance">
+        ₹0
+    </p>
+
+</div>
+
+<div class="account-summary-card">
+
+    <h3>
+        🎁 Cashback Wallet
+        <span id="summaryCashbackCount">(0)</span>
+    </h3>
+
+    <p id="summaryCashbackBalance">
+        ₹0
+    </p>
+
+</div>
+
+    <div class="account-summary-card">
+
+        <h3>
+            💰 Total Assets</h3>
+
+        <strong id="summaryAccountAssets">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="account-summary-card">
+
+        <h3>
+            📊 Net Position
+        </h3>
+
+        <strong id="summaryAccountNetPosition">
+            ₹0
+        </strong>
+
+    </div>
+
+</div>
+
+<div
+    id="accountsContainer"
+    class="accounts-container"
+    style="display: none;">
+
+    <p id="noAccountsMessage">
+        Click "Add Account" to add a new account
+        OR click "View All Accounts" to view existing accounts.
+    </p>
+
+</div>
+
+<div style="margin-top: 20px;">
+
+    <button
+        type="button"
+        id="backupFirestoreButton">
+        💾 Backup My Data
+    </button>
+
+</div>
+
+<!-- =============================== -->
+<!-- ALL ACCOUNTS VIEW -->
+<!-- =============================== -->
+
+<div
+    id="allAccountsView"
+    class="all-accounts-view"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <h2>
+            🏦 All Accounts
+            (<span id="allAccountsCount">0</span>)
+        </h2>
+
+        <button
+            type="button"
+            id="backToDashboardButton">
+            ← Back to Dashboard
+        </button>
+
+    </div>
+
+<div
+    id="allAccountsContainer"
+    class="all-accounts-table-container">
+
+    <div class="accounts-table-wrapper">
+
+        <table class="accounts-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Account Name
+                    </th>
+
+                    <th>
+                        Type
+                    </th>
+
+                    <th>
+                        Balance
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody
+                id="accountsTableBody">
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+</section>
+<!-- Add Account Form -->
+<div id="accountFormContainer" class="account-form-container" style="display: none;">
+
+    <h3>➕ Add New Account</h3>
+
+    <form id="accountForm">
+
+        <label for="accountName">Account Name</label>
+        <input
+            type="text"
+            id="accountName"
+            placeholder="जैसे SBI Savings Account"
+            required
+        >
+
+        <label for="accountType">Account Type</label>
+
+        <select id="accountType" required>
+
+            <option value="">-- Select Account Type --</option>
+
+            <option value="bank">🏦 Bank Account</option>
+
+            <option value="cash">💵 Cash</option>
+
+            <option value="credit_card">💳 Credit Card</option>
+
+            <option value="cashback">🎁 Cashback Wallet</option>
+
+        </select>
+
+
+        <label for="accountBalance">Current Balance / Amount</label>
+
+        <input
+            type="number"
+            id="accountBalance"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <div class="account-form-buttons">
+
+            <button type="submit" id="saveAccountButton">
+                Save Account
+            </button>
+
+            <button
+                type="button"
+                id="cancelAccountButton">
+                Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<div id="editAccountContainer" style="display: none;">
+
+    <h3>✏️ Edit Account</h3>
+
+    <form id="editAccountForm">
+
+        <label for="editAccountName">Account Name</label>
+
+        <input
+            type="text"
+            id="editAccountName"
+            placeholder="Account Name"
+            required
+        >
+
+        <label for="editAccountType">Account Type</label>
+
+        <select id="editAccountType" required>
+
+            <option value="bank">🏦 Bank Account</option>
+            <option value="cash">💵 Cash</option>
+            <option value="credit_card">💳 Credit Card</option>
+            <option value="cashback">🎁 Cashback Wallet</option>
+
+        </select>
+
+        <label for="editAccountBalance">
+            Current Balance / Amount
+        </label>
+
+        <input
+            type="number"
+            id="editAccountBalance"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+        <div class="account-form-buttons">
+
+            <button type="submit">
+                Save Changes
+            </button>
+
+            <button
+                type="button"
+                id="cancelEditButton">
+                Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div> 
+
+<!-- =============================== -->
+<!-- MY INVESTMENTS -->
+<!-- =============================== -->
+
+<div
+    id="investmentsSection"
+    class="dashboard-section">
+
+<!-- =============================== -->
+<!-- INVESTMENTS HEADER -->
+<!-- =============================== -->
+
+<div class="section-header investment-section-header">
+
+
+    <!-- INVESTMENT TITLE -->
+
+    <div class="section-title-area">
+
+        <h2 id="investmentsSectionTitle">
+            📈 My Investments
+        </h2>
+
+    </div>
+
+
+    <!-- INVESTMENT SUMMARY BUTTON -->
+
+    <button
+        type="button"
+        id="investmentSummaryButton"
+        class="section-summary-button">
+
+        📊 Summary of Investments
+
+    </button>
+
+
+    <!-- INVESTMENT ACTION BUTTONS -->
+
+    <div class="section-header-buttons">
+
+        <button
+            type="button"
+            id="addInvestmentButton"
+            class="add-module-button">
+
+            ➕ Add Investment
+
+        </button>
+
+
+        <button
+            type="button"
+            id="viewAllInvestmentsButton"
+            class="view-module-button">
+
+            View All Investments →
+
+        </button>
+
+        <button
+    type="button"
+    id="viewFixedDepositsFromInvestmentsButton"
+    class="view-module-button">
+
+    🏦 Fixed Deposits →
+
+</button>
+
+        <button
+            type="button"
+            id="backToInvestmentsDashboardButton"
+            class="back-module-button"
+            style="display: none;">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+</div>
+
+<div class="investment-summary">
+
+<!-- =============================== -->
+<!-- INVESTMENT SUMMARY -->
+<!-- =============================== -->
+
+<div
+    id="investmentSummary"
+    class="investment-summary"
+    style="display: none;">
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            💰 Total Invested
+        </h3>
+
+        <strong id="totalInvestmentAmount">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            💵 Current Value
+        </h3>
+
+        <strong id="totalInvestmentCurrentValue">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            📈 Profit/Loss
+        </h3>
+
+        <strong id="totalInvestmentProfitLoss">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            📊 Overall Return
+        </h3>
+
+        <strong id="totalInvestmentReturnPercent">
+            0%
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            📊 Investment Types
+        </h3>
+
+        <strong id="investmentTypeCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            📈 Investments
+        </h3>
+
+        <strong id="investmentItemCount">
+            0
+        </strong>
+
+    </div>
+
+    <div class="investment-summary-card">
+
+        <h3>
+            🏦 Fixed Deposits
+        </h3>
+
+        <strong id="investmentFixedDepositAmount">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="investment-summary-card">
+
+        <h3>
+            🏦 FD Accounts
+        </h3>
+
+        <strong id="investmentFixedDepositCount">
+            0
+        </strong>
+
+    </div>
+
+</div>
+
+<!-- =============================== -->
+<!-- INVESTMENTS TABLE -->
+<!-- =============================== -->
+
+<div
+    id="investmentTableWrapper"
+    class="investment-table-wrapper"
+    style="display: none;">
+
+    <table class="investment-table">
+
+  <thead>
+
+    <tr>
+
+        <th>Investment</th>
+
+        <th>Category</th>
+
+        <th>Invested Amount</th>
+
+        <th>Current Value</th>
+
+        <th>Profit/Loss</th>
+
+        <th>Profit/Loss %</th>
+
+        <th>Investment Date</th>
+<th>Last Updated</th>
+<th>Actions</th>
+
+    </tr>
+
+</thead>      
+
+
+        <tbody id="investmentTableBody">
+
+            <!-- Investment rows will load here -->
+
+        </tbody>
+
+    </table>
+
+
+    <p id="noInvestmentsMessage">
+    अभी कोई Investment नहीं है।
+</p>
+
+
+<div class="investment-fd-navigation">
+
+    <button
+        type="button"
+        id="viewFixedDepositsFromAllInvestmentsButton"
+        class="view-module-button">
+
+        🏦 View Fixed Deposits →
+
+    </button>
+
+</div>
+
+
+</div>
+
+<!-- =============================== -->
+<!-- PROPERTIES & RENTALS SECTION -->
+<!-- =============================== -->
+
+    <div class="finance-section properties-section">
+
+<!-- =============================== -->
+<!-- PROPERTIES HEADER -->
+<!-- =============================== -->
+
+<div class="section-header properties-section-header">
+
+    <div class="section-title-area">
+
+        <h2>
+            🏠 Properties & Rentals
+        </h2>
+
+    </div>
+
+
+    <div class="section-header-buttons">
+
+
+        <!-- SUMMARY -->
+
+        <button
+            type="button"
+            id="propertySummaryButton"
+            class="section-summary-button">
+
+            📊 Summary of Properties
+
+        </button>
+
+
+        <!-- ADD PROPERTY -->
+
+        <button
+            type="button"
+            id="addPropertyButton"
+            class="add-module-button">
+
+            ➕ Add Property
+
+        </button>
+
+
+        <!-- VIEW ALL PROPERTIES -->
+
+        <button
+            type="button"
+            id="viewAllPropertiesButton"
+            class="view-module-button">
+
+            View All Properties →
+
+        </button>
+
+
+        <!-- MANAGE RENTAL & TENANTS -->
+
+        <button
+            type="button"
+            id="manageRentalTenantsButton"
+            class="view-module-button">
+
+            🏠 Manage Rental & Tenants →
+
+        </button>
+
+
+    </div>
+
+</div>
+
+
+<!-- =============================== -->
+<!-- PROPERTIES SUMMARY -->
+<!-- =============================== -->
+
+<div
+    id="propertySummary"
+    class="property-summary"
+    style="display: none;">
+
+    <div class="property-summary-card">
+
+        <h3>🏠 Total Properties</h3>
+
+        <strong id="summaryPropertyCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="property-summary-card">
+
+        <h3>🏘️ Rental Properties</h3>
+
+        <strong id="summaryRentalCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="property-summary-card">
+
+        <h3>👨‍👩‍👦 Self Occupied</h3>
+
+        <strong id="summarySelfOccupiedCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="property-summary-card">
+
+        <h3>📐 Plots / Land</h3>
+
+        <strong id="summaryLandCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="property-summary-card">
+
+        <h3>💰 Purchase Value</h3>
+
+        <strong id="summaryPurchaseValue">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="property-summary-card">
+
+        <h3>📈 Current Value</h3>
+
+        <strong id="summaryCurrentValue">
+            ₹0
+        </strong>
+
+    </div>
+
+</div>
+
+<!-- =============================== -->
+<!-- ADD PROPERTY FORM -->
+<!-- =============================== -->
+
+<div
+    id="propertyFormContainer"
+    class="property-form-container"
+    style="display: none;">
+
+    <h3>➕ Add New Property</h3>
+
+    <form id="propertyForm">
+
+        <label for="propertyName">
+            Property Name
+        </label>
+
+        <input
+            type="text"
+            id="propertyName"
+            placeholder="जैसे 97 Abhinandan Nagar"
+            required
+        >
+
+
+        <label for="propertyType">
+            Property Type
+        </label>
+
+        <select
+            id="propertyType"
+            required>
+
+            <option value="">
+                -- Select Property Type --
+            </option>
+
+            <option value="residential">
+                🏠 Residential House
+            </option>
+
+            <option value="plot">
+                📐 Plot
+            </option>
+
+            <option value="agricultural_land">
+                🌾 Agricultural Land
+            </option>
+
+            <option value="orchard">
+                🌳 Orchard / Garden
+            </option>
+
+            <option value="other">
+                🏢 Other Property
+            </option>
+
+        </select>
+
+
+        <label for="propertyOwnership">
+            Ownership
+        </label>
+
+        <select
+            id="propertyOwnership"
+            required>
+
+            <option value="">
+                -- Select Ownership --
+            </option>
+
+            <option value="self">
+                Self
+            </option>
+
+            <option value="mother">
+                Mother
+            </option>
+
+            <option value="joint">
+                Joint / Family
+            </option>
+
+            <option value="other">
+                Other
+            </option>
+
+        </select>
+
+<label for="propertyOwnerNames">
+    Owner Name(s)
+</label>
+
+<input
+    type="text"
+    id="propertyOwnerNames"
+    placeholder="जैसे आपका नाम, पत्नी का नाम"
+>
+        <label for="propertyUsage">
+            Usage
+        </label>
+
+        <select
+            id="propertyUsage"
+            required>
+
+            <option value="">
+                -- Select Usage --
+            </option>
+
+            <option value="rental">
+                🏠 Rental
+            </option>
+
+            <option value="self_occupied">
+                👨‍👩‍👦 Self Occupied
+            </option>
+
+            <option value="vacant">
+                Empty / Vacant
+            </option>
+
+            <option value="investment">
+                📈 Investment
+            </option>
+
+            <option value="other">
+                Other
+            </option>
+
+        </select>
+
+
+        <label for="propertyAddress">
+            Address
+        </label>
+
+        <textarea
+            id="propertyAddress"
+            placeholder="Complete Property Address"
+            rows="3"
+            required></textarea>
+
+
+        <label for="propertyPurchaseDate">
+            Purchase Date
+        </label>
+
+        <input
+            type="date"
+            id="propertyPurchaseDate"
+        >
+
+
+        <label for="propertyPurchaseValue">
+            Purchase Value
+        </label>
+
+        <input
+            type="number"
+            id="propertyPurchaseValue"
+            placeholder="0"
+            min="0"
+            step="0.01"
+        >
+
+
+        <label for="propertyCurrentValue">
+            Current Value
+        </label>
+
+        <input
+            type="number"
+            id="propertyCurrentValue"
+            placeholder="0"
+            min="0"
+            step="0.01"
+        >
+
+
+        <label for="propertyStatus">
+            Status
+        </label>
+
+        <select
+            id="propertyStatus"
+            required>
+
+            <option value="active">
+                Active
+            </option>
+
+            <option value="sold">
+                Sold
+            </option>
+
+        </select>
+
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="savePropertyButton">
+                💾 Save Property
+            </button>
+
+            <button
+                type="button"
+                id="cancelPropertyButton">
+                ❌ Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- =============================== -->
+<!-- EDIT PROPERTY FORM -->
+<!-- =============================== -->
+
+<div
+    id="editPropertyFormContainer"
+    class="property-form-container"
+    style="display: none;">
+
+    <h3>✏️ Edit Property</h3>
+
+    <form id="editPropertyForm">
+
+        <label for="editPropertyName">
+            Property Name
+        </label>
+
+        <input
+            type="text"
+            id="editPropertyName"
+            placeholder="Property Name"
+            required
+        >
+
+
+        <label for="editPropertyType">
+            Property Type
+        </label>
+
+        <select
+            id="editPropertyType"
+            required>
+
+            <option value="">
+                -- Select Property Type --
+            </option>
+
+            <option value="residential">
+                🏠 Residential House
+            </option>
+
+            <option value="plot">
+                📐 Plot
+            </option>
+
+            <option value="agricultural_land">
+                🌾 Agricultural Land
+            </option>
+
+            <option value="orchard">
+                🌳 Orchard / Garden
+            </option>
+
+            <option value="other">
+                🏢 Other Property
+            </option>
+
+        </select>
+
+
+        <label for="editPropertyOwnership">
+            Ownership
+        </label>
+
+        <select
+            id="editPropertyOwnership"
+            required>
+
+            <option value="">
+                -- Select Ownership --
+            </option>
+
+            <option value="self">
+                Self
+            </option>
+
+            <option value="mother">
+                Mother
+            </option>
+
+            <option value="joint">
+                Joint / Family
+            </option>
+
+            <option value="other">
+                Other
+            </option>
+
+        </select>
+
+        <label for="editPropertyOwnerNames">
+    Owner Name(s)
+</label>
+
+<input
+    type="text"
+    id="editPropertyOwnerNames"
+    placeholder="जैसे आपका नाम, पत्नी का नाम"
+>
+        <label for="editPropertyUsage">
+            Usage
+        </label>
+
+        <select
+            id="editPropertyUsage"
+            required>
+
+            <option value="">
+                -- Select Usage --
+            </option>
+
+            <option value="rental">
+                🏠 Rental
+            </option>
+
+            <option value="self_occupied">
+                👨‍👩‍👦 Self Occupied
+            </option>
+
+            <option value="vacant">
+                Empty / Vacant
+            </option>
+
+            <option value="investment">
+                📈 Investment
+            </option>
+
+            <option value="other">
+                Other
+            </option>
+
+        </select>
+
+
+        <label for="editPropertyAddress">
+            Address
+        </label>
+
+        <textarea
+            id="editPropertyAddress"
+            placeholder="Complete Property Address"
+            rows="3"
+            required></textarea>
+
+
+        <label for="editPropertyPurchaseDate">
+            Purchase Date
+        </label>
+
+        <input
+            type="date"
+            id="editPropertyPurchaseDate"
+        >
+
+
+        <label for="editPropertyPurchaseValue">
+            Purchase Value
+        </label>
+
+        <input
+            type="number"
+            id="editPropertyPurchaseValue"
+            placeholder="0"
+            min="0"
+            step="0.01"
+        >
+
+
+        <label for="editPropertyCurrentValue">
+            Current Value
+        </label>
+
+        <input
+            type="number"
+            id="editPropertyCurrentValue"
+            placeholder="0"
+            min="0"
+            step="0.01"
+        >
+
+
+        <label for="editPropertyStatus">
+            Status
+        </label>
+
+        <select
+            id="editPropertyStatus"
+            required>
+
+            <option value="active">
+                Active
+            </option>
+
+            <option value="sold">
+                Sold
+            </option>
+
+        </select>
+
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="updatePropertyButton">
+                💾 Save Changes
+            </button>
+
+            <button
+                type="button"
+                id="cancelEditPropertyButton">
+                ❌ Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+    <!-- =============================== -->
+    <!-- DASHBOARD PROPERTIES CONTAINER -->
+    <!-- =============================== -->
+
+    <div
+        id="propertiesContainer"
+        class="properties-container"
+        style="display: none;">
+
+        <p id="noPropertiesMessage">
+            Click "Add Property" to add a new property
+            OR click "View All Properties" to view existing properties.
+        </p>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- ALL PROPERTIES VIEW -->
+    <!-- =============================== -->
+
+    <div
+        id="allPropertiesView"
+        class="all-properties-view"
+        style="display: none;">
+
+        <div class="section-header">
+
+            <h2>
+                🏠 All Properties
+                (<span id="allPropertiesCount">0</span>)
+            </h2>
+
+            <button
+                type="button"
+                id="backToPropertiesDashboardButton">
+                ← Back to Dashboard
+            </button>
+
+        </div>
+
+
+        <div
+    id="allPropertiesContainer"
+    class="properties-container">
+
+    <div class="table-responsive">
+
+        <table
+            class="finance-table"
+            id="propertiesTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Property Name
+                    </th>
+
+                    <th>
+                        Type
+                    </th>
+
+                    <th>
+                        Ownership
+                    </th>
+
+                    <th>
+                        Owner Name(s)
+                    </th>
+
+                    <th>
+                        Usage
+                    </th>
+
+                    <th>
+                        Address
+                    </th>
+
+                    <th>
+                        Purchase Date
+                    </th>
+
+                    <th>
+                        Purchase Value
+                    </th>
+
+                    <th>
+                        Current Value
+                    </th>
+
+                    <th>
+                        Status
+                    </th>
+
+                    <th>
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody
+                id="propertiesTableBody">
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+    </div>
+
+</div>
+
+<!-- =============================== -->
+<!-- RENTAL MANAGEMENT VIEW -->
+<!-- =============================== -->
+
+<div
+    id="rentalManagementView"
+    class="rental-management-view"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <h2>
+            🏠 Rental Management & Tenants
+        </h2>
+
+        <button
+            type="button"
+            id="backToPropertiesFromRentalButton">
+
+            ← Back to Properties
+
+        </button>
+
+    </div>
+
+
+<!-- ========================================= -->
+<!-- RENTAL MANAGEMENT CONTENT -->
+<!-- ========================================= -->
+
+<div class="rental-management-content">
+
+
+    <!-- ========================================= -->
+    <!-- RENTAL MANAGEMENT ACTION BAR -->
+    <!-- ========================================= -->
+
+    <div class="rental-action-bar">
+
+        <h3>
+            🏠 Rental Units & Tenants
+        </h3>
+
+        <div class="rental-action-buttons">
+
+            <button
+                type="button"
+                id="addRentalUnitButton"
+                class="add-module-button">
+
+                ➕ Add Rental Unit / Tenant
+
+            </button>
+
+
+            <button
+                type="button"
+                id="viewAllRentalUnitsButton"
+                class="view-module-button">
+
+                View All Rental Units →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RENTAL UNIT / TENANT FORM -->
+    <!-- ========================================= -->
+
+    <div
+        id="rentalUnitFormContainer"
+        class="rental-form-container"
+        style="display: none;">
+
+        <h3>
+            ➕ Add Rental Unit / Tenant
+        </h3>
+
+
+        <form id="rentalUnitForm">
+
+
+            <!-- ================================= -->
+            <!-- PROPERTY -->
+            <!-- ================================= -->
+
+            <h4>
+                🏠 Property Details
+            </h4>
+
+
+            <label for="rentalPropertyId">
+                Property
+            </label>
+
+            <select
+                id="rentalPropertyId"
+                required>
+
+                <option value="">
+                    -- Select Property --
+                </option>
+
+            </select>
+
+
+            <!-- ================================= -->
+            <!-- RENTAL UNIT -->
+            <!-- ================================= -->
+
+            <label for="rentalUnitName">
+                Rental Unit / Portion
+            </label>
+
+            <input
+                type="text"
+                id="rentalUnitName"
+                placeholder="जैसे 1 BHK - Ground Floor"
+                required
+            >
+
+
+            <label for="rentalUnitFloor">
+                Floor
+            </label>
+
+            <input
+                type="text"
+                id="rentalUnitFloor"
+                placeholder="जैसे Ground Floor"
+            >
+
+
+            <label for="rentalUnitType">
+                Unit Type
+            </label>
+
+            <select
+                id="rentalUnitType"
+                required>
+
+                <option value="">
+                    -- Select Unit Type --
+                </option>
+
+                <option value="1bhk">
+                    1 BHK
+                </option>
+
+                <option value="2bhk">
+                    2 BHK
+                </option>
+
+                <option value="1rk">
+                    1 RK
+                </option>
+
+                <option value="1room">
+                    1 Room
+                </option>
+
+                <option value="shop">
+                    Shop
+                </option>
+
+                <option value="office">
+                    Office
+                </option>
+
+                <option value="other">
+                    Other
+                </option>
+
+            </select>
+
+
+            <label for="rentalUnitArea">
+                Area (Optional)
+            </label>
+
+            <input
+                type="number"
+                id="rentalUnitArea"
+                placeholder="Sq. Ft."
+                min="0"
+                step="0.01"
+            >
+
+
+            <!-- ================================= -->
+            <!-- TENANT DETAILS -->
+            <!-- ================================= -->
+
+            <h4>
+                👤 Tenant Details
+            </h4>
+
+
+            <label for="tenantName">
+                Tenant Name
+            </label>
+
+            <input
+                type="text"
+                id="tenantName"
+                placeholder="Tenant Name"
+                required
+            >
+
+
+            <label for="tenantMobile">
+                Mobile Number
+            </label>
+
+            <input
+                type="tel"
+                id="tenantMobile"
+                placeholder="Mobile Number"
+            >
+
+
+            <label for="tenantAddress">
+                Tenant Address
+            </label>
+
+            <textarea
+                id="tenantAddress"
+                placeholder="Permanent Address"
+                rows="3"></textarea>
+
+
+            <label for="tenantIdType">
+                ID Type
+            </label>
+
+            <select id="tenantIdType">
+
+                <option value="">
+                    -- Select ID Type --
+                </option>
+
+                <option value="aadhaar">
+                    Aadhaar
+                </option>
+
+                <option value="pan">
+                    PAN
+                </option>
+
+                <option value="driving_license">
+                    Driving Licence
+                </option>
+
+                <option value="passport">
+                    Passport
+                </option>
+
+                <option value="other">
+                    Other
+                </option>
+
+            </select>
+
+
+            <label for="tenantIdNumber">
+                ID Number
+            </label>
+
+            <input
+                type="text"
+                id="tenantIdNumber"
+                placeholder="ID Number"
+            >
+
+
+            <!-- ================================= -->
+            <!-- TENANCY DETAILS -->
+            <!-- ================================= -->
+
+            <h4>
+                📅 Tenancy Details
+            </h4>
+
+
+            <label for="tenancyStartDate">
+                Tenancy Start Date
+            </label>
+
+            <input
+                type="date"
+                id="tenancyStartDate"
+                required
+            >
+
+
+            <label for="tenancyEndDate">
+                Agreement End Date
+            </label>
+
+            <input
+                type="date"
+                id="tenancyEndDate"
+            >
+
+
+            <label for="monthlyRent">
+                Monthly Rent
+            </label>
+
+            <input
+                type="number"
+                id="monthlyRent"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                required
+            >
+
+
+            <label for="securityDeposit">
+                Security Deposit
+            </label>
+
+            <input
+                type="number"
+                id="securityDeposit"
+                placeholder="0"
+                min="0"
+                step="0.01"
+            >
+
+
+            <label for="tenancyStatus">
+                Tenancy Status
+            </label>
+
+            <select
+                id="tenancyStatus"
+                required>
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="vacated">
+                    Vacated
+                </option>
+
+                <option value="notice">
+                    Notice Period
+                </option>
+
+            </select>
+
+
+            <!-- ================================= -->
+            <!-- ELECTRICITY / METER -->
+            <!-- ================================= -->
+
+            <h4>
+                ⚡ Electricity / Meter
+            </h4>
+
+
+            <label for="meterNumber">
+                Meter Number
+            </label>
+
+            <input
+                type="text"
+                id="meterNumber"
+                placeholder="Meter Number"
+            >
+
+
+            <label for="previousMeterReading">
+                Previous Meter Reading
+            </label>
+
+            <input
+                type="number"
+                id="previousMeterReading"
+                placeholder="0"
+                min="0"
+                step="0.01"
+            >
+
+
+            <label for="currentMeterReading">
+                Current Meter Reading
+            </label>
+
+            <input
+                type="number"
+                id="currentMeterReading"
+                placeholder="0"
+                min="0"
+                step="0.01"
+            >
+
+
+            <!-- ================================= -->
+            <!-- FORM BUTTONS -->
+            <!-- ================================= -->
+
+            <div class="account-form-buttons">
+
+                <button
+                    type="submit"
+                    id="saveRentalUnitButton">
+
+                    💾 Save Rental Unit
+
+                </button>
+
+
+                <button
+                    type="button"
+                    id="cancelRentalUnitButton">
+
+                    ❌ Cancel
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RENTAL UNITS TABLE -->
+    <!-- ========================================= -->
+
+    <div
+        id="rentalUnitsTableWrapper"
+        class="rental-table-wrapper"
+        style="display: none;">
+
+
+        <div class="rental-table-header">
+
+            <h3>
+                🏠 All Rental Units
+                (<span id="rentalUnitCount">0</span>)
+            </h3>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table
+                class="finance-table"
+                id="rentalUnitsTable">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Property
+                        </th>
+
+                        <th>
+                            Rental Unit
+                        </th>
+
+                        <th>
+                            Tenant
+                        </th>
+
+                        <th>
+                            Mobile
+                        </th>
+
+                        <th>
+                            Rent / Month
+                        </th>
+
+                        <th>
+                            Start Date
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody
+                    id="rentalUnitsTableBody">
+
+                    <!-- Rental unit rows will load here -->
+
+                </tbody>
+
+
+            </table>
+
+        </div>
+
+
+        <p
+            id="noRentalUnitsMessage">
+
+            अभी कोई Rental Unit / Tenant नहीं है।
+
+        </p>
+
+
+    </div>
+
+
+</div>
+
+<!-- =============================== -->
+<!-- ADD INVESTMENT FORM -->
+<!-- =============================== -->
+
+<div
+    id="investmentFormContainer"
+    style="display: none;">
+
+    <h3>
+        ➕ Add New Investment
+    </h3>
+
+
+    <form id="investmentForm">
+
+
+        <!-- INVESTMENT CATEGORY -->
+
+        <label for="investmentCategory">
+            Investment Category
+        </label>
+
+        <select
+            id="investmentCategory"
+            required>
+
+            <option value="">
+                -- Select Investment Category --
+            </option>
+
+            <option value="sip">
+                📊 SIP / Mutual Fund
+            </option>
+
+            <option value="shares">
+                📈 Shares / Stocks
+            </option>
+
+            <option value="gold">
+                🥇 Gold
+            </option>
+
+            <option value="silver">
+                🥈 Silver
+            </option>
+
+            <option value="gold_etf">
+                🪙 Gold ETF
+            </option>
+
+            <option value="silver_etf">
+                🪙 Silver ETF
+            </option>
+
+            <option value="rd">
+                🏧 Recurring Deposit
+            </option>
+
+            <option value="property">
+                🏠 Property
+            </option>
+
+            <option value="bonds">
+                📜 Bonds
+            </option>
+
+            <option value="ppf">
+                🧾 PPF
+            </option>
+
+            <option value="nps">
+                🧾 NPS
+            </option>
+
+            <option value="other">
+                💰 Other Investment
+            </option>
+
+        </select>
+
+
+        <!-- INVESTMENT NAME -->
+
+        <label for="investmentName">
+            Investment Name
+        </label>
+
+        <input
+            type="text"
+            id="investmentName"
+            placeholder="जैसे HDFC Flexi Cap SIP"
+            required
+        >
+
+
+        <!-- INVESTED AMOUNT -->
+
+        <label for="investmentAmount">
+            Invested Amount
+        </label>
+
+        <input
+            type="number"
+            id="investmentAmount"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <!-- INVESTMENT DATE -->
+
+        <label for="investmentDate">
+            Investment Date
+        </label>
+
+        <input
+            type="date"
+            id="investmentDate"
+            required
+        >
+
+
+        <!-- CURRENT VALUE -->
+
+        <label for="investmentCurrentValue">
+            Current Value
+        </label>
+
+        <input
+            type="number"
+            id="investmentCurrentValue"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <!-- NOTES -->
+
+        <label for="investmentNotes">
+            Notes
+        </label>
+
+        <textarea
+            id="investmentNotes"
+            placeholder="Optional notes">
+        </textarea>
+
+
+        <!-- BUTTONS -->
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="saveInvestmentButton">
+
+                Save Investment
+
+            </button>
+
+
+            <button
+                type="button"
+                id="cancelInvestmentButton">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </form>
+</div>
+
+
+<!-- ============================= -->
+<!-- FIXED DEPOSIT SECTION -->
+<!-- ============================= -->
+
+<div class="fd-section">
+
+    <div 
+    id="oldFixedDepositDashboardHeader"
+    class="section-header"
+    style="display: none !important;">
+
+        <h2>🏦 Fixed Deposits</h2>
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="showFDFormButton">
+                ➕ Add New FD
+            </button>
+
+            <button
+                type="button"
+                id="viewAllFDButton">
+                View All Fixed Deposits →
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="fd-summary">
+
+
+    <!-- FD FORM -->
+
+    <div
+        id="fdFormContainer"
+        style="display:none;">
+
+        <h3>➕ Add Fixed Deposit</h3>
+
+        <form id="fdForm">
+
+            <label for="fdName">
+                FD Name
+            </label>
+
+            <input
+                type="text"
+                id="fdName"
+                placeholder="जैसे PNB-18"
+                required
+            >
+
+
+            <label for="fdBank">
+                Bank Name
+            </label>
+
+            <input
+                type="text"
+                id="fdBank"
+                placeholder="जैसे PNB"
+                required
+            >
+
+
+            <label for="fdAmount">
+                Deposit Amount
+            </label>
+
+            <input
+                type="number"
+                id="fdAmount"
+                placeholder="51000"
+                min="0"
+                step="0.01"
+                required
+            >
+
+
+            <label for="fdDepositDate">
+                Date of Deposit
+            </label>
+
+            <input
+                type="date"
+                id="fdDepositDate"
+                required
+            >
+
+
+            <label for="fdMaturityDate">
+                Date of Maturity
+            </label>
+
+            <input
+                type="date"
+                id="fdMaturityDate"
+                required
+            >
+
+
+            <label for="fdInterestRate">
+                Interest Rate (%)
+            </label>
+
+            <input
+                type="number"
+                id="fdInterestRate"
+                placeholder="6.60"
+                min="0"
+                step="0.01"
+                required
+            >
+
+
+            <label for="fdCompounding">
+                Compounding Per Year
+            </label>
+
+            <select id="fdCompounding" required>
+
+                <option value="4">
+                    Quarterly (4)
+                </option>
+
+                <option value="2">
+                    Half-Yearly (2)
+                </option>
+
+                <option value="1">
+                    Yearly (1)
+                </option>
+
+            </select>
+
+
+            <label for="fdMaturityAmount">
+                Maturity Amount
+            </label>
+
+            <input
+                type="number"
+                id="fdMaturityAmount"
+                placeholder="55228"
+                min="0"
+                step="0.01"
+                required
+            >
+
+
+            <div class="account-form-buttons">
+
+                <button
+                    type="submit"
+                    id="saveFDButton">
+
+                    Save FD
+
+                </button>
+
+                <button
+                    type="button"
+                    id="cancelFDButton">
+
+                    Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- EDIT FD FORM -->
+
+<!-- EDIT FD FORM -->
+
+<div
+    id="editFDContainer"
+    style="display:none;">
+
+    <h3>✏️ Edit Fixed Deposit</h3>
+
+    <form id="editFDForm">
+
+        <label for="editFDName">
+            FD Name
+        </label>
+
+        <input
+            type="text"
+            id="editFDName"
+            required
+        >
+
+
+        <label for="editFDBank">
+            Bank Name
+        </label>
+
+        <input
+            type="text"
+            id="editFDBank"
+            required
+        >
+
+
+        <label for="editFDAmount">
+            Deposit Amount
+        </label>
+
+        <input
+            type="number"
+            id="editFDAmount"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="editFDDepositDate">
+            Date of Deposit
+        </label>
+
+        <input
+            type="date"
+            id="editFDDepositDate"
+            required
+        >
+
+
+        <label for="editFDMaturityDate">
+            Date of Maturity
+        </label>
+
+        <input
+            type="date"
+            id="editFDMaturityDate"
+            required
+        >
+
+
+        <label for="editFDInterestRate">
+            Interest Rate (%)
+        </label>
+
+        <input
+            type="number"
+            id="editFDInterestRate"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="editFDCompounding">
+            Compounding Per Year
+        </label>
+
+        <select
+            id="editFDCompounding"
+            required>
+
+            <option value="4">
+                Quarterly (4)
+            </option>
+
+            <option value="2">
+                Half-Yearly (2)
+            </option>
+
+            <option value="1">
+                Yearly (1)
+            </option>
+
+        </select>
+
+
+        <label for="editFDMaturityAmount">
+            Maturity Amount
+        </label>
+
+        <input
+            type="number"
+            id="editFDMaturityAmount"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <div class="account-form-buttons">
+
+            <button type="submit">
+                Save Changes
+            </button>
+
+            <button
+                type="button"
+                id="cancelEditFDButton">
+                Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+
+<!-- =============================== -->
+<!-- RENEW FD FORM -->
+<!-- =============================== -->
+
+<div
+    id="renewFDContainer"
+    style="display:none;">
+
+    <h3>🔄 Renew Fixed Deposit</h3>
+
+    <form id="renewFDForm">
+
+        <label for="renewFDName">
+            FD Name
+        </label>
+
+        <input
+            type="text"
+            id="renewFDName"
+            required
+        >
+
+
+        <label for="renewFDBank">
+            Bank Name
+        </label>
+
+        <input
+            type="text"
+            id="renewFDBank"
+            required
+        >
+
+
+        <label for="renewFDAmount">
+            New Deposit Amount
+        </label>
+
+        <input
+            type="number"
+            id="renewFDAmount"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="renewFDDepositDate">
+            New Deposit Date
+        </label>
+
+        <input
+            type="date"
+            id="renewFDDepositDate"
+            required
+        >
+
+
+        <label for="renewFDMaturityDate">
+            New Maturity Date
+        </label>
+
+        <input
+            type="date"
+            id="renewFDMaturityDate"
+            required
+        >
+
+
+        <label for="renewFDInterestRate">
+            New Interest Rate (%)
+        </label>
+
+        <input
+            type="number"
+            id="renewFDInterestRate"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="renewFDCompounding">
+            Compounding Per Year
+        </label>
+
+        <select
+            id="renewFDCompounding"
+            required>
+
+            <option value="4">
+                Quarterly (4)
+            </option>
+
+            <option value="2">
+                Half-Yearly (2)
+            </option>
+
+            <option value="1">
+                Yearly (1)
+            </option>
+
+        </select>
+
+
+        <label for="renewFDMaturityAmount">
+            New Maturity Amount
+        </label>
+
+        <input
+            type="number"
+            id="renewFDMaturityAmount"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="saveRenewFDButton">
+
+                🔄 Renew FD
+
+            </button>
+
+
+            <button
+                type="button"
+                id="cancelRenewFDButton">
+
+                Cancel
+
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+    <!-- FD LIST -->
+
+<!-- ============================= -->
+<!-- ACTIVE FD TABLE -->
+<!-- ============================= -->
+
+<!-- =============================== -->
+<!-- FD DASHBOARD TABLE -->
+<!-- =============================== -->
+
+<div
+    id="fdContainer"
+    class="fd-table-wrapper"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <h2>
+            🏦 All Fixed Deposits
+            (<span id="allFDCount">0</span>)
+        </h2>
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="addNewFDFromAllFDButton">
+
+                ➕ Add New FD
+
+            </button>
+
+            <button
+                type="button"
+                id="backToFDDashboardButton">
+
+                ← Back to Dashboard
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- FD TABLE -->
+    <!-- =============================== -->
+
+    <table class="fd-table">
+
+        <thead>
+
+            <tr>
+
+                <th>FD</th>
+                <th>Bank</th>
+                <th>Principal</th>
+                <th>Maturity Date</th>
+                <th>Days Left</th>
+                <th>Rate</th>
+                <th>Maturity Value</th>
+                <th>Status</th>
+                <th>Actions</th>
+
+            </tr>
+
+        </thead>
+
+
+        <tbody id="fdTableBody">
+
+            <!-- FD rows will load here -->
+
+        </tbody>
+
+    </table>
+
+
+    <p id="noFDMessage">
+
+        अभी कोई Fixed Deposit नहीं है।
+
+    </p>
+
+
+    <!-- =============================== -->
+    <!-- FD RENEWAL HISTORY -->
+    <!-- =============================== -->
+
+    <div
+        id="fdHistorySection"
+        style="display: block;">
+
+        <div class="section-header">
+
+            <h2>
+                📜 FD Renewal History
+            </h2>
+
+            <button
+                type="button"
+                id="viewAllFDHistoryButton">
+
+                View All History →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =============================== -->
+<!-- ALL FD VIEW -->
+<!-- =============================== -->
+
+<div
+    id="allFDView"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <h2>
+            🏦 All Fixed Deposits
+            (<span id="allFDCount">0</span>)
+        </h2>
+
+        <button
+            type="button"
+            id="backToFDDashboardButton">
+            ← Back to Dashboard
+        </button>
+
+    </div>
+
+
+    <div
+        id="allFDAddFDFormArea"
+        style="display: none;">
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- FD TABLE -->
+    <!-- =============================== -->
+
+    <div
+        class="fd-table-wrapper">
+
+        <table class="fd-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>FD</th>
+                    <th>Bank</th>
+                    <th>Principal</th>
+                    <th>Maturity Date</th>
+                    <th>Days Left</th>
+                    <th>Rate</th>
+                    <th>Maturity Value</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="allFDTableBody">
+
+                <!-- All FD rows will load here -->
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- FD RENEWAL HISTORY -->
+    <!-- =============================== -->
+
+    <div id="fdHistorySection">
+
+        <div class="section-header">
+
+            <h2>
+                📜 FD Renewal History
+            </h2>
+
+            <button
+                type="button"
+                id="viewAllFDHistoryButton">
+
+                View All History →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =============================== -->
+<!-- ALL FD RENEWAL HISTORY -->
+<!-- =============================== -->
+
+<div
+    id="allFDHistoryView"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <h2>
+            📜 All FD Renewal History
+            (<span id="allFDHistoryCount">0</span>)
+        </h2>
+
+        <button
+            type="button"
+            id="backToFDHistoryDashboardButton">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+
+    <div class="fd-table-wrapper">
+
+        <table class="fd-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>FD</th>
+
+                    <th>Bank</th>
+
+                    <th>Original Amount</th>
+
+                    <th>Original Maturity</th>
+
+                    <th>Maturity Amount</th>
+
+                    <th>Status</th>
+
+                    <th>Renewed To</th>
+
+                    <th>Renewal Amount</th>
+
+                    <th>New Maturity</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="fdHistoryTableBody">
+
+                <!-- FD Renewal History rows will load here -->
+
+            </tbody>
+
+        </table>
+
+
+        <p id="noFDHistoryMessage">
+
+            अभी कोई FD Renewal History नहीं है।
+
+        </p>
+
+    </div>
+
+</div>
+
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/script.js"></script>
+    <script type="module" src="js/transactions.js"></script>
+    <script type="module" src="js/rental-properties.js"></script>
+    <script src="js/rentalManagement.js"></script>
+
 </body>
 </html>
+
+<!-- =============================== -->
+<!-- INSURANCE SECTION -->
+<!-- =============================== -->
+
+<div class="finance-section insurance-section">
+
+    <div class="section-header">
+
+        <h2>
+            🛡️ Insurance
+        </h2>
+
+
+        <div class="section-header-buttons">
+
+
+            <!-- SUMMARY -->
+
+            <button
+                type="button"
+                id="insuranceSummaryButton">
+
+                📊 Summary of Insurance
+
+            </button>
+
+
+            <!-- ADD INSURANCE -->
+
+            <button
+                type="button"
+                id="addInsuranceButton">
+
+                ➕ Add Insurance
+
+            </button>
+
+
+            <!-- VIEW ALL INSURANCE -->
+
+            <button
+                type="button"
+                id="viewAllInsuranceButton">
+
+                View All Insurance →
+
+            </button>
+
+
+        </div>
+
+    </div>
+
+<!-- =============================== -->
+<!-- INSURANCE SUMMARY -->
+<!-- =============================== -->
+
+<div
+    id="insuranceSummary"
+    class="insurance-summary"
+    style="display: none;">
+
+    <div class="insurance-summary-card">
+
+        <h3>
+            📋 Total Policies
+        </h3>
+
+        <strong id="insuranceSummaryPolicyCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="insurance-summary-card">
+
+        <h3>
+            💰 Total Premium
+        </h3>
+
+        <strong id="insuranceSummaryPremium">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="insurance-summary-card">
+
+        <h3>
+            🛡️ Total Sum Assured
+        </h3>
+
+        <strong id="insuranceSummarySumAssured">
+            ₹0
+        </strong>
+
+    </div>
+
+
+    <div class="insurance-summary-card">
+
+        <h3>
+            🟢 Active Policies
+        </h3>
+
+        <strong id="insuranceSummaryActiveCount">
+            0
+        </strong>
+
+    </div>
+
+
+    <div class="insurance-summary-card">
+
+        <h3>
+            ❤️ Life Policies
+        </h3>
+
+        <strong id="insuranceSummaryLifeCount">
+            0
+        </strong>
+
+    </div>
+
+</div>
+
+    <!-- =============================== -->
+    <!-- DASHBOARD INSURANCE CONTAINER -->
+    <!-- =============================== -->
+
+    <div
+        id="insuranceContainer"
+        class="insurance-container"
+        style="display: none;">
+
+        <p id="noInsuranceMessage">
+
+            Click "Add Insurance" to add a new policy
+            OR click "View All Insurance" to view existing policies.
+
+        </p>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- ALL INSURANCE VIEW -->
+    <!-- =============================== -->
+
+    <div
+        id="allInsuranceView"
+        class="all-insurance-view"
+        style="display: none;">
+
+
+        <div class="section-header">
+
+
+            <h2>
+
+                🛡️ All Insurance Policies
+                (<span id="allInsuranceCount">0</span>)
+
+            </h2>
+
+
+            <button
+                type="button"
+                id="backToInsuranceDashboardButton">
+
+                ← Back to Dashboard
+
+            </button>
+
+
+        </div>
+
+
+        <!-- =============================== -->
+        <!-- ALL INSURANCE TABLE -->
+        <!-- =============================== -->
+
+        <div
+            id="allInsuranceContainer"
+            class="insurance-table-wrapper">
+
+
+            <table class="insurance-table">
+
+
+                <thead>
+
+                    <tr>
+
+                        <th>Insurance</th>
+
+                        <th>Company</th>
+
+                        <th>Type</th>
+
+                        <th>Policy No.</th>
+
+                        <th>Premium</th>
+
+                        <th>Frequency</th>
+
+                        <th>Start Date</th>
+
+                        <th>Renewal Date</th>
+
+                        <th>Sum Assured</th>
+
+                        <th>Status</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="allInsuranceTableBody">
+
+                    <!-- Insurance rows will load here -->
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+<!-- =============================== -->
+<!-- ADD INSURANCE FORM -->
+<!-- =============================== -->
+
+<div
+    id="insuranceFormContainer"
+    class="insurance-form-container"
+    style="display: none;">
+
+    <h3>➕ Add New Insurance Policy</h3>
+
+    <form id="insuranceForm">
+
+        <label for="insurancePolicyName">
+            Policy Name
+        </label>
+
+        <input
+            type="text"
+            id="insurancePolicyName"
+            placeholder="जैसे LIC Jeevan Anand"
+            required
+        >
+
+
+        <label for="insuranceCompany">
+            Insurance Company
+        </label>
+
+        <input
+            type="text"
+            id="insuranceCompany"
+            placeholder="जैसे LIC / HDFC Life / ICICI Lombard"
+            required
+        >
+
+
+        <label for="insurancePolicyNumber">
+            Policy Number
+        </label>
+
+        <input
+            type="text"
+            id="insurancePolicyNumber"
+            placeholder="Policy Number"
+            required
+        >
+
+
+        <label for="insuranceType">
+            Insurance Type
+        </label>
+
+        <select
+            id="insuranceType"
+            required>
+
+            <option value="">
+                -- Select Insurance Type --
+            </option>
+
+            <option value="life">
+                🧑 Life Insurance
+            </option>
+
+            <option value="health">
+                ❤️ Health Insurance
+            </option>
+
+            <option value="motor">
+                🚗 Motor Insurance
+            </option>
+
+            <option value="home">
+                🏠 Home Insurance
+            </option>
+
+            <option value="other">
+                🛡️ Other Insurance
+            </option>
+
+        </select>
+
+
+        <label for="insurancePremium">
+            Premium Amount
+        </label>
+
+        <input
+            type="number"
+            id="insurancePremium"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="insuranceFrequency">
+            Premium Frequency
+        </label>
+
+        <select
+            id="insuranceFrequency"
+            required>
+
+            <option value="">
+                -- Select Frequency --
+            </option>
+
+            <option value="monthly">
+                Monthly
+            </option>
+
+            <option value="quarterly">
+                Quarterly
+            </option>
+
+            <option value="half_yearly">
+                Half Yearly
+            </option>
+
+            <option value="yearly">
+                Yearly
+            </option>
+
+            <option value="single">
+                Single Premium
+            </option>
+
+        </select>
+
+
+        <label for="insuranceStartDate">
+            Start Date
+        </label>
+
+        <input
+            type="date"
+            id="insuranceStartDate"
+            required
+        >
+
+
+        <label for="insuranceRenewalDate">
+            Renewal / Premium Due Date
+        </label>
+
+        <input
+            type="date"
+            id="insuranceRenewalDate"
+            required
+        >
+
+
+        <label for="insuranceMaturityDate">
+            Maturity Date
+        </label>
+
+        <input
+            type="date"
+            id="insuranceMaturityDate"
+        >
+
+
+        <label for="insuranceSumAssured">
+            Sum Assured
+        </label>
+
+        <input
+            type="number"
+            id="insuranceSumAssured"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="saveInsuranceButton">
+                Save Insurance
+            </button>
+
+            <button
+                type="button"
+                id="cancelInsuranceButton">
+                Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<!-- =============================== -->
+<!-- EDIT INSURANCE FORM -->
+<!-- =============================== -->
+
+<div
+    id="editInsuranceFormContainer"
+    class="insurance-form-container"
+    style="display: none;">
+
+    <h3>✏️ Edit Insurance Policy</h3>
+
+    <form id="editInsuranceForm">
+
+        <label for="editInsurancePolicyName">
+            Policy Name
+        </label>
+
+        <input
+            type="text"
+            id="editInsurancePolicyName"
+            placeholder="Policy Name"
+            required
+        >
+
+
+        <label for="editInsuranceCompany">
+            Insurance Company
+        </label>
+
+        <input
+            type="text"
+            id="editInsuranceCompany"
+            placeholder="Insurance Company"
+            required
+        >
+
+
+        <label for="editInsurancePolicyNumber">
+            Policy Number
+        </label>
+
+        <input
+            type="text"
+            id="editInsurancePolicyNumber"
+            placeholder="Policy Number"
+            required
+        >
+
+
+        <label for="editInsuranceType">
+            Insurance Type
+        </label>
+
+        <select
+            id="editInsuranceType"
+            required>
+
+            <option value="life">
+                🧑 Life Insurance
+            </option>
+
+            <option value="health">
+                ❤️ Health Insurance
+            </option>
+
+            <option value="motor">
+                🚗 Motor Insurance
+            </option>
+
+            <option value="home">
+                🏠 Home Insurance
+            </option>
+
+            <option value="other">
+                🛡️ Other Insurance
+            </option>
+
+        </select>
+
+
+        <label for="editInsurancePremium">
+            Premium Amount
+        </label>
+
+        <input
+            type="number"
+            id="editInsurancePremium"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <label for="editInsuranceFrequency">
+            Premium Frequency
+        </label>
+
+        <select
+            id="editInsuranceFrequency"
+            required>
+
+            <option value="monthly">
+                Monthly
+            </option>
+
+            <option value="quarterly">
+                Quarterly
+            </option>
+
+            <option value="half_yearly">
+                Half Yearly
+            </option>
+
+            <option value="yearly">
+                Yearly
+            </option>
+
+            <option value="single">
+                Single Premium
+            </option>
+
+        </select>
+
+
+        <label for="editInsuranceStartDate">
+            Start Date
+        </label>
+
+        <input
+            type="date"
+            id="editInsuranceStartDate"
+            required
+        >
+
+
+        <label for="editInsuranceRenewalDate">
+            Renewal / Premium Due Date
+        </label>
+
+        <input
+            type="date"
+            id="editInsuranceRenewalDate"
+            required
+        >
+
+
+        <label for="editInsuranceMaturityDate">
+            Maturity Date
+        </label>
+
+        <input
+            type="date"
+            id="editInsuranceMaturityDate"
+        >
+
+
+        <label for="editInsuranceSumAssured">
+            Sum Assured
+        </label>
+
+        <input
+            type="number"
+            id="editInsuranceSumAssured"
+            placeholder="0"
+            min="0"
+            step="0.01"
+            required
+        >
+
+
+        <div class="account-form-buttons">
+
+            <button
+                type="submit"
+                id="updateInsuranceButton">
+                Save Changes
+            </button>
+
+            <button
+                type="button"
+                id="cancelEditInsuranceButton">
+                Cancel
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
