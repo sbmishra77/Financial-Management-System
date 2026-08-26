@@ -3906,3 +3906,115 @@ button {
     white-space: nowrap;
 
 }
+
+/* =========================================
+   RENTAL UNITS TABLE — ALIGNMENT
+   ========================================= */
+
+#rentalUnitsTableWrapper {
+    width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   RENTAL TABLE
+   ========================================= */
+
+#rentalUnitsTable {
+    width: 100%;
+    min-width: 950px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+
+/* =========================================
+   HEADER + CELLS
+   ========================================= */
+
+#rentalUnitsTable th,
+#rentalUnitsTable td {
+
+    padding: 12px 14px;
+
+    text-align: left;
+
+    vertical-align: middle;
+
+    white-space: nowrap;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+#rentalUnitsTable th {
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================
+   ACTIONS COLUMN
+   ========================================= */
+
+#rentalUnitsTable th:last-child,
+#rentalUnitsTable td:last-child {
+
+    text-align: center;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+   ========================================= */
+
+#rentalUnitsTable
+.edit-rental-unit-button,
+#rentalUnitsTable
+.delete-rental-unit-button {
+
+    margin: 2px 4px;
+
+    padding: 6px 12px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   RENT COLUMN
+   ========================================= */
+
+#rentalUnitsTable th:nth-child(5),
+#rentalUnitsTable td:nth-child(5) {
+
+    text-align: right;
+
+}
+
+
+/* =========================================
+   MOBILE / SMALL SCREEN
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    #rentalUnitsTable {
+
+        min-width: 950px;
+
+    }
+
+}
