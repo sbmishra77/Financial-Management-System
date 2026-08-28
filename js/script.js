@@ -929,24 +929,126 @@ if (backupFirestoreButton) {
 onAuthStateChanged(auth, (user) => {
 
     if (!user) {
-        window.location.href = "login.html";
+
+        window.location.href =
+            "login.html";
+
         return;
+
     }
 
-    console.log("Logged in user:", user);
 
-    if (welcomeMessage) {
-        welcomeMessage.textContent =
-            `Welcome ${user.displayName}!`;
+    console.log(
+        "Logged in user:",
+        user
+    );
+
+
+    // =========================================
+    // USER NAME + PROFILE PHOTO
+    // =========================================
+
+    if (user) {
+
+        const fullName =
+            (user.displayName || "User")
+                .trim();
+
+
+        const properName =
+            fullName
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(
+                    name =>
+                        name.charAt(0).toUpperCase() +
+                        name.slice(1)
+                )
+                .join(" ");
+
+
+        const nameParts =
+            properName.split(" ");
+
+
+        let initials =
+            "";
+
+
+        if (nameParts.length >= 3) {
+
+            initials =
+                nameParts[0].charAt(0) +
+                nameParts[1].charAt(0) +
+                nameParts[nameParts.length - 1].charAt(0);
+
+        }
+        else if (nameParts.length === 2) {
+
+            initials =
+                nameParts[0].charAt(0) +
+                nameParts[1].charAt(0);
+
+        }
+        else if (nameParts.length === 1) {
+
+            initials =
+                nameParts[0].charAt(0);
+
+        }
+
+
+        const wealthManagerTitle =
+            document.querySelector(
+                "#wealthManagerTitle"
+            );
+
+
+        if (wealthManagerTitle) {
+
+            wealthManagerTitle.textContent =
+                `${initials.toUpperCase()} Wealth Manager`;
+
+        }
+
+
+        if (welcomeMessage) {
+
+            welcomeMessage.textContent =
+                `Welcome ${properName}!`;
+
+        }
+
+
+        const userProfilePhoto =
+            document.querySelector(
+                "#userProfilePhoto"
+            );
+
+
+        if (
+            userProfilePhoto &&
+            user.photoURL
+        ) {
+
+            userProfilePhoto.src =
+                user.photoURL;
+
+            userProfilePhoto.style.display =
+                "block";
+
+        }
+
     }
 
-     loadAccounts();
-     loadFixedDeposits();
-     loadFDHistory();
-     loadInsurance();
-     loadInvestments();
-     loadDashboardSummary();
 
+    loadAccounts();
+    loadFixedDeposits();
+    loadFDHistory();
+    loadInsurance();
+    loadInvestments();
+    loadDashboardSummary();
 
 });
 

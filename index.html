@@ -11,12 +11,42 @@
 
     <div class="container">
 
-        <h1>SBM Wealth Manager</h1>
+    <!-- ========================================= -->
+    <!-- TOP USER PROFILE -->
+    <!-- ========================================= -->
 
-        <h2 id="welcomeMessage">Welcome</h2>
+    <div class="user-profile-bar">
 
-        <p>Your Personal Financial Management System</p>
+        <div class="user-profile-info">
 
+            <img
+                id="userProfilePhoto"
+                src=""
+                alt="User Profile"
+                class="user-profile-photo"
+            >
+
+            <div class="user-profile-text">
+
+                <h1 id="wealthManagerTitle">
+                    SBM Wealth Manager
+                </h1>
+
+                <h2 id="welcomeMessage">
+                    Welcome
+                </h2>
+
+                <p>
+                    Your Personal Financial Management System
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    
     <!-- ===============================
      INCOME SECTION
      =============================== -->
@@ -2502,7 +2532,18 @@
                 step="0.01"
             >
 
+<label for="commonUseWaiverUnits">
+    Common Use / Waiver Units per Month
+</label>
 
+<input
+    type="number"
+    id="commonUseWaiverUnits"
+    placeholder="0"
+    min="0"
+    step="0.01"
+    value="0"
+>
             <!-- ================================= -->
             <!-- FORM BUTTONS -->
             <!-- ================================= -->
@@ -2625,6 +2666,651 @@
 
     </div>
 
+
+</div>
+
+<!-- ========================================= -->
+<!-- MONTHLY RENT & CHARGES REGISTER -->
+<!-- ========================================= -->
+
+<div
+    id="rentRegisterSection"
+    class="rent-register-section">
+
+    <!-- ========================================= -->
+    <!-- RENT REGISTER HEADER -->
+    <!-- ========================================= -->
+
+    <div class="rental-action-bar">
+
+        <h3>
+            📒 Monthly Rent & Charges Register
+        </h3>
+
+        <div class="rental-action-buttons">
+
+            <button
+                type="button"
+                id="addRentEntryButton"
+                class="add-module-button">
+
+                ➕ Add Monthly Rent Entry
+
+            </button>
+
+
+            <button
+                type="button"
+                id="viewAllRentEntriesButton"
+                class="view-module-button">
+
+                View Rent Register →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RENT ENTRY FORM -->
+    <!-- ========================================= -->
+
+    <div
+        id="rentEntryFormContainer"
+        class="rental-form-container"
+        style="display: none;">
+
+        <h3 id="rentEntryFormHeading">
+            ➕ Add Monthly Rent Entry
+        </h3>
+
+
+        <form id="rentEntryForm">
+
+            <!-- =============================== -->
+            <!-- TENANT / RENTAL UNIT -->
+            <!-- =============================== -->
+
+            <h4>
+                👤 Tenant & Rental Details
+            </h4>
+
+
+            <label for="rentRegisterRentalId">
+                Rental Unit / Tenant
+            </label>
+
+            <select
+                id="rentRegisterRentalId"
+                required>
+
+                <option value="">
+                    -- Select Rental Unit / Tenant --
+                </option>
+
+            </select>
+
+
+            <!-- =============================== -->
+            <!-- RENT PERIOD -->
+            <!-- =============================== -->
+
+            <h4>
+                📅 Rent Period
+            </h4>
+
+
+            <label for="rentMonth">
+                Rent Month
+            </label>
+
+            <input
+                type="month"
+                id="rentMonth"
+                required
+            >
+
+
+            <label for="rentDueDate">
+                Rent Due Date
+            </label>
+
+            <input
+                type="date"
+                id="rentDueDate"
+                required
+            >
+
+
+            <!-- =============================== -->
+<!-- RENT AMOUNT / ADJUSTMENT -->
+<!-- =============================== -->
+
+<label for="rentAmount">
+    Monthly Rent (Agreed Rent)
+</label>
+
+<input
+    type="number"
+    id="rentAmount"
+    min="0"
+    step="0.01"
+    required
+>
+
+
+<label for="rentDeductionAdjustment">
+    Deduction / Adjustment
+</label>
+
+<input
+    type="number"
+    id="rentDeductionAdjustment"
+    min="0"
+    step="0.01"
+    value="0"
+>
+
+
+<label for="rentDeductionRemark">
+    Deduction Remark
+</label>
+
+<input
+    type="text"
+    id="rentDeductionRemark"
+    placeholder="जैसे Plumbing, Electrician, Maintenance आदि"
+>
+
+
+<label for="rentNetPayableRent">
+    Net Payable Rent
+</label>
+
+<input
+    type="number"
+    id="rentNetPayableRent"
+    min="0"
+    step="0.01"
+    readonly
+>
+
+
+            <!-- =============================== -->
+            <!-- ELECTRICITY -->
+            <!-- =============================== -->
+
+            <h4>
+                ⚡ Electricity / Sub-Meter
+            </h4>
+
+
+            <label for="rentPreviousMeterReading">
+                Previous Reading
+            </label>
+
+            <input
+                type="number"
+                id="rentPreviousMeterReading"
+                min="0"
+                step="0.01"
+                readonly
+            >
+
+
+            <label for="rentCurrentMeterReading">
+                Current Reading
+            </label>
+
+            <input
+                type="number"
+                id="rentCurrentMeterReading"
+                min="0"
+                step="0.01"
+            >
+
+
+            <label for="rentUnitsConsumed">
+                Units Consumed
+            </label>
+
+            <input
+                type="number"
+                id="rentUnitsConsumed"
+                min="0"
+                step="0.01"
+                readonly
+            >
+
+            <label for="rentCommonUseWaiver">
+    Common Use / Waiver Units
+</label>
+
+<input
+    type="number"
+    id="rentCommonUseWaiver"
+    min="0"
+    step="0.01"
+    value="0"
+>
+<label for="rentBillableUnits">
+    Billable Electricity Units
+</label>
+
+<input
+    type="number"
+    id="rentBillableUnits"
+    min="0"
+    step="0.01"
+    readonly
+>
+
+            <label for="rentElectricityRate">
+                Electricity Rate / Unit
+            </label>
+
+            <input
+                type="number"
+                id="rentElectricityRate"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <label for="rentElectricityCharge">
+                Electricity Charge
+            </label>
+
+            <input
+                type="number"
+                id="rentElectricityCharge"
+                min="0"
+                step="0.01"
+                readonly
+            >
+
+
+            <!-- =============================== -->
+            <!-- OTHER CHARGES -->
+            <!-- =============================== -->
+
+            <h4>
+                💧 Other Tenant Charges
+            </h4>
+
+
+            <label for="rentWaterCharge">
+                Water Charge
+            </label>
+
+            <input
+                type="number"
+                id="rentWaterCharge"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <label for="rentPropertyTaxCharge">
+                Property Tax Charge
+            </label>
+
+            <input
+                type="number"
+                id="rentPropertyTaxCharge"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <label for="rentGarbageCharge">
+                Garbage Charge
+            </label>
+
+            <input
+                type="number"
+                id="rentGarbageCharge"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <label for="rentOtherCharge">
+                Other Charge
+            </label>
+
+            <input
+                type="number"
+                id="rentOtherCharge"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <!-- =============================== -->
+            <!-- PAYMENT -->
+            <!-- =============================== -->
+
+            <h4>
+                💳 Payment Details
+            </h4>
+
+
+            <label for="rentTotalDue">
+                Total Amount Due
+            </label>
+
+            <input
+                type="number"
+                id="rentTotalDue"
+                min="0"
+                step="0.01"
+                readonly
+            >
+
+
+            <label for="rentPaidAmount">
+                Paid Amount
+            </label>
+
+            <input
+                type="number"
+                id="rentPaidAmount"
+                min="0"
+                step="0.01"
+                value="0"
+            >
+
+
+            <label for="rentPendingAmount">
+                Pending Amount
+            </label>
+
+            <input
+                type="number"
+                id="rentPendingAmount"
+                min="0"
+                step="0.01"
+                readonly
+            >
+
+
+            <label for="rentPaymentDate">
+                Payment Date
+            </label>
+
+            <input
+                type="date"
+                id="rentPaymentDate"
+            >
+
+
+            <label for="rentPaymentMode">
+                Payment Mode
+            </label>
+
+            <select id="rentPaymentMode">
+
+                <option value="">
+                    -- Select Payment Mode --
+                </option>
+
+                <option value="cash">
+                    Cash
+                </option>
+
+                <option value="bank">
+                    Bank Transfer
+                </option>
+
+                <option value="upi">
+                    UPI
+                </option>
+
+                <option value="cheque">
+                    Cheque
+                </option>
+
+                <option value="other">
+                    Other
+                </option>
+
+            </select>
+
+
+            <label for="rentPaymentStatus">
+                Payment Status
+            </label>
+
+            <select
+                id="rentPaymentStatus"
+                required>
+
+                <option value="pending">
+                    Pending
+                </option>
+
+                <option value="partial">
+                    Partial
+                </option>
+
+                <option value="paid">
+                    Paid
+                </option>
+
+            </select>
+
+
+            <label for="rentRemarks">
+                Remarks
+            </label>
+
+            <textarea
+                id="rentRemarks"
+                rows="3"
+                placeholder="Optional remarks"></textarea>
+
+
+            <!-- =============================== -->
+            <!-- BUTTONS -->
+            <!-- =============================== -->
+
+            <div class="account-form-buttons">
+
+                <button
+                    type="submit"
+                    id="saveRentEntryButton">
+
+                    💾 Save Rent Entry
+
+                </button>
+
+
+                <button
+                    type="button"
+                    id="cancelRentEntryButton">
+
+                    ❌ Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RENT REGISTER SUMMARY -->
+    <!-- ========================================= -->
+
+    <div
+        id="rentRegisterSummary"
+        class="investment-summary"
+        style="display: none;">
+
+        <div class="investment-summary-card">
+
+            <h3>
+                💰 Total Rent Due
+            </h3>
+
+            <strong id="rentSummaryTotalDue">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                💵 Total Received
+            </h3>
+
+            <strong id="rentSummaryTotalReceived">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                ⏳ Total Pending
+            </h3>
+
+            <strong id="rentSummaryTotalPending">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                👥 Total Entries
+            </h3>
+
+            <strong id="rentSummaryEntryCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                🟢 Paid
+            </h3>
+
+            <strong id="rentSummaryPaidCount">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                🔴 Pending
+            </h3>
+
+            <strong id="rentSummaryPendingCount">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RENT REGISTER TABLE -->
+    <!-- ========================================= -->
+
+    <div
+        id="rentRegisterTableWrapper"
+        class="rental-table-wrapper"
+        style="display: none;">
+
+        <div class="rental-table-header">
+
+            <h3>
+                📒 Rent Register
+                (<span id="rentRegisterCount">0</span>)
+            </h3>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table
+                class="finance-table"
+                id="rentRegisterTable">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Month</th>
+
+                        <th>Property</th>
+
+                        <th>Tenant</th>
+
+                        <th>Rent</th>
+
+                        <th>Electricity</th>
+
+                        <th>Other Charges</th>
+
+                        <th>Total Due</th>
+
+                        <th>Paid</th>
+
+                        <th>Pending</th>
+
+                        <th>Status</th>
+
+                        <th>Payment Date</th>
+
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="rentRegisterTableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <p id="noRentEntriesMessage">
+
+            अभी कोई Rent Entry नहीं है।
+
+        </p>
+
+    </div>
 
 </div>
 
@@ -3556,14 +4242,6 @@
 
 </div>
 
-    <script type="module" src="js/firebase.js"></script>
-    <script type="module" src="js/script.js"></script>
-    <script type="module" src="js/transactions.js"></script>
-    <script type="module" src="js/rental-properties.js"></script>
-    <script src="js/rentalManagement.js"></script>
-
-</body>
-</html>
 
 <!-- =============================== -->
 <!-- INSURANCE SECTION -->
@@ -4195,3 +4873,55 @@
     </form>
 
 </div>
+
+<!-- ========================================= -->
+<!-- PROFESSIONAL DEVELOPER BRANDING -->
+<!-- ========================================= -->
+
+<footer class="professional-footer">
+
+    <div class="developer-branding">
+
+        <img
+            src="assets/sbm-profile.jpg"
+            alt="Dr. S.B. Mishra"
+            class="developer-photo"
+        >
+
+        <div class="developer-details">
+
+            <div class="developer-name">
+                Developed by Dr. S.B. Mishra
+            </div>
+
+            <div class="developer-contact">
+                AG-II, SGSITS, Indore-8982086150
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="copyright-text">
+
+        © 2026 SBM Wealth Manager.
+        All Rights Reserved.
+
+    </div>
+
+</footer>
+
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT FILES -->
+<!-- ========================================= -->
+
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/script.js"></script>
+<script type="module" src="js/transactions.js"></script>
+<script type="module" src="js/rental-properties.js"></script>
+<script src="js/rentalManagement.js"></script>
+
+</body>
+</html>
