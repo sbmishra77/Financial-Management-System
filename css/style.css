@@ -4411,3 +4411,443 @@ button {
     }
 
 }
+
+/* =========================================
+   TRANSACTION HISTORY - PROFESSIONAL TABLE
+   ========================================= */
+
+.transaction-history-table-wrapper {
+
+    width: 100%;
+
+    max-width: 100%;
+
+    max-height: 300px;
+
+    overflow-x: auto;
+
+    overflow-y: auto;
+
+    position: relative;
+
+}
+
+
+/* =========================================
+   TABLE
+   ========================================= */
+
+.transaction-history-table {
+
+    width: max-content;
+
+    min-width: 1500px;
+
+    border-collapse: collapse;
+
+    table-layout: auto;
+
+}
+
+
+/* =========================================
+   TABLE CELLS
+   ========================================= */
+
+.transaction-history-table th,
+.transaction-history-table td {
+
+    padding: 10px 14px;
+
+    white-space: nowrap;
+
+    text-align: left;
+
+}
+
+
+/* =========================================
+   COLUMN ALIGNMENT
+   ========================================= */
+
+/* Date */
+
+.transaction-history-table th:nth-child(1),
+.transaction-history-table td:nth-child(1) {
+
+    text-align: left;
+
+}
+
+
+/* Type */
+
+.transaction-history-table th:nth-child(2),
+.transaction-history-table td:nth-child(2) {
+
+    text-align: left;
+
+}
+
+
+/* Category */
+
+.transaction-history-table th:nth-child(3),
+.transaction-history-table td:nth-child(3) {
+
+    text-align: left;
+
+}
+
+
+/* Party / Merchant / Person */
+
+.transaction-history-table th:nth-child(4),
+.transaction-history-table td:nth-child(4) {
+
+    text-align: left;
+
+}
+
+
+/* Investment / Asset */
+
+.transaction-history-table th:nth-child(5),
+.transaction-history-table td:nth-child(5) {
+
+    text-align: left;
+
+}
+
+
+/* Amount */
+
+.transaction-history-table th:nth-child(6),
+.transaction-history-table td:nth-child(6) {
+
+    text-align: right;
+
+}
+
+
+/* From Account */
+
+.transaction-history-table th:nth-child(7),
+.transaction-history-table td:nth-child(7) {
+
+    text-align: left;
+
+}
+
+
+/* To Account */
+
+.transaction-history-table th:nth-child(8),
+.transaction-history-table td:nth-child(8) {
+
+    text-align: left;
+
+}
+
+
+/* Payment Method */
+
+.transaction-history-table th:nth-child(9),
+.transaction-history-table td:nth-child(9) {
+
+    text-align: left;
+
+}
+
+
+/* Linked Module */
+
+.transaction-history-table th:nth-child(10),
+.transaction-history-table td:nth-child(10) {
+
+    text-align: left;
+
+}
+
+
+/* Notes */
+
+.transaction-history-table th:nth-child(11),
+.transaction-history-table td:nth-child(11) {
+
+    text-align: left;
+
+}
+
+
+/* Action */
+
+.transaction-history-table th:nth-child(12),
+.transaction-history-table td:nth-child(12) {
+
+    text-align: center;
+
+}
+
+/* =========================================
+   RENT REGISTER — PROFESSIONAL TABLE
+   ========================================= */
+
+#rentRegisterTableWrapper {
+
+    width: 100%;
+
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   TABLE SCROLL AREA
+   ========================================= */
+
+#rentRegisterTableWrapper .table-responsive {
+
+    width: 100%;
+
+    max-width: 100%;
+
+    max-height: 320px;
+
+    overflow-x: auto;
+
+    overflow-y: auto;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   RENT REGISTER TABLE
+   ========================================= */
+
+#rentRegisterTable {
+
+    width: max-content;
+
+    min-width: 1450px;
+
+    border-collapse: collapse;
+
+    table-layout: auto;
+
+}
+
+
+/* =========================================
+   HEADER + DATA CELLS
+   ========================================= */
+
+#rentRegisterTable th,
+#rentRegisterTable td {
+
+    padding: 10px 14px;
+
+    white-space: nowrap;
+
+    vertical-align: middle;
+
+    box-sizing: border-box;
+
+}
+
+
+/* =========================================
+   LEFT ALIGNMENT
+   ========================================= */
+
+#rentRegisterTable th:nth-child(1),
+#rentRegisterTable td:nth-child(1),
+
+#rentRegisterTable th:nth-child(2),
+#rentRegisterTable td:nth-child(2),
+
+#rentRegisterTable th:nth-child(3),
+#rentRegisterTable td:nth-child(3),
+
+#rentRegisterTable th:nth-child(10),
+#rentRegisterTable td:nth-child(10),
+
+#rentRegisterTable th:nth-child(11),
+#rentRegisterTable td:nth-child(11) {
+
+    text-align: left;
+
+}
+
+
+/* =========================================
+   AMOUNT COLUMNS
+   ========================================= */
+
+#rentRegisterTable th:nth-child(4),
+#rentRegisterTable td:nth-child(4),
+
+#rentRegisterTable th:nth-child(5),
+#rentRegisterTable td:nth-child(5),
+
+#rentRegisterTable th:nth-child(6),
+#rentRegisterTable td:nth-child(6),
+
+#rentRegisterTable th:nth-child(7),
+#rentRegisterTable td:nth-child(7),
+
+#rentRegisterTable th:nth-child(8),
+#rentRegisterTable td:nth-child(8),
+
+#rentRegisterTable th:nth-child(9),
+#rentRegisterTable td:nth-child(9) {
+
+    text-align: right;
+
+}
+
+
+/* =========================================
+   ACTIONS
+   ========================================= */
+
+#rentRegisterTable th:nth-child(12),
+#rentRegisterTable td:nth-child(12) {
+
+    text-align: center;
+
+    min-width: 170px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   COLUMN MINIMUM WIDTHS
+   ========================================= */
+
+#rentRegisterTable th:nth-child(1),
+#rentRegisterTable td:nth-child(1) {
+
+    min-width: 100px;
+
+}
+
+
+#rentRegisterTable th:nth-child(2),
+#rentRegisterTable td:nth-child(2) {
+
+    min-width: 180px;
+
+}
+
+
+#rentRegisterTable th:nth-child(3),
+#rentRegisterTable td:nth-child(3) {
+
+    min-width: 180px;
+
+}
+
+
+#rentRegisterTable th:nth-child(4),
+#rentRegisterTable td:nth-child(4) {
+
+    min-width: 100px;
+
+}
+
+
+#rentRegisterTable th:nth-child(5),
+#rentRegisterTable td:nth-child(5) {
+
+    min-width: 120px;
+
+}
+
+
+#rentRegisterTable th:nth-child(6),
+#rentRegisterTable td:nth-child(6) {
+
+    min-width: 140px;
+
+}
+
+
+#rentRegisterTable th:nth-child(7),
+#rentRegisterTable td:nth-child(7) {
+
+    min-width: 120px;
+
+}
+
+
+#rentRegisterTable th:nth-child(8),
+#rentRegisterTable td:nth-child(8) {
+
+    min-width: 110px;
+
+}
+
+
+#rentRegisterTable th:nth-child(9),
+#rentRegisterTable td:nth-child(9) {
+
+    min-width: 120px;
+
+}
+
+
+#rentRegisterTable th:nth-child(10),
+#rentRegisterTable td:nth-child(10) {
+
+    min-width: 110px;
+
+}
+
+
+#rentRegisterTable th:nth-child(11),
+#rentRegisterTable td:nth-child(11) {
+
+    min-width: 130px;
+
+}
+
+
+/* =========================================
+   ACTION BUTTONS
+   ========================================= */
+
+#rentRegisterTable
+.edit-rent-entry-button,
+
+#rentRegisterTable
+.delete-rent-entry-button {
+
+    margin: 2px 4px;
+
+    padding: 6px 10px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    #rentRegisterTable {
+
+        min-width: 1450px;
+
+    }
+
+}

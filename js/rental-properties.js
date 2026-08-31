@@ -12,7 +12,8 @@ import {
     doc,
     updateDoc,
     deleteDoc,
-    serverTimestamp
+    serverTimestamp,
+    writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 
@@ -3182,6 +3183,92 @@ if (
         "click",
         async () => {
 
+            console.log(
+    "ADD RENT BUTTON CLICK HANDLER FIRED"
+);
+
+console.log(
+    "RENT FORM CONTAINER BEFORE OPEN:",
+    rentEntryFormContainer
+);
+
+console.log(
+    "RENT FORM DISPLAY BEFORE OPEN:",
+    rentEntryFormContainer?.style.display
+);
+
+console.log(
+    "RENT FORM RECT:",
+    rentEntryFormContainer?.getBoundingClientRect()
+);
+
+console.log(
+    "RENT FORM PARENT:",
+    rentEntryFormContainer?.parentElement
+);
+
+console.log(
+    "RENT FORM VISIBILITY:",
+    getComputedStyle(
+        rentEntryFormContainer
+    ).visibility
+);
+
+console.log(
+    "RENT FORM Z-INDEX:",
+    getComputedStyle(
+        rentEntryFormContainer
+    ).zIndex
+);
+
+console.log(
+    "RENT REGISTER SECTION:",
+    document.querySelector(
+        "#rentRegisterSection"
+    )
+);
+
+console.log(
+    "RENT REGISTER SECTION DISPLAY:",
+    getComputedStyle(
+        document.querySelector(
+            "#rentRegisterSection"
+        )
+    ).display
+);
+
+console.log(
+    "RENT REGISTER SECTION RECT:",
+    document.querySelector(
+        "#rentRegisterSection"
+    )?.getBoundingClientRect()
+);
+
+const rentSection =
+    document.querySelector(
+        "#rentRegisterSection"
+    );
+
+console.log(
+    "RENT SECTION PARENT:",
+    rentSection?.parentElement
+);
+
+console.log(
+    "RENT SECTION PARENT DISPLAY:",
+    rentSection?.parentElement
+        ? getComputedStyle(
+            rentSection.parentElement
+        ).display
+        : null
+);
+
+console.log(
+    "RENT SECTION PARENT RECT:",
+    rentSection?.parentElement
+        ?.getBoundingClientRect()
+);
+
             // =====================================
             // OPEN FORM
             // =====================================
@@ -4348,6 +4435,38 @@ const paymentStatus =
     rentPaymentStatus?.value ||
     "pending";
 
+    // =========================================
+// RENTAL TRANSACTION LINK DEBUG
+// =========================================
+
+console.log(
+    "RENTAL TRANSACTION DATA CHECK:",
+    {
+        linkedRow:
+            window.pendingRentalIncomeTransactionRow,
+
+        rentMonth:
+            rentMonthValue,
+
+        tenantName:
+            tenantName,
+
+        rentAmount:
+            selectedRent,
+
+        paidAmount:
+            paidAmount,
+
+        paymentStatus:
+            paymentStatus,
+
+        paymentDate:
+            paymentDate,
+
+        paymentMode:
+            paymentMode
+    }
+);
 
 const remarks =
     document.querySelector(
@@ -4544,6 +4663,7 @@ if (duplicateEntry) {
 // =====================================
 
 let rentDocId = "";
+let linkedTransactionId = "";
 
 
 if (editingRentEntryId) {
@@ -4597,9 +4717,9 @@ if (editingRentEntryId) {
 else {
 
     // =================================
-    // ADD NEW ENTRY
+    // ADD NEW RENT ENTRY
     // =================================
-
+    
     const rentDoc =
         await addDoc(
             rentCollection,
@@ -4621,6 +4741,142 @@ else {
         }
     );
 
+
+    // =================================
+    // CHECK RENTAL INCOME LINK
+    // =================================
+
+    if (
+    window.pendingRentalIncomeTransactionRow &&
+    Number(paidAmount || 0) > 0
+) {
+
+        const transactionCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            );
+
+
+        const transactionRef =
+            doc(
+                transactionCollection
+            );
+
+
+        const transactionData = {
+
+            date:
+                window.pendingRentalIncomeTransactionRow
+                    .querySelector(
+                        ".transaction-date"
+                    )?.value
+                ||
+                paymentDate
+                ||
+                new Date()
+                    .toISOString()
+                    .slice(0, 10),
+
+
+            type:
+                "income",
+
+
+            category:
+                "Rental Income",
+
+
+            partyId:
+                null,
+
+
+            partyName:
+                tenantName,
+
+
+            amount:
+                Number(
+                    paidAmount || 0
+                ),
+
+
+            fromAccountId:
+                null,
+
+
+            toAccountId:
+                window.pendingRentalIncomeTransactionRow
+                    .querySelector(
+                        ".transaction-to-account"
+                    )?.value
+                || null,
+
+
+            paymentMethod:
+                paymentMode || "",
+
+
+            linkedModule:
+                "rentRegister",
+
+
+            rentEntryId:
+                rentDoc.id,
+
+
+            propertyName:
+                propertyName,
+
+
+            rentalUnitName:
+                rentalUnitName,
+
+
+            tenantName:
+                tenantName,
+
+
+            rentMonth:
+                rentMonthValue,
+
+
+            notes:
+                remarks || "",
+
+
+            createdAt:
+                serverTimestamp(),
+
+
+            updatedAt:
+                serverTimestamp()
+
+        };
+
+
+        // =================================
+        // SAVE TRANSACTION
+        // =================================
+
+        await addDoc(
+            transactionCollection,
+            transactionData
+        );
+
+
+        console.log(
+            "Rental Income Transaction saved successfully."
+        );
+
+    }
+
+
+    // =================================
+    // SUCCESS
+    // =================================
 
     alert(
         "Monthly Rent Entry successfully save हो गई।"
@@ -5002,6 +5258,49 @@ else if (
 
 }
 
+// =====================================
+// CHECK SITA KUSHWAH APRIL-2026 DUPLICATE
+// =====================================
+
+if (
+    rent.tenantName === "SITA KUSHWAH" &&
+    rent.rentMonth === "2026-04"
+) {
+
+    console.log(
+        "SITA KUSHWAH APRIL-2026 RENT ENTRY:",
+        {
+            rentEntryId:
+                rentDoc.id,
+
+            tenantName:
+                rent.tenantName,
+
+            rentMonth:
+                rent.rentMonth,
+
+            rentAmount:
+                rent.rentAmount,
+
+            totalDue:
+                totalDue,
+
+            paidAmount:
+                paidAmount,
+
+            otherCharges:
+                otherChargesTotal,
+
+            paymentDate:
+                rent.paymentDate,
+
+            linkedTransactionId:
+                rent.linkedTransactionId ||
+                null
+        }
+    );
+
+}
 
 // =====================================
 // TABLE ROW
@@ -5918,25 +6217,98 @@ function updateBasicRentSummary(
                 rentDoc.data();
 
 
+            // =================================
+            // TOTAL DUE
+            // =================================
+
             const due =
                 Number(
-                    rent.rentAmount || 0
+                    rent.totalDue ??
+                    (
+                        Number(
+                            rent.rentAmount || 0
+                        ) +
+                        Number(
+                            rent.electricityCharge || 0
+                        ) +
+                        Number(
+                            rent.waterCharge || 0
+                        ) +
+                        Number(
+                            rent.propertyTaxCharge || 0
+                        ) +
+                        Number(
+                            rent.garbageCharge || 0
+                        ) +
+                        Number(
+                            rent.otherCharge || 0
+                        )
+                    )
                 );
 
+
+            // =================================
+            // PAID / RECEIVED
+            // =================================
+
+            const paid =
+                Number(
+                    rent.paidAmount || 0
+                );
+
+
+            // =================================
+            // PENDING
+            // =================================
+
+            const pending =
+                Math.max(
+                    due - paid,
+                    0
+                );
+
+
+            // =================================
+            // SUMMARY TOTALS
+            // =================================
 
             totalDue +=
                 due;
 
 
+            totalReceived +=
+                paid;
+
+
             totalPending +=
-                due;
+                pending;
 
 
-            pendingCount++;
+            // =================================
+            // STATUS COUNTS
+            // =================================
+
+            if (
+                due > 0 &&
+                paid >= due
+            ) {
+
+                paidCount++;
+
+            }
+            else {
+
+                pendingCount++;
+
+            }
 
         }
     );
 
+
+    // =========================================
+    // SUMMARY ELEMENTS
+    // =========================================
 
     const totalDueElement =
         document.querySelector(
@@ -5974,10 +6346,16 @@ function updateBasicRentSummary(
         );
 
 
+    // =========================================
+    // UPDATE SUMMARY
+    // =========================================
+
     if (totalDueElement) {
 
         totalDueElement.textContent =
-            `₹${totalDue.toLocaleString("en-IN")}`;
+            `₹${totalDue.toLocaleString(
+                "en-IN"
+            )}`;
 
     }
 
@@ -5985,7 +6363,9 @@ function updateBasicRentSummary(
     if (totalReceivedElement) {
 
         totalReceivedElement.textContent =
-            `₹${totalReceived.toLocaleString("en-IN")}`;
+            `₹${totalReceived.toLocaleString(
+                "en-IN"
+            )}`;
 
     }
 
@@ -5993,7 +6373,9 @@ function updateBasicRentSummary(
     if (totalPendingElement) {
 
         totalPendingElement.textContent =
-            `₹${totalPending.toLocaleString("en-IN")}`;
+            `₹${totalPending.toLocaleString(
+                "en-IN"
+            )}`;
 
     }
 
@@ -6021,6 +6403,10 @@ function updateBasicRentSummary(
 
     }
 
+
+    // =========================================
+    // SHOW / HIDE SUMMARY
+    // =========================================
 
     const summary =
         document.querySelector(

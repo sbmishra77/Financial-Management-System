@@ -563,6 +563,380 @@ document.addEventListener(
     }
 );
 
+// =========================================
+// OPEN FIXED DEPOSIT FORM
+// WHEN CATEGORY = FIXED DEPOSIT
+// =========================================
+
+document.addEventListener(
+    "change",
+    (event) => {
+
+        // सिर्फ Transaction Category को पकड़ें
+        if (
+            !event.target.classList.contains(
+                "transaction-category"
+            )
+        ) {
+            return;
+        }
+
+
+        // जिस Transaction Row में category बदली गई
+        const row =
+            event.target.closest(
+                ".transaction-entry-row"
+            );
+
+
+        if (!row) {
+            return;
+        }
+
+
+        // Type पढ़ें
+        const typeSelect =
+            row.querySelector(
+                ".transaction-type"
+            );
+
+
+        // Category पढ़ें
+        const categorySelect =
+            row.querySelector(
+                ".transaction-category"
+            );
+
+
+        if (
+            !typeSelect ||
+            !categorySelect
+        ) {
+            return;
+        }
+
+
+        const type =
+            typeSelect.value;
+
+
+        const category =
+            categorySelect.value;
+
+
+        // =================================
+        // ONLY FOR FIXED DEPOSIT
+        // =================================
+
+        if (
+            type === "investment" &&
+            category === "Fixed Deposit"
+        ) {
+
+// =================================
+// STORE TRANSACTION ROW
+// FOR FD LINKING
+// =================================
+
+window.pendingModuleTransaction = {
+
+    module:
+        "fixedDeposit",
+
+    row:
+        row
+
+};
+
+// =================================
+// AUTO-FILL FD FORM FROM TRANSACTION
+// =================================
+
+const transactionDate =
+    row.querySelector(
+        ".transaction-date"
+    )?.value || "";
+
+
+const transactionAmount =
+    row.querySelector(
+        ".transaction-amount"
+    )?.value || "";
+
+
+const fdDepositDateInput =
+    document.querySelector(
+        "#fdDepositDate"
+    );
+
+
+const fdAmountInput =
+    document.querySelector(
+        "#fdAmount"
+    );
+
+
+if (
+    fdDepositDateInput &&
+    transactionDate
+) {
+
+    fdDepositDateInput.value =
+        transactionDate;
+
+}
+
+
+if (
+    fdAmountInput &&
+    transactionAmount
+) {
+
+    fdAmountInput.value =
+        transactionAmount;
+
+}
+
+
+console.log(
+    "FD FORM AUTO-FILL CHECK:",
+    {
+        transactionDate:
+            transactionDate,
+
+        transactionAmount:
+            transactionAmount,
+
+        fdDepositDate:
+            fdDepositDateInput?.value,
+
+        fdAmount:
+            fdAmountInput?.value
+    }
+);
+
+console.log(
+    "FD TRANSACTION ROW STORED:",
+    window.pendingModuleTransaction
+);
+
+            const fdFormContainer =
+                document.querySelector(
+                    "#fdFormContainer"
+                );
+
+
+            if (!fdFormContainer) {
+
+                console.error(
+                    "FD Form Container नहीं मिला।"
+                );
+
+                return;
+            }
+
+
+            // FD Form खोलें
+            fdFormContainer.style.display =
+                "block";
+
+
+            // FD Form तक scroll करें
+            fdFormContainer.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+            console.log(
+                "Fixed Deposit Form opened from Transaction."
+            );
+
+        }
+
+    }
+);
+
+// =========================================
+// RENTAL INCOME → OPEN RENT ENTRY FORM
+// =========================================
+
+document.addEventListener(
+    "change",
+    (event) => {
+
+        // Only Transaction Category
+        if (
+            !event.target.classList.contains(
+                "transaction-category"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const row =
+            event.target.closest(
+                ".transaction-entry-row"
+            );
+
+
+        if (!row) {
+
+            return;
+
+        }
+
+
+        const typeSelect =
+            row.querySelector(
+                ".transaction-type"
+            );
+
+
+        const selectedType =
+            typeSelect?.value || "";
+
+
+        const selectedCategory =
+            event.target.value || "";
+
+
+        // =================================
+        // CHECK RENTAL INCOME
+        // =================================
+
+        console.log(
+    "RENTAL CATEGORY DEBUG:",
+    {
+        selectedType:
+            selectedType,
+
+        selectedCategory:
+            selectedCategory,
+
+        categoryText:
+            event.target.options[
+                event.target.selectedIndex
+            ]?.textContent
+    }
+);
+
+        if (
+            selectedType === "income" &&
+            selectedCategory === "Rental Income"
+        ) {
+
+console.log(
+    "RENTAL INCOME CONDITION MATCHED"
+);
+
+console.log(
+    "ADD RENT BUTTON CHECK:",
+    document.querySelector(
+        "#addRentEntryButton"
+    )
+);
+
+            const addRentEntryButton =
+                document.querySelector(
+                    "#addRentEntryButton"
+                );
+
+                console.log(
+    "ABOUT TO OPEN RENT FORM"
+);
+
+// =================================
+// OPEN RENTAL MANAGEMENT VIEW
+// =================================
+
+const rentalManagementView =
+    document.querySelector(
+        "#rentalManagementView"
+    );
+
+
+if (rentalManagementView) {
+
+    rentalManagementView.style.display =
+        "block";
+
+}
+
+addRentEntryButton.click();
+
+console.log(
+    "RENT BUTTON CLICK SENT"
+);
+
+            if (!addRentEntryButton) {
+
+                console.error(
+                    "Add Monthly Rent Entry button not found."
+                );
+
+                return;
+
+            }
+
+
+            // =================================
+            // MARK THIS ROW AS RENTAL LINKED
+            // =================================
+
+            row.dataset.rentalIncomeMode =
+                "true";
+
+// Store Transaction Row Reference
+window.pendingRentalIncomeTransactionRow =
+    row;
+
+            // =================================
+            // OPEN RENT ENTRY FORM
+            // =================================
+
+            addRentEntryButton.click();
+
+
+            // =================================
+            // SCROLL TO RENT FORM
+            // =================================
+
+            setTimeout(
+                () => {
+
+                    const rentFormContainer =
+                        document.querySelector(
+                            "#rentEntryFormContainer"
+                        );
+
+
+                    if (
+                        rentFormContainer
+                    ) {
+
+                        rentFormContainer.scrollIntoView({
+                            behavior:
+                                "smooth",
+
+                            block:
+                                "start"
+                        });
+
+                    }
+
+                },
+                100
+            );
+
+        }
+
+    }
+);
+
 // ===============================
 // CATEGORY FORM ELEMENTS
 // ===============================
@@ -1168,7 +1542,7 @@ const partyFormContainer =
         "#partyFormContainer"
     );
 
-    // =========================================
+// =========================================
 // CURRENT PARTY TARGET ROW
 // =========================================
 
@@ -2059,7 +2433,9 @@ document.addEventListener(
                 "transaction-type"
             )
         ) {
+
             return;
+
         }
 
 
@@ -2068,6 +2444,85 @@ document.addEventListener(
                 ".transaction-entry-row"
             );
 
+
+        // =================================
+        // ADD NEW TRANSACTION TYPE
+        // =================================
+
+        if (
+            event.target.value ===
+            "__add_new_transaction_type__"
+        ) {
+
+            console.log(
+                "ADD NEW TRANSACTION TYPE SELECTED"
+            );
+
+
+            // =================================
+            // FIND INLINE FORM
+            // =================================
+
+            const typeForm =
+                row?.querySelector(
+                    ".transaction-type-inline-form"
+                );
+
+
+            if (typeForm) {
+
+                typeForm.style.display =
+                    "block";
+
+
+                // =================================
+                // CLEAR OLD INPUT
+                // =================================
+
+                const typeInput =
+                    typeForm.querySelector(
+                        ".new-transaction-type-name"
+                    );
+
+
+                if (typeInput) {
+
+                    typeInput.value = "";
+
+                    typeInput.focus();
+
+                }
+
+
+                console.log(
+                    "ADD NEW TRANSACTION TYPE FORM OPENED"
+                );
+
+            }
+            else {
+
+                console.error(
+                    "Inline Transaction Type Form not found."
+                );
+
+            }
+
+
+            // =================================
+            // RESET DROPDOWN
+            // =================================
+
+            event.target.value = "";
+
+
+            return;
+
+        }
+
+
+        // =================================
+        // EXISTING TYPE BEHAVIOR
+        // =================================
 
         updateTransactionRowBehavior(
             row
@@ -2174,6 +2629,26 @@ document.addEventListener(
         // FIND MATCHING INVESTMENTS
         // =====================================
 
+        console.log(
+    "Investment Search Text:",
+    searchText
+);
+
+console.log(
+    "Available Investments:",
+    savedTransactionInvestments
+);
+
+console.log(
+    "FIRST INVESTMENT OBJECT:",
+    savedTransactionInvestments[0]
+);
+
+console.log(
+    "FIRST INVESTMENT NAME:",
+    savedTransactionInvestments[0]?.name
+);
+
         const matchingInvestments =
             savedTransactionInvestments.filter(
                 (investment) =>
@@ -2182,6 +2657,11 @@ document.addEventListener(
                         .includes(searchText)
             );
 
+
+console.log(
+    "Investment search matches:",
+    matchingInvestments
+);
 
         // =====================================
         // NO MATCH
@@ -2246,6 +2726,10 @@ document.addEventListener(
                     "click",
                     () => {
 
+console.log(
+    "INVESTMENT SUGGESTION CLICKED"
+);
+
                         investmentInput.value =
                             investment.name;
 
@@ -2254,6 +2738,10 @@ document.addEventListener(
                         investmentInput.dataset.investmentId =
                             investment.id;
 
+console.log(
+    "Investment ID stored:",
+    investmentInput.dataset.investmentId
+);
 
                         // Hide suggestions
                         suggestionBox.innerHTML =
@@ -2261,7 +2749,6 @@ document.addEventListener(
 
                         suggestionBox.style.display =
                             "none";
-
 
                         console.log(
                             "Investment selected:",
@@ -2917,23 +3404,42 @@ accountsSnapshot.forEach(
             0;
 
 
-        // =====================================
-        // LOAD EACH TRANSACTION
-        // =====================================
+// =====================================
+// LOAD EACH TRANSACTION
+// LATEST DATE FIRST
+// =====================================
 
-        snapshot.forEach(
-            (transactionDoc) => {
+const sortedTransactionDocs =
+    [...snapshot.docs].sort(
+        (a, b) => {
 
-                const transaction =
-                    transactionDoc.data();
+            const dateA =
+                a.data().date || "";
+
+            const dateB =
+                b.data().date || "";
 
 
-                transactionCount++;
+            return dateB.localeCompare(
+                dateA
+            );
+
+        }
+    );
 
 
-                const row =
-                    document.createElement("tr");
+sortedTransactionDocs.forEach(
+    (transactionDoc) => {
 
+        const transaction =
+            transactionDoc.data();
+
+
+        transactionCount++;
+
+
+        const row =
+            document.createElement("tr");
 
 // =================================
 // STORE FIRESTORE TRANSACTION ID

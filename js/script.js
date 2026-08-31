@@ -3431,131 +3431,707 @@ if (oldFixedDepositDashboardHeader) {
 
 // ===============================
 // SAVE FIXED DEPOSIT
+// TRANSACTION-LINKED VERSION
 // ===============================
 
 const fdForm =
     document.querySelector("#fdForm");
 
 
+// =========================================
+// FD SAVE
+// =========================================
+
 if (fdForm) {
 
-    fdForm.addEventListener("submit", async (event) => {
+    fdForm.addEventListener(
+        "submit",
+        async (event) => {
 
-        event.preventDefault();
+            event.preventDefault();
 
-        try {
+            try {
 
-            const user = auth.currentUser;
+                // =================================
+                // LOGIN CHECK
+                // =================================
 
-            if (!user) {
+                const user =
+                    auth.currentUser;
 
-                alert("कृपया पहले Login करें।");
-                return;
+                if (!user) {
 
-            }
+                    alert(
+                        "कृपया पहले Login करें।"
+                    );
+
+                    return;
+                }
 
 
-            const fdName =
-                document.querySelector("#fdName").value.trim();
+                // =================================
+                // READ FD FORM
+                // =================================
 
-            const fdBank =
-                document.querySelector("#fdBank").value.trim();
+                const fdName =
+                    document
+                        .querySelector("#fdName")
+                        .value
+                        .trim();
 
-            const fdAmount =
-                Number(
-                    document.querySelector("#fdAmount").value
+                const fdBank =
+                    document
+                        .querySelector("#fdBank")
+                        .value
+                        .trim();
+
+                const fdAmount =
+                    Number(
+                        document
+                            .querySelector("#fdAmount")
+                            .value
+                    );
+
+                const fdDepositDate =
+                    document
+                        .querySelector("#fdDepositDate")
+                        .value;
+
+                const fdMaturityDate =
+                    document
+                        .querySelector("#fdMaturityDate")
+                        .value;
+
+                const fdInterestRate =
+                    Number(
+                        document
+                            .querySelector("#fdInterestRate")
+                            .value
+                    );
+
+                const fdCompounding =
+                    Number(
+                        document
+                            .querySelector("#fdCompounding")
+                            .value
+                    );
+
+                const fdMaturityAmount =
+                    Number(
+                        document
+                            .querySelector("#fdMaturityAmount")
+                            .value
+                    );
+
+
+                // =================================
+                // VALIDATION
+                // =================================
+
+                if (
+                    !fdName ||
+                    !fdBank ||
+                    !fdAmount ||
+                    !fdDepositDate ||
+                    !fdMaturityDate ||
+                    !fdInterestRate ||
+                    !fdMaturityAmount
+                ) {
+
+                    alert(
+                        "कृपया सभी FD details भरें।"
+                    );
+
+                    return;
+                }
+
+
+                console.log(
+                    "Saving Fixed Deposit..."
                 );
 
-            const fdDepositDate =
-                document.querySelector("#fdDepositDate").value;
 
-            const fdMaturityDate =
-                document.querySelector("#fdMaturityDate").value;
+                // =================================
+                // 1. SAVE FD
+                // =================================
 
-            const fdInterestRate =
-                Number(
-                    document.querySelector("#fdInterestRate").value
+                const fdRef =
+                    await addDoc(
+
+                        collection(
+                            db,
+                            "users",
+                            user.uid,
+                            "fixedDeposits"
+                        ),
+
+                        {
+
+                            name:
+                                fdName,
+
+                            bank:
+                                fdBank,
+
+                            amount:
+                                fdAmount,
+
+                            depositDate:
+                                fdDepositDate,
+
+                            maturityDate:
+                                fdMaturityDate,
+
+                            interestRate:
+                                fdInterestRate,
+
+                            compounding:
+                                fdCompounding,
+
+                            maturityAmount:
+                                fdMaturityAmount,
+
+                            status:
+                                "active",
+
+                            createdAt:
+                                serverTimestamp(),
+
+                            updatedAt:
+                                serverTimestamp()
+
+                        }
+
+                    );
+
+
+                console.log(
+                    "FD saved successfully:",
+                    fdRef.id
                 );
 
-            const fdCompounding =
-                Number(
-                    document.querySelector("#fdCompounding").value
-                );
+// =================================
+// CHECK TRANSACTION LINK
+// =================================
 
-            const fdMaturityAmount =
-                Number(
-                    document.querySelector("#fdMaturityAmount").value
-                );
+console.log(
+    "FD TRANSACTION LINK CHECK:",
+    {
+        fdId: fdRef.id,
+
+        pendingTransaction:
+            window.pendingModuleTransaction || null,
+
+        row:
+            window.pendingModuleTransaction?.row || null
+    }
+);
+
+// =================================
+// FILL TRANSACTION ROW FROM FD
+// =================================
+
+const linkedTransaction =
+    window.pendingModuleTransaction;
 
 
-            console.log(
-                "Saving FD to Firestore..."
-            );
+const transactionRow =
+    linkedTransaction?.row;
 
 
-            await addDoc(
+if (
+    linkedTransaction &&
+    linkedTransaction.module ===
+        "fixedDeposit" &&
+    transactionRow
+) {
 
-                collection(
-                    db,
-                    "users",
-                    user.uid,
-                    "fixedDeposits"
-                ),
+    // =================================
+    // PARTY / BANK
+    // =================================
 
-                {
+    const partyInput =
+        transactionRow.querySelector(
+            ".transaction-party"
+        );
 
-                    name: fdName,
 
-                    bank: fdBank,
+    if (partyInput) {
 
-                    amount: fdAmount,
+        partyInput.value =
+            fdBank;
 
-                    depositDate: fdDepositDate,
+    }
 
-                    maturityDate: fdMaturityDate,
 
-                    interestRate: fdInterestRate,
+    // =================================
+    // INVESTMENT / ASSET
+    // =================================
 
-                    compounding: fdCompounding,
+    const investmentInput =
+        transactionRow.querySelector(
+            ".transaction-investment"
+        );
 
-                    maturityAmount: fdMaturityAmount,
 
-                    createdAt: serverTimestamp()
+    if (investmentInput) {
+
+        investmentInput.value =
+            fdName;
+
+    }
+
+
+    // =================================
+    // AMOUNT
+    // =================================
+
+    const amountInput =
+        transactionRow.querySelector(
+            ".transaction-amount"
+        );
+
+
+    if (amountInput) {
+
+        amountInput.value =
+            fdAmount;
+
+    }
+
+
+    // =================================
+    // DATE
+    // =================================
+
+    const dateInput =
+        transactionRow.querySelector(
+            ".transaction-date"
+        );
+
+
+    if (dateInput) {
+
+        dateInput.value =
+            fdDepositDate;
+
+    }
+
+
+// =================================
+// LINKED MODULE
+// =================================
+
+const linkedModuleSelect =
+    transactionRow.querySelector(
+        ".transaction-linked-module"
+    );
+
+
+if (linkedModuleSelect) {
+
+    // पहले available options देखें
+    console.log(
+        "FD LINKED MODULE OPTIONS:",
+        Array.from(
+            linkedModuleSelect.options
+        ).map(option => ({
+            text: option.text,
+            value: option.value
+        }))
+    );
+
+
+    // Fixed Deposit वाला option खोजें
+    const fdModuleOption =
+        Array.from(
+            linkedModuleSelect.options
+        ).find(option =>
+            option.text
+                .trim()
+                .toLowerCase()
+                .includes("fixed deposit")
+        );
+
+
+    if (fdModuleOption) {
+
+        linkedModuleSelect.value =
+            fdModuleOption.value;
+
+    }
+
+
+    console.log(
+        "FD LINKED MODULE SELECTED:",
+        {
+            text:
+                linkedModuleSelect
+                    .selectedOptions[0]
+                    ?.text || "",
+
+            value:
+                linkedModuleSelect.value
+        }
+    );
+
+}
+
+    console.log(
+        "FD TRANSACTION ROW UPDATED:",
+        {
+            party:
+                partyInput?.value,
+
+            investment:
+                investmentInput?.value,
+
+            amount:
+                amountInput?.value,
+
+            date:
+                dateInput?.value,
+
+            linkedModule:
+                linkedModuleSelect?.value
+        }
+    );
+
+}
+
+                // =================================
+                // 2. CHECK PENDING TRANSACTION
+                // =================================
+
+                const pendingTransaction =
+                    window.pendingModuleTransaction;
+
+
+                // =================================
+                // 3. IF FD WAS OPENED FROM
+                //    TRANSACTION ENTRY
+                // =================================
+
+                if (
+                    pendingTransaction &&
+                    pendingTransaction.row
+                ) {
+
+                    const row =
+                        pendingTransaction.row;
+
+
+                    // =================================
+                    // READ TRANSACTION ROW
+                    // =================================
+
+                    const dateInput =
+                        row.querySelector(
+                            ".transaction-date"
+                        );
+
+                    const typeSelect =
+                        row.querySelector(
+                            ".transaction-type"
+                        );
+
+                    const categorySelect =
+                        row.querySelector(
+                            ".transaction-category"
+                        );
+
+                    const partyInput =
+                        row.querySelector(
+                            ".transaction-party"
+                        );
+
+                    const amountInput =
+                        row.querySelector(
+                            ".transaction-amount"
+                        );
+
+                    const fromAccountSelect =
+                        row.querySelector(
+                            ".transaction-from-account"
+                        );
+
+                    const toAccountSelect =
+                        row.querySelector(
+                            ".transaction-to-account"
+                        );
+
+                    const paymentMethodSelect =
+                        row.querySelector(
+                            ".transaction-payment-method"
+                        );
+
+                    const notesInput =
+                        row.querySelector(
+                            ".transaction-notes"
+                        );
+
+
+                    // =================================
+                    // TRANSACTION VALUES
+                    // =================================
+
+                    const transactionDate =
+                        dateInput
+                            ? dateInput.value
+                            : fdDepositDate;
+
+                    const transactionType =
+                        typeSelect
+                            ? typeSelect.value
+                            : "investment";
+
+                    const transactionCategory =
+                        categorySelect
+                            ? categorySelect.value
+                            : "Fixed Deposit";
+
+                    const partyName =
+                        partyInput
+                            ? partyInput.value.trim()
+                            : fdBank;
+
+                    const amount =
+                        amountInput &&
+                        amountInput.value
+                            ? Number(
+                                amountInput.value
+                            )
+                            : fdAmount;
+
+                    const fromAccountId =
+                        fromAccountSelect
+                            ? fromAccountSelect.value
+                            : "";
+
+                    const toAccountId =
+                        toAccountSelect
+                            ? toAccountSelect.value
+                            : "";
+
+                    const paymentMethod =
+                        paymentMethodSelect
+                            ? paymentMethodSelect.value
+                            : "";
+
+                    const notes =
+                        notesInput
+                            ? notesInput.value.trim()
+                            : "";
+
+
+                    // =================================
+                    // 4. CREATE TRANSACTION
+                    // =================================
+
+                    const transactionData = {
+
+                        date:
+                            transactionDate,
+
+                        type:
+                            transactionType,
+
+                        category:
+                            transactionCategory,
+
+                        partyId:
+                            null,
+
+                        partyName:
+                            partyName,
+
+                        investmentId:
+                            fdRef.id,
+
+                        investmentName:
+                            fdName,
+
+                        amount:
+                            amount,
+
+                        fromAccountId:
+                            fromAccountId,
+
+                        toAccountId:
+                            toAccountId,
+
+                        paymentMethod:
+                            paymentMethod,
+
+                        linkedModule:
+                            "fixedDeposit",
+
+                        linkedRecordId:
+                            fdRef.id,
+
+                        notes:
+                            notes,
+
+                        createdAt:
+                            serverTimestamp(),
+
+                        updatedAt:
+                            serverTimestamp()
+
+                    };
+
+
+                    // =================================
+                    // 5. SAVE TRANSACTION HISTORY
+                    // =================================
+
+                    const transactionRef =
+                        await addDoc(
+
+                            collection(
+                                db,
+                                "users",
+                                user.uid,
+                                "transactions"
+                            ),
+
+                            transactionData
+
+                        );
+
+
+                    console.log(
+                        "Linked Transaction saved:",
+                        transactionRef.id
+                    );
+
+
+                    // =================================
+                    // STORE TRANSACTION ID
+                    // INSIDE FD DOCUMENT
+                    // =================================
+
+                    await updateDoc(
+
+                        doc(
+                            db,
+                            "users",
+                            user.uid,
+                            "fixedDeposits",
+                            fdRef.id
+                        ),
+
+                        {
+
+                            transactionId:
+                                transactionRef.id,
+
+                            updatedAt:
+                                serverTimestamp()
+
+                        }
+
+                    );
+
+
+                    // =================================
+                    // CLEAR PENDING TRANSACTION
+                    // =================================
+
+                    window.pendingModuleTransaction =
+                        null;
+
+
+                    console.log(
+                        "FD ↔ Transaction linked successfully."
+                    );
 
                 }
 
-            );
+
+                // =================================
+                // SUCCESS
+                // =================================
+
+                alert(
+                    "Fixed Deposit और Transaction History दोनों successfully save हो गए।"
+                );
 
 
-            console.log(
-                "FD saved successfully!"
-            );
+                // =================================
+                // RESET FORM
+                // =================================
+
+                fdForm.reset();
 
 
-            alert(
-                "Fixed Deposit successfully saved!"
-            );
+                // =================================
+                // CLOSE FD FORM
+                // =================================
+
+                if (fdFormContainer) {
+
+                    fdFormContainer.style.display =
+                        "none";
+
+                }
 
 
-            fdForm.reset();
+                // =================================
+                // REFRESH FD MODULE
+                // =================================
 
-            fdFormContainer.style.display = "none";
+                if (
+                    typeof loadFixedDeposits ===
+                    "function"
+                ) {
+
+                    await loadFixedDeposits();
+
+                }
 
 
-        } catch (error) {
+                // =================================
+                // REFRESH TRANSACTION HISTORY
+                // =================================
 
-           console.error("FD Save Error:", error);
-           console.error("FD Error Code:", error?.code);
-           console.error("FD Error Message:", error?.message);
-           console.error("FD Full Error:", JSON.stringify(error));
+                if (
+                    typeof loadSavedTransactions ===
+                    "function"
+                ) {
 
-            alert(
-                "FD save नहीं हो पाया। कृपया फिर कोशिश करें।"
-            );
+                    await loadSavedTransactions();
+
+                }
+
+
+            }
+            catch (error) {
+
+                console.error(
+                    "FD Save Error:",
+                    error
+                );
+
+                console.error(
+                    "FD Error Code:",
+                    error?.code
+                );
+
+                console.error(
+                    "FD Error Message:",
+                    error?.message
+                );
+
+                alert(
+                    "FD save नहीं हो पाया। कृपया फिर कोशिश करें।"
+                );
+
+            }
 
         }
 
-    });
+    );
 
 }
 
@@ -4379,6 +4955,7 @@ editFDMaturityAmount.value =
     }
 
 });
+
 // ===============================
 // SAVE EDITED FD
 // ===============================
@@ -4518,6 +5095,7 @@ document.addEventListener("submit", async (event) => {
     }
 
 });
+
 // ===============================
 // DELETE FD
 // ===============================
