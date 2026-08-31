@@ -552,86 +552,100 @@
     </div>
 
 
-    <!-- =========================================
-         ADD NEW CATEGORY FORM
-         ========================================= -->
+  <!-- =========================================
+     ADD NEW CATEGORY FORM
+     ========================================= -->
 
-    <div
-        id="categoryFormContainer"
-        style="display: none;">
+<div
+    id="categoryFormContainer"
+    style="display: none;">
 
-        <div class="form-group">
+    <div class="form-group">
 
-            <label for="newCategoryName">
-                📂 Category Name
-            </label>
+        <label for="newCategoryName">
+            📂 Category Name
+        </label>
 
-            <input
-                type="text"
-                id="newCategoryName"
-                placeholder="Enter category name">
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label for="newCategoryType">
-                🔘 Transaction Type
-            </label>
-
-            <select id="newCategoryType">
-
-                <option value="">
-                    Select Transaction Type
-                </option>
-
-                <option value="income">
-                    💵 Income
-                </option>
-
-                <option value="expense">
-                    🛒 Expense
-                </option>
-
-                <option value="investment">
-                    📈 Investment
-                </option>
-
-                <option value="transfer">
-                    🔄 Transfer
-                </option>
-
-                <option value="wallet_payment">
-                    👛 Wallet Payment
-                </option>
-
-                <option value="cashback">
-                    🎁 Cashback
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="form-actions">
-
-            <button
-                type="button"
-                id="saveCategoryButton">
-                💾 Save Category
-            </button>
-
-            <button
-                type="button"
-                id="cancelCategoryButton">
-                ❌ Cancel
-            </button>
-
-        </div>
+        <input
+            type="text"
+            id="newCategoryName"
+            placeholder="Enter category name">
 
     </div>
+
+
+    <div class="form-group">
+
+        <label for="newCategoryType">
+            🔘 Transaction Type
+        </label>
+
+        <select id="newCategoryType">
+
+            <option value="">
+                Select Transaction Type
+            </option>
+
+            <option value="income">
+                💵 Income
+            </option>
+
+            <option value="expense">
+                🛒 Expense
+            </option>
+
+            <option value="investment">
+                📈 Investment
+            </option>
+
+            <option value="transfer">
+                🔄 Transfer
+            </option>
+
+            <option value="wallet_payment">
+                👛 Wallet Payment
+            </option>
+
+            <option value="cashback">
+                🎁 Cashback
+            </option>
+
+            <!-- =================================
+                 CUSTOM TRANSACTION TYPES
+                 ================================= -->
+
+            <!--
+                Custom Transaction Types
+                JavaScript से यहाँ add होंगे
+            -->
+
+        </select>
+
+    </div>
+
+
+    <div class="form-actions">
+
+        <button
+            type="button"
+            id="saveCategoryButton">
+
+            💾 Save Category
+
+        </button>
+
+
+        <button
+            type="button"
+            id="cancelCategoryButton">
+
+            ❌ Cancel
+
+        </button>
+
+    </div>
+
+</div>
 
  <!-- =========================================
      ADD NEW TRANSACTION TYPE FORM

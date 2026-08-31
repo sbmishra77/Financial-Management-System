@@ -69,7 +69,7 @@ if (addTransactionButton) {
 
     addTransactionButton.addEventListener(
         "click",
-        () => {
+        async () => {
 
             if (transactionFormContainer) {
 
@@ -78,6 +78,7 @@ if (addTransactionButton) {
 
             }
 
+
             loadSavedTransactionCategories();
 
             loadTransactionAccounts();
@@ -85,6 +86,14 @@ if (addTransactionButton) {
             loadTransactionParties();
 
             loadTransactionInvestments();
+
+
+            // =================================
+            // LOAD CUSTOM TRANSACTION TYPES
+            // =================================
+
+            await loadCustomTransactionTypes();
+
 
             loadSavedTransactions();
 
@@ -352,14 +361,16 @@ function loadTransactionCategoriesForRow(row) {
         transactionTypeSelect.value;
 
 
-    transactionCategorySelect.innerHTML = "";
+    transactionCategorySelect.innerHTML =
+        "";
 
 
     const defaultOption =
         document.createElement("option");
 
 
-    defaultOption.value = "";
+    defaultOption.value =
+        "";
 
 
     defaultOption.textContent =
@@ -457,8 +468,37 @@ function loadTransactionCategoriesForRow(row) {
 
     savedTransactionCategories
         .filter(
-            (category) =>
-                category.type === selectedType
+            (category) => {
+
+                // Normal existing types
+                if (
+                    category.type ===
+                    selectedType
+                ) {
+
+                    return true;
+
+                }
+
+
+                // Custom transaction type
+                if (
+                    selectedType.startsWith(
+                        "custom_"
+                    )
+                ) {
+
+                    return (
+                        category.type ===
+                        selectedType
+                    );
+
+                }
+
+
+                return false;
+
+            }
         )
         .forEach(
             (category) => {
@@ -469,8 +509,6 @@ function loadTransactionCategoriesForRow(row) {
                     );
 
 
-                // Already in built-in
-                // or already added from Firestore
                 if (
                     addedCategories.has(
                         normalizedName
@@ -974,11 +1012,18 @@ if (addCategoryButton) {
 
             }
 
+
+            // =================================
+            // LOAD CUSTOM TRANSACTION TYPES
+            // INTO CATEGORY FORM
+            // =================================
+
+            loadCustomTypesIntoCategoryForm();
+
         }
     );
 
 }
-
 
 // ===============================
 // CLOSE CATEGORY FORM
@@ -1020,7 +1065,7 @@ if (saveCategoryButton) {
 
     saveCategoryButton.addEventListener(
         "click",
-        function () {
+        async function () {
 
             const categoryName =
                 newCategoryNameInput.value.trim();
@@ -1028,6 +1073,10 @@ if (saveCategoryButton) {
             const categoryType =
                 newCategoryTypeSelect.value;
 
+
+            // =================================
+            // VALIDATE CATEGORY NAME
+            // =================================
 
             if (!categoryName) {
 
@@ -1038,8 +1087,13 @@ if (saveCategoryButton) {
                 newCategoryNameInput.focus();
 
                 return;
+
             }
 
+
+            // =================================
+            // VALIDATE TRANSACTION TYPE
+            // =================================
 
             if (!categoryType) {
 
@@ -1050,6 +1104,7 @@ if (saveCategoryButton) {
                 newCategoryTypeSelect.focus();
 
                 return;
+
             }
 
 
@@ -1064,82 +1119,146 @@ if (saveCategoryButton) {
                 );
 
                 return;
+
             }
 
 
-            const categoryCollection =
-                collection(
-                    db,
-                    "users",
-                    user.uid,
-                    "transactionCategories"
+            try {
+
+                console.log(
+                    "Saving Category:",
+                    {
+                        name:
+                            categoryName,
+
+                        type:
+                            categoryType
+                    }
                 );
 
 
-            addDoc(
-                categoryCollection,
-                {
-                    name: categoryName,
-                    type: categoryType,
-                    createdAt: serverTimestamp()
-                }
-            )
-            .then(
-                function () {
-
-                   console.log(
-    "Category saved successfully:",
-    categoryName,
-    categoryType
-);
-
-
-// ===============================
-// ADD NEW CATEGORY IMMEDIATELY
-// ===============================
-
-savedTransactionCategories.push({
-    name: categoryName,
-    type: categoryType
-});
-
-
-// Refresh all category dropdowns
-loadCategoriesForAllRows();
-       
-                    alert(
-                        "Category successfully save हो गई।"
+                const categoryCollection =
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactionCategories"
                     );
 
 
-                    newCategoryNameInput.value =
-                        "";
+                // =================================
+                // SAVE CATEGORY TO FIRESTORE
+                // =================================
 
-                    newCategoryTypeSelect.value =
-                        "";
+                const categoryRef =
+                    await addDoc(
+                        categoryCollection,
+                        {
+
+                            name:
+                                categoryName,
+
+                            type:
+                                categoryType,
+
+                            createdAt:
+                                serverTimestamp()
+
+                        }
+                    );
+
+
+                console.log(
+                    "Category saved successfully:",
+                    {
+                        id:
+                            categoryRef.id,
+
+                        name:
+                            categoryName,
+
+                        type:
+                            categoryType
+                    }
+                );
+
+
+                // =================================
+                // ADD CATEGORY IMMEDIATELY
+                // =================================
+
+                savedTransactionCategories.push({
+
+                    id:
+                        categoryRef.id,
+
+                    name:
+                        categoryName,
+
+                    type:
+                        categoryType
+
+                });
+
+
+                // =================================
+                // REFRESH ALL CATEGORY DROPDOWNS
+                // =================================
+
+                loadCategoriesForAllRows();
+
+
+                // =================================
+                // SUCCESS MESSAGE
+                // =================================
+
+                alert(
+                    "Category successfully save हो गई।"
+                );
+
+
+                // =================================
+                // CLEAR FORM
+                // =================================
+
+                newCategoryNameInput.value =
+                    "";
+
+                newCategoryTypeSelect.value =
+                    "";
+
+
+                if (categoryFormContainer) {
 
                     categoryFormContainer.style.display =
                         "none";
 
                 }
-            )
-            .catch(
-                function (error) {
 
-                    console.error(
+            }
+            catch (error) {
+
+                console.error(
                     "Save Category Error:",
-                    error?.code,
-                    error?.message,
                     error
                 );
 
+                console.error(
+                    "Error Code:",
+                    error?.code
+                );
 
-                    alert(
-                        "Category save नहीं हो सकी। Console में error देखें।"
-                    );
+                console.error(
+                    "Error Message:",
+                    error?.message
+                );
 
-                }
-            );
+
+                alert(
+                    "Category save नहीं हो सकी। Console में error देखें।"
+                );
+
+            }
 
         }
     );
@@ -2418,6 +2537,52 @@ else if (
 
     }
 
+        // =====================================
+    // CUSTOM TRANSACTION TYPES
+    // =====================================
+
+    else if (
+        selectedType.startsWith(
+            "custom_"
+        )
+    ) {
+
+        // Party / Person available
+        setCellVisible(
+            partyCell,
+            true
+        );
+
+
+        // Investment / Asset not required
+        setCellVisible(
+            investmentCell,
+            false
+        );
+
+
+        // Keep From Account available
+        setCellVisible(
+            fromAccountCell,
+            true
+        );
+
+
+        // Keep To Account available
+        setCellVisible(
+            toAccountCell,
+            true
+        );
+
+
+        if (partyInput) {
+
+            partyInput.placeholder =
+                "Party / Merchant / Person";
+
+        }
+
+    }
 }
 
 // =========================================
@@ -2552,6 +2717,16 @@ function initializeTransactionRows() {
 
         }
     );
+
+
+    // =====================================
+    // LOAD CUSTOM TRANSACTION TYPES
+    // =====================================
+console.log(
+    "CUSTOM TYPE LOAD CALLING NOW"
+);
+
+    loadCustomTransactionTypes();
 
 }
 
@@ -4240,3 +4415,549 @@ document.addEventListener(
 
     }
 );
+
+// =========================================
+// SAVE NEW TRANSACTION TYPE
+// =========================================
+
+document.addEventListener(
+    "click",
+    async (event) => {
+
+        if (
+            !event.target.classList.contains(
+                "save-inline-transaction-type"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const form =
+            event.target.closest(
+                ".transaction-type-inline-form"
+            );
+
+
+        if (!form) {
+
+            console.error(
+                "Transaction Type form not found."
+            );
+
+            return;
+
+        }
+
+
+        const input =
+            form.querySelector(
+                ".new-transaction-type-name"
+            );
+
+
+        if (!input) {
+
+            console.error(
+                "New Transaction Type input not found."
+            );
+
+            return;
+
+        }
+
+
+        const typeName =
+            input.value.trim();
+
+
+        // =================================
+        // VALIDATION
+        // =================================
+
+        if (!typeName) {
+
+            alert(
+                "कृपया Transaction Type का नाम लिखें।"
+            );
+
+            input.focus();
+
+            return;
+
+        }
+
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            alert(
+                "कृपया पहले Login करें।"
+            );
+
+            return;
+
+        }
+
+
+        try {
+
+            console.log(
+                "Saving New Transaction Type:",
+                typeName
+            );
+
+
+            // =================================
+            // SAVE TO FIRESTORE
+            // =================================
+
+            const typeRef =
+                await addDoc(
+
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactionTypes"
+                    ),
+
+                    {
+
+                        name:
+                            typeName,
+
+                        createdAt:
+                            serverTimestamp(),
+
+                        updatedAt:
+                            serverTimestamp()
+
+                    }
+
+                );
+
+
+            console.log(
+                "New Transaction Type saved:",
+                typeRef.id
+            );
+
+
+            alert(
+                "New Transaction Type successfully saved."
+            );
+
+
+            // =================================
+            // CLEAR INPUT
+            // =================================
+
+            input.value = "";
+
+
+            // =================================
+            // CLOSE FORM
+            // =================================
+
+            form.style.display =
+                "none";
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Save Transaction Type Error:",
+                error
+            );
+
+            console.error(
+                "Error Code:",
+                error?.code
+            );
+
+            console.error(
+                "Error Message:",
+                error?.message
+            );
+
+
+            alert(
+                "Transaction Type save नहीं हो पाया।"
+            );
+
+        }
+
+    }
+);
+
+
+// =========================================
+// CANCEL NEW TRANSACTION TYPE
+// =========================================
+
+document.addEventListener(
+    "click",
+    (event) => {
+
+        if (
+            !event.target.classList.contains(
+                "cancel-inline-transaction-type"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const form =
+            event.target.closest(
+                ".transaction-type-inline-form"
+            );
+
+
+        if (!form) {
+
+            console.error(
+                "Transaction Type inline form not found."
+            );
+
+            return;
+
+        }
+
+
+        // =================================
+        // CLEAR INPUT
+        // =================================
+
+        const input =
+            form.querySelector(
+                ".new-transaction-type-name"
+            );
+
+
+        if (input) {
+
+            input.value = "";
+
+        }
+
+
+        // =================================
+        // CLOSE FORM
+        // =================================
+
+        form.style.display =
+            "none";
+
+
+        // =================================
+        // RESET TRANSACTION TYPE
+        // =================================
+
+        const row =
+            form.closest(
+                ".transaction-entry-row"
+            );
+
+
+        const typeSelect =
+            row?.querySelector(
+                ".transaction-type"
+            );
+
+
+        if (typeSelect) {
+
+            typeSelect.value = "";
+
+            updateTransactionRowBehavior(
+                row
+            );
+
+        }
+
+
+        console.log(
+            "NEW TRANSACTION TYPE FORM CANCELLED"
+        );
+
+    }
+);
+
+
+// =========================================
+// LOAD CUSTOM TRANSACTION TYPES
+// =========================================
+
+async function loadCustomTransactionTypes() {
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        console.log(
+            "User not logged in. Custom Transaction Types cannot be loaded."
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        console.log(
+            "Loading Custom Transaction Types..."
+        );
+
+
+        const typeCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactionTypes"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                typeCollection
+            );
+
+
+        const customTypes = [];
+
+
+        snapshot.forEach(
+            (typeDoc) => {
+
+                const type =
+                    typeDoc.data();
+
+
+                if (
+                    type.name &&
+                    type.name.trim()
+                ) {
+
+                    customTypes.push({
+
+                        id:
+                            typeDoc.id,
+
+                        name:
+                            type.name.trim()
+
+                    });
+
+                }
+
+            }
+        );
+
+
+        console.log(
+            "Custom Transaction Types Loaded:",
+            customTypes
+        );
+
+
+        // =====================================
+        // ADD CUSTOM TYPES TO ALL DROPDOWNS
+        // =====================================
+
+        const typeSelects =
+            document.querySelectorAll(
+                ".transaction-type"
+            );
+
+
+        typeSelects.forEach(
+            (typeSelect) => {
+
+                // -----------------------------
+                // Remove old custom types
+                // -----------------------------
+
+                typeSelect
+                    .querySelectorAll(
+                        "option[data-custom-transaction-type='true']"
+                    )
+                    .forEach(
+                        (option) => {
+
+                            option.remove();
+
+                        }
+                    );
+
+
+                // -----------------------------
+                // Find Add New Type option
+                // -----------------------------
+
+                const addNewOption =
+                    typeSelect.querySelector(
+                        "option[value='__add_new_transaction_type__']"
+                    );
+
+
+                // -----------------------------
+                // Add custom types
+                // -----------------------------
+
+                customTypes.forEach(
+                    (customType) => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            "custom_" +
+                            customType.id;
+
+
+                        option.textContent =
+                            customType.name;
+
+
+                        option.dataset.customTransactionType =
+                            "true";
+
+
+                        if (addNewOption) {
+
+                            typeSelect.insertBefore(
+                                option,
+                                addNewOption
+                            );
+
+                        }
+                        else {
+
+                            typeSelect.appendChild(
+                                option
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+    }
+    catch (error) {
+
+        console.error(
+            "Load Custom Transaction Types Error:",
+            error
+        );
+
+    }
+
+}
+
+// =========================================
+// LOAD CUSTOM TYPES INTO CATEGORY FORM
+// =========================================
+
+function loadCustomTypesIntoCategoryForm() {
+
+    const categoryTypeSelect =
+        document.querySelector(
+            "#newCategoryType"
+        );
+
+
+    if (!categoryTypeSelect) {
+
+        console.log(
+            "Category Transaction Type dropdown not found."
+        );
+
+        return;
+
+    }
+
+
+    // =====================================
+    // REMOVE OLD CUSTOM TYPES
+    // =====================================
+
+    categoryTypeSelect
+        .querySelectorAll(
+            "option[data-custom-category-type='true']"
+        )
+        .forEach(
+            (option) => {
+
+                option.remove();
+
+            }
+        );
+
+
+    // =====================================
+    // FIND CUSTOM TYPES
+    // =====================================
+
+    const customTypeOptions =
+        document.querySelectorAll(
+            ".transaction-type option[data-custom-transaction-type='true']"
+        );
+
+
+    customTypeOptions.forEach(
+        (sourceOption) => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                sourceOption.value;
+
+
+            option.textContent =
+                sourceOption.textContent;
+
+
+            option.dataset.customCategoryType =
+                "true";
+
+
+            categoryTypeSelect.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    console.log(
+        "Custom Types added to Category Form:",
+        customTypeOptions.length
+    );
+
+}
+
