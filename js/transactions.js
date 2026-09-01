@@ -3259,6 +3259,25 @@ if (transactionForm) {
 
                     }
 
+                    // =================================
+// GET CUSTOM TRANSACTION BEHAVIOR
+// =================================
+
+const selectedTypeOption =
+    row.querySelector(
+        ".transaction-type option:checked"
+    );
+
+const transactionBehavior =
+    selectedTypeOption?.dataset.behavior || "";
+
+console.log(
+    "TRANSACTION BEHAVIOR:",
+    {
+        type: type,
+        behavior: transactionBehavior
+    }
+);
 
                     // =================================
                     // CREATE TRANSACTION DATA
@@ -3309,7 +3328,7 @@ if (transactionForm) {
                     };
 
 
-     // =================================
+// =================================
 // SAVE OR UPDATE TO FIRESTORE
 // =================================
 
@@ -3653,69 +3672,110 @@ row.dataset.transactionId =
                 }
 
 
-                // =================================
-                // TYPE
-                // =================================
+ // =================================
+// TYPE
+// =================================
 
-                let typeLabel =
-                    transaction.type || "-";
+let typeLabel =
+    transaction.type || "-";
 
 
-                if (
-                    transaction.type ===
-                    "income"
-                ) {
+// =================================
+// BUILT-IN TRANSACTION TYPES
+// =================================
 
-                    typeLabel =
-                        "💵 Income";
+if (
+    transaction.type ===
+    "income"
+) {
 
-                }
-                else if (
-                    transaction.type ===
-                    "expense"
-                ) {
+    typeLabel =
+        "💵 Income";
 
-                    typeLabel =
-                        "🛒 Expense";
+}
 
-                }
-                else if (
-                    transaction.type ===
-                    "investment"
-                ) {
+else if (
+    transaction.type ===
+    "expense"
+) {
 
-                    typeLabel =
-                        "📈 Investment";
+    typeLabel =
+        "🛒 Expense";
 
-                }
-                else if (
-                    transaction.type ===
-                    "transfer"
-                ) {
+}
 
-                    typeLabel =
-                        "🔄 Transfer";
+else if (
+    transaction.type ===
+    "investment"
+) {
 
-                }
-                else if (
-                    transaction.type ===
-                    "wallet_payment"
-                ) {
+    typeLabel =
+        "📈 Investment";
 
-                    typeLabel =
-                        "👛 Wallet Payment";
+}
 
-                }
-                else if (
-                    transaction.type ===
-                    "cashback"
-                ) {
+else if (
+    transaction.type ===
+    "transfer"
+) {
 
-                    typeLabel =
-                        "🎁 Cashback";
+    typeLabel =
+        "🔄 Transfer";
 
-                }
+}
 
+else if (
+    transaction.type ===
+    "wallet_payment"
+) {
+
+    typeLabel =
+        "👛 Wallet Payment";
+
+}
+
+else if (
+    transaction.type ===
+    "cashback"
+) {
+
+    typeLabel =
+        "🎁 Cashback";
+
+}
+
+
+// =================================
+// CUSTOM TRANSACTION TYPE
+// =================================
+
+else if (
+    transaction.type &&
+    transaction.type.startsWith(
+        "custom_"
+    )
+) {
+
+    const customTypeOption =
+        document.querySelector(
+            `.transaction-type option[value="${transaction.type}"]`
+        );
+
+
+    if (customTypeOption) {
+
+        typeLabel =
+            customTypeOption.textContent.trim();
+
+    }
+    else {
+
+        typeLabel =
+            transaction.type;
+
+    }
+
+}
 
                 // =================================
                 // INVESTMENT / ASSET
@@ -4458,6 +4518,11 @@ document.addEventListener(
             );
 
 
+            const behaviorSelect =
+    form.querySelector(
+        ".new-transaction-type-behavior"
+    );
+
         if (!input) {
 
             console.error(
@@ -4472,6 +4537,30 @@ document.addEventListener(
         const typeName =
             input.value.trim();
 
+const behavior =
+    behaviorSelect
+        ? behaviorSelect.value
+        : "";
+  
+  // =================================
+// VALIDATE BEHAVIOR
+// =================================
+
+if (!behavior) {
+
+    alert(
+        "कृपया Transaction Type का Behavior चुनें।"
+    );
+
+    if (behaviorSelect) {
+
+        behaviorSelect.focus();
+
+    }
+
+    return;
+
+}
 
         // =================================
         // VALIDATION
@@ -4531,6 +4620,9 @@ document.addEventListener(
 
                         name:
                             typeName,
+
+                        behavior: 
+                            behavior,
 
                         createdAt:
                             serverTimestamp(),
@@ -4754,13 +4846,16 @@ async function loadCustomTransactionTypes() {
 
                     customTypes.push({
 
-                        id:
-                            typeDoc.id,
+    id:
+        typeDoc.id,
 
-                        name:
-                            type.name.trim()
+    name:
+        type.name.trim(),
 
-                    });
+    behavior:
+        type.behavior || ""
+
+});
 
                 }
 
@@ -4839,6 +4934,8 @@ async function loadCustomTransactionTypes() {
                         option.dataset.customTransactionType =
                             "true";
 
+                        option.dataset.behavior =
+                            customType.behavior || "";
 
                         if (addNewOption) {
 
