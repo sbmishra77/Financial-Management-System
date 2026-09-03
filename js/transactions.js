@@ -12,6 +12,7 @@ import {
     deleteDoc,
     doc,
     updateDoc
+    
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ===============================
@@ -4542,7 +4543,7 @@ const behavior =
         ? behaviorSelect.value
         : "";
   
-  // =================================
+// =================================
 // VALIDATE BEHAVIOR
 // =================================
 
@@ -4640,11 +4641,123 @@ if (!behavior) {
                 typeRef.id
             );
 
+// =================================
+// ADD NEW TYPE IMMEDIATELY
+// =================================
+
+const newCustomType = {
+
+    id:
+        typeRef.id,
+
+    name:
+        typeName,
+
+    behavior:
+        behavior
+
+};
+
+
+console.log(
+    "Adding New Transaction Type Immediately:",
+    newCustomType
+);
+
+
+// =================================
+// UPDATE ALL TRANSACTION TYPE DROPDOWNS
+// =================================
+
+const typeSelects =
+    document.querySelectorAll(
+        ".transaction-type"
+    );
+
+
+typeSelects.forEach(
+    (typeSelect) => {
+
+        // -----------------------------
+        // FIND ADD NEW TYPE OPTION
+        // -----------------------------
+
+        const addNewOption =
+            typeSelect.querySelector(
+                "option[value='__add_new_transaction_type__']"
+            );
+
+
+        // -----------------------------
+        // CHECK DUPLICATE
+        // -----------------------------
+
+        const existingOption =
+            typeSelect.querySelector(
+                `option[value="custom_${typeRef.id}"]`
+            );
+
+
+        if (existingOption) {
+
+            return;
+
+        }
+
+
+        // -----------------------------
+        // CREATE NEW OPTION
+        // -----------------------------
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+
+        option.value =
+            "custom_" +
+            typeRef.id;
+
+
+        option.textContent =
+            typeName;
+
+
+        option.dataset.customTransactionType =
+            "true";
+
+
+        option.dataset.behavior =
+            behavior;
+
+
+        // -----------------------------
+        // INSERT BEFORE ADD NEW TYPE
+        // -----------------------------
+
+        if (addNewOption) {
+
+            typeSelect.insertBefore(
+                option,
+                addNewOption
+            );
+
+        }
+        else {
+
+            typeSelect.appendChild(
+                option
+            );
+
+        }
+
+    }
+);
 
             alert(
                 "New Transaction Type successfully saved."
             );
-
 
             // =================================
             // CLEAR INPUT
@@ -5058,3 +5171,832 @@ function loadCustomTypesIntoCategoryForm() {
 
 }
 
+// ======================================================
+// SHARE / STOCK INVESTMENT FORM - STEP 1
+// सिर्फ FORM OPEN करने के लिए
+// ======================================================
+
+(function () {
+
+    // --------------------------------------------------
+    // 1. Share Form बनाना
+    // --------------------------------------------------
+
+    function createShareForm() {
+
+        // अगर form पहले से बना हुआ है तो दोबारा मत बनाओ
+        if (document.getElementById("shareFormContainer")) {
+            return;
+        }
+
+        const container = document.createElement("div");
+
+        container.id = "shareFormContainer";
+
+        container.style.cssText = `
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 99999;
+            overflow-y: auto;
+            padding: 30px 15px;
+        `;
+
+        container.innerHTML = `
+            <div style="
+                max-width: 700px;
+                margin: 20px auto;
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            ">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-bottom:20px;
+                ">
+
+                    <h2 style="margin:0;">
+                        📈 Stock / Shares Investment
+                    </h2>
+
+                    <button
+                        type="button"
+                        id="closeShareFormButton"
+                        style="
+                            border:none;
+                            background:#eee;
+                            width:35px;
+                            height:35px;
+                            border-radius:50%;
+                            font-size:20px;
+                            cursor:pointer;
+                        "
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <div style="display:grid; gap:15px;">
+
+                    <div>
+                        <label>Transaction</label>
+
+                        <select
+                            id="shareTransactionType"
+                            style="width:100%; padding:10px;"
+                        >
+                            <option value="buy">Buy</option>
+                            <option value="sell">Sell</option>
+                            <option value="dividend">Dividend</option>
+                        </select>
+                    </div>
+
+
+                    <div>
+                        <label>Date</label>
+
+                        <input
+                            type="date"
+                            id="shareDate"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                  <div style="position:relative;">
+    <label>🔎 Search Stock</label>
+
+    <input
+        type="text"
+        id="shareStockSearch"
+        placeholder="Search company or stock symbol..."
+        autocomplete="off"
+        style="width:100%; padding:10px;"
+    >
+
+    <div
+        id="shareStockSearchResults"
+        style="
+            display:none;
+            position:absolute;
+            left:0;
+            right:0;
+            top:100%;
+            background:white;
+            border:1px solid #ccc;
+            border-radius:6px;
+            max-height:220px;
+            overflow-y:auto;
+            z-index:100000;
+        "
+    ></div>
+
+    <!-- Selected stock का actual name यहाँ रहेगा -->
+    <input
+        type="hidden"
+        id="shareStockName"
+    >
+
+    <!-- आगे CMP/API के लिए काम आएगा -->
+    <input
+        type="hidden"
+        id="shareStockSymbol"
+    >
+
+    <input
+        type="hidden"
+        id="shareStockExchange"
+    >
+</div>
+
+
+                    <div>
+                        <label>Exchange</label>
+
+                        <select
+                            id="shareExchange"
+                            style="width:100%; padding:10px;"
+                        >
+                            <option value="">Select Exchange</option>
+                            <option value="NSE">NSE</option>
+                            <option value="BSE">BSE</option>
+                        </select>
+                    </div>
+
+
+                    <div>
+                        <label>Broker</label>
+
+                        <input
+                            type="text"
+                            id="shareBroker"
+                            placeholder="e.g. Zerodha"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Quantity</label>
+
+                        <input
+                            type="number"
+                            id="shareQuantity"
+                            min="0"
+                            step="any"
+                            placeholder="0"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Price per Share</label>
+
+                        <input
+                            type="number"
+                            id="sharePrice"
+                            min="0"
+                            step="any"
+                            placeholder="0.00"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Charges</label>
+
+                        <input
+                            type="number"
+                            id="shareCharges"
+                            min="0"
+                            step="any"
+                            value="0"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Total Investment Amount</label>
+
+                        <input
+                            type="number"
+                            id="shareTotalAmount"
+                            readonly
+                            style="
+                                width:100%;
+                                padding:10px;
+                                background:#f3f3f3;
+                            "
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Current Market Price</label>
+
+                        <input
+                            type="number"
+                            id="shareCurrentPrice"
+                            min="0"
+                            step="any"
+                            placeholder="0.00"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label>Remarks</label>
+
+                        <textarea
+                            id="shareRemarks"
+                            rows="3"
+                            placeholder="Optional"
+                            style="width:100%; padding:10px;"
+                        ></textarea>
+                    </div>
+
+                </div>
+
+
+                <div style="
+                    display:flex;
+                    justify-content:flex-end;
+                    gap:10px;
+                    margin-top:25px;
+                ">
+
+                    <button
+                        type="button"
+                        id="cancelShareFormButton"
+                        style="
+                            padding:10px 18px;
+                            border:1px solid #ccc;
+                            background:white;
+                            border-radius:6px;
+                            cursor:pointer;
+                        "
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        id="saveShareFormButton"
+                        style="
+                            padding:10px 18px;
+                            border:none;
+                            background:#2563eb;
+                            color:white;
+                            border-radius:6px;
+                            cursor:pointer;
+                        "
+                    >
+                        Save
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(container);
+
+// --------------------------------------------------
+// STEP 3 — Stock Search Dropdown
+// --------------------------------------------------
+
+const stockSearchInput =
+    document.getElementById("shareStockSearch");
+
+const stockSearchResults =
+    document.getElementById("shareStockSearchResults");
+
+
+stockSearchInput?.addEventListener(
+    "input",
+    function () {
+
+        const search =
+            this.value.trim().toLowerCase();
+
+        stockSearchResults.innerHTML = "";
+
+        if (!search) {
+            stockSearchResults.style.display = "none";
+            return;
+        }
+
+console.log("STOCK MASTER:", window.stockMaster);
+
+        const matches =
+            window.stockMaster.filter(stock =>
+                stock.name.toLowerCase().includes(search) ||
+                stock.symbol.toLowerCase().includes(search)
+            );
+
+
+        if (matches.length === 0) {
+
+            stockSearchResults.innerHTML =
+                `<div style="padding:10px;">
+                    No matching stock found
+                </div>`;
+
+            stockSearchResults.style.display = "block";
+            return;
+        }
+
+
+        matches.forEach(stock => {
+
+            const item =
+                document.createElement("div");
+
+            item.textContent =
+                `${stock.symbol} — ${stock.name} — ${stock.exchange}`;
+
+            item.style.cssText = `
+                padding:10px;
+                cursor:pointer;
+                border-bottom:1px solid #eee;
+            `;
+
+
+            item.addEventListener(
+                "click",
+                function () {
+
+                    stockSearchInput.value =
+                        `${stock.symbol} — ${stock.name}`;
+
+                    document.getElementById(
+                        "shareStockName"
+                    ).value = stock.name;
+
+                    document.getElementById(
+                        "shareStockSymbol"
+                    ).value = stock.symbol;
+
+                   document.getElementById(
+    "shareStockExchange"
+).value = stock.exchange;
+
+document.getElementById(
+    "shareExchange"
+).value = stock.exchange;
+
+let isinInput = document.getElementById("shareStockISIN");
+
+if (!isinInput) {
+    isinInput = document.createElement("input");
+    isinInput.type = "hidden";
+    isinInput.id = "shareStockISIN";
+    document.getElementById("shareFormContainer").appendChild(isinInput);
+}
+
+isinInput.value = stock.isin || "";
+
+stockSearchResults.style.display =
+    "none";
+
+                    console.log(
+                        "SELECTED STOCK:",
+                        stock
+                    );
+                }
+            );
+
+
+            stockSearchResults.appendChild(item);
+        });
+
+
+        stockSearchResults.style.display =
+            "block";
+    }
+);
+        // --------------------------------------------------
+        // Default Date = Today
+        // --------------------------------------------------
+
+        const dateInput =
+            document.getElementById("shareDate");
+
+        if (dateInput) {
+
+            const today =
+                new Date()
+                    .toISOString()
+                    .split("T")[0];
+
+            dateInput.value = today;
+        }
+
+
+        // --------------------------------------------------
+        // Close buttons
+        // --------------------------------------------------
+
+        document
+            .getElementById("closeShareFormButton")
+            ?.addEventListener("click", closeShareForm);
+
+        document
+            .getElementById("cancelShareFormButton")
+            ?.addEventListener("click", closeShareForm);
+
+
+        // --------------------------------------------------
+        // Quantity × Price + Charges
+        // --------------------------------------------------
+
+        const quantityInput =
+            document.getElementById("shareQuantity");
+
+        const priceInput =
+            document.getElementById("sharePrice");
+
+        const chargesInput =
+            document.getElementById("shareCharges");
+
+        function calculateShareTotal() {
+
+            const quantity =
+                Number(quantityInput?.value || 0);
+
+            const price =
+                Number(priceInput?.value || 0);
+
+            const charges =
+                Number(chargesInput?.value || 0);
+
+            const total =
+                (quantity * price) + charges;
+
+            const totalInput =
+                document.getElementById(
+                    "shareTotalAmount"
+                );
+
+            if (totalInput) {
+                totalInput.value =
+                    total.toFixed(2);
+            }
+        }
+
+
+        quantityInput?.addEventListener(
+            "input",
+            calculateShareTotal
+        );
+
+        priceInput?.addEventListener(
+            "input",
+            calculateShareTotal
+        );
+
+        chargesInput?.addEventListener(
+            "input",
+            calculateShareTotal
+        );
+
+
+        // --------------------------------------------------
+        // STEP 1 में Save सिर्फ test करेगा
+        // Firebase में अभी कुछ save नहीं होगा
+        // --------------------------------------------------
+
+        document
+    .getElementById("saveShareFormButton")
+    ?.addEventListener("click", async function () {
+
+        const shareData = {
+            transactionType: document.getElementById("shareTransactionType")?.value || "",
+            date: document.getElementById("shareDate")?.value || "",
+            companyName: document.getElementById("shareStockName")?.value || "",
+            symbol: document.getElementById("shareStockSymbol")?.value || "",
+            exchange: document.getElementById("shareStockExchange")?.value || "",
+            isin: document.getElementById("shareStockISIN")?.value || "",
+            quantity: Number(document.getElementById("shareQuantity")?.value || 0),
+            buyPrice: Number(document.getElementById("sharePrice")?.value || 0),
+            charges: Number(document.getElementById("shareCharges")?.value || 0),
+            totalAmount: Number(document.getElementById("shareTotalAmount")?.value || 0),
+            currentPrice: Number(document.getElementById("shareCurrentPrice")?.value || 0),
+            broker: document.getElementById("shareBroker")?.value || "",
+            remarks: document.getElementById("shareRemarks")?.value || ""
+        };
+
+        console.log("SAVE BUTTON CLICKED:", shareData);
+
+        const user = auth.currentUser;
+
+if (!user) {
+    alert("कृपया पहले login करें।");
+    return;
+}
+
+try {
+
+    const sharesCollection = collection(
+        db,
+        "users",
+        user.uid,
+        "shares"
+    );
+
+let shareDoc;
+
+if (window.editingShareId) {
+
+    const shareDocRef = doc(
+        db,
+        "users",
+        user.uid,
+        "shares",
+        window.editingShareId
+    );
+
+    await updateDoc(
+        shareDocRef,
+        {
+            ...shareData,
+            updatedAt: serverTimestamp()
+        }
+    );
+
+    shareDoc = {
+        id: window.editingShareId
+    };
+
+    console.log(
+        "SHARE UPDATED SUCCESSFULLY:",
+        {
+            id: shareDoc.id,
+            ...shareData
+        }
+    );
+
+    window.editingShareId = null;
+
+    alert("Share successfully update हो गया।");
+
+} else {
+
+    shareDoc = await addDoc(
+        sharesCollection,
+        {
+            ...shareData,
+            createdAt: serverTimestamp()
+        }
+    );
+
+    console.log(
+        "SHARE SAVED SUCCESSFULLY:",
+        {
+            id: shareDoc.id,
+            ...shareData
+        }
+    );
+
+    alert("Share successfully save हो गया।");
+}
+
+} catch (error) {
+
+console.error("SAVE SHARE ERROR OBJECT:", error);
+console.error("SAVE SHARE ERROR CODE:", error?.code);
+console.error("SAVE SHARE ERROR MESSAGE:", error?.message);
+
+    alert(
+        "Share save नहीं हो सका। Console में error देखें।"
+    );
+
+}
+
+    });
+    }
+
+
+    // --------------------------------------------------
+    // 2. Form Open
+    // --------------------------------------------------
+
+    function openShareForm(row) {
+
+        createShareForm();
+
+        const container =
+            document.getElementById(
+                "shareFormContainer"
+            );
+
+        if (!container) {
+            return;
+        }
+
+
+        // Transaction row को याद रखेंगे
+        window.pendingShareTransaction = {
+            row: row
+        };
+
+
+        // Transaction Date → Share Date
+        const transactionDate =
+            row?.querySelector(
+                ".transaction-date"
+            )?.value || "";
+
+
+        const shareDate =
+            document.getElementById(
+                "shareDate"
+            );
+
+        if (
+            shareDate &&
+            transactionDate
+        ) {
+            shareDate.value =
+                transactionDate;
+        }
+
+
+        // Transaction Amount → Quantity/Price
+        // अभी सिर्फ console में check करेंगे
+        const transactionAmount =
+            row?.querySelector(
+                ".transaction-amount"
+            )?.value || "";
+
+
+        console.log(
+            "SHARE FORM OPENED",
+            {
+                transactionDate:
+                    transactionDate,
+
+                transactionAmount:
+                    transactionAmount,
+
+                row:
+                    row
+            }
+        );
+
+
+        container.style.display =
+            "block";
+    }
+
+
+    // --------------------------------------------------
+    // 3. Form Close
+    // --------------------------------------------------
+
+    function closeShareForm() {
+
+        const container =
+            document.getElementById(
+                "shareFormContainer"
+            );
+
+        if (container) {
+
+            container.style.display =
+                "none";
+        }
+
+        window.pendingShareTransaction =
+            null;
+    }
+
+
+    // --------------------------------------------------
+    // 4. Transaction Category Change
+    // --------------------------------------------------
+
+    document.addEventListener(
+        "change",
+        function (event) {
+
+            // केवल Transaction Category
+            if (
+                !event.target.classList.contains(
+                    "transaction-category"
+                )
+            ) {
+                return;
+            }
+
+
+            const row =
+                event.target.closest(
+                    ".transaction-entry-row"
+                );
+
+            if (!row) {
+                return;
+            }
+
+
+            const typeSelect =
+                row.querySelector(
+                    ".transaction-type"
+                );
+
+            const categorySelect =
+                row.querySelector(
+                    ".transaction-category"
+                );
+
+            if (
+                !typeSelect ||
+                !categorySelect
+            ) {
+                return;
+            }
+
+
+            const type =
+                typeSelect.value;
+
+
+            const categoryValue =
+                categorySelect.value;
+
+
+            const selectedOption =
+                categorySelect.options[
+                    categorySelect.selectedIndex
+                ];
+
+
+            const categoryText =
+                selectedOption
+                    ?.textContent
+                    ?.trim() || "";
+
+
+            console.log(
+                "TRANSACTION CATEGORY CHANGED:",
+                {
+                    type: type,
+                    categoryValue:
+                        categoryValue,
+                    categoryText:
+                        categoryText
+                }
+            );
+
+
+            // --------------------------------------------------
+            // Stock / Shares detect
+            // Value OR visible text दोनों check करेंगे
+            // --------------------------------------------------
+
+            const isShareCategory =
+                categoryValue ===
+                    "Stock / Shares"
+                ||
+                categoryText ===
+                    "Stock / Shares";
+
+
+            if (
+                type === "investment" &&
+                isShareCategory
+            ) {
+
+                openShareForm(row);
+            }
+
+        }
+    );
+
+    // --------------------------------------------------
+    // Shares Holdings → Add New Share
+    // Same Share Form open होगा
+    // --------------------------------------------------
+
+    document
+        .getElementById("addNewShareFromAllSharesButton")
+        ?.addEventListener("click", function () {
+
+            openShareForm(null);
+
+        });
+
+       window.openShareForm = openShareForm;
+})();

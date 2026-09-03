@@ -7646,3 +7646,497 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+
+// ======================================================
+// SHARES HOLDINGS VIEW - STEP 4
+// Existing Shares button को Shares Holdings page से जोड़ना
+// ======================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const sharesButton =
+        document.querySelector(
+            "#viewSharesFromInvestmentsButton"
+        );
+
+    const sharesContainer =
+        document.querySelector(
+            "#sharesContainer"
+        );
+
+    const investmentTableWrapper =
+        document.querySelector(
+            "#investmentTableWrapper"
+        );
+
+    const investmentsSectionTitle =
+        document.querySelector(
+            "#investmentsSectionTitle"
+        );
+
+    const addInvestmentButton =
+        document.querySelector(
+            "#addInvestmentButton"
+        );
+
+    const viewAllInvestmentsButton =
+        document.querySelector(
+            "#viewAllInvestmentsButton"
+        );
+
+    const backToInvestmentsDashboardButton =
+        document.querySelector(
+            "#backToInvestmentsDashboardButton"
+        );
+
+
+    console.log(
+        "Shares View Elements:",
+        {
+            sharesButton: !!sharesButton,
+            sharesContainer: !!sharesContainer
+        }
+    );
+
+
+    // ==================================================
+    // SHARES BUTTON
+    // ==================================================
+
+    if (sharesButton) {
+
+        sharesButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "Shares button clicked"
+                );
+
+
+                // Shares page दिखाओ
+                if (sharesContainer) {
+
+                    sharesContainer.style.display =
+                        "block";
+                }
+
+                window.loadShares();
+
+                // Main Investment table छुपाओ
+                if (investmentTableWrapper) {
+
+                    investmentTableWrapper.style.display =
+                        "none";
+                }
+
+
+                // Title बदलो
+                if (investmentsSectionTitle) {
+
+                    investmentsSectionTitle.textContent =
+                        "📈 Share Holdings";
+                }
+
+
+                // Dashboard के buttons छुपाओ
+                if (addInvestmentButton) {
+
+                    addInvestmentButton.style.display =
+                        "none";
+                }
+
+
+                if (viewAllInvestmentsButton) {
+
+                    viewAllInvestmentsButton.style.display =
+                        "none";
+                }
+
+
+                if (sharesButton) {
+
+                    sharesButton.style.display =
+                        "none";
+                }
+
+
+                // Back button दिखाओ
+                if (backToInvestmentsDashboardButton) {
+
+                    backToInvestmentsDashboardButton.style.display =
+                        "inline-block";
+                }
+
+            }
+        );
+
+    }
+
+
+    // ==================================================
+    // BACK TO INVESTMENT DASHBOARD
+    // ==================================================
+
+    if (backToInvestmentsDashboardButton) {
+
+        backToInvestmentsDashboardButton.addEventListener(
+            "click",
+            function () {
+
+                console.log(
+                    "Back to Investment Dashboard clicked"
+                );
+
+
+                // Shares page hide
+                if (sharesContainer) {
+
+                    sharesContainer.style.display =
+                        "none";
+                }
+
+
+                // Investment table वापस दिखाओ
+                if (investmentTableWrapper) {
+
+                    investmentTableWrapper.style.display =
+                        "block";
+                }
+
+
+                // Original title
+                if (investmentsSectionTitle) {
+
+                    investmentsSectionTitle.textContent =
+                        "📈 My Investments";
+                }
+
+
+                // Original buttons वापस दिखाओ
+                if (addInvestmentButton) {
+
+                    addInvestmentButton.style.display =
+                        "inline-block";
+                }
+
+
+                if (viewAllInvestmentsButton) {
+
+                    viewAllInvestmentsButton.style.display =
+                        "inline-block";
+                }
+
+
+                if (sharesButton) {
+
+                    sharesButton.style.display =
+                        "inline-block";
+                }
+
+
+                // Back button hide
+                backToInvestmentsDashboardButton.style.display =
+                    "none";
+
+            }
+        );
+
+    }
+
+});
+
+document.getElementById("backToSharesDashboardButton")?.addEventListener("click", function () {
+    const sharesContainer = document.getElementById("sharesContainer");
+    const investmentTableWrapper = document.getElementById("investmentTableWrapper");
+    const title = document.getElementById("investmentsSectionTitle");
+
+    // Close Shares Holdings
+    if (sharesContainer) {
+        sharesContainer.style.display = "none";
+    }
+
+    // Keep Investment list hidden
+    if (investmentTableWrapper) {
+        investmentTableWrapper.style.display = "none";
+    }
+
+    // Restore Investment Dashboard title
+    if (title) {
+        title.textContent = "📈 My Investments";
+    }
+
+    // Restore dashboard buttons
+    const addInvestmentButton = document.getElementById("addInvestmentButton");
+    const viewAllInvestmentsButton = document.getElementById("viewAllInvestmentsButton");
+    const viewFixedDepositsButton = document.getElementById("viewFixedDepositsFromInvestmentsButton");
+    const viewSharesButton = document.getElementById("viewSharesFromInvestmentsButton");
+    const viewMutualFundsButton = document.getElementById("viewMutualFundsFromInvestmentsButton");
+    const viewOtherInvestmentsButton = document.getElementById("viewOtherInvestmentsFromInvestmentsButton");
+    const backButton = document.getElementById("backToInvestmentsDashboardButton");
+
+    if (addInvestmentButton) addInvestmentButton.style.display = "";
+    if (viewAllInvestmentsButton) viewAllInvestmentsButton.style.display = "";
+    if (viewFixedDepositsButton) viewFixedDepositsButton.style.display = "";
+    if (viewSharesButton) viewSharesButton.style.display = "";
+    if (viewMutualFundsButton) viewMutualFundsButton.style.display = "";
+    if (viewOtherInvestmentsButton) viewOtherInvestmentsButton.style.display = "";
+
+    if (backButton) {
+        backButton.style.display = "none";
+    }
+});
+
+// ==================================================
+// LOAD SHARES FROM FIRESTORE — TEST + TABLE
+// ==================================================
+
+window.loadShares = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("SHARES TEST: User not logged in");
+        return;
+    }
+
+    try {
+
+        const sharesSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "shares"
+            )
+        );
+
+        console.log(
+            "SHARES FROM FIRESTORE:",
+            sharesSnapshot.size
+        );
+
+        const tableBody =
+            document.querySelector(
+                "#sharesContainer #sharesTableBody"
+            );
+
+        if (!tableBody) {
+            console.error("SHARES TABLE BODY NOT FOUND");
+            return;
+        }
+
+        tableBody.innerHTML = "";
+
+        sharesSnapshot.forEach((shareDoc) => {
+
+            const share = shareDoc.data();
+
+            console.log(
+                "SHARE:",
+                shareDoc.id,
+                share
+            );
+
+            const quantity = Number(share.quantity || 0);
+            const buyPrice = Number(share.buyPrice || 0);
+            const currentPrice = Number(share.currentPrice || 0);
+
+            const invested =
+                Number(share.totalAmount || 0) ||
+                (quantity * buyPrice);
+
+            const currentValue =
+                quantity * currentPrice;
+
+            const profitLoss =
+                currentValue - invested;
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>
+                    <strong>${share.companyName || "-"}</strong>
+                    <br>
+                    <small>${share.symbol || "-"}</small>
+                </td>
+
+                <td>${share.exchange || "-"}</td>
+
+                <td>${quantity}</td>
+
+                <td>₹${buyPrice.toFixed(2)}</td>
+
+                <td>₹${invested.toFixed(2)}</td>
+
+                <td>₹${currentValue.toFixed(2)}</td>
+
+                <td>
+                    ₹${profitLoss.toFixed(2)}
+                </td>
+
+                <td>${share.broker || "-"}</td>
+
+                <td>${share.date || "-"}</td>
+
+                <td>
+    <button
+        type="button"
+        class="share-edit-button"
+        data-id="${shareDoc.id}">
+        ✏️
+    </button>
+
+    <button
+        type="button"
+        class="share-delete-button"
+        data-id="${shareDoc.id}">
+        🗑️
+    </button>
+</td>
+            `;
+
+            tableBody.appendChild(row);
+
+        });
+
+        const countElement =
+            document.getElementById("allSharesCount");
+
+        if (countElement) {
+            countElement.textContent =
+                sharesSnapshot.size;
+        }
+
+        const noSharesMessage =
+            document.querySelector(
+                "#sharesContainer #noSharesMessage"
+            );
+
+        if (noSharesMessage) {
+            noSharesMessage.style.display =
+                sharesSnapshot.size === 0
+                    ? ""
+                    : "none";
+        }
+
+        console.log("SHARES TABLE RENDERED");
+
+    } catch (error) {
+
+        console.error(
+            "LOAD SHARES TEST ERROR:",
+            error
+        );
+
+    }
+};
+
+// ==================================================
+// SHARE EDIT BUTTON — OPEN EXISTING SHARE FORM
+// ==================================================
+
+document.addEventListener("click", async function (event) {
+
+    const editButton = event.target.closest(".share-edit-button");
+
+    if (!editButton) {
+        return;
+    }
+
+    const shareId = editButton.dataset.id;
+
+    console.log("EDIT SHARE CLICKED:", shareId);
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    try {
+
+        const shareDocRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shares",
+            shareId
+        );
+
+        const shareSnapshot = await getDoc(shareDocRef);
+
+        if (!shareSnapshot.exists()) {
+            console.error("SHARE NOT FOUND:", shareId);
+            return;
+        }
+
+        const share = shareSnapshot.data();
+
+        console.log("EDIT SHARE DATA:", share);
+
+        // Existing Share Form खोलें
+        window.openShareForm(null);
+
+        // Form fields में existing data भरें
+        document.getElementById("shareTransactionType").value =
+            share.transactionType || "";
+
+        document.getElementById("shareDate").value =
+            share.date || "";
+
+        document.getElementById("shareStockSearch").value =
+            `${share.symbol || ""} — ${share.companyName || ""}`;
+
+        document.getElementById("shareStockName").value =
+            share.companyName || "";
+
+        document.getElementById("shareStockSymbol").value =
+            share.symbol || "";
+
+        document.getElementById("shareStockExchange").value =
+            share.exchange || "";
+
+        document.getElementById("shareExchange").value =
+            share.exchange || "";
+
+        document.getElementById("shareBroker").value =
+            share.broker || "";
+
+        document.getElementById("shareQuantity").value =
+            share.quantity || 0;
+
+        document.getElementById("sharePrice").value =
+            share.buyPrice || 0;
+
+        document.getElementById("shareCharges").value =
+            share.charges || 0;
+
+        document.getElementById("shareTotalAmount").value =
+            share.totalAmount || 0;
+
+        document.getElementById("shareCurrentPrice").value =
+            share.currentPrice || 0;
+
+        document.getElementById("shareRemarks").value =
+            share.remarks || "";
+
+        // Editing document याद रखें
+        window.editingShareId = shareId;
+
+        console.log(
+            "SHARE FORM READY FOR EDIT:",
+            shareId
+        );
+
+    } catch (error) {
+
+        console.error(
+            "EDIT SHARE ERROR:",
+            error
+        );
+
+    }
+
+});

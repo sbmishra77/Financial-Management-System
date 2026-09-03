@@ -1454,52 +1454,288 @@
 
     <!-- INVESTMENT ACTION BUTTONS -->
 
-    <div class="section-header-buttons">
+<div class="section-header-buttons">
 
-        <button
-            type="button"
-            id="addInvestmentButton"
-            class="add-module-button">
+    <style>
+/* =========================================
+   INVESTMENT HEADER - KEEP EVERYTHING
+   ON ONE SINGLE LINE
+   ========================================= */
 
-            ➕ Add Investment
+.investment-section-header {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    width: 100%;
+    overflow-x: auto;
+}
 
-        </button>
+
+/* Investment title */
+.investment-section-header .section-title-area {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 
 
-        <button
-            type="button"
-            id="viewAllInvestmentsButton"
-            class="view-module-button">
+/* Summary button */
+.investment-section-header .section-summary-button {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 
-            View All Investments →
 
-        </button>
+/* All investment action buttons */
+.investment-section-header .section-header-buttons {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
 
-        <button
+
+/* Individual buttons */
+.investment-section-header .section-header-buttons button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+}
+</style>
+
+    <button
+        type="button"
+        id="addInvestmentButton"
+        class="add-module-button">
+
+        ➕ Add Investment
+
+    </button>
+
+
+    <button
+        type="button"
+        id="viewAllInvestmentsButton"
+        class="view-module-button">
+
+        View All Investments →
+
+    </button>
+
+
+    <button
+        type="button"
+        id="viewFixedDepositsFromInvestmentsButton"
+        class="view-module-button">
+
+        🏦 Fixed Deposits →
+
+    </button>
+
+
+<!-- =============================== -->
+<!-- INVESTMENT HEADER ACTION BUTTONS -->
+<!-- =============================== -->
+
+<style>
+    /* Keep Investment header buttons in one row */
+    .investment-section-header {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .investment-section-header .section-header-buttons {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .investment-section-header .section-header-buttons button {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+    }
+</style>
+
+
+<!-- =============================== -->
+<!-- SHARES -->
+<!-- =============================== -->
+
+<button
     type="button"
-    id="viewFixedDepositsFromInvestmentsButton"
+    id="viewSharesFromInvestmentsButton"
     class="view-module-button">
 
-    🏦 Fixed Deposits →
+    📈 Shares →
 
 </button>
 
-        <button
-            type="button"
-            id="backToInvestmentsDashboardButton"
-            class="back-module-button"
-            style="display: none;">
 
-            ← Back to Dashboard
+<!-- =============================== -->
+<!-- MUTUAL FUNDS / SIP -->
+<!-- =============================== -->
 
-        </button>
+<button
+    type="button"
+    id="viewMutualFundsFromInvestmentsButton"
+    class="view-module-button">
+
+    📊 Mutual Funds / SIP →
+
+</button>
+
+
+<!-- =============================== -->
+<!-- OTHER INVESTMENTS -->
+<!-- =============================== -->
+
+<button
+    type="button"
+    id="viewOtherInvestmentsFromInvestmentsButton"
+    class="view-module-button">
+
+    📦 Other Investments →
+
+</button>
+
+
+<!-- =============================== -->
+<!-- CLOSE INVESTMENT HEADER -->
+<!-- =============================== -->
+
+</div> <!-- section-header-buttons -->
+
+
+</div> <!-- investment-section-header -->
+
+
+<!-- ================================================= -->
+<!-- SHARE HOLDINGS VIEW -->
+<!-- ================================================= -->
+
+<div
+    id="sharesContainer"
+    class="fd-table-wrapper"
+    style="
+        display: none;
+        width: 100%;
+        margin-top: 20px;
+    ">
+
+
+    <!-- =============================== -->
+    <!-- SHARE HOLDINGS HEADER -->
+    <!-- =============================== -->
+
+    <div class="section-header">
+
+        <h2>
+
+            📈 All Share Holdings
+            (<span id="allSharesCount">0</span>)
+
+        </h2>
+
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="addNewShareFromAllSharesButton">
+
+                ➕ Add New Share
+
+            </button>
+
+
+            <button
+                type="button"
+                id="backToSharesDashboardButton">
+
+                ← Back to Dashboard
+
+            </button>
+
+        </div>
 
     </div>
 
+
+    <!-- =============================== -->
+    <!-- SHARE HOLDINGS TABLE -->
+    <!-- =============================== -->
+
+    <div
+        style="
+            width: 100%;
+            overflow-x: auto;
+        ">
+
+        <table
+            class="fd-table"
+            style="
+                width: 100%;
+                min-width: 1200px;
+            ">
+
+            <thead>
+
+                <tr>
+
+                    <th>Company / Stock</th>
+
+                    <th>Exchange</th>
+
+                    <th>Quantity</th>
+
+                    <th>Buy Price</th>
+
+                    <th>Invested</th>
+
+                    <th>Current Value</th>
+
+                    <th>P/L</th>
+
+                    <th>Broker</th>
+
+                    <th>Date</th>
+
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="sharesTableBody">
+
+                <!-- Share holdings will load here -->
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <p id="noSharesMessage">
+
+        अभी कोई Share Holding नहीं है।
+
+    </p>
+
+
 </div>
 
-<div class="investment-summary">
 
+<div class="investment-summary">
+        
 <!-- =============================== -->
 <!-- INVESTMENT SUMMARY -->
 <!-- =============================== -->
@@ -1678,6 +1914,199 @@
 </div>
 
 </div>
+
+</div>
+
+<!-- =============================== -->
+<!-- SHARES SECTION -->
+<!-- =============================== -->
+
+<div
+    id="sharesInvestmentView"
+    class="finance-section"
+    style="display: none;">
+
+    <!-- =============================== -->
+    <!-- SHARES HEADER -->
+    <!-- =============================== -->
+
+    <div class="section-header">
+
+        <div class="section-title-area">
+
+            <h2 id="sharesSectionTitle">
+                📈 Shares / Stocks
+            </h2>
+
+        </div>
+
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="addShareInvestmentButton"
+                class="add-module-button">
+
+                ➕ Add Share
+
+            </button>
+
+
+            <button
+                type="button"
+                id="viewAllSharesButton"
+                class="view-module-button">
+
+                View All Shares →
+
+            </button>
+
+
+            <button
+                type="button"
+                id="backFromSharesButton"
+                class="back-module-button">
+
+                ← Back to Investments
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- SHARES SUMMARY -->
+    <!-- =============================== -->
+
+    <div class="investment-summary">
+
+        <div class="investment-summary-card">
+
+            <h3>
+                💰 Total Invested
+            </h3>
+
+            <strong id="sharesTotalInvested">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                📈 Current Value
+            </h3>
+
+            <strong id="sharesCurrentValue">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                📊 Profit / Loss
+            </h3>
+
+            <strong id="sharesProfitLoss">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                📈 Return
+            </h3>
+
+            <strong id="sharesReturnPercent">
+                0%
+            </strong>
+
+        </div>
+
+
+        <div class="investment-summary-card">
+
+            <h3>
+                📦 Holdings
+            </h3>
+
+            <strong id="sharesHoldingCount">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- SHARES TABLE -->
+    <!-- =============================== -->
+
+    <div
+        id="sharesTableWrapper"
+        class="investment-table-wrapper">
+
+        <table class="investment-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Share</th>
+
+                    <th>Symbol</th>
+
+                    <th>Quantity</th>
+
+                    <th>Buy Price</th>
+
+                    <th>Invested</th>
+
+                    <th>CMP</th>
+
+                    <th>Current Value</th>
+
+                    <th>Profit / Loss</th>
+
+                    <th>Return %</th>
+
+                    <th>Actions</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="sharesTableBody">
+
+                <!-- Share rows will load here -->
+
+            </tbody>
+
+        </table>
+
+
+        <p
+            id="noSharesMessage"
+            style="display: none;">
+
+            अभी कोई Share Holding नहीं है।
+
+        </p>
+
+    </div>
 
 </div>
 
@@ -5181,6 +5610,7 @@
 <!-- JAVASCRIPT FILES -->
 <!-- ========================================= -->
 
+<script src="js/stockMaster.js"></script>
 <script type="module" src="js/firebase.js"></script>
 <script type="module" src="js/script.js"></script>
 <script type="module" src="js/transactions.js"></script>
