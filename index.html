@@ -1628,54 +1628,103 @@
         margin-top: 20px;
     ">
 
+<!-- =============================== -->
+<!-- SHARE HOLDINGS HEADER -->
+<!-- =============================== -->
 
-    <!-- =============================== -->
-    <!-- SHARE HOLDINGS HEADER -->
-    <!-- =============================== -->
+<div class="section-header">
 
-    <div class="section-header">
+    <h2 style="margin:0; white-space:nowrap;">
 
-        <h2>
+        📈 All Share Holdings
+        (<span id="allSharesCount">0</span>)
 
-            📈 All Share Holdings
-            (<span id="allSharesCount">0</span>)
-
-        </h2>
-
-
-        <div class="section-header-buttons">
-
-            <button
-                type="button"
-                id="addNewShareFromAllSharesButton">
-
-                ➕ Add New Share
-
-            </button>
+    </h2>
 
 
-            <button
-                type="button"
-                id="backToSharesDashboardButton">
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            gap:20px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+        ">
 
-                ← Back to Dashboard
+        <!-- HOLDINGS SUMMARY -->
 
-            </button>
+        <div style="font-size:14px;">
+
+            <strong>Total Investment:</strong>
+            <span id="sharesTotalInvestment">₹0.00</span>
 
         </div>
 
+
+        <div style="font-size:14px;">
+
+            <strong>Total Value:</strong>
+            <span id="sharesTotalValue">₹0.00</span>
+
+        </div>
+
+
+        <div style="font-size:14px;">
+
+            <strong>P/L:</strong>
+
+            <span id="sharesTotalPL">
+                ₹0.00 (0.00%)
+            </span>
+
+        </div>
+
+
+        <!-- REFRESH -->
+
+        <button
+            type="button"
+            id="refreshShareDataButton">
+
+            🔄 Refresh
+
+        </button>
+
+
+        <!-- EXISTING BUTTONS -->
+
+        <button
+            type="button"
+            id="addNewShareFromAllSharesButton">
+
+            ➕ Add New Share
+
+        </button>
+
+
+        <button
+            type="button"
+            id="backToSharesDashboardButton">
+
+            ← Back to Dashboard
+
+        </button>
+
     </div>
 
+</div>
 
     <!-- =============================== -->
     <!-- SHARE HOLDINGS TABLE -->
     <!-- =============================== -->
 
     <div
-        style="
-            width: 100%;
-            overflow-x: auto;
-        ">
+    style="
+        width: 100%;
+        max-height: 330px;
+        overflow-x: auto;
+        overflow-y: auto;
+    ">
 
         <table
             class="fd-table"
@@ -1689,29 +1738,20 @@
                 <tr>
 
                     <th>Company / Stock</th>
-
                     <th>Exchange</th>
-
                     <th>Quantity</th>
-
                     <th>Buy Price</th>
-
                     <th>Invested</th>
-
+                    <th>CMP / LTP</th>
                     <th>Current Value</th>
-
                     <th>P/L</th>
-
                     <th>Broker</th>
-
                     <th>Date</th>
-
                     <th>Actions</th>
 
                 </tr>
 
             </thead>
-
 
             <tbody id="sharesTableBody">
 
@@ -1731,8 +1771,141 @@
     </p>
 
 
+    <!-- ================================================= -->
+    <!-- SHARE TRADING HISTORY -->
+    <!-- ================================================= -->
+
+    <div
+        id="shareTradingHistoryContainer"
+        style="
+            display: block;
+            width: 100%;
+            margin-top: 30px;
+        ">
+
+    <div
+    style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:20px;
+        flex-wrap:wrap;
+        margin-bottom:10px;
+        width:100%;
+    ">
+
+    <h2 style="margin:0; white-space:nowrap;">
+
+        📊 Share Trading History
+        (<span id="shareTradingHistoryCount">0</span>)
+
+    </h2>
+
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            gap:20px;
+            flex-wrap:wrap;
+            justify-content:flex-end;
+            font-size:14px;
+        ">
+
+        <div>
+
+            <strong>Total Sell:</strong>
+            <span id="historyTotalSell">
+                ₹0.00
+            </span>
+
+        </div>
+
+
+        <div>
+
+            <strong>Total Cost:</strong>
+            <span id="historyTotalCost">
+                ₹0.00
+            </span>
+
+        </div>
+
+
+        <div>
+
+            <strong>Realized P/L:</strong>
+
+            <span id="historyRealizedPL">
+                ₹0.00 (0.00%)
+            </span>
+
+        </div>
+
+    </div>
+
 </div>
 
+
+        <div
+    style="
+        width: 100%;
+        max-height: 330px;
+        overflow-x: auto;
+        overflow-y: auto;
+    ">
+
+            <table
+                class="fd-table"
+                style="
+                    width: 100%;
+                    min-width: 1200px;
+                ">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>Company</th>
+                        <th>Symbol</th>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Gross</th>
+                        <th>Charges</th>
+                        <th>Net Amount</th>
+                        <th>Cost</th>
+                        <th>Realized P/L</th>
+                        <th>Broker</th>
+                        <th>Actions</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="shareTradingHistoryTableBody">
+
+                    <!-- Trading history will load here -->
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <p
+            id="noShareTradingHistoryMessage"
+            style="display: none;">
+
+            अभी कोई Share Trading History नहीं है।
+
+        </p>
+
+    </div>
+
+</div>
 
 <div class="investment-summary">
         
@@ -2108,7 +2281,6 @@
 
     </div>
 
-</div>
 
 <!-- =============================== -->
 <!-- PROPERTIES & RENTALS SECTION -->

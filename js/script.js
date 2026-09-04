@@ -7723,6 +7723,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 window.loadShares();
 
+                if (window.loadShareTradingHistory) {
+    window.loadShareTradingHistory();
+}
+
                 // Main Investment table छुपाओ
                 if (investmentTableWrapper) {
 
@@ -7928,6 +7932,10 @@ window.loadShares = async function () {
 
         tableBody.innerHTML = "";
 
+        let totalInvestment = 0;
+let totalCurrentValue = 0;
+let totalProfitLoss = 0;
+
         sharesSnapshot.forEach((shareDoc) => {
 
             const share = shareDoc.data();
@@ -7952,6 +7960,10 @@ window.loadShares = async function () {
             const profitLoss =
                 currentValue - invested;
 
+                totalInvestment += invested;
+totalCurrentValue += currentValue;
+totalProfitLoss += profitLoss;
+
             const row = document.createElement("tr");
 
             row.innerHTML = `
@@ -7968,18 +7980,22 @@ window.loadShares = async function () {
                 <td>₹${buyPrice.toFixed(2)}</td>
 
                 <td>₹${invested.toFixed(2)}</td>
-
-                <td>₹${currentValue.toFixed(2)}</td>
-
-                <td>
-                    ₹${profitLoss.toFixed(2)}
-                </td>
+<td class="share-cmp-cell">₹${currentPrice.toFixed(2)}</td>
+<td class="share-current-value-cell">₹${currentValue.toFixed(2)}</td>
+<td class="share-pl-cell">₹${profitLoss.toFixed(2)}</td>
 
                 <td>${share.broker || "-"}</td>
 
                 <td>${share.date || "-"}</td>
 
-                <td>
+    <td>
+    <button
+        type="button"
+        class="share-sell-button"
+        data-id="${shareDoc.id}">
+        💰 Sell
+    </button>
+
     <button
         type="button"
         class="share-edit-button"
@@ -7993,12 +8009,90 @@ window.loadShares = async function () {
         data-id="${shareDoc.id}">
         🗑️
     </button>
-</td>
+    </td>
             `;
 
             tableBody.appendChild(row);
 
+            window.fetchShareCMP(share.symbol).then(async (cmp) => {
+
+    if (cmp === null) return;
+
+    const latestCurrentValue = quantity * cmp;
+    const latestProfitLoss = latestCurrentValue - invested;
+
+    // Update table
+    row.cells[5].textContent =
+    `₹${cmp.toFixed(2)}`;
+
+row.cells[6].textContent =
+    `₹${latestCurrentValue.toFixed(2)}`;
+
+row.cells[7].textContent =
+    `₹${latestProfitLoss.toFixed(2)}`;
+
+    // Save latest CMP to Firestore
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "users",
+                user.uid,
+                "shares",
+                shareDoc.id
+            ),
+            {
+                currentPrice: cmp,
+                updatedAt: serverTimestamp()
+            }
+        );
+
+        console.log(
+            "CMP UPDATED:",
+            share.symbol,
+            cmp
+        );
+
+    } catch (error) {
+
+        console.error(
+            "CMP FIRESTORE UPDATE ERROR:",
+            error
+        );
+    }
+});
         });
+
+        const totalPLPercentage =
+    totalInvestment > 0
+        ? (totalProfitLoss / totalInvestment) * 100
+        : 0;
+
+const totalInvestmentElement =
+    document.getElementById("sharesTotalInvestment");
+
+const totalValueElement =
+    document.getElementById("sharesTotalValue");
+
+const totalPLElement =
+    document.getElementById("sharesTotalPL");
+
+if (totalInvestmentElement) {
+    totalInvestmentElement.textContent =
+        `₹${totalInvestment.toFixed(2)}`;
+}
+
+if (totalValueElement) {
+    totalValueElement.textContent =
+        `₹${totalCurrentValue.toFixed(2)}`;
+}
+
+if (totalPLElement) {
+    totalPLElement.textContent =
+        `₹${totalProfitLoss.toFixed(2)} ` +
+        `(${totalPLPercentage.toFixed(2)}%)`;
+}
 
         const countElement =
             document.getElementById("allSharesCount");
@@ -8135,6 +8229,69 @@ document.addEventListener("click", async function (event) {
         console.error(
             "EDIT SHARE ERROR:",
             error
+        );
+
+    }
+
+});
+
+// --------------------------------------------------
+// Shares Holdings → Delete Share
+// --------------------------------------------------
+
+document.addEventListener("click", async function (event) {
+
+    const deleteButton = event.target.closest(".share-delete-button");
+
+    if (!deleteButton) return;
+
+    const shareId = deleteButton.dataset.id;
+
+    console.log("DELETE SHARE CLICKED:", shareId);
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    const confirmDelete = confirm(
+        "क्या आप यह Share holding delete करना चाहते हैं?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        const shareDocRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shares",
+            shareId
+        );
+
+        await deleteDoc(shareDocRef);
+
+        console.log(
+            "SHARE DELETED SUCCESSFULLY:",
+            shareId
+        );
+
+        alert("Share successfully delete हो गया।");
+
+        // Table refresh
+        if (window.loadShares) {
+            await window.loadShares();
+        }
+
+    } catch (error) {
+
+        console.error("DELETE SHARE ERROR:", error);
+
+        alert(
+            "Share delete नहीं हो सका। Console में error देखें।"
         );
 
     }

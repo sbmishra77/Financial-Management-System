@@ -5500,11 +5500,13 @@ stockSearchInput?.addEventListener(
 console.log("STOCK MASTER:", window.stockMaster);
 
         const matches =
-            window.stockMaster.filter(stock =>
-                stock.name.toLowerCase().includes(search) ||
-                stock.symbol.toLowerCase().includes(search)
-            );
+    (window.stockMaster || []).filter(stock =>
+        (stock.name || "").toLowerCase().includes(search) ||
+        (stock.symbol || "").toLowerCase().includes(search) ||
+        (stock.isin || "").toLowerCase().includes(search)
+    );
 
+console.log("STOCK SEARCH MATCHES:", matches);
 
         if (matches.length === 0) {
 
@@ -5535,7 +5537,7 @@ console.log("STOCK MASTER:", window.stockMaster);
 
             item.addEventListener(
                 "click",
-                function () {
+                async function () {
 
                     stockSearchInput.value =
                         `${stock.symbol} — ${stock.name}`;
@@ -5566,6 +5568,28 @@ if (!isinInput) {
 }
 
 isinInput.value = stock.isin || "";
+
+const cmp = await window.fetchShareCMP(
+    stock.symbol
+);
+
+if (cmp !== null) {
+
+    const currentPriceInput =
+        document.getElementById("shareCurrentPrice");
+
+    if (currentPriceInput) {
+
+        currentPriceInput.value =
+            cmp.toFixed(2);
+
+        console.log(
+            "CURRENT PRICE AUTO-FILLED:",
+            stock.symbol,
+            cmp
+        );
+    }
+}
 
 stockSearchResults.style.display =
     "none";
@@ -6000,3 +6024,1597 @@ console.error("SAVE SHARE ERROR MESSAGE:", error?.message);
 
        window.openShareForm = openShareForm;
 })();
+
+// --------------------------------------------------
+// Share CMP / LTP Fetch
+// --------------------------------------------------
+
+window.fetchShareCMP = async function (nseSymbol) {
+
+    if (!nseSymbol) {
+        console.log("CMP: No NSE symbol");
+        return null;
+    }
+
+    try {
+
+        const response = await fetch(
+            `http://localhost:3000/cmp?symbol=${encodeURIComponent(nseSymbol)}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`CMP server HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (typeof data.cmp !== "number") {
+            throw new Error("CMP not available");
+        }
+
+        console.log(
+            "CMP FROM LOCAL SERVER:",
+            nseSymbol,
+            data.cmp
+        );
+
+        return data.cmp;
+
+    } catch (error) {
+
+        console.error(
+            "CMP SERVER ERROR:",
+            nseSymbol,
+            error
+        );
+
+        return null;
+    }
+};
+
+// ======================================================
+// SHARE SELL FORM — STEP 1
+// ======================================================
+
+(function () {
+
+    function createShareSellForm() {
+
+        // Form पहले से बना है तो दोबारा मत बनाओ
+        if (document.getElementById("shareSellFormContainer")) {
+            return;
+        }
+
+        const container = document.createElement("div");
+
+        container.id = "shareSellFormContainer";
+
+        container.style.cssText = `
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.55);
+            z-index:99999;
+            overflow-y:auto;
+            padding:30px 15px;
+        `;
+
+        container.innerHTML = `
+            <div style="
+                max-width:700px;
+                margin:20px auto;
+                background:white;
+                border-radius:12px;
+                padding:25px;
+                box-shadow:0 10px 40px rgba(0,0,0,0.25);
+            ">
+
+                <div style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    margin-bottom:20px;
+                ">
+
+                    <h2 style="margin:0;">
+                        💰 Sell Stock / Shares
+                    </h2>
+
+                    <button
+                        type="button"
+                        id="closeShareSellFormButton"
+                        style="
+                            border:none;
+                            background:#eee;
+                            width:35px;
+                            height:35px;
+                            border-radius:50%;
+                            font-size:20px;
+                            cursor:pointer;
+                        "
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <div style="display:grid; gap:15px;">
+
+                    <div>
+                        <label>Company / Stock</label>
+
+                        <input
+                            type="text"
+                            id="sellShareCompany"
+                            readonly
+                            style="
+                                width:100%;
+                                padding:10px;
+                                background:#f3f4f6;
+                            "
+                        >
+                    </div>
+
+                    <div>
+                        <label>Symbol</label>
+
+                        <input
+                            type="text"
+                            id="sellShareSymbol"
+                            readonly
+                            style="
+                                width:100%;
+                                padding:10px;
+                                background:#f3f4f6;
+                            "
+                        >
+                    </div>
+
+                    <div>
+                        <label>Available Quantity</label>
+
+                        <input
+                            type="number"
+                            id="sellShareAvailableQuantity"
+                            readonly
+                            style="
+                                width:100%;
+                                padding:10px;
+                                background:#f3f4f6;
+                            "
+                        >
+                    </div>
+
+                    <div>
+                        <label>Quantity to Sell</label>
+
+                        <input
+                            type="number"
+                            id="sellShareQuantity"
+                            min="0"
+                            step="any"
+                            placeholder="Enter quantity"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Sell Price</label>
+
+                        <input
+                            type="number"
+                            id="sellSharePrice"
+                            min="0"
+                            step="any"
+                            placeholder="Enter sell price"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Sell Date</label>
+
+                        <input
+                            type="date"
+                            id="sellShareDate"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Broker</label>
+
+                        <input
+                            type="text"
+                            id="sellShareBroker"
+                            readonly
+                            style="
+                                width:100%;
+                                padding:10px;
+                                background:#f3f4f6;
+                            "
+                        >
+                    </div>
+
+                    <div>
+                        <label>Charges</label>
+
+                        <input
+                            type="number"
+                            id="sellShareCharges"
+                            min="0"
+                            step="any"
+                            value="0"
+                            style="width:100%; padding:10px;"
+                        >
+                    </div>
+
+                    <div>
+    <label>Net Sell Amount</label>
+
+    <input
+        type="number"
+        id="sellShareNetAmount"
+        readonly
+        style="
+            width:100%;
+            padding:10px;
+            background:#f3f4f6;
+            font-weight:bold;
+        "
+    >
+</div>
+
+                    <div>
+                        <label>Remarks</label>
+
+                        <textarea
+                            id="sellShareRemarks"
+                            rows="3"
+                            placeholder="Optional remarks"
+                            style="
+                                width:100%;
+                                padding:10px;
+                                resize:vertical;
+                            "
+                        ></textarea>
+                    </div>
+
+                    <div style="
+                        display:flex;
+                        gap:10px;
+                        justify-content:flex-end;
+                        margin-top:10px;
+                    ">
+
+                        <button
+                            type="button"
+                            id="cancelShareSellFormButton"
+                            style="
+                                padding:10px 18px;
+                                border:1px solid #ccc;
+                                background:#eee;
+                                border-radius:6px;
+                                cursor:pointer;
+                            "
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            id="confirmShareSellButton"
+                            style="
+                                padding:10px 18px;
+                                border:none;
+                                background:#dc2626;
+                                color:white;
+                                border-radius:6px;
+                                cursor:pointer;
+                            "
+                        >
+                            💰 Confirm Sell
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        document.body.appendChild(container);
+    }
+
+
+    // ==================================================
+    // OPEN SELL FORM
+    // ==================================================
+
+    async function openShareSellForm(shareId) {
+
+        createShareSellForm();
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("कृपया पहले login करें।");
+            return;
+        }
+
+        try {
+
+            const shareRef = doc(
+                db,
+                "users",
+                user.uid,
+                "shares",
+                shareId
+            );
+
+            const shareSnapshot =
+                await getDoc(shareRef);
+
+            if (!shareSnapshot.exists()) {
+                alert("Share holding नहीं मिली।");
+                return;
+            }
+
+            const share = shareSnapshot.data();
+
+            document.getElementById(
+                "sellShareCompany"
+            ).value =
+                share.companyName || "";
+
+            document.getElementById(
+                "sellShareSymbol"
+            ).value =
+                share.symbol || "";
+
+            document.getElementById(
+                "sellShareAvailableQuantity"
+            ).value =
+                Number(share.quantity || 0);
+
+            document.getElementById(
+                "sellShareBroker"
+            ).value =
+                share.broker || "";
+
+            // आज की date
+            const today =
+                new Date()
+                    .toISOString()
+                    .split("T")[0];
+
+            document.getElementById(
+                "sellShareDate"
+            ).value = today;
+
+            // Holding ID याद रखेंगे
+            window.currentSellingShareId =
+                shareId;
+
+            // Form खोलें
+            document.getElementById(
+                "shareSellFormContainer"
+            ).style.display = "block";
+
+            console.log(
+                "SHARE SELL FORM OPENED:",
+                {
+                    id: shareId,
+                    share: share
+                }
+            );
+
+        } catch (error) {
+
+            console.error(
+                "OPEN SHARE SELL FORM ERROR:",
+                error
+            );
+
+            alert(
+                "Sell Form खोलते समय error आया।"
+            );
+        }
+    }
+
+
+    // ==================================================
+    // SELL BUTTON CLICK
+    // ==================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const sellButton =
+                event.target.closest(
+                    ".share-sell-button"
+                );
+
+            if (!sellButton) {
+                return;
+            }
+
+            const shareId =
+                sellButton.dataset.id;
+
+            console.log(
+                "SELL BUTTON CLICKED:",
+                shareId
+            );
+
+            openShareSellForm(shareId);
+        }
+    );
+
+
+    // ==================================================
+    // CLOSE SELL FORM
+    // ==================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target.id ===
+                    "closeShareSellFormButton" ||
+                event.target.id ===
+                    "cancelShareSellFormButton"
+            ) {
+
+                const container =
+                    document.getElementById(
+                        "shareSellFormContainer"
+                    );
+
+                if (container) {
+                    container.style.display =
+                        "none";
+                }
+
+            }
+
+        }
+    );
+
+})();
+
+// ======================================================
+// SELL AMOUNT CALCULATION
+// ======================================================
+
+document.addEventListener("input", function (event) {
+
+    if (
+        event.target.id !== "sellShareQuantity" &&
+        event.target.id !== "sellSharePrice" &&
+        event.target.id !== "sellShareCharges"
+    ) {
+        return;
+    }
+
+    const quantity =
+        Number(
+            document.getElementById("sellShareQuantity")?.value || 0
+        );
+
+    const price =
+        Number(
+            document.getElementById("sellSharePrice")?.value || 0
+        );
+
+    const charges =
+        Number(
+            document.getElementById("sellShareCharges")?.value || 0
+        );
+
+    const grossAmount =
+        quantity * price;
+
+    const netAmount =
+        Math.max(0, grossAmount - charges);
+
+    const netAmountInput =
+        document.getElementById("sellShareNetAmount");
+
+    if (netAmountInput) {
+        netAmountInput.value =
+            netAmount.toFixed(2);
+    }
+
+});
+
+// ======================================================
+// SELL QUANTITY VALIDATION
+// ======================================================
+
+document.addEventListener("click", function (event) {
+
+    if (
+        event.target.id !== "confirmShareSellButton"
+    ) {
+        return;
+    }
+
+    const availableQuantity =
+        Number(
+            document.getElementById(
+                "sellShareAvailableQuantity"
+            )?.value || 0
+        );
+
+    const sellQuantity =
+        Number(
+            document.getElementById(
+                "sellShareQuantity"
+            )?.value || 0
+        );
+
+    if (sellQuantity <= 0) {
+        alert("कृपया Sell Quantity डालें।");
+        return;
+    }
+
+    if (sellQuantity > availableQuantity) {
+        alert(
+            `आपके पास केवल ${availableQuantity} shares उपलब्ध हैं।`
+        );
+        return;
+    }
+
+    console.log(
+        "SELL QUANTITY VALID:",
+        {
+            availableQuantity,
+            sellQuantity
+        }
+    );
+
+    alert("Quantity valid है।");
+});
+
+// ======================================================
+// ACTUAL SHARE SELL PROCESS
+// ======================================================
+
+document.addEventListener("click", async function (event) {
+
+    if (event.target.id !== "confirmShareSellButton") {
+        return;
+    }
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    const shareId = window.currentSellingShareId;
+
+    if (!shareId) {
+        alert("Selling Share select नहीं है।");
+        return;
+    }
+
+    const sellQuantity = Number(
+        document.getElementById("sellShareQuantity")?.value || 0
+    );
+
+    const sellPrice = Number(
+        document.getElementById("sellSharePrice")?.value || 0
+    );
+
+    const sellDate =
+        document.getElementById("sellShareDate")?.value || "";
+
+    const charges = Number(
+        document.getElementById("sellShareCharges")?.value || 0
+    );
+
+    const remarks =
+        document.getElementById("sellShareRemarks")?.value || "";
+
+    if (sellQuantity <= 0) {
+        alert("कृपया Sell Quantity डालें।");
+        return;
+    }
+
+    if (sellPrice <= 0) {
+        alert("कृपया Sell Price डालें।");
+        return;
+    }
+
+    if (!sellDate) {
+        alert("कृपया Sell Date डालें।");
+        return;
+    }
+
+    try {
+
+        const shareRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shares",
+            shareId
+        );
+
+        const shareSnapshot = await getDoc(shareRef);
+
+        if (!shareSnapshot.exists()) {
+            alert("Share holding नहीं मिली।");
+            return;
+        }
+
+        const share = shareSnapshot.data();
+
+        const availableQuantity =
+            Number(share.quantity || 0);
+
+        if (sellQuantity > availableQuantity) {
+            alert(
+                `आपके पास केवल ${availableQuantity} shares उपलब्ध हैं।`
+            );
+            return;
+        }
+
+        // ----------------------------------------------
+        // SELL CALCULATION
+        // ----------------------------------------------
+
+        const grossSellAmount =
+            sellQuantity * sellPrice;
+
+        const netSellAmount =
+            Math.max(0, grossSellAmount - charges);
+
+        const buyPrice =
+            Number(share.buyPrice || 0);
+
+        const costOfSoldShares =
+            sellQuantity * buyPrice;
+
+        const realizedProfitLoss =
+            netSellAmount - costOfSoldShares;
+
+        const remainingQuantity =
+            availableQuantity - sellQuantity;
+
+        console.log("SELL CALCULATION:", {
+            availableQuantity,
+            sellQuantity,
+            sellPrice,
+            grossSellAmount,
+            charges,
+            netSellAmount,
+            costOfSoldShares,
+            realizedProfitLoss,
+            remainingQuantity
+        });
+
+        // ----------------------------------------------
+        // SAVE SELL TRANSACTION HISTORY
+        // ----------------------------------------------
+
+        const sellHistoryData = {
+            transactionType: "SELL",
+            holdingId: shareId,
+
+            date: sellDate,
+
+            companyName:
+                share.companyName || "",
+
+            symbol:
+                share.symbol || "",
+
+            exchange:
+                share.exchange || "",
+
+            isin:
+                share.isin || "",
+
+            quantity: sellQuantity,
+
+            sellPrice: sellPrice,
+
+            buyPrice: buyPrice,
+
+            grossSellAmount:
+                grossSellAmount,
+
+            charges:
+                charges,
+
+            netSellAmount:
+                netSellAmount,
+
+            costOfSoldShares:
+                costOfSoldShares,
+
+            realizedProfitLoss:
+                realizedProfitLoss,
+
+            broker:
+                share.broker || "",
+
+            remarks:
+                remarks,
+
+            createdAt:
+                serverTimestamp()
+        };
+
+        await addDoc(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "shareTradingHistory"
+            ),
+            sellHistoryData
+        );
+
+        // ----------------------------------------------
+        // UPDATE / REMOVE HOLDING
+        // ----------------------------------------------
+
+        if (remainingQuantity === 0) {
+
+            await deleteDoc(shareRef);
+
+            console.log(
+                "SHARE HOLDING FULLY SOLD:",
+                shareId
+            );
+
+        } else {
+
+            const originalTotalAmount =
+                Number(share.totalAmount || 0);
+
+            const remainingTotalAmount =
+                originalTotalAmount *
+                (remainingQuantity / availableQuantity);
+
+            await updateDoc(
+                shareRef,
+                {
+                    quantity:
+                        remainingQuantity,
+
+                    totalAmount:
+                        remainingTotalAmount,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+            console.log(
+                "SHARE HOLDING QUANTITY UPDATED:",
+                {
+                    oldQuantity: availableQuantity,
+                    soldQuantity: sellQuantity,
+                    remainingQuantity
+                }
+            );
+        }
+
+        // ----------------------------------------------
+        // CLOSE FORM
+        // ----------------------------------------------
+
+        document.getElementById(
+            "shareSellFormContainer"
+        ).style.display = "none";
+
+        window.currentSellingShareId = null;
+
+        alert(
+            `Share successfully sell हो गया।\n\n` +
+            `Net Sell Amount: ₹${netSellAmount.toFixed(2)}\n` +
+            `Realized P/L: ₹${realizedProfitLoss.toFixed(2)}`
+        );
+
+        // ----------------------------------------------
+        // REFRESH HOLDINGS
+        // ----------------------------------------------
+
+        if (window.loadShares) {
+            await window.loadShares();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "ACTUAL SHARE SELL ERROR:",
+            error
+        );
+
+        alert(
+            "Share sell नहीं हो सका। Console में error देखें।"
+        );
+    }
+
+});
+
+// ======================================================
+// SHARE TRADING HISTORY — LOAD & DISPLAY
+// ======================================================
+
+window.loadShareTradingHistory = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("SHARE HISTORY: User not logged in");
+        return;
+    }
+
+    const historyContainer =
+        document.getElementById(
+            "shareTradingHistoryContainer"
+        );
+
+    const tableBody =
+        document.getElementById(
+            "shareTradingHistoryTableBody"
+        );
+
+    const countElement =
+        document.getElementById(
+            "shareTradingHistoryCount"
+        );
+
+    const noHistoryMessage =
+        document.getElementById(
+            "noShareTradingHistoryMessage"
+        );
+
+    if (!tableBody) {
+        console.error(
+            "SHARE HISTORY TABLE BODY NOT FOUND"
+        );
+        return;
+    }
+
+    try {
+
+        const historySnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "shareTradingHistory"
+            )
+        );
+
+        console.log(
+            "SHARE TRADING HISTORY COUNT:",
+            historySnapshot.size
+        );
+
+        tableBody.innerHTML = "";
+
+        let totalSell = 0;
+let totalCost = 0;
+let totalRealizedPL = 0;
+
+        const historyDocs =
+            [...historySnapshot.docs].sort(
+                (a, b) => {
+
+                    const dateA =
+                        a.data().date || "";
+
+                    const dateB =
+                        b.data().date || "";
+
+                    return dateB.localeCompare(dateA);
+                }
+            );
+
+        historyDocs.forEach((historyDoc) => {
+
+            const history =
+                historyDoc.data();
+
+            const row =
+                document.createElement("tr");
+
+            const quantity =
+                Number(history.quantity || 0);
+
+            const price =
+                Number(
+                    history.sellPrice ||
+                    history.price ||
+                    0
+                );
+
+            const grossAmount =
+                Number(
+                    history.grossSellAmount || 0
+                );
+
+            const charges =
+                Number(
+                    history.charges || 0
+                );
+
+            const netAmount =
+                Number(
+                    history.netSellAmount || 0
+                );
+
+            const cost =
+                Number(
+                    history.costOfSoldShares || 0
+                );
+
+            const realizedPL =
+                Number(
+                    history.realizedProfitLoss || 0
+                );
+
+                totalSell += netAmount;
+totalCost += cost;
+totalRealizedPL += realizedPL;
+
+            row.innerHTML = `
+
+                <td>
+                    ${history.date || "-"}
+                </td>
+
+                <td>
+                    <strong>
+                        ${history.companyName || "-"}
+                    </strong>
+                </td>
+
+                <td>
+                    ${history.symbol || "-"}
+                </td>
+
+                <td>
+                    ${history.transactionType || "-"}
+                </td>
+
+                <td>
+                    ${quantity}
+                </td>
+
+                <td>
+                    ₹${price.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${grossAmount.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${charges.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${netAmount.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${cost.toFixed(2)}
+                </td>
+
+                <td>
+                    ₹${realizedPL.toFixed(2)}
+                </td>
+
+               <td>
+    ${history.broker || "-"}
+</td>
+
+<td style="white-space: nowrap;">
+
+    <button
+        type="button"
+        class="share-history-edit-button"
+        data-id="${historyDoc.id}">
+        ✏️
+    </button>
+
+    <button
+        type="button"
+        class="share-history-delete-button"
+        data-id="${historyDoc.id}">
+        🗑️
+    </button>
+
+</td>
+
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+        const realizedPLPercentage =
+    totalCost > 0
+        ? (totalRealizedPL / totalCost) * 100
+        : 0;
+
+const totalSellElement =
+    document.getElementById("historyTotalSell");
+
+const totalCostElement =
+    document.getElementById("historyTotalCost");
+
+const realizedPLElement =
+    document.getElementById("historyRealizedPL");
+
+if (totalSellElement) {
+    totalSellElement.textContent =
+        `₹${totalSell.toFixed(2)}`;
+}
+
+if (totalCostElement) {
+    totalCostElement.textContent =
+        `₹${totalCost.toFixed(2)}`;
+}
+
+if (realizedPLElement) {
+    const sign =
+        totalRealizedPL > 0 ? "+" : "";
+
+    realizedPLElement.textContent =
+        `₹${totalRealizedPL.toFixed(2)} ` +
+        `(${sign}${realizedPLPercentage.toFixed(2)}%)`;
+}
+
+        if (countElement) {
+            countElement.textContent =
+                historySnapshot.size;
+        }
+
+        if (noHistoryMessage) {
+            noHistoryMessage.style.display =
+                historySnapshot.size === 0
+                    ? "block"
+                    : "none";
+        }
+
+        if (historyContainer) {
+            historyContainer.style.display =
+                "block";
+        }
+
+        console.log(
+            "SHARE TRADING HISTORY TABLE RENDERED"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "LOAD SHARE TRADING HISTORY ERROR:",
+            error
+        );
+
+    }
+};  
+
+// ======================================================
+// SHARE DATA REFRESH BUTTON
+// ======================================================
+
+document.addEventListener("click", async function (event) {
+
+    if (event.target.id !== "refreshShareDataButton") {
+        return;
+    }
+
+    const refreshButton =
+        document.getElementById("refreshShareDataButton");
+
+    if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.textContent = "⏳ Refreshing...";
+    }
+
+    try {
+
+        if (window.loadShares) {
+    await window.loadShares();
+}
+
+    } catch (error) {
+
+        console.error("SHARE REFRESH ERROR:", error);
+
+    } finally {
+
+        if (refreshButton) {
+            refreshButton.disabled = false;
+            refreshButton.textContent = "🔄 Refresh";
+        }
+
+    }
+
+});
+
+// ======================================================
+// SHARE TRADING HISTORY — DELETE
+// ======================================================
+
+document.addEventListener("click", async function (event) {
+
+    const deleteButton =
+        event.target.closest(".share-history-delete-button");
+
+    if (!deleteButton) return;
+
+    const historyId = deleteButton.dataset.id;
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    const confirmDelete = confirm(
+        "क्या आप यह Trading History delete करना चाहते हैं?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        const historyRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shareTradingHistory",
+            historyId
+        );
+
+        await deleteDoc(historyRef);
+
+        console.log(
+            "SHARE TRADING HISTORY DELETED:",
+            historyId
+        );
+
+        alert(
+            "Trading History successfully delete हो गई।"
+        );
+
+        if (window.loadShareTradingHistory) {
+            await window.loadShareTradingHistory();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "DELETE SHARE TRADING HISTORY ERROR:",
+            error
+        );
+
+        alert(
+            "Trading History delete नहीं हो सकी। Console में error देखें।"
+        );
+
+    }
+
+});
+
+// ======================================================
+// SHARE TRADING HISTORY — EDIT FORM OPEN
+// ======================================================
+
+document.addEventListener("click", async function (event) {
+
+    const editButton =
+        event.target.closest(".share-history-edit-button");
+
+    if (!editButton) return;
+
+    const historyId = editButton.dataset.id;
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    console.log(
+        "SHARE HISTORY EDIT CLICKED:",
+        historyId
+    );
+
+    try {
+
+        const historyRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shareTradingHistory",
+            historyId
+        );
+
+        const historySnapshot =
+            await getDoc(historyRef);
+
+        if (!historySnapshot.exists()) {
+            alert("Trading History नहीं मिली।");
+            return;
+        }
+
+        const history =
+            historySnapshot.data();
+
+        console.log(
+            "SHARE HISTORY TO EDIT:",
+            history
+        );
+
+       const editContainer =
+    document.getElementById("shareHistoryEditFormContainer");
+
+if (!editContainer) {
+
+    const form = document.createElement("div");
+
+    form.id = "shareHistoryEditFormContainer";
+
+    form.style.cssText = `
+        display:none;
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,0.55);
+        z-index:99999;
+        overflow-y:auto;
+        padding:30px 15px;
+    `;
+
+    form.innerHTML = `
+        <div style="
+            max-width:650px;
+            margin:20px auto;
+            background:white;
+            border-radius:12px;
+            padding:25px;
+        ">
+
+            <h2>✏️ Edit Share Trading History</h2>
+
+            <div style="display:grid; gap:15px;">
+
+                <div>
+                    <label>Company</label>
+                    <input id="editHistoryCompany"
+                        readonly
+                        style="width:100%;padding:10px;background:#f3f4f6;">
+                </div>
+
+                <div>
+                    <label>Symbol</label>
+                    <input id="editHistorySymbol"
+                        readonly
+                        style="width:100%;padding:10px;background:#f3f4f6;">
+                </div>
+
+                <div>
+                    <label>Quantity</label>
+                    <input type="number"
+                        id="editHistoryQuantity"
+                        min="0"
+                        step="any"
+                        style="width:100%;padding:10px;">
+                </div>
+
+                <div>
+                    <label>Sell Price</label>
+                    <input type="number"
+                        id="editHistoryPrice"
+                        min="0"
+                        step="any"
+                        style="width:100%;padding:10px;">
+                </div>
+
+                <div>
+                    <label>Sell Date</label>
+                    <input type="date"
+                        id="editHistoryDate"
+                        style="width:100%;padding:10px;">
+                </div>
+
+                <div>
+                    <label>Charges</label>
+                    <input type="number"
+                        id="editHistoryCharges"
+                        min="0"
+                        step="any"
+                        style="width:100%;padding:10px;">
+                </div>
+
+                <div>
+                    <label>Remarks</label>
+                    <textarea
+                        id="editHistoryRemarks"
+                        rows="3"
+                        style="width:100%;padding:10px;"></textarea>
+                </div>
+
+                <div style="
+                    display:flex;
+                    gap:10px;
+                    justify-content:flex-end;
+                ">
+
+                    <button
+                        type="button"
+                        id="cancelHistoryEditButton">
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        id="saveHistoryEditButton">
+                        💾 Save Changes
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(form);
+}
+
+const editForm =
+    document.getElementById("shareHistoryEditFormContainer");
+
+document.getElementById("editHistoryCompany").value =
+    history.companyName || "";
+
+document.getElementById("editHistorySymbol").value =
+    history.symbol || "";
+
+document.getElementById("editHistoryQuantity").value =
+    Number(history.quantity || 0);
+
+document.getElementById("editHistoryPrice").value =
+    Number(history.sellPrice || 0);
+
+document.getElementById("editHistoryDate").value =
+    history.date || "";
+
+document.getElementById("editHistoryCharges").value =
+    Number(history.charges || 0);
+
+document.getElementById("editHistoryRemarks").value =
+    history.remarks || "";
+
+window.editingShareHistoryId = historyId;
+
+editForm.style.display = "block";
+
+console.log(
+    "SHARE HISTORY EDIT FORM OPENED:",
+    historyId
+);
+
+    } catch (error) {
+
+        console.error(
+            "OPEN SHARE HISTORY EDIT ERROR:",
+            error
+        );
+
+        alert(
+            "Trading History खोलते समय error आया।"
+        );
+
+    }
+
+});
+
+// ======================================================
+// SHARE TRADING HISTORY — EDIT FORM CLOSE
+// ======================================================
+
+document.addEventListener("click", function (event) {
+
+    if (
+        event.target.id !== "cancelHistoryEditButton"
+    ) {
+        return;
+    }
+
+    const editForm =
+        document.getElementById(
+            "shareHistoryEditFormContainer"
+        );
+
+    if (editForm) {
+        editForm.style.display = "none";
+    }
+
+    window.editingShareHistoryId = null;
+
+});
+
+// ======================================================
+// SHARE TRADING HISTORY — SAVE EDIT
+// ======================================================
+
+document.addEventListener("click", async function (event) {
+
+    if (event.target.id !== "saveHistoryEditButton") {
+        return;
+    }
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    const historyId =
+        window.editingShareHistoryId;
+
+    if (!historyId) {
+        alert("Edit History select नहीं है।");
+        return;
+    }
+
+    const quantity =
+        Number(
+            document.getElementById(
+                "editHistoryQuantity"
+            )?.value || 0
+        );
+
+    const sellPrice =
+        Number(
+            document.getElementById(
+                "editHistoryPrice"
+            )?.value || 0
+        );
+
+    const sellDate =
+        document.getElementById(
+            "editHistoryDate"
+        )?.value || "";
+
+    const charges =
+        Number(
+            document.getElementById(
+                "editHistoryCharges"
+            )?.value || 0
+        );
+
+    const remarks =
+        document.getElementById(
+            "editHistoryRemarks"
+        )?.value || "";
+
+    if (quantity <= 0) {
+        alert("कृपया Quantity डालें।");
+        return;
+    }
+
+    if (sellPrice <= 0) {
+        alert("कृपया Sell Price डालें।");
+        return;
+    }
+
+    if (!sellDate) {
+        alert("कृपया Date डालें।");
+        return;
+    }
+
+    try {
+
+        const historyRef = doc(
+            db,
+            "users",
+            user.uid,
+            "shareTradingHistory",
+            historyId
+        );
+
+        const historySnapshot =
+            await getDoc(historyRef);
+
+        if (!historySnapshot.exists()) {
+            alert("Trading History नहीं मिली।");
+            return;
+        }
+
+        const history =
+            historySnapshot.data();
+
+        const buyPrice =
+            Number(history.buyPrice || 0);
+
+        const grossSellAmount =
+            quantity * sellPrice;
+
+        const netSellAmount =
+            Math.max(
+                0,
+                grossSellAmount - charges
+            );
+
+        const costOfSoldShares =
+            quantity * buyPrice;
+
+        const realizedProfitLoss =
+            netSellAmount -
+            costOfSoldShares;
+
+        await updateDoc(
+            historyRef,
+            {
+                quantity: quantity,
+                sellPrice: sellPrice,
+                date: sellDate,
+                charges: charges,
+                grossSellAmount: grossSellAmount,
+                netSellAmount: netSellAmount,
+                costOfSoldShares: costOfSoldShares,
+                realizedProfitLoss: realizedProfitLoss,
+                remarks: remarks,
+                updatedAt: serverTimestamp()
+            }
+        );
+
+        console.log(
+            "SHARE TRADING HISTORY UPDATED:",
+            historyId
+        );
+
+        alert(
+            "Trading History successfully update हो गई।"
+        );
+
+        const editForm =
+            document.getElementById(
+                "shareHistoryEditFormContainer"
+            );
+
+        if (editForm) {
+            editForm.style.display = "none";
+        }
+
+        window.editingShareHistoryId = null;
+
+        if (window.loadShareTradingHistory) {
+            await window.loadShareTradingHistory();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "UPDATE SHARE TRADING HISTORY ERROR:",
+            error
+        );
+
+        alert(
+            "Trading History update नहीं हो सकी। Console में error देखें।"
+        );
+
+    }
+
+});
