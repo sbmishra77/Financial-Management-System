@@ -11,59 +11,239 @@
 
     <div class="container">
 
-    <!-- ========================================= -->
-    <!-- TOP USER PROFILE -->
-    <!-- ========================================= -->
+<!-- ========================================= -->
+<!-- MASTER SIDEBAR -->
+<!-- ========================================= -->
 
-    <div class="user-profile-bar">
+<aside class="master-sidebar">
 
-        <div class="user-profile-info">
+    <!-- LOGO / BRAND -->
+    <div class="sidebar-brand">
 
-            <img
-                id="userProfilePhoto"
-                src=""
-                alt="User Profile"
-                class="user-profile-photo"
-            >
+        <div class="sidebar-logo">
+            SBM
+        </div>
 
-            <div class="user-profile-text">
+        <div class="sidebar-title">
+    WEALTH MANAGER
+</div>
 
-                <h1 id="wealthManagerTitle">
-                    SBM Wealth Manager
-                </h1>
+<div
+    id="sidebarWelcomeMessage"
+    class="sidebar-welcome">
+    Welcome
+</div>
 
-                <h2 id="welcomeMessage">
-                    Welcome
-                </h2>
+<div class="sidebar-subtitle">
+    Your Personal Financial Management System
+</div>
 
-                <p>
-                    Your Personal Financial Management System
-                </p>
+    </div>
 
-            </div>
 
+<!-- ========================================= -->
+<!-- MASTER SIDEBAR NAVIGATION -->
+<!-- ========================================= -->
+
+<nav class="sidebar-navigation">
+
+    <button
+        type="button"
+        class="sidebar-menu-item active"
+        data-section="dashboard">
+        🏠
+        <span>Dashboard</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="transactions">
+        💳
+        <span>Transactions</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="properties">
+        🏢
+        <span>Properties & Rentals</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="accounts">
+        🏦
+        <span>My Accounts</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="investments">
+        📈
+        <span>Investments</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="insurance">
+        🛡️
+        <span>My Insurance</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="vehicles">
+        🚗
+        <span>Vehicle Management</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="repairs">
+        🔧
+        <span>Repairs & Maintenance</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="reports">
+        📊
+        <span>Reports</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="calendar">
+        📅
+        <span>Calendar</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="settings">
+        ⚙️
+        <span>Settings</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="profile">
+        👤
+        <span>Profile</span>
+    </button>
+
+
+    <button
+        type="button"
+        class="sidebar-menu-item"
+        data-section="logout">
+        🚪
+        <span>Logout</span>
+    </button>
+
+</nav>
+
+    <!-- DEVELOPER BRANDING -->
+    <div class="sidebar-developer-branding">
+
+        <img
+            src="assets/sbm-profile.jpg"
+            alt="Dr. S.B. Mishra"
+            class="sidebar-developer-photo"
+        >
+
+        <div class="sidebar-developer-name">
+            Developed by
+        </div>
+
+        <div class="sidebar-developer-name">
+            Dr. S.B. Mishra
+        </div>
+
+        <div class="sidebar-developer-contact">
+            AG-II, SGSITS, Indore-8982086150
         </div>
 
     </div>
 
-    
-    <!-- ===============================
-     INCOME SECTION
-     =============================== -->
+</aside>
 
-<div class="transaction-section">
 
-    <div class="section-header">
+<!-- ===============================
+DASHBOARD PROFILE HEADER
+=============================== -->
 
-        <h2>💳 Transactions</h2>
+<div class="dashboard-profile-header">
+
+    <img
+        id="dashboardUserProfilePhoto"
+        class="dashboard-user-photo"
+        alt="Profile">
+
+    <div class="dashboard-profile-text">
+
+        <div>
+            <span class="dashboard-sbm-logo">SBM</span>
+            <span class="dashboard-manager-title">
+                Wealth Manager
+            </span>
+        </div>
+
+        <h2 id="dashboardWelcomeText">
+            Welcome!
+        </h2>
+
+        <p>Your Personal Financial Management System</p>
 
     </div>
 
-    <button
-        type="button"
-         id="addTransactionButton">
-       ➕ Add Transaction
-    </button>
+    <div class="dashboard-financial-graphic">
+
+    <div class="growth-bars">
+        <span class="bar-1"></span>
+        <span class="bar-2"></span>
+        <span class="bar-3"></span>
+        <span class="bar-4"></span>
+        <span class="bar-5"></span>
+    </div>
+
+    <div class="growth-line">
+        ╱╲___╱╲____╱
+    </div>
+
+    <div class="growth-arrow">
+        ↗
+    </div>
+
+    <div class="growth-coins">
+        ₹
+    </div>
+
+</div>
+
+</div>
 
 <!-- ===============================
    ADD TRANSACTION FORM
@@ -1007,41 +1187,303 @@
 </div>
 
 
-  <div class="dashboard-grid">
+<!-- =========================================================
+     MASTER DASHBOARD — INFOGRAPHIC MODULE CARDS
+     ========================================================= -->
 
-    <div class="card">
-        <h3>💰 Total Assets</h3>
-        <p id="totalAssetsAmount">₹ 0</p>
+<div id="masterDashboard" class="master-dashboard">
+
+    <div class="master-dashboard-header">
+        <h1>📊 Financial Dashboard</h1>
+        <p>Your complete financial overview</p>
     </div>
 
 
-    <div class="card">
-        <h3>💳 Total Liabilities</h3>
-        <p id="totalLiabilitiesAmount">₹ 0</p>
+    <div class="master-module-grid">
+
+        <!-- ACCOUNTS -->
+        <button type="button"
+                class="master-module-card"
+                data-section="accounts">
+
+            <div class="module-big-icon">🏦</div>
+
+            <div class="module-card-title">
+                MY ACCOUNTS
+            </div>
+
+            <div class="module-card-subtitle">
+                BANK ACCOUNTS • CREDIT CARDS<br>
+                CASH • WALLET
+            </div>
+
+            <div class="module-card-value"
+                 id="dashboardAccountsBalance">
+                ₹0
+            </div>
+
+            <div class="module-card-label">
+                CURRENT BALANCE
+            </div>
+
+        </button>
+
+
+        <!-- TRANSACTIONS -->
+        <button type="button"
+                class="master-module-card"
+                data-section="transactions">
+
+            <div class="module-big-icon">💳</div>
+
+            <div class="module-card-title">
+                TRANSACTIONS
+            </div>
+
+            <div class="module-card-subtitle">
+                INCOME • EXPENSE<br>
+                TRANSFER • INVESTMENT
+            </div>
+
+            <div class="module-card-value"
+                 id="dashboardTransactionsValue">
+                ₹0
+            </div>
+
+            <div class="module-card-label">
+                THIS MONTH
+            </div>
+
+        </button>
+
+
+        <!-- INVESTMENTS -->
+        <button type="button"
+                class="master-module-card"
+                data-section="investments">
+
+            <div class="module-big-icon">📈</div>
+
+            <div class="module-card-title">
+                INVESTMENTS
+            </div>
+
+            <div class="module-card-subtitle">
+                SHARES • MUTUAL FUNDS<br>
+                FIXED DEPOSITS • OTHER ASSETS
+            </div>
+
+            <div class="module-card-value"
+                 id="dashboardInvestmentsValue">
+                ₹0
+            </div>
+
+            <div class="module-card-label">
+                CURRENT VALUE
+            </div>
+
+        </button>
+
+
+        <!-- PROPERTIES -->
+        <button type="button"
+                class="master-module-card"
+                data-section="properties">
+
+            <div class="module-big-icon">🏢</div>
+
+            <div class="module-card-title">
+                PROPERTIES & RENTALS
+            </div>
+
+            <div class="module-card-subtitle">
+                PROPERTIES • RENT • TENANTS<br>
+                RENT REGISTER
+            </div>
+
+            <div class="module-card-value"
+                 id="dashboardPropertyValue">
+                ₹0
+            </div>
+
+            <div class="module-card-label">
+                PROPERTY VALUE
+            </div>
+
+        </button>
+
+
+        <!-- INSURANCE -->
+        <button type="button"
+                class="master-module-card"
+                data-section="insurance">
+
+            <div class="module-big-icon">🛡️</div>
+
+            <div class="module-card-title">
+                MY INSURANCE
+            </div>
+
+            <div class="module-card-subtitle">
+                LIFE • HEALTH • MOTOR<br>
+                HOME • OTHER
+            </div>
+
+            <div class="module-card-value"
+                 id="dashboardInsuranceValue">
+                0
+            </div>
+
+            <div class="module-card-label">
+                ACTIVE POLICIES
+            </div>
+
+        </button>
+
+
+        <!-- VEHICLES -->
+        <button type="button"
+                class="master-module-card"
+                data-section="vehicles">
+
+            <div class="module-big-icon">🚗</div>
+
+            <div class="module-card-title">
+                VEHICLE MANAGEMENT
+            </div>
+
+            <div class="module-card-subtitle">
+                VEHICLES • DOCUMENTS<br>
+                INSURANCE • SERVICE
+            </div>
+
+            <div class="module-card-value">
+                —
+            </div>
+
+            <div class="module-card-label">
+                VEHICLE OVERVIEW
+            </div>
+
+        </button>
+
+
+        <!-- REPAIRS -->
+        <button type="button"
+                class="master-module-card"
+                data-section="repairs">
+
+            <div class="module-big-icon">🔧</div>
+
+            <div class="module-card-title">
+                REPAIRS & MAINTENANCE
+            </div>
+
+            <div class="module-card-subtitle">
+                VEHICLE • PROPERTY<br>
+                HOME • ASSET MAINTENANCE
+            </div>
+
+            <div class="module-card-value">
+                —
+            </div>
+
+            <div class="module-card-label">
+                MAINTENANCE OVERVIEW
+            </div>
+
+        </button>
+
+
+        <!-- REPORTS -->
+        <button type="button"
+                class="master-module-card"
+                data-section="reports">
+
+            <div class="module-big-icon">📊</div>
+
+            <div class="module-card-title">
+                REPORTS
+            </div>
+
+            <div class="module-card-subtitle">
+                INCOME • EXPENSES<br>
+                ASSETS • LIABILITIES
+            </div>
+
+            <div class="module-card-value">
+                →
+            </div>
+
+            <div class="module-card-label">
+                VIEW REPORTS
+            </div>
+
+        </button>
+
+
+        <!-- CALENDAR -->
+        <button type="button"
+                class="master-module-card"
+                data-section="calendar">
+
+            <div class="module-big-icon">📅</div>
+
+            <div class="module-card-title">
+                CALENDAR
+            </div>
+
+            <div class="module-card-subtitle">
+                PAYMENTS • RENT<br>
+                PREMIUMS • MATURITY
+            </div>
+
+            <div class="module-card-value">
+                →
+            </div>
+
+            <div class="module-card-label">
+                VIEW CALENDAR
+            </div>
+
+        </button>
+
     </div>
 
 
-    <div class="card">
-        <h3>📈 Net Worth</h3>
-        <p id="netWorthAmount">₹ 0</p>
-    </div>
+    <!-- FINANCIAL SUMMARY -->
+    <div class="master-financial-summary">
 
+        <div class="master-summary-card">
+            <span>💰 TOTAL ASSETS</span>
+            <strong id="totalAssetsAmount">₹ 0</strong>
+        </div>
 
-    <div class="card">
-        <h3>💵 Monthly Income</h3>
-        <p id="monthlyIncomeAmount">₹ 0</p>
-    </div>
+        <div class="master-summary-card">
+            <span>💳 LIABILITIES</span>
+            <strong id="totalLiabilitiesAmount">₹ 0</strong>
+        </div>
 
+        <div class="master-summary-card">
+            <span>📈 NET WORTH</span>
+            <strong id="netWorthAmount">₹ 0</strong>
+        </div>
 
-    <div class="card">
-        <h3>🛒 Monthly Expenses</h3>
-        <p id="monthlyExpensesAmount">₹ 0</p>
-    </div>
+        <div class="master-summary-card">
+            <span>💵 MONTHLY INCOME</span>
+            <strong id="monthlyIncomeAmount">₹ 0</strong>
+        </div>
 
+        <div class="master-summary-card">
+            <span>🛒 MONTHLY EXPENSE</span>
+            <strong id="monthlyExpensesAmount">₹ 0</strong>
+        </div>
 
-    <div class="card">
-        <h3>🏠 Rental Income</h3>
-        <p id="rentalIncomeAmount">₹ 0</p>
+        <div class="master-summary-card">
+            <span>🏠 RENTAL INCOME</span>
+            <strong id="rentalIncomeAmount">₹ 0</strong>
+        </div>
+
     </div>
 
 </div>
@@ -2286,7 +2728,7 @@
 <!-- PROPERTIES & RENTALS SECTION -->
 <!-- =============================== -->
 
-    <div class="finance-section properties-section">
+<div id="propertiesSection" class="finance-section properties-section">
 
 <!-- =============================== -->
 <!-- PROPERTIES HEADER -->

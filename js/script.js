@@ -1020,6 +1020,32 @@ onAuthStateChanged(auth, (user) => {
 
         }
 
+        // ======================================================
+// DASHBOARD PROFILE HEADER
+// ======================================================
+
+const dashboardWelcomeText =
+    document.querySelector("#dashboardWelcomeText");
+
+if (dashboardWelcomeText) {
+    dashboardWelcomeText.textContent =
+        `Welcome ${properName}!`;
+}
+
+const dashboardUserProfilePhoto =
+    document.querySelector("#dashboardUserProfilePhoto");
+
+if (dashboardUserProfilePhoto && user.photoURL) {
+    dashboardUserProfilePhoto.src = user.photoURL;
+}
+
+const sidebarWelcomeMessage =
+    document.querySelector("#sidebarWelcomeMessage");
+
+if (sidebarWelcomeMessage) {
+    sidebarWelcomeMessage.textContent =
+        `Welcome ${properName}!`;
+}
 
         const userProfilePhoto =
             document.querySelector(
@@ -8295,5 +8321,332 @@ document.addEventListener("click", async function (event) {
         );
 
     }
+
+});
+
+// ======================================================
+// MASTER SIDEBAR NAVIGATION — STEP 1
+// Dashboard + Transactions
+// ======================================================
+
+document.addEventListener("click", function (event) {
+
+    // ==================================================
+    // DASHBOARD QUICK MODULE CARD
+    // ==================================================
+
+    const quickCard =
+        event.target.closest(".quick-module-card");
+
+    if (quickCard) {
+
+        const quickSection =
+            quickCard.dataset.section;
+
+        console.log(
+            "QUICK CARD CLICK:",
+            quickSection
+        );
+
+        // PROPERTIES CARD
+        if (quickSection === "properties") {
+
+            const propertiesMenu =
+                document.querySelector(
+                    '.sidebar-menu-item[data-section="properties"]'
+                );
+
+            if (propertiesMenu) {
+                propertiesMenu.click();
+            } else {
+                console.warn(
+                    "Properties sidebar button not found."
+                );
+            }
+
+            return;
+        }
+
+        // ACCOUNTS CARD
+        if (quickSection === "accounts") {
+
+            const accountsMenu =
+                document.querySelector(
+                    '.sidebar-menu-item[data-section="accounts"]'
+                );
+
+            if (accountsMenu) {
+                accountsMenu.click();
+            } else {
+                console.warn(
+                    "Accounts sidebar button not found."
+                );
+            }
+
+            return;
+        }
+
+        // INVESTMENTS CARD
+if (quickSection === "investments") {
+
+    const investmentsMenu =
+        document.querySelector(
+            '.sidebar-menu-item[data-section="investments"]'
+        );
+
+    if (investmentsMenu) {
+        investmentsMenu.click();
+    } else {
+        console.warn(
+            "Investments sidebar button not found."
+        );
+    }
+
+    return;
+}       
+    }
+
+    
+
+    // ==================================================
+    // SIDEBAR MENU BUTTON
+    // ==================================================
+
+    const menuButton =
+        event.target.closest(".sidebar-menu-item");
+
+    if (!menuButton) {
+        return;
+    }
+
+    const section =
+        menuButton.dataset.section;
+
+    console.log(
+        "SIDEBAR CLICK:",
+        section
+    );
+
+
+    // ==================================================
+    // ACTIVE MENU
+    // ==================================================
+
+    document
+        .querySelectorAll(".sidebar-menu-item")
+        .forEach(button => {
+
+            button.classList.remove("active");
+
+        });
+
+    menuButton.classList.add("active");
+
+
+    // ==================================================
+    // DASHBOARD
+    // ==================================================
+
+    if (section === "dashboard") {
+
+        location.reload();
+
+        return;
+    }
+
+
+    // ==================================================
+    // TRANSACTIONS
+    // ==================================================
+
+    if (section === "transactions") {
+
+        const transactionSection =
+            document.querySelector(
+                "#transactionSection"
+            );
+
+        if (transactionSection) {
+
+            transactionSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        } else {
+
+            console.warn(
+                "Transaction section not found."
+            );
+
+        }
+
+        return;
+    }
+
+
+    // ==================================================
+    // PROPERTIES & RENTALS
+    // ==================================================
+
+    if (section === "properties") {
+
+        const propertiesSection =
+            document.getElementById(
+                "propertiesSection"
+            );
+
+        if (propertiesSection) {
+
+            propertiesSection.style.height =
+                "auto";
+
+            propertiesSection.style.minHeight =
+                "500px";
+
+            propertiesSection.style.display =
+                "block";
+
+
+            console.log(
+                "PROPERTIES CSS:",
+                {
+                    height:
+                        getComputedStyle(
+                            propertiesSection
+                        ).height,
+
+                    minHeight:
+                        getComputedStyle(
+                            propertiesSection
+                        ).minHeight,
+
+                    maxHeight:
+                        getComputedStyle(
+                            propertiesSection
+                        ).maxHeight,
+
+                    overflow:
+                        getComputedStyle(
+                            propertiesSection
+                        ).overflow,
+
+                    position:
+                        getComputedStyle(
+                            propertiesSection
+                        ).position
+                }
+            );
+
+
+            window.scrollTo({
+
+                top:
+                    propertiesSection
+                        .getBoundingClientRect()
+                        .top
+                    + window.pageYOffset
+                    - 20,
+
+                behavior: "smooth"
+
+            });
+
+        } else {
+
+            console.warn(
+                "Properties section not found."
+            );
+
+        }
+
+        return;
+    }
+
+
+    // ==================================================
+    // MY ACCOUNTS
+    // ==================================================
+
+    if (section === "accounts") {
+
+        const accountsSection =
+            document.getElementById(
+                "accountsSection"
+            );
+
+        if (accountsSection) {
+
+            window.scrollTo({
+
+                top:
+                    accountsSection
+                        .getBoundingClientRect()
+                        .top
+                    + window.pageYOffset
+                    - 20,
+
+                behavior: "smooth"
+
+            });
+
+        } else {
+
+            console.warn(
+                "Accounts section not found."
+            );
+
+        }
+
+        return;
+    }
+
+// =========================================
+// INVESTMENTS
+// =========================================
+
+if (section === "investments") {
+
+    const investmentsSection =
+        document.getElementById("investmentsSection");
+
+    console.log(
+        "INVESTMENTS NAVIGATION:",
+        investmentsSection
+    );
+
+    if (investmentsSection) {
+
+        // Make sure section is visible
+        investmentsSection.style.display = "block";
+
+        const rect =
+            investmentsSection.getBoundingClientRect();
+
+        const targetTop =
+            rect.top +
+            window.pageYOffset -
+            20;
+
+        window.scrollTo({
+            top: targetTop,
+            behavior: "smooth"
+        });
+
+        console.log(
+            "INVESTMENTS SCROLLED TO:",
+            targetTop
+        );
+
+    } else {
+
+        console.warn(
+            "Investments section not found."
+        );
+
+    }
+
+    return;
+}
 
 });

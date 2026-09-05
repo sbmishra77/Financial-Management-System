@@ -4851,3 +4851,1331 @@ button {
     }
 
 }
+
+/* ======================================================
+   MASTER DASHBOARD SIDEBAR
+   ====================================================== */
+
+.master-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+
+    width: 225px;
+
+    background: linear-gradient(
+        180deg,
+        #062653 0%,
+        #061d3d 100%
+    );
+
+    color: #ffffff;
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 10000;
+
+    box-sizing: border-box;
+}
+
+
+/* ===============================
+   SIDEBAR BRAND
+   =============================== */
+
+.sidebar-brand {
+    text-align: center;
+    padding: 14px 10px 18px;
+}
+
+.sidebar-logo {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    color: #f4c542;
+    letter-spacing: 1px;
+}
+
+.sidebar-title {
+    margin-top: 4px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+
+/* ===============================
+   SIDEBAR NAVIGATION
+   =============================== */
+
+.sidebar-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    padding: 10px 14px;
+
+    flex: 1;
+}
+
+
+.sidebar-menu-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding: 11px 14px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-size: 16px;
+    font-weight: 500;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: background 0.2s ease;
+}
+
+
+.sidebar-menu-item:hover {
+    background: rgba(255, 255, 255, 0.10);
+}
+
+
+.sidebar-menu-item.active {
+    background: #1769e0;
+    font-weight: 600;
+}
+
+
+/* ===============================
+   DEVELOPER BRANDING
+   =============================== */
+
+.sidebar-developer-branding {
+    padding: 12px 12px 16px;
+
+    text-align: center;
+
+    border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+
+.sidebar-developer-photo {
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    border: 2px solid #f4c542;
+
+    margin-bottom: 5px;
+}
+
+
+.sidebar-developer-name {
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1.25;
+
+    color: #ffffff;
+}
+
+
+.sidebar-developer-contact {
+    margin-top: 4px;
+
+    font-size: 10px;
+
+    line-height: 1.2;
+
+    color: #f4c542;
+}
+
+
+/* ======================================================
+   MAIN CONTENT SPACE
+   ====================================================== */
+
+body {
+    padding-left: 225px;
+    box-sizing: border-box;
+}
+
+
+.container {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+
+/* ======================================================
+   OLD BOTTOM FOOTER — TEMPORARILY HIDE
+   ====================================================== */
+
+.professional-footer {
+    display: none;
+}
+
+/* ======================================================
+   SIDEBAR WELCOME / USER INFO
+   ====================================================== */
+
+.sidebar-welcome {
+    margin-top: 8px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    line-height: 1.3;
+
+    color: #ffffff;
+}
+
+.sidebar-subtitle {
+    margin-top: 4px;
+
+    font-size: 10px;
+    line-height: 1.3;
+
+    color: rgba(255,255,255,0.75);
+}
+
+
+/* ======================================================
+   MOBILE SIDEBAR FOUNDATION
+   ====================================================== */
+
+@media (max-width: 768px) {
+
+    .master-sidebar {
+        width: 0;
+        overflow: hidden;
+
+        transition: width 0.25s ease;
+    }
+
+    body {
+        padding-left: 0;
+    }
+
+    .container {
+        width: 100%;
+    }
+
+}
+
+.dashboard-profile-header {
+    width: 100%;
+    min-height: 145px;
+    padding: 22px 35px;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    background: linear-gradient(
+        135deg,
+        #ffffff 0%,
+        #f4f8ff 100%
+    );
+
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+
+    margin-bottom: 18px;
+}
+
+.dashboard-profile-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.dashboard-user-photo {
+    width: 105px;
+    height: 105px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #1769e0;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+}
+
+.dashboard-logo-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.dashboard-sbm-logo {
+    font-size: 42px;
+    font-weight: 900;
+    color: #1769e0;
+    letter-spacing: 1px;
+}
+
+.dashboard-manager-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #172033;
+}
+
+.dashboard-profile-text h2 {
+    margin: 4px 0;
+    font-size: 21px;
+    color: #172033;
+}
+
+.dashboard-profile-text h2::first-line {
+    color: #1769e0;
+}
+
+.dashboard-profile-text p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.dashboard-financial-graphic {
+    position: relative;
+    width: 330px;
+    height: 115px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.graphic-bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 9px;
+    height: 90px;
+}
+
+.graphic-bar-chart span {
+    display: block;
+    width: 25px;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(
+        to top,
+        #1769e0,
+        #38a1ff
+    );
+}
+
+.graphic-bar-chart span:nth-child(1) {
+    height: 25px;
+}
+
+.graphic-bar-chart span:nth-child(2) {
+    height: 40px;
+}
+
+.graphic-bar-chart span:nth-child(3) {
+    height: 55px;
+}
+
+.graphic-bar-chart span:nth-child(4) {
+    height: 72px;
+}
+
+.graphic-bar-chart span:nth-child(5) {
+    height: 90px;
+}
+
+.graphic-wallet {
+    position: absolute;
+    left: 20px;
+    bottom: 0;
+    font-size: 55px;
+}
+
+.graphic-coins {
+    position: absolute;
+    left: 5px;
+    bottom: -4px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #f4b400;
+    letter-spacing: 5px;
+}
+
+.graphic-arrow {
+    position: absolute;
+    right: 5px;
+    top: 0;
+    font-size: 65px;
+    font-weight: 900;
+    color: #1769e0;
+    transform: rotate(-8deg);
+}
+
+@media (max-width: 768px) {
+
+    .dashboard-profile-header {
+        padding: 18px;
+    }
+
+    .dashboard-user-photo {
+        width: 75px;
+        height: 75px;
+    }
+
+    .dashboard-sbm-logo {
+        font-size: 30px;
+    }
+
+    .dashboard-manager-title {
+        font-size: 21px;
+    }
+
+    .dashboard-profile-text h2 {
+        font-size: 17px;
+    }
+
+    .dashboard-financial-graphic {
+        display: none;
+    }
+}
+
+.dashboard-financial-graphic {
+    position: relative;
+    width: 330px;
+    height: 110px;
+}
+
+.growth-bars {
+    position: absolute;
+    right: 45px;
+    bottom: 10px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.growth-bars span {
+    width: 24px;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(
+        to top,
+        #1769e0,
+        #42a5f5
+    );
+}
+
+.bar-1 { height: 28px; }
+.bar-2 { height: 42px; }
+.bar-3 { height: 58px; }
+.bar-4 { height: 76px; }
+.bar-5 { height: 94px; }
+
+.growth-line {
+    position: absolute;
+    right: 25px;
+    top: 8px;
+    font-size: 22px;
+    font-weight: 900;
+    color: #1769e0;
+    transform: scaleX(1.4);
+}
+
+.growth-arrow {
+    position: absolute;
+    right: 0;
+    top: -10px;
+    font-size: 55px;
+    font-weight: 900;
+    color: #1769e0;
+}
+
+.growth-coins {
+    position: absolute;
+    left: 35px;
+    bottom: 0;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: #f4c542;
+    color: #1769e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    font-weight: 900;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+@media (max-width: 768px) {
+    .dashboard-financial-graphic {
+        display: none;
+    }
+}
+
+/* =====================================================
+   SBM MASTER DASHBOARD — LARGE PROFESSIONAL CARDS
+   ===================================================== */
+
+.master-dashboard {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 0 25px;
+}
+
+.master-dashboard-header {
+    margin-bottom: 18px;
+}
+
+.master-dashboard-header h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 800;
+    color: #124b9b;
+    letter-spacing: -0.5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.12);
+}
+
+.master-dashboard-header p {
+    margin: 5px 0 0;
+    color: #475569;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   MODULE CARDS
+   ===================================================== */
+
+.master-module-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    width: 100%;
+}
+
+.master-module-card {
+    min-height: 175px;
+    padding: 20px 16px;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 14px;
+
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #edf4ff
+    );
+
+    box-shadow:
+        0 4px 10px rgba(15, 23, 42, 0.10),
+        inset 0 1px 0 rgba(255,255,255,0.9);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.master-module-card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 8px 20px rgba(15, 23, 42, 0.16),
+        inset 0 1px 0 rgba(255,255,255,1);
+
+    border-color: #1769e0;
+}
+
+.module-big-icon {
+    font-size: 43px;
+    line-height: 1;
+    margin-bottom: 10px;
+
+    filter:
+        drop-shadow(1px 2px 2px rgba(0,0,0,0.18));
+}
+
+.module-card-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #123f7a;
+    letter-spacing: 0.4px;
+    margin-bottom: 7px;
+}
+
+.module-card-subtitle {
+    min-height: 38px;
+
+    font-size: 11px;
+    line-height: 1.45;
+    font-weight: 600;
+
+    color: #475569;
+}
+
+.module-card-value {
+    margin-top: 10px;
+
+    font-size: 20px;
+    font-weight: 800;
+
+    color: #1769e0;
+
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.08);
+}
+
+.module-card-label {
+    margin-top: 3px;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    color: #64748b;
+    letter-spacing: 0.5px;
+}
+
+
+/* =====================================================
+   FINANCIAL SUMMARY
+   ===================================================== */
+
+.master-financial-summary {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 14px;
+
+    margin-top: 20px;
+}
+
+.master-summary-card {
+    min-height: 82px;
+
+    padding: 14px 18px;
+    box-sizing: border-box;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    border: 1px solid #d8e2f0;
+
+    box-shadow:
+        0 3px 9px rgba(15,23,42,0.08);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.master-summary-card span {
+    font-size: 12px;
+    font-weight: 700;
+
+    color: #64748b;
+
+    margin-bottom: 5px;
+}
+
+.master-summary-card strong {
+    font-size: 21px;
+    font-weight: 800;
+
+    color: #123f7a;
+}
+
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 1400px) {
+
+    .master-module-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 900px) {
+
+    .master-module-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .master-financial-summary {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .master-module-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .master-financial-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .master-module-card {
+        min-height: 155px;
+    }
+
+    .master-dashboard-header h1 {
+        font-size: 27px;
+    }
+}
+
+/* =====================================================
+   SBM DASHBOARD — PREMIUM CARD COLORS
+   ===================================================== */
+
+/* ---------- MODULE CARDS ---------- */
+
+.master-module-card:nth-child(1) {
+    background: linear-gradient(135deg, #eef6ff, #dcecff);
+    border-color: #8ab8f5;
+}
+
+.master-module-card:nth-child(2) {
+    background: linear-gradient(135deg, #edfff5, #d5f8e5);
+    border-color: #82d9ad;
+}
+
+.master-module-card:nth-child(3) {
+    background: linear-gradient(135deg, #fbf0ff, #efd9ff);
+    border-color: #c89af0;
+}
+
+.master-module-card:nth-child(4) {
+    background: linear-gradient(135deg, #fff6e8, #ffe3bd);
+    border-color: #f2bd76;
+}
+
+.master-module-card:nth-child(5) {
+    background: linear-gradient(135deg, #fff0f4, #ffdce6);
+    border-color: #f29bb2;
+}
+
+.master-module-card:nth-child(6) {
+    background: linear-gradient(135deg, #edfdff, #d1f7fb);
+    border-color: #7fdce5;
+}
+
+.master-module-card:nth-child(7) {
+    background: linear-gradient(135deg, #fffbea, #fff0bd);
+    border-color: #ebcc69;
+}
+
+.master-module-card:nth-child(8) {
+    background: linear-gradient(135deg, #f4f0ff, #e4dcff);
+    border-color: #b6a0f2;
+}
+
+.master-module-card:nth-child(9) {
+    background: linear-gradient(135deg, #fff0f5, #ffdce8);
+    border-color: #ee9fbc;
+}
+
+
+/* ---------- HOVER ---------- */
+
+.master-module-card:hover {
+    transform: translateY(-5px) scale(1.01);
+
+    box-shadow:
+        0 10px 25px rgba(15, 23, 42, 0.16),
+        inset 0 1px 0 rgba(255,255,255,0.95);
+}
+
+
+/* ---------- CARD TITLE ---------- */
+
+.module-card-title {
+    color: #103d78;
+    text-shadow:
+        1px 1px 1px rgba(255,255,255,0.8);
+}
+
+
+/* ---------- CARD VALUE ---------- */
+
+.module-card-value {
+    color: #075dcc;
+    text-shadow:
+        1px 1px 1px rgba(255,255,255,0.8);
+}
+
+
+/* =====================================================
+   FINANCIAL SUMMARY — DIFFERENT COLORS
+   ===================================================== */
+
+.master-financial-summary {
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 12px;
+    margin-top: 18px;
+}
+
+
+.master-summary-card {
+    min-height: 88px;
+
+    border-radius: 12px;
+
+    padding: 14px 18px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    box-shadow:
+        0 4px 12px rgba(15,23,42,0.09);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.master-summary-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 8px 18px rgba(15,23,42,0.14);
+}
+
+
+/* TOTAL ASSETS */
+
+.master-summary-card:nth-child(1) {
+    background: linear-gradient(
+        135deg,
+        #edfff5,
+        #d8f8e7
+    );
+
+    border: 1px solid #8bd9ad;
+}
+
+
+/* LIABILITIES */
+
+.master-summary-card:nth-child(2) {
+    background: linear-gradient(
+        135deg,
+        #fff0f3,
+        #ffdce3
+    );
+
+    border: 1px solid #efa0b1;
+}
+
+
+/* NET WORTH */
+
+.master-summary-card:nth-child(3) {
+    background: linear-gradient(
+        135deg,
+        #f8f0ff,
+        #e9dcff
+    );
+
+    border: 1px solid #c3a1ef;
+}
+
+
+/* MONTHLY INCOME */
+
+.master-summary-card:nth-child(4) {
+    background: linear-gradient(
+        135deg,
+        #edfff6,
+        #d7f8e8
+    );
+
+    border: 1px solid #82d9ac;
+}
+
+
+/* MONTHLY EXPENSE */
+
+.master-summary-card:nth-child(5) {
+    background: linear-gradient(
+        135deg,
+        #fff1f4,
+        #ffdce5
+    );
+
+    border: 1px solid #ef9eaf;
+}
+
+
+/* RENTAL INCOME */
+
+.master-summary-card:nth-child(6) {
+    background: linear-gradient(
+        135deg,
+        #fff9e9,
+        #ffefc6
+    );
+
+    border: 1px solid #e7c76b;
+}
+
+
+.master-summary-card span {
+    color: #475569;
+    font-weight: 700;
+}
+
+
+.master-summary-card strong {
+    color: #123f7a;
+
+    font-size: 22px;
+
+    text-shadow:
+        1px 1px 1px rgba(255,255,255,0.9);
+}
+
+
+/* =====================================================
+   SUMMARY RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 900px) {
+
+    .master-financial-summary {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .master-financial-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =====================================================
+   SBM WEALTH MANAGER — PREMIUM EMBOSSED HEADER
+   ===================================================== */
+
+.dashboard-profile-header {
+    min-height: 145px !important;
+    padding: 18px 35px !important;
+
+    background:
+        radial-gradient(
+            circle at 15% 50%,
+            rgba(255,255,255,0.95),
+            transparent 28%
+        ),
+        linear-gradient(
+            135deg,
+            #eef7ff 0%,
+            #ffffff 45%,
+            #e8f3ff 100%
+        ) !important;
+
+    border: 1px solid #d6e4f5 !important;
+    border-radius: 14px !important;
+
+    box-shadow:
+        0 5px 18px rgba(15, 45, 85, 0.14),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -1px 2px rgba(80,120,170,0.08) !important;
+
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* =====================================================
+   PROFILE PHOTO
+   ===================================================== */
+
+.dashboard-user-photo {
+    width: 105px !important;
+    height: 105px !important;
+
+    border: 3px solid #1769e0 !important;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.20),
+        0 0 0 4px rgba(255,255,255,0.8),
+        inset 0 1px 3px rgba(255,255,255,0.8) !important;
+}
+
+
+/* =====================================================
+   SBM LOGO — 3D / EMBOSSED
+   ===================================================== */
+
+.dashboard-sbm-logo {
+    font-family:
+        "Trebuchet MS",
+        "Arial Black",
+        Arial,
+        sans-serif !important;
+
+    font-size: 48px !important;
+    font-weight: 900 !important;
+
+    letter-spacing: 1px !important;
+
+    background: linear-gradient(
+        180deg,
+        #2f8cff 0%,
+        #1769e0 45%,
+        #06459c 100%
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        1px 1px 0 #ffffff,
+        2px 2px 0 rgba(0,60,140,0.18),
+        3px 4px 5px rgba(0,0,0,0.20);
+}
+
+
+/* =====================================================
+   WEALTH MANAGER — PREMIUM GOLD
+   ===================================================== */
+
+.dashboard-manager-title {
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif !important;
+
+    font-size: 32px !important;
+    font-weight: 800 !important;
+
+    background: linear-gradient(
+        180deg,
+        #ffd95a 0%,
+        #f4b400 45%,
+        #b97800 100%
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow:
+        1px 1px 0 #ffffff,
+        2px 2px 3px rgba(100,70,0,0.25);
+}
+
+
+/* =====================================================
+   WELCOME TEXT
+   ===================================================== */
+
+.dashboard-profile-text h2 {
+    margin: 5px 0 !important;
+
+    font-family:
+        "Trebuchet MS",
+        Arial,
+        sans-serif !important;
+
+    font-size: 21px !important;
+    font-weight: 800 !important;
+
+    color: #1769e0 !important;
+
+    text-shadow:
+        1px 1px 0 #ffffff,
+        1px 2px 2px rgba(0,0,0,0.12);
+}
+
+
+/* =====================================================
+   SUBTITLE
+   ===================================================== */
+
+.dashboard-profile-text p {
+    margin-top: 5px !important;
+
+    font-family:
+        "Trebuchet MS",
+        Arial,
+        sans-serif !important;
+
+    font-size: 11px !important;
+    font-weight: 700 !important;
+
+    letter-spacing: 3px !important;
+    text-transform: uppercase;
+
+    color: #334e68 !important;
+
+    text-shadow:
+        1px 1px 0 #ffffff;
+}
+
+
+/* =====================================================
+   FINANCIAL GRAPHIC
+   ===================================================== */
+
+.dashboard-financial-graphic {
+    transform: scale(1.08);
+    filter:
+        drop-shadow(2px 4px 5px rgba(0,0,0,0.12));
+}
+
+
+/* =====================================================
+   DECORATIVE SHINE
+   ===================================================== */
+
+.dashboard-profile-header::after {
+    content: "";
+
+    position: absolute;
+    left: -10%;
+    top: -80%;
+
+    width: 120%;
+    height: 160%;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 42%,
+            rgba(255,255,255,0.28) 50%,
+            transparent 58%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =====================================================
+   MOBILE
+   ===================================================== */
+
+@media (max-width: 768px) {
+
+    .dashboard-profile-header {
+        min-height: 115px !important;
+        padding: 15px !important;
+    }
+
+    .dashboard-user-photo {
+        width: 75px !important;
+        height: 75px !important;
+    }
+
+    .dashboard-sbm-logo {
+        font-size: 32px !important;
+    }
+
+    .dashboard-manager-title {
+        font-size: 22px !important;
+    }
+
+    .dashboard-profile-text h2 {
+        font-size: 16px !important;
+    }
+
+    .dashboard-profile-text p {
+        font-size: 8px !important;
+        letter-spacing: 1.5px !important;
+    }
+}
+
+/* =====================================================
+   FORCE PREMIUM 3D COLORS
+   ===================================================== */
+
+.dashboard-sbm-logo {
+    font-family: "Arial Black", "Trebuchet MS", sans-serif !important;
+    font-size: 50px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1px !important;
+
+    color: #0b5ed7 !important;
+
+    -webkit-text-fill-color: #0b5ed7 !important;
+
+    text-shadow:
+        1px 1px 0 #8fc4ff,
+        2px 2px 0 #ffffff,
+        3px 3px 0 #084298,
+        4px 4px 5px rgba(0, 35, 100, 0.45) !important;
+}
+
+
+/* =====================================================
+   WEALTH MANAGER — GOLD 3D
+   ===================================================== */
+
+.dashboard-manager-title {
+    font-family: Georgia, "Times New Roman", serif !important;
+    font-size: 34px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px !important;
+
+    color: #f5b400 !important;
+
+    -webkit-text-fill-color: #f5b400 !important;
+
+    text-shadow:
+        1px 1px 0 #fff4b0,
+        2px 2px 0 #ffffff,
+        3px 3px 0 #c47f00,
+        4px 4px 5px rgba(100, 65, 0, 0.45) !important;
+}
+
+
+/* =====================================================
+   WELCOME — DEEP BLUE
+   ===================================================== */
+
+.dashboard-profile-text h2 {
+    color: #075dcc !important;
+
+    font-weight: 900 !important;
+
+    text-shadow:
+        1px 1px 0 #ffffff,
+        2px 2px 2px rgba(0, 60, 140, 0.25) !important;
+}
+
+
+/* =====================================================
+   SUBTITLE
+   ===================================================== */
+
+.dashboard-profile-text p {
+    color: #23415f !important;
+    font-weight: 700 !important;
+}
+
+ /* =====================================================
+    SBM HEADER — PREMIUM MULTI COLOR BACKGROUND
+    ===================================================== */
+
+.dashboard-profile-header {
+
+    background:
+        radial-gradient(
+            circle at 8% 50%,
+            rgba(80, 150, 255, 0.22),
+            transparent 25%
+        ),
+
+        radial-gradient(
+            circle at 35% 15%,
+            rgba(170, 110, 255, 0.16),
+            transparent 28%
+        ),
+
+        radial-gradient(
+            circle at 65% 85%,
+            rgba(80, 210, 180, 0.18),
+            transparent 30%
+        ),
+
+        radial-gradient(
+            circle at 92% 45%,
+            rgba(255, 190, 70, 0.22),
+            transparent 27%
+        ),
+
+        linear-gradient(
+            110deg,
+            #e9f4ff 0%,
+            #ffffff 25%,
+            #f4edff 48%,
+            #effff9 72%,
+            #fff7e8 100%
+        ) !important;
+
+    border: 1px solid rgba(130,160,210,0.45) !important;
+
+    box-shadow:
+        0 6px 20px rgba(40,70,120,0.16),
+        inset 0 1px 2px rgba(255,255,255,0.95),
+        inset 0 -2px 5px rgba(80,120,180,0.08) !important;
+}
+
+
+/* =====================================================
+   SOFT COLOR GLOW INSIDE HEADER
+   ===================================================== */
+
+.dashboard-profile-header::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            120deg,
+            transparent 0%,
+            rgba(60,140,255,0.08) 25%,
+            rgba(180,100,255,0.06) 50%,
+            rgba(60,210,170,0.07) 72%,
+            rgba(255,190,60,0.09) 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =====================================================
+   KEEP HEADER CONTENT ABOVE BACKGROUND
+   ===================================================== */
+
+.dashboard-profile-header > * {
+    position: relative;
+    z-index: 2;
+}
