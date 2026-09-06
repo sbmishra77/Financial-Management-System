@@ -485,6 +485,11 @@ propertySnapshot.forEach((propertyDoc) => {
 
 });
 
+// =========================================
+// MAKE PROPERTY LOADER AVAILABLE GLOBALLY
+// =========================================
+
+window.loadSavedProperties = loadSavedProperties;
 
 // ===============================
 // TOTAL PROPERTIES
@@ -630,7 +635,7 @@ if (summaryCurrentValue) {
         const property =
             propertyDoc.data();
 
-            // =================================
+// =================================
 // FORMAT PURCHASE DATE
 // =================================
 

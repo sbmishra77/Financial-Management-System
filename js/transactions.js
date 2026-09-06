@@ -63,6 +63,14 @@ console.log(
 );
 
 // ===============================
+// TRANSACTION FORM HIDDEN BY DEFAULT
+// ===============================
+
+if (transactionFormContainer) {
+    transactionFormContainer.style.display = "none";
+}
+
+// ===============================
 // OPEN TRANSACTION FORM
 // ===============================
 
@@ -3963,6 +3971,12 @@ else if (
     }
 
 }
+
+// =========================================
+// MAKE TRANSACTION LOADER AVAILABLE GLOBALLY
+// =========================================
+
+window.loadSavedTransactions = loadSavedTransactions;
 
 // =========================================
 // DELETE TRANSACTION FROM HISTORY

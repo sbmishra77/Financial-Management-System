@@ -43,6 +43,14 @@ const transactionFormContainer =
         "#transactionFormContainer"
     );
 
+// ===============================
+// HIDE TRANSACTION FORM ON LOAD
+// ===============================
+
+if (transactionFormContainer) {
+    transactionFormContainer.style.display = "none";
+}
+
 const cancelTransactionButton =
     document.querySelector(
         "#cancelTransactionButton"
@@ -8325,6 +8333,133 @@ document.addEventListener("click", async function (event) {
 });
 
 // ======================================================
+// SBM MASTER VIEW CONTROLLER
+// Dashboard OR ONE MODULE ONLY
+// ======================================================
+
+function showMasterView(view) {
+    console.log("MASTER VIEW:", view);
+// Hide old page-level Logout button
+document.querySelectorAll("button").forEach(button => {
+
+    const text = button.textContent.trim();
+
+    if (
+        text === "Logout" &&
+        !button.classList.contains("sidebar-menu-item")
+    ) {
+        button.style.display = "none";
+    }
+
+});
+
+    // ----------------------------------------------
+    // DASHBOARD
+    // ----------------------------------------------
+
+    const dashboard =
+        document.getElementById("masterDashboard");
+
+
+    // ----------------------------------------------
+    // ALL MODULES
+    // ----------------------------------------------
+
+    const modules = {
+
+    transactions:
+        document.getElementById("transactionsSection"),
+
+    accounts:
+        document.getElementById("accountsSection"),
+
+    loans:
+        document.getElementById("loansSection"),
+
+    investments:
+        document.getElementById("investmentsSection"),
+
+    properties:
+        document.getElementById("propertiesSection"),
+
+    insurance:
+    document.querySelector(".insurance-section")
+
+};
+
+    // ----------------------------------------------
+    // FIRST HIDE DASHBOARD
+    // ----------------------------------------------
+
+    if (dashboard) {
+
+        dashboard.style.display =
+            "none";
+    }
+
+
+    // ----------------------------------------------
+    // HIDE AVAILABLE MODULES
+    // ----------------------------------------------
+
+    Object.entries(modules).forEach(
+        ([name, element]) => {
+
+            if (element) {
+
+                element.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    // ----------------------------------------------
+    // SHOW DASHBOARD
+    // ----------------------------------------------
+
+    if (view === "dashboard") {
+
+        if (dashboard) {
+
+            dashboard.style.display =
+                "block";
+        }
+
+        return;
+    }
+
+    
+// ----------------------------------------------
+// SHOW SELECTED MODULE ONLY
+// ----------------------------------------------
+
+const selectedModule =
+    modules[view];
+
+if (selectedModule) {
+
+    selectedModule.style.display =
+        "block";
+
+    selectedModule.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+} else {
+
+    console.warn(
+        "MASTER MODULE NOT FOUND:",
+        view
+    );
+}
+
+}
+
+// ======================================================
 // MASTER SIDEBAR NAVIGATION — STEP 1
 // Dashboard + Transactions
 // ======================================================
@@ -8336,77 +8471,50 @@ document.addEventListener("click", function (event) {
     // ==================================================
 
     const quickCard =
-        event.target.closest(".quick-module-card");
+    event.target.closest(
+        ".quick-module-card, .master-module-card"
+    );
 
-    if (quickCard) {
+if (quickCard) {
 
-        const quickSection =
-            quickCard.dataset.section;
+    const section =
+        quickCard.dataset.section;
 
-        console.log(
-            "QUICK CARD CLICK:",
-            quickSection
-        );
+    console.log(
+        "MODULE CARD CLICK:",
+        section
+    );
 
-        // PROPERTIES CARD
-        if (quickSection === "properties") {
+    const sidebarMenu =
+    document.querySelector(
+        `.sidebar-menu-item[data-section="${section}"]`
+    );
 
-            const propertiesMenu =
-                document.querySelector(
-                    '.sidebar-menu-item[data-section="properties"]'
-                );
+if (sidebarMenu) {
 
-            if (propertiesMenu) {
-                propertiesMenu.click();
-            } else {
-                console.warn(
-                    "Properties sidebar button not found."
-                );
-            }
+    // Highlight selected sidebar item
+    document
+        .querySelectorAll(".sidebar-menu-item")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
 
-            return;
-        }
+    sidebarMenu.classList.add("active");
 
-        // ACCOUNTS CARD
-        if (quickSection === "accounts") {
+    // Run the existing sidebar navigation
+    sidebarMenu.click();
 
-            const accountsMenu =
-                document.querySelector(
-                    '.sidebar-menu-item[data-section="accounts"]'
-                );
+} else {
 
-            if (accountsMenu) {
-                accountsMenu.click();
-            } else {
-                console.warn(
-                    "Accounts sidebar button not found."
-                );
-            }
+    console.warn(
+        "Sidebar button not found for:",
+        section
+    );
 
-            return;
-        }
-
-        // INVESTMENTS CARD
-if (quickSection === "investments") {
-
-    const investmentsMenu =
-        document.querySelector(
-            '.sidebar-menu-item[data-section="investments"]'
-        );
-
-    if (investmentsMenu) {
-        investmentsMenu.click();
-    } else {
-        console.warn(
-            "Investments sidebar button not found."
-        );
-    }
+}
 
     return;
-}       
-    }
-
-    
+}
 
     // ==================================================
     // SIDEBAR MENU BUTTON
@@ -8422,11 +8530,53 @@ if (quickSection === "investments") {
     const section =
         menuButton.dataset.section;
 
-    console.log(
-        "SIDEBAR CLICK:",
-        section
-    );
+// ==================================================
+// SIDEBAR LOGOUT
+// ==================================================
 
+if (section === "logout") {
+
+    console.log("🚪 LOGOUT CLICKED");
+
+    signOut(auth)
+        .then(() => {
+
+            console.log("✅ LOGOUT SUCCESS");
+
+            window.location.reload();
+
+        })
+        .catch((error) => {
+
+            console.error("❌ LOGOUT ERROR:", error);
+
+            alert("Logout failed. Please try again.");
+
+        });
+
+    return;
+}
+
+// ==================================================
+// LOANS & BORROWINGS — MASTER VIEW
+// ==================================================
+
+if (section === "loans") {
+
+    // Highlight Loans & Borrowings
+    document
+        .querySelectorAll(".sidebar-menu-item")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
+
+    menuButton.classList.add("active");
+
+    // Open Loans Module
+    showMasterView("loans");
+
+    return;
+}
 
     // ==================================================
     // ACTIVE MENU
@@ -8442,6 +8592,62 @@ if (quickSection === "investments") {
 
     menuButton.classList.add("active");
 
+    // ==================================================
+// MY INSURANCE — SIDEBAR
+// ==================================================
+
+if (section === "insurance") {
+
+    const dashboard =
+        document.getElementById("masterDashboard");
+
+    const insuranceSection =
+        document.querySelector(".insurance-section");
+
+    // Hide Dashboard
+    if (dashboard) {
+        dashboard.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    // Hide other modules
+    document.querySelectorAll(
+        ".transaction-section, #accountsSection, #loansSection, #investmentsSection, #propertiesSection"
+    ).forEach(element => {
+        element.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    });
+
+    // Show Insurance
+    if (insuranceSection) {
+
+        insuranceSection.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+        insuranceSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        console.log("✅ INSURANCE MODULE OPENED");
+
+    } else {
+
+        console.error("❌ .insurance-section NOT FOUND");
+
+    }
+
+    return;
+}
 
     // ==================================================
     // DASHBOARD
@@ -8449,199 +8655,123 @@ if (quickSection === "investments") {
 
     if (section === "dashboard") {
 
-        location.reload();
+    showMasterView("dashboard");
 
-        return;
+    return;
+}
+
+// ==================================================
+// TRANSACTIONS — MASTER VIEW
+// ==================================================
+
+if (section === "transactions") {
+
+    showMasterView("transactions");
+
+    const transactionForm =
+        document.getElementById("transactionFormContainer");
+
+    if (transactionForm) {
+        transactionForm.style.display = "block";
     }
 
-
-    // ==================================================
-    // TRANSACTIONS
-    // ==================================================
-
-    if (section === "transactions") {
-
-        const transactionSection =
-            document.querySelector(
-                "#transactionSection"
-            );
-
-        if (transactionSection) {
-
-            transactionSection.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
-        } else {
-
-            console.warn(
-                "Transaction section not found."
-            );
-
-        }
-
-        return;
+    if (typeof loadSavedTransactions === "function") {
+        loadSavedTransactions();
     }
 
+    return;
+}
 
-    // ==================================================
-    // PROPERTIES & RENTALS
-    // ==================================================
+// ==================================================
+// PROPERTIES & RENTALS — MASTER VIEW
+// ==================================================
 
-    if (section === "properties") {
+if (section === "properties") {
 
-        const propertiesSection =
-            document.getElementById(
-                "propertiesSection"
-            );
+    console.log("🔥 PROPERTIES SIDEBAR CLICKED");
 
-        if (propertiesSection) {
+    // Hide Dashboard
+    const dashboard =
+        document.getElementById("masterDashboard");
 
-            propertiesSection.style.height =
-                "auto";
-
-            propertiesSection.style.minHeight =
-                "500px";
-
-            propertiesSection.style.display =
-                "block";
-
-
-            console.log(
-                "PROPERTIES CSS:",
-                {
-                    height:
-                        getComputedStyle(
-                            propertiesSection
-                        ).height,
-
-                    minHeight:
-                        getComputedStyle(
-                            propertiesSection
-                        ).minHeight,
-
-                    maxHeight:
-                        getComputedStyle(
-                            propertiesSection
-                        ).maxHeight,
-
-                    overflow:
-                        getComputedStyle(
-                            propertiesSection
-                        ).overflow,
-
-                    position:
-                        getComputedStyle(
-                            propertiesSection
-                        ).position
-                }
-            );
-
-
-            window.scrollTo({
-
-                top:
-                    propertiesSection
-                        .getBoundingClientRect()
-                        .top
-                    + window.pageYOffset
-                    - 20,
-
-                behavior: "smooth"
-
-            });
-
-        } else {
-
-            console.warn(
-                "Properties section not found."
-            );
-
-        }
-
-        return;
+    if (dashboard) {
+        dashboard.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
     }
 
+    // Hide ALL modules
+    document.querySelectorAll(
+        "#transactionFormContainer, " +
+        "#accountsSection, " +
+        "#loansSection, " +
+        "#investmentsSection, " +
+        "#propertiesSection, " +
+        "#insuranceSection"
+    ).forEach(element => {
 
-    // ==================================================
-    // MY ACCOUNTS
-    // ==================================================
+        element.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
 
-    if (section === "accounts") {
+    });
 
-        const accountsSection =
-            document.getElementById(
-                "accountsSection"
-            );
+    // Show Properties
+    const propertiesSection =
+        document.getElementById(
+            "propertiesSection"
+        );
 
-        if (accountsSection) {
+    if (propertiesSection) {
 
-            window.scrollTo({
+        propertiesSection.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
 
-                top:
-                    accountsSection
-                        .getBoundingClientRect()
-                        .top
-                    + window.pageYOffset
-                    - 20,
+        propertiesSection.style.setProperty(
+            "visibility",
+            "visible",
+            "important"
+        );
 
-                behavior: "smooth"
+        propertiesSection.style.setProperty(
+            "opacity",
+            "1",
+            "important"
+        );
 
-            });
+        propertiesSection.style.setProperty(
+            "height",
+            "auto",
+            "important"
+        );
 
-        } else {
-
-            console.warn(
-                "Accounts section not found."
-            );
-
-        }
-
-        return;
-    }
-
-// =========================================
-// INVESTMENTS
-// =========================================
-
-if (section === "investments") {
-
-    const investmentsSection =
-        document.getElementById("investmentsSection");
-
-    console.log(
-        "INVESTMENTS NAVIGATION:",
-        investmentsSection
-    );
-
-    if (investmentsSection) {
-
-        // Make sure section is visible
-        investmentsSection.style.display = "block";
-
-        const rect =
-            investmentsSection.getBoundingClientRect();
-
-        const targetTop =
-            rect.top +
-            window.pageYOffset -
-            20;
-
-        window.scrollTo({
-            top: targetTop,
-            behavior: "smooth"
-        });
+        propertiesSection.style.setProperty(
+            "min-height",
+            "500px",
+            "important"
+        );
 
         console.log(
-            "INVESTMENTS SCROLLED TO:",
-            targetTop
+            "🔥 PROPERTIES OPENED:",
+            propertiesSection
         );
+
+        propertiesSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
 
     } else {
 
-        console.warn(
-            "Investments section not found."
+        console.error(
+            "❌ propertiesSection NOT FOUND"
         );
 
     }
@@ -8649,4 +8779,25 @@ if (section === "investments") {
     return;
 }
 
+// ==================================================
+// MY ACCOUNTS — MASTER VIEW
+// ==================================================
+
+if (section === "accounts") {
+
+    showMasterView("accounts");
+
+    return;
+}
+
+// ==================================================
+// INVESTMENTS — MASTER VIEW
+// ==================================================
+
+if (section === "investments") {
+
+    showMasterView("investments");
+
+    return;
+}
 });

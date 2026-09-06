@@ -6179,3 +6179,957 @@ body {
     position: relative;
     z-index: 2;
 }
+
+/* =====================================================
+   LOANS & BORROWINGS CARD
+   ===================================================== */
+
+.master-module-card[data-section="loans"] {
+    background: linear-gradient(
+        135deg,
+        #fff1e8,
+        #ffd9c2
+    );
+
+    border-color: #eea06b;
+}
+
+.master-module-card[data-section="loans"]:hover {
+    border-color: #e87932;
+}
+
+/* ==================================================
+   LOANS — PROFESSIONAL COLORFUL TYPE CARDS
+================================================== */
+
+.loan-type-grid {
+    width: min(1180px, 94%);
+    margin: 18px auto 28px;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
+
+    align-items: stretch;
+}
+
+.loan-type-card {
+    min-height: 76px;
+    padding: 10px 16px;
+}
+
+
+/* BASE CARD */
+
+.loan-type-card {
+    min-height: 82px;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    padding: 13px 18px;
+
+    border-radius: 14px;
+    border: 1px solid transparent;
+
+    cursor: pointer;
+    text-align: left;
+
+    box-sizing: border-box;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+.loan-type-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.12);
+}
+
+
+/* ICON */
+
+.loan-type-icon {
+    width: 52px;
+    height: 52px;
+
+    flex: 0 0 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.65);
+
+    font-size: 28px;
+
+    margin-right: 15px;
+
+    box-shadow:
+        inset 0 1px 3px rgba(255,255,255,0.9),
+        0 3px 8px rgba(0,0,0,0.08);
+}
+
+
+/* TEXT */
+
+.loan-type-info {
+    flex: 1;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    min-width: 0;
+}
+
+.loan-type-info strong {
+    font-size: 18px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.loan-type-info small {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.78;
+    white-space: nowrap;
+}
+
+
+/* ACTIVE COUNT */
+
+.loan-active-count {
+    flex-shrink: 0;
+
+    padding: 7px 12px;
+
+    border-radius: 20px;
+
+    background: rgba(255,255,255,0.72);
+
+    font-size: 12px;
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    box-shadow:
+        0 2px 6px rgba(0,0,0,0.06);
+}
+
+
+/* ARROW */
+
+.loan-card-arrow {
+    margin-left: 12px;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    opacity: 0.55;
+}
+
+
+/* ==================================================
+   INDIVIDUAL COLORS
+================================================== */
+
+.loan-home {
+    background: linear-gradient(
+        135deg,
+        #fff0f3,
+        #ffdfe5
+    );
+
+    border-color: #f2a9b8;
+
+    color: #8f2341;
+}
+
+.loan-home .loan-active-count {
+    color: #a51f45;
+}
+
+
+.loan-car {
+    background: linear-gradient(
+        135deg,
+        #e9f4ff,
+        #d6eaff
+    );
+
+    border-color: #9dc8f5;
+
+    color: #155da8;
+}
+
+.loan-car .loan-active-count {
+    color: #1769c2;
+}
+
+
+.loan-gold {
+    background: linear-gradient(
+        135deg,
+        #fff8dc,
+        #ffedb0
+    );
+
+    border-color: #ebca69;
+
+    color: #855d00;
+}
+
+.loan-gold .loan-active-count {
+    color: #9b6c00;
+}
+
+
+.loan-mortgage {
+    background: linear-gradient(
+        135deg,
+        #f1edff,
+        #e5dcff
+    );
+
+    border-color: #c0aeea;
+
+    color: #5b3e9b;
+}
+
+.loan-mortgage .loan-active-count {
+    color: #6542ad;
+}
+
+
+.loan-kcc {
+    background: linear-gradient(
+        135deg,
+        #e6fff7,
+        #d0f7ea
+    );
+
+    border-color: #8ed9c0;
+
+    color: #08765c;
+}
+
+.loan-kcc .loan-active-count {
+    color: #08765c;
+}
+
+
+.loan-credit-card {
+    background: linear-gradient(
+        135deg,
+        #f0edff,
+        #dfd9ff
+    );
+
+    border-color: #b9ade8;
+
+    color: #503a9b;
+}
+
+.loan-credit-card .loan-active-count {
+    color: #5b43a8;
+}
+
+
+.loan-personal {
+    background: linear-gradient(
+        135deg,
+        #edf8ff,
+        #dcefff
+    );
+
+    border-color: #a5cde8;
+
+    color: #205f82;
+}
+
+.loan-personal .loan-active-count {
+    color: #23698f;
+}
+
+
+.loan-other {
+    background: linear-gradient(
+        135deg,
+        #f4f4f4,
+        #e7e7e7
+    );
+
+    border-color: #c8c8c8;
+
+    color: #444444;
+}
+
+.loan-other .loan-active-count {
+    color: #444444;
+}
+
+
+/* ==================================================
+   MOBILE
+================================================== */
+
+@media (max-width: 850px) {
+
+    .loan-type-grid {
+        grid-template-columns: 1fr;
+        width: 94%;
+    }
+
+    .loan-type-info {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .loan-type-info small {
+        white-space: normal;
+    }
+}
+
+/* ==================================================
+   DASHBOARD POSITION & ALIGNMENT ADJUSTMENT
+================================================== */
+
+/* Wealth Manager header को बिल्कुल ऊपर लाना */
+.dashboard-profile-header {
+    margin-top: 0 !important;
+}
+
+/* Dashboard heading और header के बीच का gap कम करना */
+#masterDashboard {
+    padding-top: 0 !important;
+}
+
+.master-dashboard-header {
+    margin-top: 8px !important;
+    margin-bottom: 12px !important;
+    text-align: center !important;
+}
+
+/* Financial Dashboard heading center */
+.master-dashboard-header h1 {
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+.master-dashboard-header p {
+    text-align: center !important;
+    margin: 4px 0 0 !important;
+}
+
+/* Dashboard cards को थोड़ा ऊपर लाना */
+.master-module-grid {
+    margin-top: 8px !important;
+}
+
+/* Wealth Manager header — align with sidebar top */
+.dashboard-profile-header {
+    margin-top: -35px !important;
+}
+
+/* ==================================================
+   CENTER ONLY SBM WEALTH MANAGER
+   KEEP FINANCIAL GRAPHIC ON RIGHT
+================================================== */
+
+.dashboard-profile-header {
+    position: relative !important;
+}
+
+/* Center the SBM Wealth Manager block */
+.dashboard-profile-text {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    text-align: center !important;
+    width: max-content !important;
+}
+
+/* Keep financial infographic on RIGHT */
+.dashboard-financial-graphic {
+    margin-left: auto !important;
+    margin-right: 25px !important;
+}
+
+/* Keep profile photo on LEFT */
+.dashboard-profile-header .dashboard-user-photo {
+    position: absolute !important;
+    left: 32px !important;
+}
+
+/* Financial Dashboard stays centered */
+.master-dashboard-header {
+    text-align: center !important;
+}
+
+/* ==================================================
+   HIDE OLD PAGE LOGOUT BUTTON
+   Sidebar Logout remains active
+================================================== */
+
+#logoutButton {
+    display: none !important;
+}
+
+/* ==================================================
+   FORCE PROPERTIES & RENTALS VISIBILITY
+   ================================================== */
+
+#propertiesSection {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 500px !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+/* =========================================
+   HIDE PROPERTIES & INSURANCE BY DEFAULT
+   ========================================= */
+
+#propertiesSection,
+.insurance-section {
+    display: none !important;
+}
+
+/* =====================================================
+   SBM WEALTH MANAGER — 3D FINANCIAL HEADER
+   ===================================================== */
+
+.dashboard-profile-header {
+    position: relative;
+    width: 100%;
+    min-height: 145px;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 25px;
+
+    background:
+        linear-gradient(
+            105deg,
+            #d8ecff 0%,
+            #eee7ff 42%,
+            #dffaf5 72%,
+            #fff0cc 100%
+        );
+
+    border: 1px solid #b8cce5;
+    border-radius: 0 0 16px 16px;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,0.15);
+
+    overflow: hidden;
+}
+
+
+/* ===============================
+   LEFT USER PHOTO
+================================ */
+
+.dashboard-user-area {
+    width: 145px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-user-photo {
+    width: 105px;
+    height: 105px;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+
+    border: 5px solid white;
+
+    box-shadow:
+        0 0 0 3px #1976d2,
+        0 6px 14px rgba(0,0,0,0.30);
+}
+
+
+/* ===============================
+   CENTER BRAND
+================================ */
+
+.dashboard-profile-text {
+    flex: 1;
+    text-align: center;
+    z-index: 5;
+}
+
+.sbm-brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+}
+
+
+/* ===============================
+   SBM 3D FINANCE COINS
+================================ */
+
+.sbm-coin {
+    position: relative;
+
+    width: 72px;
+    height: 72px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #fff7b0 0%,
+            #ffd84d 18%,
+            #d89b12 58%,
+            #8b5a00 100%
+        );
+
+    border: 4px solid #f6d76b;
+
+    box-shadow:
+        inset 0 0 0 3px #a96f05,
+        inset 0 0 9px rgba(255,255,255,0.85),
+        0 6px 10px rgba(0,0,0,0.35);
+
+    transform: perspective(500px) rotateX(8deg);
+}
+
+
+/* Inner coin ring */
+
+.sbm-coin::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 6px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(255,245,170,0.8);
+}
+
+
+/* Currency letters */
+
+.sbm-coin span {
+    position: relative;
+
+    z-index: 2;
+
+    font-size: 45px;
+    line-height: 1;
+
+    font-weight: 900;
+
+    color: #fff3a6;
+
+    text-shadow:
+        2px 2px 0 #805000,
+        3px 4px 5px rgba(0,0,0,0.5);
+}
+
+
+/* M coin */
+
+.sbm-m-coin span {
+    font-size: 42px;
+}
+
+
+/* M coin upward arrow */
+
+.sbm-m-coin b {
+    position: absolute;
+
+    z-index: 3;
+
+    right: 8px;
+    top: 8px;
+
+    font-size: 25px;
+    line-height: 1;
+
+    color: #fff6b0;
+
+    font-weight: 900;
+
+    text-shadow:
+        1px 2px 2px #704500;
+}
+
+
+/* ===============================
+   WEALTH MANAGER SIZE
+================================ */
+
+.dashboard-manager-title {
+    margin-left: 8px;
+
+    font-size: 46px;
+
+    font-weight: 900;
+
+    white-space: nowrap;
+
+    color: #f0ad17;
+
+    text-shadow:
+        2px 2px 0 #805000,
+        3px 4px 5px rgba(0,0,0,0.35);
+}
+
+
+/* Coin inner ring */
+
+.sbm-coin::before {
+    content: "";
+    position: absolute;
+
+    inset: 6px;
+
+    border-radius: 50%;
+
+    border: 2px solid rgba(255,245,170,0.75);
+}
+
+
+/* Coin symbol */
+
+.sbm-coin span {
+    position: relative;
+
+    z-index: 2;
+
+    font-size: 39px;
+    font-weight: 900;
+
+    color: #fff1a6;
+
+    text-shadow:
+        2px 2px 0 #805000,
+        3px 4px 5px rgba(0,0,0,0.5);
+}
+
+
+/* M coin */
+
+.sbm-m-coin span {
+    font-size: 36px;
+}
+
+.sbm-m-coin b {
+    position: absolute;
+
+    right: 8px;
+    top: 7px;
+
+    font-size: 20px;
+
+    color: #fff4a8;
+
+    text-shadow:
+        1px 2px 2px #704500;
+}
+
+
+/* ===============================
+   WEALTH MANAGER TEXT
+================================ */
+
+.dashboard-manager-title {
+    margin-left: 6px;
+
+    font-size: 38px;
+    font-weight: 900;
+
+    color: #f0ad17;
+
+    text-shadow:
+        2px 2px 0 #805000,
+        3px 4px 5px rgba(0,0,0,0.35);
+}
+
+
+/* ===============================
+   WELCOME USER NAME
+================================ */
+
+#dashboardWelcomeText {
+    margin: 5px 0 3px;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    color: #0875dc;
+
+    text-shadow:
+        1px 2px 2px rgba(0,0,0,0.20);
+}
+
+
+/* ===============================
+   TAGLINE
+================================ */
+
+.dashboard-tagline {
+    font-size: 11px;
+
+    letter-spacing: 4px;
+
+    color: #123d6b;
+
+    font-weight: 600;
+}
+
+
+/* ===============================
+   RIGHT FINANCIAL GRAPHIC
+================================ */
+
+.dashboard-financial-graphic {
+    position: relative;
+
+    width: 270px;
+    height: 125px;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+
+/* Bars */
+
+.financial-bars {
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 7px;
+
+    height: 85px;
+}
+
+.f-bar {
+    width: 20px;
+
+    background:
+        linear-gradient(
+            to right,
+            #1565c0,
+            #42a5f5,
+            #0d63c5
+        );
+
+    border-radius: 4px 4px 0 0;
+
+    box-shadow:
+        2px 3px 5px rgba(0,0,0,0.25);
+}
+
+.f-bar-1 { height: 25px; }
+.f-bar-2 { height: 40px; }
+.f-bar-3 { height: 58px; }
+.f-bar-4 { height: 78px; }
+.f-bar-5 { height: 96px; }
+
+
+/* Growth Arrow */
+
+.financial-arrow {
+    position: absolute;
+
+    top: 2px;
+    right: 22px;
+
+    font-size: 58px;
+
+    font-weight: 900;
+
+    color: #e6a516;
+
+    transform: rotate(-12deg);
+
+    text-shadow:
+        2px 3px 3px rgba(0,0,0,0.25);
+}
+
+
+/* Rupee Coin */
+
+.financial-rupee {
+    position: absolute;
+
+    left: 22px;
+    bottom: 2px;
+
+    width: 48px;
+    height: 48px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 29px;
+    font-weight: 900;
+
+    color: #fff1a5;
+
+    background:
+        radial-gradient(
+            circle at 30% 25%,
+            #fff5a8,
+            #f4bf25 35%,
+            #bd7d00 100%
+        );
+
+    border: 3px solid #f8dd78;
+
+    box-shadow:
+        inset 0 0 0 3px #a86c00,
+        0 5px 9px rgba(0,0,0,0.3);
+
+    text-shadow:
+        2px 2px 2px #805000;
+}
+
+/* =========================================
+   SIDEBAR SBM COINS — HORIZONTAL FIX
+========================================= */
+
+.sbm-sidebar-coins {
+    display: flex !important;
+    flex-direction: row !important;
+
+    justify-content: center !important;
+    align-items: center !important;
+
+    gap: 4px !important;
+
+    width: 100% !important;
+    height: 48px !important;
+
+    margin: 0 auto !important;
+    padding: 0 !important;
+}
+
+
+/* छोटे लेकिन वही 3D coins */
+
+.sbm-sidebar-coins .sbm-coin {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+    min-height: 34px !important;
+
+    margin: 0 !important;
+}
+
+
+/* Symbols */
+
+.sbm-sidebar-coins .sbm-coin span {
+    font-size: 22px !important;
+}
+
+.sbm-sidebar-coins .sbm-m-coin span {
+    font-size: 20px !important;
+}
+
+
+/* M arrow */
+
+.sbm-sidebar-coins .sbm-m-coin b {
+    right: 3px !important;
+    top: 3px !important;
+
+    font-size: 10px !important;
+}
+
+
+/* Sidebar title */
+
+.sbm-sidebar-coins + .sidebar-title {
+    margin-top: 3px !important;
+}
+
+/* =========================================
+   SIDEBAR COINS + WEALTH MANAGER
+========================================= */
+
+.sbm-sidebar-coins {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    width: 100% !important;
+    height: 45px !important;
+
+    gap: 4px !important;
+    margin: 0 auto 2px !important;
+}
+
+
+/* Wealth Manager नीचे */
+
+.sbm-sidebar-coins + .sidebar-title {
+    display: block !important;
+
+    width: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    text-align: center !important;
+
+    font-size: 13px !important;
+    line-height: 16px !important;
+
+    white-space: nowrap !important;
+}
+
+/* =========================================
+   HIDE MODULES ON INITIAL PAGE LOAD
+========================================= */
+
+#accountsSection,
+#investmentsSection {
+    display: none;
+}

@@ -20,11 +20,24 @@
     <!-- LOGO / BRAND -->
     <div class="sidebar-brand">
 
-        <div class="sidebar-logo">
-            SBM
-        </div>
+        <div class="sidebar-logo sbm-sidebar-coins">
 
-        <div class="sidebar-title">
+    <div class="sbm-coin sbm-s-coin">
+        <span>$</span>
+    </div>
+
+    <div class="sbm-coin sbm-b-coin">
+        <span>₿</span>
+    </div>
+
+    <div class="sbm-coin sbm-m-coin">
+        <span>M</span>
+        <b>↗</b>
+    </div>
+
+</div>
+
+<div class="sidebar-title">
     WEALTH MANAGER
 </div>
 
@@ -91,6 +104,10 @@
         <span>Investments</span>
     </button>
 
+<button type="button" class="sidebar-menu-item" data-section="loans">
+    💰
+    <span>Loans & Borrowings</span>
+</button>
 
     <button
         type="button"
@@ -192,58 +209,91 @@
 
 
 <!-- ===============================
-DASHBOARD PROFILE HEADER
-=============================== -->
+     SBM WEALTH MANAGER HEADER
+================================ -->
 
 <div class="dashboard-profile-header">
 
-    <img
-        id="dashboardUserProfilePhoto"
-        class="dashboard-user-photo"
-        alt="Profile">
+    <!-- LEFT : USER PHOTO -->
+    <div class="dashboard-user-area">
+        <img
+            id="dashboardUserProfilePhoto"
+            class="dashboard-user-photo"
+            alt="Profile">
+    </div>
 
+
+    <!-- CENTER : SBM LOGO + WELCOME -->
     <div class="dashboard-profile-text">
 
-        <div>
-            <span class="dashboard-sbm-logo">SBM</span>
+        <div class="sbm-brand-row">
+
+            <div class="sbm-coin sbm-s-coin">
+                <span>$</span>
+            </div>
+
+            <div class="sbm-coin sbm-b-coin">
+                <span>₿</span>
+            </div>
+
+            <div class="sbm-coin sbm-m-coin">
+                <span>M</span>
+                <b>↗</b>
+            </div>
+
             <span class="dashboard-manager-title">
                 Wealth Manager
             </span>
+
         </div>
 
         <h2 id="dashboardWelcomeText">
             Welcome!
         </h2>
 
-        <p>Your Personal Financial Management System</p>
+        <div class="dashboard-tagline">
+            YOUR PERSONAL FINANCIAL MANAGEMENT SYSTEM
+        </div>
 
     </div>
 
+
+    <!-- RIGHT : FINANCIAL GROWTH GRAPHIC -->
     <div class="dashboard-financial-graphic">
 
-    <div class="growth-bars">
-        <span class="bar-1"></span>
-        <span class="bar-2"></span>
-        <span class="bar-3"></span>
-        <span class="bar-4"></span>
-        <span class="bar-5"></span>
-    </div>
+        <div class="financial-arrow">↗</div>
 
-    <div class="growth-line">
-        ╱╲___╱╲____╱
-    </div>
+        <div class="financial-bars">
+            <span class="f-bar f-bar-1"></span>
+            <span class="f-bar f-bar-2"></span>
+            <span class="f-bar f-bar-3"></span>
+            <span class="f-bar f-bar-4"></span>
+            <span class="f-bar f-bar-5"></span>
+        </div>
 
-    <div class="growth-arrow">
-        ↗
-    </div>
+        <div class="financial-rupee">₹</div>
 
-    <div class="growth-coins">
-        ₹
     </div>
 
 </div>
 
-</div>
+<!-- ===============================
+     TRANSACTIONS MODULE
+=============================== -->
+
+<section
+    id="transactionsSection"
+    class="transactions-section"
+    style="display: none;">
+
+    <div class="transactions-module-header">
+
+        <div>
+            <h2>💳 Transactions</h2>
+            <p>Income • Expenses • Transfers • Investments</p>
+        </div>
+
+    </div>
 
 <!-- ===============================
    ADD TRANSACTION FORM
@@ -755,9 +805,9 @@ DASHBOARD PROFILE HEADER
     </div>
 
 
-    <!-- =========================================
+  <!-- =========================================
          ADD NEW ENTRY
-         ========================================= -->
+  ========================================= -->
 
     <div class="transaction-entry-controls">
 
@@ -1184,9 +1234,7 @@ DASHBOARD PROFILE HEADER
 
 </div>
 
-</div>
-
-
+</section>
 <!-- =========================================================
      MASTER DASHBOARD — INFOGRAPHIC MODULE CARDS
      ========================================================= -->
@@ -1284,6 +1332,33 @@ DASHBOARD PROFILE HEADER
 
         </button>
 
+<!-- LOANS & BORROWINGS -->
+<button
+    type="button"
+    class="master-module-card"
+    data-section="loans">
+
+    <div class="module-big-icon">💰</div>
+
+    <div class="module-card-title">
+        LOANS & BORROWINGS
+    </div>
+
+    <div class="module-card-subtitle">
+        HOME • CAR • GOLD • MORTGAGE<br>
+        KCC • CREDIT CARD • PERSONAL
+    </div>
+
+    <div class="module-card-value"
+         id="dashboardLoansValue">
+        ₹0
+    </div>
+
+    <div class="module-card-label">
+        OUTSTANDING BALANCE
+    </div>
+
+</button>
 
         <!-- PROPERTIES -->
         <button type="button"
@@ -1488,10 +1563,6 @@ DASHBOARD PROFILE HEADER
 
 </div>
 
-        <button id="logoutButton">Logout</button>
-
-    </div>
-    
 <section
     id="accountsSection"
     class="accounts-section">
@@ -1855,6 +1926,322 @@ DASHBOARD PROFILE HEADER
     </form>
 
 </div> 
+
+<!-- =====================================================
+     LOANS & BORROWINGS MODULE
+     ===================================================== -->
+
+<section
+    id="loansSection"
+    class="loans-section"
+    style="display: none;">
+
+    <!-- HEADER -->
+
+    <div class="section-header loans-section-header">
+
+        <div class="section-title-area">
+
+            <h2>
+                💰 Loans & Borrowings
+            </h2>
+
+            <p>
+                Manage loans, borrowings, advances & credit facilities
+            </p>
+
+        </div>
+
+
+        <div class="section-header-buttons">
+
+            <!-- SUMMARY -->
+
+            <button
+                type="button"
+                id="loanSummaryButton"
+                class="section-summary-button">
+
+                📊 Loan Summary
+
+            </button>
+
+
+            <!-- ADD LOAN -->
+
+            <button
+                type="button"
+                id="addLoanButton"
+                class="add-module-button">
+
+                ➕ Add Loan
+
+            </button>
+
+
+            <!-- VIEW ALL -->
+
+            <button
+                type="button"
+                id="viewAllLoansButton"
+                class="view-module-button">
+
+                View All Loans →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         LOAN SUMMARY
+         ================================================= -->
+
+    <div
+        id="loanSummary"
+        class="loan-summary"
+        style="display: none;">
+
+        <div class="loan-summary-card">
+
+            <h3>
+                💰 Total Loans
+            </h3>
+
+            <p id="totalLoansAmount">
+                ₹0
+            </p>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <h3>
+                📉 Outstanding
+            </h3>
+
+            <p id="outstandingLoansAmount">
+                ₹0
+            </p>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <h3>
+                💵 Monthly EMI
+            </h3>
+
+            <p id="monthlyLoanEMI">
+                ₹0
+            </p>
+
+        </div>
+
+
+        <div class="loan-summary-card">
+
+            <h3>
+                📅 Active Loans
+            </h3>
+
+            <p id="activeLoansCount">
+                0
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==================================================
+     LOAN TYPE CARDS
+================================================== -->
+
+<div class="loan-type-grid">
+
+    <button type="button" class="loan-type-card loan-home" data-loan-type="Home Loan">
+        <span class="loan-type-icon">🏠</span>
+
+        <span class="loan-type-info">
+            <strong>Home Loan</strong>
+            <small>Housing / Property Loan</small>
+        </span>
+
+        <span class="loan-active-count" id="homeLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-car" data-loan-type="Car Loan">
+        <span class="loan-type-icon">🚗</span>
+
+        <span class="loan-type-info">
+            <strong>Car Loan</strong>
+            <small>Vehicle Finance</small>
+        </span>
+
+        <span class="loan-active-count" id="carLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-gold" data-loan-type="Gold Loan">
+        <span class="loan-type-icon">🪙</span>
+
+        <span class="loan-type-info">
+            <strong>Gold Loan</strong>
+            <small>Loan Against Gold</small>
+        </span>
+
+        <span class="loan-active-count" id="goldLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-mortgage" data-loan-type="Mortgage Loan">
+        <span class="loan-type-icon">🏢</span>
+
+        <span class="loan-type-info">
+            <strong>Mortgage Loan</strong>
+            <small>Loan Against Property</small>
+        </span>
+
+        <span class="loan-active-count" id="mortgageLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-kcc" data-loan-type="KCC Loan">
+        <span class="loan-type-icon">🌾</span>
+
+        <span class="loan-type-info">
+            <strong>KCC Loan</strong>
+            <small>Kisan Credit Card</small>
+        </span>
+
+        <span class="loan-active-count" id="kccLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-credit-card" data-loan-type="Credit Card Loan">
+        <span class="loan-type-icon">💳</span>
+
+        <span class="loan-type-info">
+            <strong>Credit Card Loan</strong>
+            <small>Card Based Borrowing</small>
+        </span>
+
+        <span class="loan-active-count" id="creditCardLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-personal" data-loan-type="Personal Loan">
+        <span class="loan-type-icon">👤</span>
+
+        <span class="loan-type-info">
+            <strong>Personal Loan</strong>
+            <small>Unsecured Personal Finance</small>
+        </span>
+
+        <span class="loan-active-count" id="personalLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+
+    <button type="button" class="loan-type-card loan-other" data-loan-type="Other Borrowings">
+        <span class="loan-type-icon">🤝</span>
+
+        <span class="loan-type-info">
+            <strong>Other Borrowings</strong>
+            <small>Advance / Other Liability</small>
+        </span>
+
+        <span class="loan-active-count" id="otherLoanActiveCount">
+            0 Active
+        </span>
+
+        <span class="loan-card-arrow">→</span>
+    </button>
+
+</div>
+
+    <!-- =================================================
+         ADD / EDIT LOAN AREA
+         ================================================= -->
+
+    <div
+        id="loanFormContainer"
+        style="display: none;">
+
+        <!-- FORM WILL BE ADDED IN NEXT STEP -->
+
+    </div>
+
+
+    <!-- =================================================
+         LOAN LIST
+         ================================================= -->
+
+    <div
+        id="loansListContainer"
+        style="display: none;">
+
+        <table class="loans-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Loan Type</th>
+                    <th>Lender</th>
+                    <th>Principal</th>
+                    <th>Outstanding</th>
+                    <th>Interest Rate</th>
+                    <th>EMI</th>
+                    <th>Start Date</th>
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="loansTableBody">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</section>
 
 <!-- =============================== -->
 <!-- MY INVESTMENTS -->
@@ -2722,6 +3109,7 @@ DASHBOARD PROFILE HEADER
         </p>
 
     </div>
+</div>
 </div>
 
 <!-- =============================== -->
