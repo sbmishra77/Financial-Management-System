@@ -88,29 +88,22 @@ if (addTransactionButton) {
             }
 
 
-            loadSavedTransactionCategories();
+                    loadSavedTransactionCategories();
 
-            loadTransactionAccounts();
+                    await loadTransactionAccounts();
 
-            loadTransactionParties();
+                    loadTransactionParties();
 
-            loadTransactionInvestments();
+                    await loadTransactionInvestments();
 
+                    await loadCustomTransactionTypes();
 
-            // =================================
-            // LOAD CUSTOM TRANSACTION TYPES
-            // =================================
-
-            await loadCustomTransactionTypes();
-
-
-            loadSavedTransactions();
+                    loadSavedTransactions();
 
         }
     );
 
 }
-
 
 // ===============================
 // CLOSE TRANSACTION FORM
@@ -605,6 +598,12 @@ document.addEventListener(
                 row
             );
 
+            // =================================
+// REFRESH ACCOUNT DROPDOWNS
+// =================================
+
+loadTransactionAccounts();
+
         }
 
     }
@@ -874,18 +873,18 @@ document.addEventListener(
         if (
             selectedType === "income" &&
             selectedCategory === "Rental Income"
-        ) {
+            ) {
 
-console.log(
-    "RENTAL INCOME CONDITION MATCHED"
-);
+                console.log(
+                "RENTAL INCOME CONDITION MATCHED"
+                );
 
-console.log(
-    "ADD RENT BUTTON CHECK:",
-    document.querySelector(
-        "#addRentEntryButton"
-    )
-);
+                console.log(
+                "ADD RENT BUTTON CHECK:",
+                document.querySelector(
+                "#addRentEntryButton"
+            )
+        );
 
             const addRentEntryButton =
                 document.querySelector(
@@ -979,6 +978,89 @@ window.pendingRentalIncomeTransactionRow =
                 100
             );
 
+                }
+
+        // =================================
+        // MUTUAL FUND / SIP
+        // =================================
+
+        if (
+            selectedType === "investment" &&
+            selectedCategory === "Mutual Fund / SIP"
+        ) {
+
+            console.log(
+                "MUTUAL FUND / SIP CONDITION MATCHED"
+            );
+
+            // Store Transaction Row Reference
+            window.pendingMutualFundTransactionRow =
+                row;
+
+// =================================
+// COPY INVESTMENT / FUND NAME TO MF
+// =================================
+
+setTimeout(() => {
+
+    const mfFundNameInput =
+        document.querySelector("#mfFundName");
+
+    const transactionInvestmentInput =
+        row.querySelector(".transaction-investment");
+
+    if (
+        mfFundNameInput &&
+        transactionInvestmentInput
+    ) {
+
+        mfFundNameInput.value =
+            transactionInvestmentInput.value || "";
+
+        console.log(
+            "✅ Fund name copied to MF:",
+            mfFundNameInput.value
+        );
+    }
+
+}, 300);
+
+// =================================
+// COPY TRANSACTION AMOUNT TO MF
+// =================================
+
+setTimeout(() => {
+
+    const mfAmountInput =
+        document.querySelector("#mfAmount");
+
+    const transactionAmountInput =
+        row.querySelector(".transaction-amount");
+
+    if (
+        mfAmountInput &&
+        transactionAmountInput
+    ) {
+
+        mfAmountInput.value =
+            transactionAmountInput.value || "";
+
+        console.log(
+            "✅ Transaction amount copied to MF:",
+            mfAmountInput.value
+        );
+    }
+
+}, 300);
+
+            // Open Mutual Fund Module
+            if (window.openMutualFundsFromTransaction) {
+
+                window.openMutualFundsFromTransaction();
+
+            }
+
+            return;
         }
 
     }
@@ -2702,6 +2784,11 @@ document.addEventListener(
             row
         );
 
+        // =========================================
+// REFRESH ACCOUNT DROPDOWNS
+// =========================================
+
+loadTransactionAccountDropdowns();
     }
 );
 
@@ -2727,7 +2814,7 @@ function initializeTransactionRows() {
         }
     );
 
-
+    
     // =====================================
     // LOAD CUSTOM TRANSACTION TYPES
     // =====================================
@@ -2745,7 +2832,7 @@ console.log(
 
 document.addEventListener(
     "input",
-    (event) => {
+    async (event) => {
 
         if (
             !event.target.classList.contains(
@@ -2787,6 +2874,11 @@ document.addEventListener(
                 .trim()
                 .toLowerCase();
 
+                if (
+    savedTransactionInvestments.length === 0
+) {
+    await loadTransactionInvestments();
+}
 
         // =====================================
         // CLEAR OLD SUGGESTIONS
@@ -3268,7 +3360,7 @@ if (transactionForm) {
 
                     }
 
-                    // =================================
+// =================================
 // GET CUSTOM TRANSACTION BEHAVIOR
 // =================================
 
@@ -7632,3 +7724,15 @@ document.addEventListener("click", async function (event) {
     }
 
 });
+
+// =========================================
+// EXPOSE TRANSACTION LOADERS
+// =========================================
+
+window.loadTransactionInvestments =
+    loadTransactionInvestments;
+
+window.loadTransactionAccounts =
+    loadTransactionAccounts;
+
+    window.getTransactionInvestments = () => savedTransactionInvestments;

@@ -8572,6 +8572,40 @@ if (section === "loans") {
 
     menuButton.classList.add("active");
 
+    // ==========================================
+// BACK TO DASHBOARD — ALL MODULES
+// ==========================================
+
+if (section !== "dashboard") {
+    document.querySelectorAll(".back-to-dashboard-button")
+        .forEach(button => {
+            button.onclick = () => {
+
+                showMasterView("dashboard");
+
+                document
+                    .querySelectorAll(".sidebar-menu-item")
+                    .forEach(item => {
+                        item.classList.remove("active");
+                    });
+
+                const dashboardButton =
+                    document.querySelector(
+                        '.sidebar-menu-item[data-section="dashboard"]'
+                    );
+
+                if (dashboardButton) {
+                    dashboardButton.classList.add("active");
+                }
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            };
+        });
+}
+
     // Open Loans Module
     showMasterView("loans");
 
@@ -8615,8 +8649,9 @@ if (section === "insurance") {
 
     // Hide other modules
     document.querySelectorAll(
-        ".transaction-section, #accountsSection, #loansSection, #investmentsSection, #propertiesSection"
-    ).forEach(element => {
+    "#transactionsSection, #accountsSection, #loansSection, #investmentsSection, #propertiesSection, #insuranceSection, #mutualFundsInvestmentView"
+).forEach(element => {
+
         element.style.setProperty(
             "display",
             "none",
@@ -8668,6 +8703,29 @@ if (section === "transactions") {
 
     showMasterView("transactions");
 
+    // Hide Investment UI inside Transactions
+const investmentsSection =
+    document.getElementById("investmentsSection");
+
+const mutualFundsView =
+    document.getElementById("mutualFundsInvestmentView");
+
+if (investmentsSection) {
+    investmentsSection.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+}
+
+if (mutualFundsView) {
+    mutualFundsView.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+}
+
     const transactionForm =
         document.getElementById("transactionFormContainer");
 
@@ -8678,6 +8736,31 @@ if (section === "transactions") {
     if (typeof loadSavedTransactions === "function") {
         loadSavedTransactions();
     }
+setTimeout(() => {
+
+    const investmentsSection =
+        document.getElementById("investmentsSection");
+
+    const mutualFundsView =
+        document.getElementById("mutualFundsInvestmentView");
+
+    if (investmentsSection) {
+        investmentsSection.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    if (mutualFundsView) {
+        mutualFundsView.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+}, 300);
 
     return;
 }
@@ -8801,3 +8884,957 @@ if (section === "investments") {
     return;
 }
 });
+
+// ==========================================
+// BACK TO DASHBOARD BUTTON — GLOBAL
+// ==========================================
+
+document.addEventListener("click", function (event) {
+
+    const button =
+        event.target.closest(".back-to-dashboard-button");
+
+    if (!button) return;
+
+    console.log("← BACK TO DASHBOARD CLICKED");
+
+    showMasterView("dashboard");
+
+    document
+        .querySelectorAll(".sidebar-menu-item")
+        .forEach(item => {
+            item.classList.remove("active");
+        });
+
+    const dashboardButton =
+        document.querySelector(
+            '.sidebar-menu-item[data-section="dashboard"]'
+        );
+
+    if (dashboardButton) {
+        dashboardButton.classList.add("active");
+    }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+});
+
+// ==================================================
+// MUTUAL FUNDS / SIP - OPEN ONLY MF VIEW
+// ==================================================
+
+document.addEventListener("click", function (event) {
+
+    const button = event.target.closest(
+        "#viewMutualFundsFromInvestmentsButton"
+    );
+
+    if (!button) return;
+
+    console.log("📊 OPENING MUTUAL FUND VIEW");
+
+    // ------------------------------------------
+    // HIDE NORMAL INVESTMENT CONTENT
+    // ------------------------------------------
+
+    const investmentSummary =
+        document.getElementById("investmentSummary");
+
+    const investmentTable =
+        document.getElementById("investmentTableWrapper");
+
+    const sharesContainer =
+        document.getElementById("sharesContainer");
+
+    const sharesView =
+        document.getElementById("sharesInvestmentView");
+
+    if (investmentSummary) {
+        investmentSummary.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    if (investmentTable) {
+        investmentTable.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    if (sharesContainer) {
+        sharesContainer.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    if (sharesView) {
+        sharesView.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+    }
+
+    // ------------------------------------------
+    // SHOW MUTUAL FUND VIEW
+    // ------------------------------------------
+
+    const mfView =
+        document.getElementById(
+            "mutualFundsInvestmentView"
+        );
+
+    if (!mfView) {
+        console.error(
+            "❌ mutualFundsInvestmentView NOT FOUND"
+        );
+        return;
+    }
+
+    mfView.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+    // ------------------------------------------
+    // MOVE MF FORM ABOVE MF HISTORY TABLE
+    // ------------------------------------------
+
+    const mfForm =
+        document.getElementById(
+            "mutualFundFormContainer"
+        );
+
+    const mfTableBody =
+        document.getElementById(
+            "mutualFundTableBody"
+        );
+
+    if (mfForm && mfTableBody) {
+
+        const mfTable =
+            mfTableBody.closest("table");
+
+        if (mfTable) {
+
+            const tableWrapper =
+                mfTable.parentElement;
+
+            if (tableWrapper) {
+
+                tableWrapper.parentElement.insertBefore(
+                    mfForm,
+                    tableWrapper
+                );
+
+            }
+        }
+    }
+
+    // ------------------------------------------
+    // OPEN FORM
+    // ------------------------------------------
+
+    if (mfForm) {
+
+        mfForm.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+        mfForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+    console.log(
+        "✅ ONLY MUTUAL FUND VIEW OPENED"
+    );
+
+});
+
+// ==================================================
+// MUTUAL FUND VIEW — NAVIGATION RESET
+// ==================================================
+
+document.addEventListener("click", function (event) {
+
+    // ------------------------------------------
+    // INVESTMENTS BUTTON / CARD
+    // ------------------------------------------
+
+    const investmentTrigger =
+        event.target.closest(
+            '.sidebar-menu-item[data-section="investments"], .master-module-card[data-section="investments"]'
+        );
+
+    if (investmentTrigger) {
+
+        const mfView =
+            document.getElementById(
+                "mutualFundsInvestmentView"
+            );
+
+        const mfForm =
+            document.getElementById(
+                "mutualFundFormContainer"
+            );
+
+        const investmentsSection =
+            document.getElementById(
+                "investmentsSection"
+            );
+
+        // Hide MF section
+        if (mfView) {
+            mfView.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+        // Hide MF form
+        if (mfForm) {
+            mfForm.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+        // Show normal Investments
+        if (investmentsSection) {
+            investmentsSection.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+        }
+
+        console.log(
+            "✅ INVESTMENTS RESET — MF VIEW CLOSED"
+        );
+
+        return;
+    }
+
+
+    // ------------------------------------------
+    // BACK TO INVESTMENTS FROM MF
+    // ------------------------------------------
+
+    const backButton =
+        event.target.closest(
+            "#mutualFundsInvestmentView button"
+        );
+
+    if (
+        backButton &&
+        backButton.textContent
+            .toLowerCase()
+            .includes("back to investments")
+    ) {
+
+        const mfView =
+            document.getElementById(
+                "mutualFundsInvestmentView"
+            );
+
+        const mfForm =
+            document.getElementById(
+                "mutualFundFormContainer"
+            );
+
+        const investmentsSection =
+            document.getElementById(
+                "investmentsSection"
+            );
+
+        // Hide MF
+        if (mfView) {
+            mfView.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+        // Hide MF Form
+        if (mfForm) {
+            mfForm.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+        // Show Investments
+        if (investmentsSection) {
+            investmentsSection.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+        }
+
+        // Keep Investment Summary closed
+        const investmentSummary =
+            document.getElementById(
+                "investmentSummary"
+            );
+
+        if (investmentSummary) {
+            investmentSummary.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+        console.log(
+            "✅ BACK TO INVESTMENTS"
+        );
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+        return;
+    }
+
+});
+
+// ==================================================
+// MUTUAL FUND / SIP - SAVE + HISTORY
+// ==================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const mfForm =
+        document.getElementById("mutualFundForm");
+
+    const mfFormContainer =
+        document.getElementById(
+            "mutualFundFormContainer"
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "cancelMutualFundButton"
+        );
+
+    if (!mfForm) {
+        console.error("❌ Mutual Fund Form NOT FOUND");
+        return;
+    }
+
+
+    // ==========================================
+    // CANCEL
+    // ==========================================
+
+    cancelButton?.addEventListener(
+    "click",
+    function (event) {
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        mfForm.reset();
+
+        if (mfFormContainer) {
+            mfFormContainer.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+    },
+    true
+);
+
+
+    // ==========================================
+    // SAVE MUTUAL FUND
+    // ==========================================
+
+    mfForm.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("कृपया पहले Login करें।");
+            return;
+        }
+
+
+        // ==========================================
+        // READ FORM DATA
+        // ==========================================
+
+        const fundName =
+            document.getElementById(
+                "mfFundName"
+            )?.value.trim() || "";
+
+        const amc =
+            document.getElementById(
+                "mfAMC"
+            )?.value.trim() || "";
+
+        const investmentType =
+            document.getElementById(
+                "mfInvestmentType"
+            )?.value || "";
+
+        const folioNumber =
+            document.getElementById(
+                "mfFolioNumber"
+            )?.value.trim() || "";
+
+        const investmentDate =
+            document.getElementById(
+                "mfInvestmentDate"
+            )?.value || "";
+
+        const amount =
+            Number(
+                document.getElementById(
+                    "mfAmount"
+                )?.value || 0
+            );
+
+        const units =
+            Number(
+                document.getElementById(
+                    "mfUnits"
+                )?.value || 0
+            );
+
+        const purchaseNAV =
+            Number(
+                document.getElementById(
+                    "mfNAV"
+                )?.value || 0
+            );
+
+        const sipAmount =
+            Number(
+                document.getElementById(
+                    "mfSIPAmount"
+                )?.value || 0
+            );
+
+        const sipDate =
+            Number(
+                document.getElementById(
+                    "mfSIPDate"
+                )?.value || 0
+            );
+
+        const notes =
+            document.getElementById(
+                "mfNotes"
+            )?.value.trim() || "";
+
+
+        // ==========================================
+        // VALIDATION
+        // ==========================================
+
+        if (
+            !fundName ||
+            !amc ||
+            !investmentType ||
+            !investmentDate ||
+            amount <= 0 ||
+            units <= 0 ||
+            purchaseNAV <= 0
+        ) {
+
+            alert(
+                "कृपया सभी जरूरी Mutual Fund details भरें।"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            console.log(
+                "💾 Saving Mutual Fund:",
+                {
+                    fundName,
+                    amc,
+                    investmentType,
+                    amount,
+                    units,
+                    purchaseNAV
+                }
+            );
+
+
+            // ==========================================
+            // MUTUAL FUNDS COLLECTION
+            // ==========================================
+
+            const mfCollection =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "mutualFunds"
+                );
+
+
+            const mfData = {
+
+                fundName,
+
+                amc,
+
+                investmentType,
+
+                folioNumber,
+
+                investmentDate,
+
+                totalInvested: amount,
+
+                totalUnits: units,
+
+                averageNAV: purchaseNAV,
+
+                latestNAV: purchaseNAV,
+
+                currentValue:
+                    units * purchaseNAV,
+
+                profitLoss: 0,
+
+                profitLossPercent: 0,
+
+                sipAmount,
+
+                sipDate,
+
+                notes,
+
+                createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            };
+
+
+            // ==========================================
+            // SAVE MUTUAL FUND
+            // ==========================================
+
+            const mfDoc =
+                await addDoc(
+                    mfCollection,
+                    mfData
+                );
+
+
+            // ==========================================
+            // ALSO SAVE IN INVESTMENTS MASTER
+            // ==========================================
+
+            await addDoc(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "investments"
+                ),
+                {
+
+                    category: "sip",
+
+                    name: fundName,
+
+                    amount: amount,
+
+                    investmentDate:
+                        investmentDate,
+
+                    currentValue:
+                        units * purchaseNAV,
+
+                    notes: notes,
+
+                    mutualFundId:
+                        mfDoc.id,
+
+                    createdAt:
+                        serverTimestamp(),
+
+                    updatedAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+            console.log(
+                "✅ MUTUAL FUND SAVED:",
+                mfDoc.id
+            );
+
+
+            alert(
+                "✅ Mutual Fund / SIP successfully save हो गया।"
+            );
+
+
+            // ==========================================
+            // RESET FORM
+            // ==========================================
+
+            mfForm.reset();
+
+            if (mfFormContainer) {
+    mfFormContainer.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+}
+
+
+            // ==========================================
+            // REFRESH HISTORY
+            // ==========================================
+
+            if (
+                typeof window.loadMutualFunds ===
+                "function"
+            ) {
+
+                await window.loadMutualFunds();
+
+            }
+
+            // Refresh Investments master
+            if (
+                typeof loadInvestments ===
+                "function"
+            ) {
+
+                await loadInvestments();
+
+            }
+
+            if (
+                typeof loadDashboardSummary ===
+                "function"
+            ) {
+
+                await loadDashboardSummary();
+
+            }
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "❌ MUTUAL FUND SAVE ERROR:",
+                error
+            );
+
+            console.error(
+                "Error Code:",
+                error?.code
+            );
+
+            console.error(
+                "Error Message:",
+                error?.message
+            );
+
+            alert(
+                "Mutual Fund save नहीं हो सका। Console में error देखें।"
+            );
+
+        }
+
+    });
+
+});
+
+// ==================================================
+// MUTUAL FUNDS / SIP - LOAD DATA
+// ==================================================
+
+async function loadMutualFunds() {
+
+    try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            console.warn("⚠️ User not logged in");
+            return;
+        }
+
+        const mutualFundsRef = collection(
+            db,
+            "users",
+            user.uid,
+            "mutualFunds"
+        );
+
+        const snapshot = await getDocs(mutualFundsRef);
+
+        const tableBody =
+            document.getElementById("mutualFundTableBody");
+
+        const noMessage =
+            document.getElementById("noMutualFundsMessage");
+
+        if (!tableBody) {
+            console.error("❌ mutualFundTableBody not found");
+            return;
+        }
+
+        tableBody.innerHTML = "";
+
+        let totalInvested = 0;
+        let currentValue = 0;
+        let totalPL = 0;
+        let totalFunds = 0;
+
+        if (snapshot.empty) {
+
+            if (noMessage) {
+                noMessage.style.display = "block";
+            }
+
+        } else {
+
+            if (noMessage) {
+                noMessage.style.display = "none";
+            }
+
+            snapshot.forEach((docSnap) => {
+
+                const data = docSnap.data();
+
+                const invested =
+                    Number(data.totalInvested) || 0;
+
+                const units =
+                    Number(data.totalUnits) || 0;
+
+                const avgNAV =
+                    Number(data.averageNAV) || 0;
+
+                const latestNAV =
+                    Number(data.latestNAV) || avgNAV;
+
+                const value =
+                    units * latestNAV;
+
+                const pl =
+                    value - invested;
+
+                const plPercent =
+                    invested > 0
+                        ? (pl / invested) * 100
+                        : 0;
+
+                totalInvested += invested;
+                currentValue += value;
+                totalPL += pl;
+                totalFunds++;
+
+                const row =
+                    document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${data.fundName || "-"}</td>
+
+                    <td>${data.amc || "-"}</td>
+
+                    <td>${data.investmentType || "-"}</td>
+
+                    <td>₹${invested.toFixed(2)}</td>
+
+                    <td>${units.toFixed(4)}</td>
+
+                    <td>₹${avgNAV.toFixed(4)}</td>
+
+                    <td>₹${latestNAV.toFixed(4)}</td>
+
+                    <td>₹${value.toFixed(2)}</td>
+
+                    <td>
+                        ₹${pl.toFixed(2)}
+                    </td>
+
+                    <td>
+                        ${plPercent.toFixed(2)}%
+                    </td>
+
+                    <td>
+                        <button
+                            type="button"
+                            class="mf-edit-button"
+                            data-id="${docSnap.id}">
+                            ✏️ Edit
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mf-delete-button"
+                            data-id="${docSnap.id}">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+
+            });
+        }
+
+        // ==========================================
+        // UPDATE SUMMARY
+        // ==========================================
+
+        const totalInvestedElement =
+            document.getElementById("mfTotalInvested");
+
+        const currentValueElement =
+            document.getElementById("mfCurrentValue");
+
+        const totalPLElement =
+            document.getElementById("mfTotalPL");
+
+        const totalFundsElement =
+            document.getElementById("mfTotalFunds");
+
+        if (totalInvestedElement) {
+            totalInvestedElement.textContent =
+                `₹${totalInvested.toFixed(2)}`;
+        }
+
+        if (currentValueElement) {
+            currentValueElement.textContent =
+                `₹${currentValue.toFixed(2)}`;
+        }
+
+        if (totalPLElement) {
+            totalPLElement.textContent =
+                `₹${totalPL.toFixed(2)}`;
+        }
+
+        if (totalFundsElement) {
+            totalFundsElement.textContent =
+                totalFunds;
+        }
+
+        console.log(
+            `✅ Mutual Funds loaded: ${totalFunds}`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ MUTUAL FUND LOAD ERROR:",
+            error
+        );
+
+    }
+}
+
+
+// Make available to other modules
+window.loadMutualFunds = loadMutualFunds;
+
+// ==================================================
+// OPEN MUTUAL FUNDS FROM TRANSACTION ENTRY
+// ==================================================
+
+window.openMutualFundsFromTransaction = function () {
+
+    const investmentsSection =
+        document.getElementById("investmentsSection");
+
+    const mutualFundsView =
+        document.getElementById("mutualFundsInvestmentView");
+
+    if (!investmentsSection || !mutualFundsView) {
+        console.error("❌ Mutual Fund view not found");
+        return;
+    }
+
+    // Keep Investments module open
+    investmentsSection.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+    // Hide normal Investment content
+    const elementsToHide = [
+        "#investmentSummary",
+        "#investmentFormContainer",
+        "#allInvestmentsView",
+        "#fixedDepositsInvestmentView",
+        "#sharesInvestmentView",
+        "#otherInvestmentsInvestmentView"
+    ];
+
+    elementsToHide.forEach(selector => {
+
+        const element =
+            document.querySelector(selector);
+
+        if (element) {
+            element.style.display = "none";
+        }
+
+    });
+
+    // Show Mutual Funds
+    mutualFundsView.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+    // Load saved Mutual Funds
+    if (window.loadMutualFunds) {
+        window.loadMutualFunds();
+    }
+
+    mutualFundsView.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    console.log("✅ Mutual Fund module opened from Transaction");
+};

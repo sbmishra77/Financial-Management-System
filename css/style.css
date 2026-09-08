@@ -7133,3 +7133,204 @@ body {
 #investmentsSection {
     display: none;
 }
+
+.back-to-dashboard-wrapper {
+    width: 100%;
+    display: block;
+    text-align: left;
+    margin: 0 0 15px 0;
+}
+
+.back-to-dashboard-button {
+    margin: 0 !important;
+}
+
+/* =========================================
+   MUTUAL FUND / SIP FORM VISIBILITY
+========================================= */
+
+#mutualFundFormContainer {
+    display: block !important;
+    width: 100%;
+    margin-top: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   MUTUAL FUND / SIP - PREVENT HORIZONTAL SCROLL
+========================================= */
+
+#mutualFundsInvestmentView {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+#mutualFundForm {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+
+    display: grid !important;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(180px, 1fr)
+    ) !important;
+
+    gap: 10px !important;
+}
+
+#mutualFundForm input,
+#mutualFundForm select,
+#mutualFundForm textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#mutualFundForm textarea {
+    grid-column: 1 / -1 !important;
+}
+
+#mutualFundForm .investment-form-buttons {
+    grid-column: 1 / -1 !important;
+}
+
+#investmentsSection {
+    overflow-x: hidden !important;
+}
+
+/* =========================================
+   MUTUAL FUND / SIP - FIX OVERFLOW
+========================================= */
+
+#mutualFundsInvestmentView {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+}
+
+/* Keep MF content inside available width */
+#mutualFundsInvestmentView * {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Form fields must wrap instead of extending page */
+#mutualFundForm {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Table scroll stays inside MF area */
+#mutualFundsInvestmentView table {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Do not allow MF view to enlarge parent */
+#investmentsSection {
+    max-width: 100vw !important;
+}
+
+/* =========================================
+   MUTUAL FUND HEADER BUTTON POSITION
+========================================= */
+
+#mutualFundsInvestmentView .section-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 25px !important;
+}
+
+#mutualFundsInvestmentView .section-title-area {
+    flex-shrink: 0 !important;
+    margin-right: 10px !important;
+}
+
+#mutualFundsInvestmentView #addMutualFundButton {
+    margin-left: 135px !important;
+}
+
+/* =================================================
+   MUTUAL FUND / SIP FORM — POPUP MODAL
+   ================================================= */
+
+#mutualFundFormContainer {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+
+    width: min(720px, 92vw) !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+
+    background: #ffffff !important;
+    padding: 24px !important;
+
+    border-radius: 14px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important;
+
+    z-index: 99999 !important;
+}
+
+/* ==========================================
+   MUTUAL FUND POPUP - 2 COLUMN FORM
+   ========================================== */
+
+#mutualFundFormContainer {
+    width: min(680px, 92vw) !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+}
+
+#mutualFundForm {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 18px !important;
+    row-gap: 12px !important;
+}
+
+/* Labels + fields */
+#mutualFundForm label,
+#mutualFundForm input,
+#mutualFundForm select,
+#mutualFundForm textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Notes पूरे width में */
+#mutualFundForm label[for="mfNotes"],
+#mutualFundForm #mfNotes {
+    grid-column: 1 / -1 !important;
+}
+
+/* Buttons पूरे width में */
+#mutualFundForm .investment-form-buttons {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    margin-top: 8px !important;
+}
+
+/* Mobile पर single column */
+@media (max-width: 600px) {
+
+    #mutualFundForm {
+        grid-template-columns: 1fr !important;
+    }
+
+    #mutualFundForm label[for="mfNotes"],
+    #mutualFundForm #mfNotes,
+    #mutualFundForm .investment-form-buttons {
+        grid-column: 1 !important;
+    }
+}
+

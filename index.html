@@ -286,6 +286,12 @@
     class="transactions-section"
     style="display: none;">
 
+<div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+</div>
+
     <div class="transactions-module-header">
 
         <div>
@@ -608,7 +614,7 @@
 
 <!-- =================================
      INVESTMENT / ASSET
-     ================================= -->
+================================= -->
 
 <td class="investment-asset-cell">
 
@@ -1567,6 +1573,12 @@
     id="accountsSection"
     class="accounts-section">
 
+    <div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+    </div>
+
 <!-- =============================== -->
 <!-- ACCOUNTS HEADER -->
 <!-- =============================== -->
@@ -1936,6 +1948,11 @@
     class="loans-section"
     style="display: none;">
 
+    <div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+</div>
     <!-- HEADER -->
 
     <div class="section-header loans-section-header">
@@ -2251,6 +2268,12 @@
     id="investmentsSection"
     class="dashboard-section">
 
+      <div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+</div>
+
 <!-- =============================== -->
 <!-- INVESTMENTS HEADER -->
 <!-- =============================== -->
@@ -2420,6 +2443,7 @@
 </button>
 
 
+
 <!-- =============================== -->
 <!-- OTHER INVESTMENTS -->
 <!-- =============================== -->
@@ -2442,6 +2466,290 @@
 
 
 </div> <!-- investment-section-header -->
+
+<!-- ================================================= -->
+<!-- MUTUAL FUNDS / SIP VIEW -->
+<!-- ================================================= -->
+
+<div
+    id="mutualFundsInvestmentView"
+    class="finance-section"
+    style="display: none;">
+
+    <div class="section-header">
+
+        <div class="section-title-area">
+            <h2>
+                📊 Mutual Funds / SIP
+            </h2>
+        </div>
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="addMutualFundButton"
+                class="add-module-button">
+                ➕ Add Mutual Fund / SIP
+            </button>
+
+            <button
+                type="button"
+                id="backFromMutualFundsButton"
+                class="back-module-button">
+                ← Back to Investments
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- SUMMARY -->
+
+    <div class="investment-summary">
+
+        <div class="investment-summary-card">
+            <h3>💰 Total Invested</h3>
+            <strong id="mfTotalInvested">₹0.00</strong>
+        </div>
+
+        <div class="investment-summary-card">
+            <h3>📊 Current Value</h3>
+            <strong id="mfCurrentValue">₹0.00</strong>
+        </div>
+
+        <div class="investment-summary-card">
+            <h3>📈 Profit / Loss</h3>
+            <strong id="mfTotalPL">₹0.00</strong>
+        </div>
+
+        <div class="investment-summary-card">
+            <h3>📦 Total Funds</h3>
+            <strong id="mfTotalFunds">0</strong>
+        </div>
+
+    </div>
+
+    <!-- MUTUAL FUND TABLE -->
+
+    <div class="investment-table-container">
+
+        <table class="investment-table">
+
+            <thead>
+                <tr>
+                    <th>Fund Name</th>
+                    <th>AMC</th>
+                    <th>Type</th>
+                    <th>Total Invested</th>
+                    <th>Units</th>
+                    <th>Avg NAV</th>
+                    <th>Latest NAV</th>
+                    <th>Current Value</th>
+                    <th>P/L</th>
+                    <th>P/L %</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="mutualFundTableBody">
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <p id="noMutualFundsMessage">
+        अभी कोई Mutual Fund / SIP नहीं है।
+    </p>
+
+    
+<!-- ================================================= -->
+<!-- ADD MUTUAL FUND / SIP FORM -->
+<!-- ================================================= -->
+
+<div
+    id="mutualFundFormContainer"
+    style="display: none;">
+
+    <h3>➕ Add Mutual Fund / SIP</h3>
+
+    <form id="mutualFundForm">
+
+        <label for="mfFundName">
+            Fund Name
+        </label>
+
+        <input
+            type="text"
+            id="mfFundName"
+            placeholder="e.g. Parag Parikh Flexi Cap Fund"
+            required>
+
+
+        <label for="mfAMC">
+            AMC
+        </label>
+
+        <input
+            type="text"
+            id="mfAMC"
+            placeholder="e.g. SBI / HDFC / ICICI Prudential"
+            required>
+
+
+        <label for="mfInvestmentType">
+            Investment Type
+        </label>
+
+        <select
+            id="mfInvestmentType"
+            required>
+
+            <option value="">
+                -- Select Type --
+            </option>
+
+            <option value="SIP">
+                🔄 SIP
+            </option>
+
+            <option value="Lumpsum">
+                💰 Lumpsum
+            </option>
+
+        </select>
+
+
+        <label for="mfFolioNumber">
+            Folio Number
+        </label>
+
+        <input
+            type="text"
+            id="mfFolioNumber"
+            placeholder="Optional">
+
+
+        <label for="mfInvestmentDate">
+            Investment Date
+        </label>
+
+        <input
+            type="date"
+            id="mfInvestmentDate"
+            required>
+
+
+        <label for="mfAmount">
+            Investment Amount
+        </label>
+
+        <input
+            type="number"
+            id="mfAmount"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            required>
+
+
+        <label for="mfUnits">
+            Units Purchased
+        </label>
+
+        <input
+            type="number"
+            id="mfUnits"
+            min="0"
+            step="0.000001"
+            placeholder="0.000000"
+            required>
+
+
+        <label for="mfNAV">
+            Purchase NAV
+        </label>
+
+        <input
+            type="number"
+            id="mfNAV"
+            min="0"
+            step="0.000001"
+            placeholder="0.000000"
+            required>
+
+
+        <label for="mfSIPAmount">
+            SIP Amount
+        </label>
+
+        <input
+            type="number"
+            id="mfSIPAmount"
+            min="0"
+            step="0.01"
+            placeholder="For SIP only">
+
+
+        <label for="mfSIPDate">
+            SIP Date
+        </label>
+
+        <input
+            type="number"
+            id="mfSIPDate"
+            min="1"
+            max="31"
+            placeholder="1 - 31">
+
+
+        <label for="mfNotes">
+            Notes
+        </label>
+
+        <textarea
+            id="mfNotes"
+            placeholder="Optional notes"></textarea>
+
+
+        <div class="investment-form-buttons">
+
+            <button
+                type="submit"
+                id="saveMutualFundButton">
+                💾 Save Mutual Fund
+            </button>
+
+   <button
+    type="button"
+    id="cancelMutualFundButton">
+    Cancel
+</button>
+
+        </div>
+
+    </form>
+
+</div>
+</div>
+
+<script>
+document.addEventListener("click", function (event) {
+
+    if (event.target.id !== "cancelMutualFundButton") {
+        return;
+    }
+
+    const mfFormContainer =
+        document.getElementById("mutualFundFormContainer");
+
+    if (mfFormContainer) {
+        mfFormContainer.style.display = "none";
+    }
+
+});
+</script>
 
 
 <!-- ================================================= -->
@@ -3117,6 +3425,11 @@
 <!-- =============================== -->
 
 <div id="propertiesSection" class="finance-section properties-section">
+<div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+</div>
 
 <!-- =============================== -->
 <!-- PROPERTIES HEADER -->
@@ -5943,6 +6256,12 @@
 <!-- =============================== -->
 
 <div class="finance-section insurance-section">
+
+    <div class="back-to-dashboard-wrapper">
+    <button type="button" class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+</div>
 
     <div class="section-header">
 
