@@ -2442,6 +2442,8 @@
 
 </button>
 
+
+
 <!-- =============================== -->
 <!-- OTHER INVESTMENTS -->
 <!-- =============================== -->
@@ -2455,14 +2457,15 @@
 
 </button>
 
+
 <!-- =============================== -->
 <!-- CLOSE INVESTMENT HEADER -->
 <!-- =============================== -->
 
 </div> <!-- section-header-buttons -->
 
-</div> <!-- investment-section-header -->
 
+</div> <!-- investment-section-header -->
 
 <!-- ================================================= -->
 <!-- MUTUAL FUNDS / SIP VIEW -->
@@ -2471,18 +2474,15 @@
 <div
     id="mutualFundsInvestmentView"
     class="finance-section"
-    style="display:none;">
+    style="display: none;">
 
     <div class="section-header">
 
         <div class="section-title-area">
-
             <h2>
                 📊 Mutual Funds / SIP
             </h2>
-
         </div>
-
 
         <div class="section-header-buttons">
 
@@ -2490,90 +2490,54 @@
                 type="button"
                 id="addMutualFundButton"
                 class="add-module-button">
-
                 ➕ Add Mutual Fund / SIP
-
             </button>
-
 
             <button
                 type="button"
                 id="backFromMutualFundsButton"
                 class="back-module-button">
-
                 ← Back to Investments
-
             </button>
 
         </div>
 
     </div>
 
-
-    <!-- =============================== -->
-    <!-- MUTUAL FUND SUMMARY -->
-    <!-- =============================== -->
+    <!-- SUMMARY -->
 
     <div class="investment-summary">
 
         <div class="investment-summary-card">
-
             <h3>💰 Total Invested</h3>
-
-            <strong id="mfTotalInvested">
-                ₹0.00
-            </strong>
-
+            <strong id="mfTotalInvested">₹0.00</strong>
         </div>
 
-
         <div class="investment-summary-card">
-
             <h3>📊 Current Value</h3>
-
-            <strong id="mfCurrentValue">
-                ₹0.00
-            </strong>
-
+            <strong id="mfCurrentValue">₹0.00</strong>
         </div>
 
-
         <div class="investment-summary-card">
-
             <h3>📈 Profit / Loss</h3>
-
-            <strong id="mfTotalPL">
-                ₹0.00
-            </strong>
-
+            <strong id="mfTotalPL">₹0.00</strong>
         </div>
 
-
         <div class="investment-summary-card">
-
             <h3>📦 Total Funds</h3>
-
-            <strong id="mfTotalFunds">
-                0
-            </strong>
-
+            <strong id="mfTotalFunds">0</strong>
         </div>
 
     </div>
 
-
-    <!-- =============================== -->
     <!-- MUTUAL FUND TABLE -->
-    <!-- =============================== -->
 
     <div class="investment-table-container">
 
         <table class="investment-table">
 
             <thead>
-
                 <tr>
-
                     <th>Fund Name</th>
                     <th>AMC</th>
                     <th>Type</th>
@@ -2585,11 +2549,8 @@
                     <th>P/L</th>
                     <th>P/L %</th>
                     <th>Action</th>
-
                 </tr>
-
             </thead>
-
 
             <tbody id="mutualFundTableBody">
             </tbody>
@@ -2598,29 +2559,22 @@
 
     </div>
 
-
     <p id="noMutualFundsMessage">
-
         अभी कोई Mutual Fund / SIP नहीं है।
-
     </p>
 
-</div>
-
-
+    
 <!-- ================================================= -->
-<!-- MUTUAL FUND / SIP POPUP FORM -->
+<!-- ADD MUTUAL FUND / SIP FORM -->
 <!-- ================================================= -->
 
 <div
     id="mutualFundFormContainer"
-    style="display:none;">
+    style="display: none;">
 
     <h3>➕ Add Mutual Fund / SIP</h3>
 
-
     <form id="mutualFundForm">
-
 
         <label for="mfFundName">
             Fund Name
@@ -2761,86 +2715,42 @@
 
         <div class="investment-form-buttons">
 
-
             <button
                 type="submit"
                 id="saveMutualFundButton">
-
                 💾 Save Mutual Fund
-
             </button>
 
-
-            <button
-                type="button"
-                id="cancelMutualFundButton">
-
-                Cancel
-
-            </button>
-
+   <button
+    type="button"
+    id="cancelMutualFundButton">
+    Cancel
+</button>
 
         </div>
-
 
     </form>
 
 </div>
-
+</div>
 
 <script>
+document.addEventListener("click", function (event) {
 
-document.addEventListener("DOMContentLoaded", function () {
+    if (event.target.id !== "cancelMutualFundButton") {
+        return;
+    }
 
-    const mfPopup =
+    const mfFormContainer =
         document.getElementById("mutualFundFormContainer");
 
-    if (mfPopup) {
-
-        document.body.appendChild(mfPopup);
-
-        mfPopup.style.setProperty(
-            "display",
-            "none",
-            "important"
-        );
-
+    if (mfFormContainer) {
+        mfFormContainer.style.display = "none";
     }
 
 });
-
-document.addEventListener(
-    "click",
-    function (event) {
-
-        if (
-            event.target.id !==
-            "cancelMutualFundButton"
-        ) {
-            return;
-        }
-
-
-        const mfFormContainer =
-            document.getElementById(
-                "mutualFundFormContainer"
-            );
-
-
-        if (mfFormContainer) {
-
-            mfFormContainer.style.setProperty(
-                "display",
-                "none",
-                "important"
-            );
-
-        }
-
-    }
-);
-
 </script>
+
 
 <!-- ================================================= -->
 <!-- SHARE HOLDINGS VIEW -->

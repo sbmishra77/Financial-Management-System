@@ -980,88 +980,160 @@ window.pendingRentalIncomeTransactionRow =
 
                 }
 
-        // =================================
-        // MUTUAL FUND / SIP
-        // =================================
-
-        if (
-            selectedType === "investment" &&
-            selectedCategory === "Mutual Fund / SIP"
-        ) {
-
-            console.log(
-                "MUTUAL FUND / SIP CONDITION MATCHED"
-            );
-
-            // Store Transaction Row Reference
-            window.pendingMutualFundTransactionRow =
-                row;
-
 // =================================
-// COPY INVESTMENT / FUND NAME TO MF
+// MUTUAL FUND / SIP → OPEN POPUP
 // =================================
 
-setTimeout(() => {
+const mfSelectedOption =
+    event.target.options[
+        event.target.selectedIndex
+    ];
 
-    const mfFundNameInput =
-        document.querySelector("#mfFundName");
+const mfCategoryValue =
+    event.target.value || "";
 
-    const transactionInvestmentInput =
-        row.querySelector(".transaction-investment");
+const mfCategoryText =
+    mfSelectedOption?.textContent
+        ?.trim() || "";
+
+const isMutualFundCategory =
+    mfCategoryValue === "Mutual Fund / SIP" ||
+    mfCategoryValue === "sip" ||
+    mfCategoryValue === "mutual_fund" ||
+    mfCategoryValue === "mutualFund" ||
+    mfCategoryText === "Mutual Fund / SIP";
+
+if (
+    selectedType === "investment" &&
+    isMutualFundCategory
+) {
+
+    console.log(
+        "✅ MUTUAL FUND / SIP DETECTED"
+    );
+
+    // ---------------------------------
+    // SAVE CURRENT TRANSACTION ROW
+    // ---------------------------------
+
+    window.pendingMutualFundTransactionRow =
+        row;
+
+
+    // ---------------------------------
+    // FUND NAME ← TRANSACTION ASSET
+    // ---------------------------------
+
+    const mfFundName =
+        document.querySelector(
+            "#mfFundName"
+        );
+
+    const transactionInvestment =
+        row.querySelector(
+            ".transaction-investment"
+        );
 
     if (
-        mfFundNameInput &&
-        transactionInvestmentInput
+        mfFundName &&
+        transactionInvestment
     ) {
-
-        mfFundNameInput.value =
-            transactionInvestmentInput.value || "";
-
-        console.log(
-            "✅ Fund name copied to MF:",
-            mfFundNameInput.value
-        );
+        mfFundName.value =
+            transactionInvestment.value || "";
     }
 
-}, 300);
 
-// =================================
-// COPY TRANSACTION AMOUNT TO MF
-// =================================
+    // ---------------------------------
+    // AMOUNT ← TRANSACTION AMOUNT
+    // ---------------------------------
 
-setTimeout(() => {
+    const mfAmount =
+        document.querySelector(
+            "#mfAmount"
+        );
 
-    const mfAmountInput =
-        document.querySelector("#mfAmount");
-
-    const transactionAmountInput =
-        row.querySelector(".transaction-amount");
+    const transactionAmount =
+        row.querySelector(
+            ".transaction-amount"
+        );
 
     if (
-        mfAmountInput &&
-        transactionAmountInput
+        mfAmount &&
+        transactionAmount
     ) {
-
-        mfAmountInput.value =
-            transactionAmountInput.value || "";
-
-        console.log(
-            "✅ Transaction amount copied to MF:",
-            mfAmountInput.value
-        );
+        mfAmount.value =
+            transactionAmount.value || "";
     }
 
-}, 300);
 
-            // Open Mutual Fund Module
-            if (window.openMutualFundsFromTransaction) {
+    // ---------------------------------
+    // DATE ← TRANSACTION DATE
+    // ---------------------------------
 
-                window.openMutualFundsFromTransaction();
+    const mfDate =
+        document.querySelector(
+            "#mfInvestmentDate"
+        );
 
-            }
+    const transactionDate =
+        row.querySelector(
+            ".transaction-date"
+        );
 
-            return;
-        }
+    if (
+        mfDate &&
+        transactionDate
+    ) {
+        mfDate.value =
+            transactionDate.value || "";
+    }
+
+
+    // ---------------------------------
+    // LINKED MODULE = SIP
+    // ---------------------------------
+
+    const linkedModule =
+        row.querySelector(
+            ".transaction-linked-module"
+        );
+
+    if (linkedModule) {
+        linkedModule.value = "sip";
+    }
+
+
+    // ---------------------------------
+    // OPEN POPUP
+    // ---------------------------------
+
+    const mfPopup =
+        document.querySelector(
+            "#mutualFundFormContainer"
+        );
+
+    if (!mfPopup) {
+
+        console.error(
+            "❌ #mutualFundFormContainer NOT FOUND"
+        );
+
+        return;
+    }
+
+
+    mfPopup.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+    console.log(
+        "✅ MUTUAL FUND POPUP OPENED"
+    );
+
+    return;
+}
 
     }
 );
@@ -6090,30 +6162,181 @@ console.error("SAVE SHARE ERROR MESSAGE:", error?.message);
                 }
             );
 
+// =================================
+// MUTUAL FUND / SIP
+// SAME LISTENER AS SHARES
+// =================================
 
-            // --------------------------------------------------
-            // Stock / Shares detect
-            // Value OR visible text दोनों check करेंगे
-            // --------------------------------------------------
-
-            const isShareCategory =
-                categoryValue ===
-                    "Stock / Shares"
-                ||
-                categoryText ===
-                    "Stock / Shares";
+const isMutualFundCategory =
+    categoryValue === "Mutual Fund / SIP"
+    ||
+    categoryValue === "sip"
+    ||
+    categoryText === "Mutual Fund / SIP";
 
 
-            if (
-                type === "investment" &&
-                isShareCategory
-            ) {
+if (
+    type === "investment" &&
+    isMutualFundCategory
+) {
 
-                openShareForm(row);
-            }
-
-        }
+    console.log(
+        "✅ MUTUAL FUND / SIP SELECTED FROM TRANSACTION"
     );
+
+
+    // Save current transaction row
+    window.pendingMutualFundTransactionRow =
+        row;
+
+
+    // ---------------------------------
+    // Fund Name ← Investment / Asset
+    // ---------------------------------
+
+    const mfFundName =
+        document.getElementById(
+            "mfFundName"
+        );
+
+    const transactionInvestment =
+        row.querySelector(
+            ".transaction-investment"
+        );
+
+    if (
+        mfFundName &&
+        transactionInvestment
+    ) {
+
+        mfFundName.value =
+            transactionInvestment.value || "";
+
+    }
+
+
+    // ---------------------------------
+    // Amount ← Transaction Amount
+    // ---------------------------------
+
+    const mfAmount =
+        document.getElementById(
+            "mfAmount"
+        );
+
+    const transactionAmount =
+        row.querySelector(
+            ".transaction-amount"
+        );
+
+    if (
+        mfAmount &&
+        transactionAmount
+    ) {
+
+        mfAmount.value =
+            transactionAmount.value || "";
+
+    }
+
+
+    // ---------------------------------
+    // Date ← Transaction Date
+    // ---------------------------------
+
+    const mfInvestmentDate =
+        document.getElementById(
+            "mfInvestmentDate"
+        );
+
+    const transactionDate =
+        row.querySelector(
+            ".transaction-date"
+        );
+
+    if (
+        mfInvestmentDate &&
+        transactionDate
+    ) {
+
+        mfInvestmentDate.value =
+            transactionDate.value || "";
+
+    }
+
+
+    // ---------------------------------
+    // Linked Module = SIP
+    // ---------------------------------
+
+    const linkedModule =
+        row.querySelector(
+            ".transaction-linked-module"
+        );
+
+    if (linkedModule) {
+
+        linkedModule.value = "sip";
+
+    }
+
+
+    // ---------------------------------
+    // OPEN SAME MF POPUP
+    // ---------------------------------
+
+    const mfPopup =
+        document.getElementById(
+            "mutualFundFormContainer"
+        );
+
+    if (!mfPopup) {
+
+        console.error(
+            "❌ mutualFundFormContainer NOT FOUND"
+        );
+
+        return;
+
+    }
+
+
+    mfPopup.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+
+    console.log(
+        "✅ MUTUAL FUND POPUP OPENED"
+    );
+
+    return;
+}
+
+            // --------------------------------------------------
+// Stock / Shares detect
+// Value OR visible text दोनों check करेंगे
+// --------------------------------------------------
+
+const isShareCategory =
+    categoryValue === "Stock / Shares"
+    ||
+    categoryText === "Stock / Shares";
+
+
+if (
+    type === "investment" &&
+    isShareCategory
+) {
+
+    openShareForm(row);
+
+}
+
+    }
+);
 
     // --------------------------------------------------
     // Shares Holdings → Add New Share
@@ -7736,3 +7959,179 @@ window.loadTransactionAccounts =
     loadTransactionAccounts;
 
     window.getTransactionInvestments = () => savedTransactionInvestments;
+
+// =====================================================
+// MUTUAL FUND / SIP - FINAL POPUP TRIGGER
+// =====================================================
+
+document.addEventListener(
+    "change",
+    function (event) {
+
+        const categorySelect = event.target;
+
+        if (
+            !categorySelect.matches(
+                ".transaction-category"
+            )
+        ) {
+            return;
+        }
+
+        const row =
+            categorySelect.closest(
+                ".transaction-entry-row"
+            );
+
+        if (!row) {
+            return;
+        }
+
+        const typeSelect =
+            row.querySelector(
+                ".transaction-type"
+            );
+
+        const selectedType =
+            typeSelect?.value
+                ?.trim()
+                ?.toLowerCase() || "";
+
+        const selectedCategory =
+            categorySelect.value
+                ?.trim()
+                ?.toLowerCase() || "";
+
+        const selectedCategoryText =
+            categorySelect.options[
+                categorySelect.selectedIndex
+            ]
+                ?.textContent
+                ?.trim()
+                ?.toLowerCase() || "";
+
+        // ==========================================
+        // MUTUAL FUND / SIP DETECTION
+        // ==========================================
+
+        const isMutualFund =
+            selectedCategory.includes(
+                "mutual fund"
+            ) ||
+            selectedCategoryText.includes(
+                "mutual fund"
+            );
+
+        if (
+            selectedType !== "investment" ||
+            !isMutualFund
+        ) {
+            return;
+        }
+
+        console.log(
+            "✅ MUTUAL FUND / SIP DETECTED"
+        );
+
+        // ==========================================
+        // STORE TRANSACTION ROW
+        // ==========================================
+
+        window.pendingMutualFundTransactionRow =
+            row;
+
+        // ==========================================
+        // GET POPUP
+        // ==========================================
+
+        const mfFormContainer =
+            document.getElementById(
+                "mutualFundFormContainer"
+            );
+
+        if (!mfFormContainer) {
+
+            console.error(
+                "❌ mutualFundFormContainer NOT FOUND"
+            );
+
+            return;
+        }
+
+        // ==========================================
+        // COPY FUND NAME
+        // ==========================================
+
+        const mfFundNameInput =
+            document.getElementById(
+                "mfFundName"
+            );
+
+        const transactionInvestmentInput =
+            row.querySelector(
+                ".transaction-investment"
+            );
+
+        if (
+            mfFundNameInput &&
+            transactionInvestmentInput
+        ) {
+
+            mfFundNameInput.value =
+                transactionInvestmentInput.value || "";
+
+        }
+
+        // ==========================================
+        // COPY AMOUNT
+        // ==========================================
+
+        const mfAmountInput =
+            document.getElementById(
+                "mfAmount"
+            );
+
+        const transactionAmountInput =
+            row.querySelector(
+                ".transaction-amount"
+            );
+
+        if (
+            mfAmountInput &&
+            transactionAmountInput
+        ) {
+
+            mfAmountInput.value =
+                transactionAmountInput.value || "";
+
+        }
+
+        // ==========================================
+        // FORCE POPUP
+        // ==========================================
+
+        mfFormContainer.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+        mfFormContainer.style.setProperty(
+            "position",
+            "fixed",
+            "important"
+        );
+
+        mfFormContainer.style.setProperty(
+            "z-index",
+            "999999",
+            "important"
+        );
+
+        console.log(
+            "🎯 MUTUAL FUND POPUP OPENED"
+        );
+
+    },
+    true
+);
