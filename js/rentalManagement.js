@@ -25,11 +25,10 @@ document.addEventListener(
                 "#rentalManagementView"
             );
 
-
-        const propertiesSection =
-            document.querySelector(
-                ".properties-section"
-            );
+const propertiesSection =
+    document.querySelector(
+        "#propertiesSection"
+    );
 
 
         /* =========================================
@@ -71,35 +70,129 @@ document.addEventListener(
            BACK TO PROPERTIES
            ========================================= */
 
-        if (
-            backToPropertiesFromRentalButton &&
-            rentalManagementView &&
-            propertiesSection
-        ) {
+if (
+    backToPropertiesFromRentalButton &&
+    rentalManagementView &&
+    propertiesSection
+) {
 
-            backToPropertiesFromRentalButton.addEventListener(
-                "click",
-                () => {
+    backToPropertiesFromRentalButton.addEventListener(
+        "click",
+        () => {
 
+            // =================================
+            // CLOSE RENTAL MANAGEMENT
+            // =================================
 
-                    rentalManagementView.style.display =
-                        "none";
-
-
-                    propertiesSection.style.display =
-                        "block";
-
-
-                    propertiesSection.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-
-
-                }
+            rentalManagementView.style.setProperty(
+                "display",
+                "none",
+                "important"
             );
 
+
+            // =================================
+            // SHOW PROPERTIES AGAIN
+            // =================================
+
+            propertiesSection.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+            propertiesSection.style.setProperty(
+                "visibility",
+                "visible",
+                "important"
+            );
+
+            propertiesSection.style.setProperty(
+                "opacity",
+                "1",
+                "important"
+            );
+
+
+            // =================================
+            // HIDE OPEN SUB-VIEWS
+            // =================================
+
+            const allPropertiesView =
+                document.getElementById(
+                    "allPropertiesView"
+                );
+
+            const propertySummary =
+                document.getElementById(
+                    "propertySummary"
+                );
+
+            const propertyFormContainer =
+                document.getElementById(
+                    "propertyFormContainer"
+                );
+
+            const editPropertyFormContainer =
+                document.getElementById(
+                    "editPropertyFormContainer"
+                );
+
+
+            if (allPropertiesView) {
+
+                allPropertiesView.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (propertySummary) {
+
+                propertySummary.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (propertyFormContainer) {
+
+                propertyFormContainer.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (editPropertyFormContainer) {
+
+                editPropertyFormContainer.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            // =================================
+            // RETURN TO PROPERTIES TOP
+            // =================================
+
+            propertiesSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
         }
+    );
+
+}
 
 
     }

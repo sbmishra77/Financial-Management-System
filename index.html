@@ -1820,6 +1820,7 @@
 </div>
 
 </section>
+
 <!-- Add Account Form -->
 <div id="accountFormContainer" class="account-form-container" style="display: none;">
 
@@ -2353,6 +2354,106 @@
     flex-shrink: 0 !important;
     white-space: nowrap !important;
 }
+
+/* =====================================================
+   FIXED DEPOSIT POPUP
+   ===================================================== */
+
+#fdFormContainer {
+    position: fixed !important;
+
+    top: 50% !important;
+    left: 50% !important;
+
+    transform: translate(-50%, -50%) !important;
+
+    width: min(720px, 92vw) !important;
+    max-height: 88vh !important;
+
+    overflow-y: auto !important;
+
+    background: #ffffff !important;
+
+    padding: 28px !important;
+
+    border-radius: 16px !important;
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.35) !important;
+
+    z-index: 99999 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* FD POPUP TITLE */
+
+#fdFormContainer h3 {
+    margin-top: 0 !important;
+    margin-bottom: 22px !important;
+    text-align: center !important;
+    font-size: 24px !important;
+}
+
+
+/* FD FORM LAYOUT */
+
+#fdFormContainer form {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 14px 18px !important;
+}
+
+
+/* LABELS */
+
+#fdFormContainer label {
+    font-weight: 600 !important;
+}
+
+
+/* INPUTS + SELECT */
+
+#fdFormContainer input,
+#fdFormContainer select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 7px !important;
+}
+
+
+/* BUTTON AREA */
+
+#fdFormContainer .account-form-buttons {
+    grid-column: 1 / -1 !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    gap: 12px !important;
+
+    margin-top: 12px !important;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    #fdFormContainer {
+        width: 94vw !important;
+        max-height: 90vh !important;
+        padding: 20px !important;
+    }
+
+    #fdFormContainer form {
+        grid-template-columns: 1fr !important;
+    }
+
+}
+
 </style>
 
     <button
@@ -6101,25 +6202,30 @@ document.addEventListener(
     <!-- FD TABLE -->
     <!-- =============================== -->
 
-    <table class="fd-table">
+    <!-- =============================== -->
+<!-- FD TABLE -->
+<!-- =============================== -->
 
-        <thead>
+<table class="fd-table">
 
-            <tr>
+    <thead>
 
-                <th>FD</th>
-                <th>Bank</th>
-                <th>Principal</th>
-                <th>Maturity Date</th>
-                <th>Days Left</th>
-                <th>Rate</th>
-                <th>Maturity Value</th>
-                <th>Status</th>
-                <th>Actions</th>
+        <tr>
 
-            </tr>
+            <th>🏦 Fixed Deposit ID</th>
+            <th>🏛️ Bank</th>
+            <th>💰 Principal</th>
+            <th>📅 Opening Date</th>
+            <th>📅 Maturity Date</th>
+            <th>⏳ Days Left</th>
+            <th>📈 Rate</th>
+            <th>💵 Maturity Value</th>
+            <th>🔵 Status</th>
+            <th>⚙️ Actions</th>
 
-        </thead>
+        </tr>
+
+    </thead>
 
 
         <tbody id="fdTableBody">
@@ -6207,24 +6313,24 @@ document.addEventListener(
 
         <table class="fd-table">
 
-            <thead>
+<thead>
 
-                <tr>
+    <tr>
 
-                    <th>FD</th>
-                    <th>Bank</th>
-                    <th>Principal</th>
-                    <th>Maturity Date</th>
-                    <th>Days Left</th>
-                    <th>Rate</th>
-                    <th>Maturity Value</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+        <th>🏦 FD</th>
+        <th>🏛️ Bank</th>
+        <th>💰 Principal</th>
+        <th>📅 Opening Date</th>
+        <th>📅 Maturity Date</th>
+        <th>⏳ Days Left</th>
+        <th>📈 Rate</th>
+        <th>💵 Maturity Value</th>
+        <th>🔵 Status</th>
+        <th>⚙️ Actions</th>
 
-                </tr>
+    </tr>
 
-            </thead>
-
+</thead>
             <tbody id="allFDTableBody">
 
                 <!-- All FD rows will load here -->
@@ -7023,6 +7129,7 @@ document.addEventListener(
 
 <script src="js/stockMaster.js"></script>
 <script type="module" src="js/firebase.js"></script>
+<script src="js/refresh.js"></script>
 <script type="module" src="js/script.js"></script>
 <script type="module" src="js/transactions.js"></script>
 <script type="module" src="js/rental-properties.js"></script>

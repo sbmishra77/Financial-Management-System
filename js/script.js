@@ -3427,15 +3427,18 @@ const cancelFDButton =
 
 
 if (showFDFormButton) {
-
     showFDFormButton.addEventListener("click", () => {
 
-        fdFormContainer.style.display = "block";
+        if (fdFormContainer) {
+            fdFormContainer.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+        }
 
     });
-
 }
-
 
 if (cancelFDButton) {
 
@@ -4356,6 +4359,26 @@ if (fd.maturityDate) {
 
 }
 
+// ===============================
+// FORMAT FD OPENING DATE
+// YYYY-MM-DD → DD-MM-YYYY
+// ===============================
+
+let formattedOpeningDate = "-";
+
+if (fd.depositDate) {
+
+    const dateParts =
+        fd.depositDate.split("-");
+
+    if (dateParts.length === 3) {
+
+        formattedOpeningDate =
+            `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+
+    }
+}
+
             const fdBank =
                 fd.bank || "Unknown Bank";
 
@@ -4470,23 +4493,22 @@ fdRow.innerHTML = `
 
 
     <td>
-        ${fdBank}
-    </td>
+    ${fdBank}
+</td>
 
+<td>
+    <span class="fd-amount">
+        ₹${fdAmount.toLocaleString("en-IN")}
+    </span>
+</td>
 
-    <td>
+<td>
+    ${formattedOpeningDate}
+</td>
 
-        <span class="fd-amount">
-            ₹${fdAmount.toLocaleString("en-IN")}
-        </span>
-
-    </td>
-
-
-    <td>
-        ${formattedMaturityDate}
-    </td>
-
+<td>
+    ${formattedMaturityDate}
+</td>
 
     <td>
 
@@ -6421,7 +6443,13 @@ async function loadInsurance() {
 
 
         insuranceContainer.innerHTML = "";
+// Clear All Insurance Table before reloading
+const allInsuranceTableBody =
+    document.querySelector("#allInsuranceTableBody");
 
+if (allInsuranceTableBody) {
+    allInsuranceTableBody.innerHTML = "";
+}
 
         insuranceSnapshot.forEach(
             (insuranceDoc) => {
@@ -8333,6 +8361,213 @@ document.addEventListener("click", async function (event) {
 });
 
 // ======================================================
+// GLOBAL MODULE UI RESET
+// हर बार नया module खोलने पर उसकी पुरानी sub-view
+// / form / summary state reset होगी
+// ======================================================
+
+function resetAllModuleUI() {
+
+    const resetToNone = [
+        "#transactionFormContainer",
+
+        "#investmentSummary",
+        "#investmentFormContainer",
+        "#allInvestmentsView",
+        "#investmentTableWrapper",
+        "#fixedDepositsInvestmentView",
+
+        "#fdContainer",
+        "#fdHistorySection",
+        "#allFDHistoryView",
+
+        "#sharesInvestmentView",
+        "#otherInvestmentsInvestmentView",
+        "#mutualFundsInvestmentView",
+
+        "#sharesContainer",
+
+        "#allInsuranceView",
+
+        "#accountFormContainer",
+
+        "#accountSummary",
+
+        "#allAccountsView",
+
+        "#loanFormContainer",
+
+        "#loanFormContainer",
+
+"#propertySummary",
+"#propertyFormContainer",
+"#editPropertyFormContainer",
+"#allPropertiesView",
+
+"#rentalManagementView",
+"#rentalUnitFormContainer",
+"#rentalUnitsTableWrapper",
+
+        ".insurance-section",
+    ];
+
+    resetToNone.forEach(selector => {
+
+        const element =
+            document.querySelector(selector);
+
+        if (element) {
+            element.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+        }
+
+    });
+
+
+
+    // ------------------------------------------
+    // RESET COMMON FORMS
+    // ------------------------------------------
+
+    document
+        .querySelectorAll(
+            ".transaction-type-inline-form, " +
+            ".transaction-category-inline-form"
+        )
+        .forEach(form => {
+
+            form.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        });
+
+// ------------------------------------------
+// RESET TRANSACTION EXTRA ROWS
+// ------------------------------------------
+
+const transactionEntryBody =
+    document.getElementById("transactionEntryBody");
+
+if (transactionEntryBody) {
+
+    const transactionRows =
+        transactionEntryBody.querySelectorAll(
+            ".transaction-entry-row"
+        );
+
+    transactionRows.forEach((row, index) => {
+
+        if (index > 0) {
+            row.remove();
+        }
+
+    });
+
+}
+
+// ------------------------------------------
+// RESET ADD NEW CATEGORY FORM
+// ------------------------------------------
+
+const categoryForm =
+    document.getElementById(
+        "categoryFormContainer"
+    );
+
+if (categoryForm) {
+
+    categoryForm.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+// ------------------------------------------
+// RESET ADD ACCOUNT BUTTON
+// ------------------------------------------
+
+const addAccountButton =
+    document.getElementById(
+        "addAccountButton"
+    );
+
+if (addAccountButton) {
+
+    addAccountButton.style.setProperty(
+        "display",
+        "inline-block",
+        "important"
+    );
+
+}
+
+// ------------------------------------------
+// RESET INVESTMENTS BUTTONS
+// ------------------------------------------
+
+const addInvestmentButton =
+    document.getElementById(
+        "addInvestmentButton"
+    );
+
+const viewAllInvestmentsButton =
+    document.getElementById(
+        "viewAllInvestmentsButton"
+    );
+
+const backToInvestmentsDashboardButton =
+    document.getElementById(
+        "backToInvestmentsDashboardButton"
+    );
+
+if (addInvestmentButton) {
+    addInvestmentButton.style.setProperty(
+        "display",
+        "inline-block",
+        "important"
+    );
+}
+
+if (viewAllInvestmentsButton) {
+    viewAllInvestmentsButton.style.setProperty(
+        "display",
+        "inline-block",
+        "important"
+    );
+}
+
+if (backToInvestmentsDashboardButton) {
+    backToInvestmentsDashboardButton.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+}
+
+    // ------------------------------------------
+    // RESET SCROLL POSITION
+    // ------------------------------------------
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
+
+    console.log(
+        "✅ ALL MODULE UI STATES RESET"
+    );
+}
+
+// ======================================================
 // SBM MASTER VIEW CONTROLLER
 // Dashboard OR ONE MODULE ONLY
 // ======================================================
@@ -8530,6 +8765,12 @@ if (sidebarMenu) {
     const section =
         menuButton.dataset.section;
 
+// ==========================================
+// RESET PREVIOUS MODULE STATE
+// ==========================================
+
+resetAllModuleUI();
+
 // ==================================================
 // SIDEBAR LOGOUT
 // ==================================================
@@ -8626,7 +8867,7 @@ if (section !== "dashboard") {
 
     menuButton.classList.add("active");
 
-    // ==================================================
+// ==================================================
 // MY INSURANCE — SIDEBAR
 // ==================================================
 
@@ -8673,6 +8914,10 @@ if (section === "insurance") {
             block: "start"
         });
 
+        if (typeof refreshModuleData === "function") {
+    refreshModuleData("insurance");
+}
+
         console.log("✅ INSURANCE MODULE OPENED");
 
     } else {
@@ -8703,7 +8948,11 @@ if (section === "transactions") {
 
     showMasterView("transactions");
 
-    // Hide Investment UI inside Transactions
+    if (typeof refreshModuleData === "function") {
+    refreshModuleData("transactions");
+}
+
+// Hide Investment UI inside Transactions
 const investmentsSection =
     document.getElementById("investmentsSection");
 
@@ -8787,7 +9036,7 @@ if (section === "properties") {
 
     // Hide ALL modules
     document.querySelectorAll(
-        "#transactionFormContainer, " +
+        "#transactionsSection, " +
         "#accountsSection, " +
         "#loansSection, " +
         "#investmentsSection, " +
@@ -8851,6 +9100,10 @@ if (section === "properties") {
             block: "start"
         });
 
+        if (typeof refreshModuleData === "function") {
+    refreshModuleData("properties");
+}
+
     } else {
 
         console.error(
@@ -8870,6 +9123,10 @@ if (section === "accounts") {
 
     showMasterView("accounts");
 
+if (typeof refreshModuleData === "function") {
+    refreshModuleData("accounts");
+}
+
     return;
 }
 
@@ -8881,6 +9138,9 @@ if (section === "investments") {
 
     showMasterView("investments");
 
+if (typeof refreshModuleData === "function") {
+    refreshModuleData("investments");
+}
     return;
 }
 });
@@ -9774,3 +10034,118 @@ async function loadMutualFunds() {
 // Make available to other modules
 window.loadMutualFunds = loadMutualFunds;
 
+// =====================================================
+// SBM GLOBAL UI REFRESH
+// Refresh dashboard cards + active module data
+// after Save / Update / Delete / Back to Dashboard
+// =====================================================
+
+window.refreshWealthManagerUI = async function () {
+
+    try {
+
+        console.log("🔄 GLOBAL UI REFRESH STARTED");
+
+        // Dashboard summary/cards
+        if (typeof loadDashboardSummary === "function") {
+            await loadDashboardSummary();
+        }
+
+        // Main modules
+        if (typeof loadAccounts === "function") {
+            await loadAccounts();
+        }
+
+        if (typeof loadFixedDeposits === "function") {
+            await loadFixedDeposits();
+        }
+
+        if (typeof loadFDHistory === "function") {
+            await loadFDHistory();
+        }
+
+        if (typeof loadInsurance === "function") {
+            await loadInsurance();
+        }
+
+        if (typeof loadInvestments === "function") {
+            await loadInvestments();
+        }
+
+        // Shares
+        if (window.loadShares) {
+            await window.loadShares();
+        }
+
+        if (window.loadShareTradingHistory) {
+            await window.loadShareTradingHistory();
+        }
+
+        // Mutual Funds
+        if (typeof loadMutualFunds === "function") {
+            await loadMutualFunds();
+        }
+
+        console.log("✅ GLOBAL UI REFRESH COMPLETED");
+
+    } catch (error) {
+
+        console.error(
+            "❌ GLOBAL UI REFRESH ERROR:",
+            error
+        );
+
+    }
+
+};
+
+
+// =====================================================
+// AUTO REFRESH AFTER USER ACTION
+// =====================================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const button =
+            event.target.closest("button");
+
+        if (!button) {
+            return;
+        }
+
+        const text =
+            button.textContent
+                .trim()
+                .toLowerCase();
+
+        const shouldRefresh =
+            text.includes("save") ||
+            text.includes("update") ||
+            text.includes("delete") ||
+            text.includes("back to dashboard") ||
+            text.includes("dashboard");
+
+        if (!shouldRefresh) {
+            return;
+        }
+
+        // Wait for the module's Firestore operation
+        // to finish before refreshing the UI.
+        setTimeout(
+            function () {
+
+                if (
+                    window.refreshWealthManagerUI
+                ) {
+                    window.refreshWealthManagerUI();
+                }
+
+            },
+            1200
+        );
+
+    },
+    true
+);

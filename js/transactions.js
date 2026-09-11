@@ -360,12 +360,14 @@ function loadTransactionCategoriesForRow(row) {
 
 
     const selectedType =
-        transactionTypeSelect.value;
+    transactionTypeSelect.value;
 
+// Remember currently selected category
+const previousCategory =
+    transactionCategorySelect.value;
 
-    transactionCategorySelect.innerHTML =
-        "";
-
+transactionCategorySelect.innerHTML =
+    "";
 
     const defaultOption =
         document.createElement("option");
@@ -572,6 +574,19 @@ function loadCategoriesForAllRows() {
         }
     );
 
+    // Restore previously selected category
+if (
+    previousCategory &&
+    Array.from(
+        transactionCategorySelect.options
+    ).some(
+        option =>
+            option.value === previousCategory
+    )
+) {
+    transactionCategorySelect.value =
+        previousCategory;
+}
 }
 
 
@@ -782,17 +797,19 @@ console.log(
             }
 
 
-            // FD Form खोलें
-            fdFormContainer.style.display =
-                "block";
+// =================================
+// OPEN FD POPUP
+// =================================
 
+fdFormContainer.style.setProperty(
+    "display",
+    "block",
+    "important"
+);
 
-            // FD Form तक scroll करें
-            fdFormContainer.scrollIntoView({
-                behavior: "smooth",
-                block: "start"
-            });
-
+console.log(
+    "🎉 Fixed Deposit Popup opened from Transaction."
+);
 
             console.log(
                 "Fixed Deposit Form opened from Transaction."
@@ -1602,10 +1619,15 @@ if (
                 newRow
             );
 
+            loadCustomTransactionTypes();
+
+updateTransactionRowBehavior(newRow);
+
         }
     );
 
 }
+
 
 // =========================================
 // LOAD ACCOUNTS FOR TRANSACTION FORM
@@ -1728,6 +1750,12 @@ function loadTransactionAccountDropdowns() {
                 return;
             }
 
+            // Remember existing selections
+const previousFromAccount =
+    fromSelect.value;
+
+const previousToAccount =
+    toSelect.value;
 
             // ===============================
             // FROM ACCOUNT
@@ -1810,6 +1838,37 @@ function loadTransactionAccountDropdowns() {
                 }
             );
 
+                        // =================================
+            // RESTORE EXISTING ACCOUNT SELECTIONS
+            // =================================
+
+            if (
+                previousFromAccount &&
+                Array.from(
+                    fromSelect.options
+                ).some(
+                    option =>
+                        option.value ===
+                        previousFromAccount
+                )
+            ) {
+                fromSelect.value =
+                    previousFromAccount;
+            }
+
+            if (
+                previousToAccount &&
+                Array.from(
+                    toSelect.options
+                ).some(
+                    option =>
+                        option.value ===
+                        previousToAccount
+                )
+            ) {
+                toSelect.value =
+                    previousToAccount;
+            }
         }
     );
 
@@ -2700,7 +2759,7 @@ else if (
 
     }
 
-        // =====================================
+    // =====================================
     // CUSTOM TRANSACTION TYPES
     // =====================================
 
@@ -2856,7 +2915,7 @@ document.addEventListener(
             row
         );
 
-        // =========================================
+// =========================================
 // REFRESH ACCOUNT DROPDOWNS
 // =========================================
 
@@ -2898,6 +2957,21 @@ console.log(
 
 }
 
+// =========================================
+// TRANSACTION MASTER DATA INITIALIZATION
+// =========================================
+
+async function initializeTransactionMasterData() {
+
+    await loadSavedTransactionCategories();
+
+    await loadCustomTransactionTypes();
+
+}
+
+window.initializeTransactionMasterData =
+    initializeTransactionMasterData;
+    
 // =========================================
 // INVESTMENT SEARCH / SUGGESTIONS
 // =========================================
@@ -3493,8 +3567,9 @@ console.log(
                             linkedModule,
 
                         notes:
-                            notes,
+                            notes,  
 
+                            behavior: transactionBehavior,
                         createdAt:
                             serverTimestamp()
 
@@ -3632,7 +3707,7 @@ savedCount++;
                 // RELOAD PAGE / FORM
                 // =================================
 
-                location.reload();
+                await loadSavedTransactions();
 
             }
             catch (error) {
@@ -6315,7 +6390,7 @@ if (
     return;
 }
 
-            // --------------------------------------------------
+// --------------------------------------------------
 // Stock / Shares detect
 // Value OR visible text दोनों check करेंगे
 // --------------------------------------------------
