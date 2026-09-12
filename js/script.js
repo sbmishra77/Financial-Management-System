@@ -237,7 +237,6 @@ const netAccountPosition =
     totalAccountAssets -
     creditCardBalance;
 
-
 // =========================================
 // UPDATE SUMMARY UI
 // =========================================
@@ -388,6 +387,708 @@ console.log(
     }
 );
 
+// =========================================
+// CURRENT BALANCE / FUNDS AVAILABLE
+// =========================================
+
+// Dashboard total
+const dashboardFundsAvailableValue =
+    document.querySelector(
+        "#dashboardFundsAvailableValue"
+    );
+
+
+// Module summary values
+const availableBankBalance =
+    document.querySelector(
+        "#availableBankBalance"
+    );
+
+const availableCashBalance =
+    document.querySelector(
+        "#availableCashBalance"
+    );
+
+const availableWalletBalance =
+    document.querySelector(
+        "#availableWalletBalance"
+    );
+
+const totalAvailableFunds =
+    document.querySelector(
+        "#totalAvailableFunds"
+    );
+
+
+// Individual account containers
+const availableBankAccountsList =
+    document.querySelector(
+        "#availableBankAccountsList"
+    );
+
+const availableCashAccountsList =
+    document.querySelector(
+        "#availableCashAccountsList"
+    );
+
+const availableWalletAccountsList =
+    document.querySelector(
+        "#availableWalletAccountsList"
+    );
+
+
+// =========================================
+// UPDATE FUNDS AVAILABLE TOTAL
+// =========================================
+
+const totalAvailableFundsBottom =
+    document.querySelector(
+        "#totalAvailableFundsBottom"
+    );
+
+
+if (totalAvailableFundsBottom) {
+
+    totalAvailableFundsBottom.textContent =
+        `₹${totalAccountAssets.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
+
+
+// =========================================
+// UPDATE DASHBOARD CARD
+// =========================================
+
+if (dashboardFundsAvailableValue) {
+
+    dashboardFundsAvailableValue.textContent =
+        `₹${totalAccountAssets.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
+
+// =========================================
+// CLEAR OLD ACCOUNT LISTS
+// =========================================
+
+if (availableBankAccountsList) {
+
+    availableBankAccountsList.innerHTML = "";
+
+}
+
+
+if (availableCashAccountsList) {
+
+    availableCashAccountsList.innerHTML = "";
+
+}
+
+
+if (availableWalletAccountsList) {
+
+    availableWalletAccountsList.innerHTML = "";
+
+}
+
+
+// =========================================
+// LOAD EACH ACCOUNT INDIVIDUALLY
+// =========================================
+
+accountsSnapshot.forEach(
+    (accountDoc) => {
+
+        const account =
+            accountDoc.data();
+
+        const accountName =
+            account.name ||
+            "Unnamed Account";
+
+        const balance =
+            Number(account.balance || 0);
+
+
+        // =================================
+        // CREATE ACCOUNT ROW
+        // =================================
+
+        const accountRow =
+            document.createElement("div");
+
+        accountRow.style.display =
+            "flex";
+
+        accountRow.style.justifyContent =
+            "space-between";
+
+        accountRow.style.alignItems =
+            "center";
+
+        accountRow.style.padding =
+            "10px 14px";
+
+        accountRow.style.marginBottom =
+            "8px";
+
+        accountRow.style.border =
+            "1px solid #ddd";
+
+        accountRow.style.borderRadius =
+            "8px";
+
+        accountRow.style.background =
+            "#ffffff";
+
+
+        const nameElement =
+            document.createElement("span");
+
+        nameElement.textContent =
+            accountName;
+
+
+        const balanceElement =
+            document.createElement("strong");
+
+        balanceElement.textContent =
+            `₹${balance.toLocaleString("en-IN")}`;
+
+
+        accountRow.appendChild(
+            nameElement
+        );
+
+        accountRow.appendChild(
+            balanceElement
+        );
+
+
+        // =================================
+        // PUT INTO CORRECT SECTION
+        // =================================
+
+        if (
+            account.type === "bank" &&
+            availableBankAccountsList
+        ) {
+
+            availableBankAccountsList.appendChild(
+                accountRow
+            );
+
+        }
+
+        else if (
+            account.type === "cash" &&
+            availableCashAccountsList
+        ) {
+
+            availableCashAccountsList.appendChild(
+                accountRow
+            );
+
+        }
+
+
+        else if (
+            account.type === "cashback" &&
+            availableWalletAccountsList
+        ) {
+
+            availableWalletAccountsList.appendChild(
+                accountRow
+            );
+
+        }
+
+    }
+);
+
+// =========================================
+// LIVE FUNDS CHARTS
+// =========================================
+
+const fundsPieChart =
+    document.querySelector(
+        "#fundsPieChart"
+    );
+
+const fundsPieLegend =
+    document.querySelector(
+        "#fundsPieLegend"
+    );
+
+const fundsBarChart =
+    document.querySelector(
+        "#fundsBarChart"
+    );
+
+
+// =========================================
+// TOTAL FOR PERCENTAGE
+// =========================================
+
+const fundsChartTotal =
+    totalAccountAssets;
+
+
+// =========================================
+// CALCULATE PERCENTAGES
+// =========================================
+
+let fundsBankPercent = 0;
+let fundsCashPercent = 0;
+let fundsWalletPercent = 0;
+
+
+if (fundsChartTotal > 0) {
+
+    fundsBankPercent =
+        (bankBalance / fundsChartTotal) * 100;
+
+    fundsCashPercent =
+        (cashBalance / fundsChartTotal) * 100;
+
+    fundsWalletPercent =
+        (cashbackBalance / fundsChartTotal) * 100;
+
+}
+
+
+// =========================================
+// PIE CHART
+// =========================================
+
+if (fundsPieChart) {
+
+    const bankEnd =
+        fundsBankPercent;
+
+    const cashEnd =
+        bankEnd +
+        fundsCashPercent;
+
+
+    fundsPieChart.style.background =
+        `conic-gradient(
+            #1e88e5 0% ${bankEnd}%,
+            #43a047 ${bankEnd}% ${cashEnd}%,
+            #8e44ad ${cashEnd}% 100%
+        )`;
+
+}
+
+
+// =========================================
+// PIE LEGEND
+// =========================================
+
+if (fundsPieLegend) {
+
+    fundsPieLegend.innerHTML = "";
+
+
+    const chartLegendData = [
+
+        {
+            label: "🏦 Bank",
+            percent: fundsBankPercent,
+            amount: bankBalance,
+            color: "#1e88e5"
+        },
+
+        {
+            label: "💵 Cash",
+            percent: fundsCashPercent,
+            amount: cashBalance,
+            color: "#43a047"
+        },
+
+        {
+            label: "👛 Wallet",
+            percent: fundsWalletPercent,
+            amount: cashbackBalance,
+            color: "#8e44ad"
+        }
+
+    ];
+
+
+    chartLegendData.forEach(
+        (item) => {
+
+            const legendItem =
+                document.createElement("div");
+
+
+            legendItem.style.display =
+                "flex";
+
+            legendItem.style.alignItems =
+                "center";
+
+            legendItem.style.gap =
+                "7px";
+
+
+            const dot =
+                document.createElement("span");
+
+
+            dot.style.width =
+                "13px";
+
+            dot.style.height =
+                "13px";
+
+            dot.style.borderRadius =
+                "50%";
+
+            dot.style.background =
+                item.color;
+
+            dot.style.display =
+                "inline-block";
+
+
+            const text =
+                document.createElement("span");
+
+
+            text.textContent =
+                `${item.label} — ${item.percent.toFixed(2)}%`;
+
+
+            legendItem.appendChild(dot);
+
+            legendItem.appendChild(text);
+
+
+            fundsPieLegend.appendChild(
+                legendItem
+            );
+
+        }
+    );
+
+}
+
+
+// =========================================
+// BAR CHART
+// =========================================
+
+if (fundsBarChart) {
+
+    fundsBarChart.innerHTML = "";
+
+
+    const chartBars = [
+
+        {
+            label: "🏦 Bank",
+            amount: bankBalance,
+            percent: fundsBankPercent,
+            color: "#1e88e5"
+        },
+
+        {
+            label: "💵 Cash",
+            amount: cashBalance,
+            percent: fundsCashPercent,
+            color: "#43a047"
+        },
+
+        {
+            label: "👛 Wallet",
+            amount: cashbackBalance,
+            percent: fundsWalletPercent,
+            color: "#8e44ad"
+        }
+
+    ];
+
+
+    const maxAmount =
+        Math.max(
+            bankBalance,
+            cashBalance,
+            cashbackBalance,
+            1
+        );
+
+
+    chartBars.forEach(
+        (item) => {
+
+            const bar =
+                document.createElement("div");
+
+
+            bar.className =
+                "funds-bar";
+
+
+            const barHeight =
+                Math.max(
+                    (item.amount / maxAmount) * 240,
+                    item.amount > 0 ? 18 : 8
+                );
+
+
+            bar.style.height =
+                `${barHeight}px`;
+
+
+            bar.style.background =
+                `linear-gradient(
+                    to right,
+                    ${item.color},
+                    rgba(255,255,255,0.45),
+                    ${item.color}
+                )`;
+
+
+            const value =
+                document.createElement("div");
+
+
+            value.className =
+                "funds-bar-value";
+
+
+            value.innerHTML =
+    `
+    <div>
+        ${item.percent.toFixed(2)}%
+    </div>
+
+    <div
+        style="
+            font-size: 13px;
+            margin-top: 3px;
+            font-weight: 800;
+        "
+    >
+        ₹${item.amount.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}
+    </div>
+    `;
+
+
+            const label =
+                document.createElement("div");
+
+
+            label.className =
+                "funds-bar-label";
+
+
+            label.textContent =
+                item.label;
+
+
+            bar.appendChild(value);
+
+            bar.appendChild(label);
+
+
+            fundsBarChart.appendChild(
+                bar
+            );
+
+        }
+    );
+
+}
+
+// =========================================
+// PIE CHART - PERCENTAGE LABELS
+// =========================================
+
+if (fundsPieChart) {
+
+    // Remove old labels
+    fundsPieChart
+        .querySelectorAll(
+            ".funds-pie-percent-label"
+        )
+        .forEach(label => label.remove());
+
+
+    const pieLabelData = [
+
+        {
+            label: "🏦",
+            percent: fundsBankPercent,
+            color: "#1e88e5"
+        },
+
+        {
+            label: "💵",
+            percent: fundsCashPercent,
+            color: "#43a047"
+        },
+
+        {
+            label: "👛",
+            percent: fundsWalletPercent,
+            color: "#8e44ad"
+        }
+
+    ];
+
+
+    let runningPercent = 0;
+
+
+    pieLabelData.forEach(
+        (item) => {
+
+            // Zero-value category को pie पर label नहीं देंगे
+            if (item.percent <= 0) {
+                return;
+            }
+
+
+            const middlePercent =
+                runningPercent +
+                (item.percent / 2);
+
+
+            const angle =
+                (middlePercent * 3.6) - 90;
+
+
+            const radians =
+                angle * Math.PI / 180;
+
+
+            const radius = 92;
+
+
+            const x =
+                50 +
+                (radius / 2.9) *
+                Math.cos(radians);
+
+
+            const y =
+                50 +
+                (radius / 2.9) *
+                Math.sin(radians);
+
+
+            const label =
+                document.createElement("div");
+
+
+            label.className =
+                "funds-pie-percent-label";
+
+
+            label.innerHTML =
+                `
+                <span class="pie-percent-icon">
+                    ${item.label}
+                </span>
+                <span>
+                    ${item.percent.toFixed(2)}%
+                </span>
+                `;
+
+
+            label.style.left =
+                `${x}%`;
+
+
+            label.style.top =
+                `${y}%`;
+
+
+            label.style.borderColor =
+                item.color;
+
+
+            fundsPieChart.appendChild(
+                label
+            );
+
+
+            runningPercent +=
+                item.percent;
+
+        }
+    );
+
+}
+
+// =========================================
+// EMPTY LIST MESSAGES
+// =========================================
+
+if (
+    availableBankAccountsList &&
+    availableBankAccountsList.children.length === 0
+) {
+
+    availableBankAccountsList.innerHTML =
+        "<p>No Bank Accounts found.</p>";
+
+}
+
+
+if (
+    availableCashAccountsList &&
+    availableCashAccountsList.children.length === 0
+) {
+
+    availableCashAccountsList.innerHTML =
+        "<p>No Cash Account found.</p>";
+
+}
+
+
+if (
+    availableWalletAccountsList &&
+    availableWalletAccountsList.children.length === 0
+) {
+
+    availableWalletAccountsList.innerHTML =
+        "<p>No Wallet found.</p>";
+
+}
+
+
+console.log(
+    "Funds Available Updated:",
+    {
+        bankBalance,
+        cashBalance,
+        cashbackBalance,
+        totalAvailableFunds:
+            totalAccountAssets
+    }
+);  
+
         let accountAssets = 0;
         let accountLiabilities = 0;
 
@@ -425,6 +1126,114 @@ console.log(
             }
         );
 
+// =========================================
+// UPDATE FUNDS TABLE HEADERS
+// =========================================
+
+const fundsBankCountEl =
+    document.querySelector(
+        "#availableBankCount"
+    );
+
+const fundsBankTotalEl =
+    document.querySelector(
+        "#availableBankTotal"
+    );
+
+const fundsCashCountEl =
+    document.querySelector(
+        "#availableCashCount"
+    );
+
+const fundsCashTotalEl =
+    document.querySelector(
+        "#availableCashTotal"
+    );
+
+const fundsWalletCountEl =
+    document.querySelector(
+        "#availableWalletCount"
+    );
+
+const fundsWalletTotalEl =
+    document.querySelector(
+        "#availableWalletTotal"
+    );
+
+
+// =========================================
+// BANK
+// =========================================
+
+if (fundsBankCountEl) {
+
+    fundsBankCountEl.textContent =
+        bankCount;
+
+}
+
+if (fundsBankTotalEl) {
+
+    fundsBankTotalEl.textContent =
+        `₹${bankBalance.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
+
+
+// =========================================
+// CASH
+// =========================================
+
+if (fundsCashCountEl) {
+
+    fundsCashCountEl.textContent =
+        cashCount;
+
+}
+
+if (fundsCashTotalEl) {
+
+    fundsCashTotalEl.textContent =
+        `₹${cashBalance.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
+
+
+// =========================================
+// WALLET
+// =========================================
+
+if (fundsWalletCountEl) {
+
+    fundsWalletCountEl.textContent =
+        cashbackCount;
+
+}
+
+if (fundsWalletTotalEl) {
+
+    fundsWalletTotalEl.textContent =
+        `₹${cashbackBalance.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
 
         // ===============================
         // LOAD FIXED DEPOSITS
@@ -8389,6 +9198,11 @@ function resetAllModuleUI() {
 
         "#allInsuranceView",
 
+"#insuranceSummary",
+"#insuranceContainer",
+"#insuranceFormContainer",
+"#editInsuranceFormContainer",
+
         "#accountFormContainer",
 
         "#accountSummary",
@@ -8407,6 +9221,10 @@ function resetAllModuleUI() {
 "#rentalManagementView",
 "#rentalUnitFormContainer",
 "#rentalUnitsTableWrapper",
+"#rentEntryFormContainer",
+"#rentRegisterTableWrapper",
+"#rentRegisterSummary",
+
 
         ".insurance-section",
     ];
@@ -8597,10 +9415,10 @@ document.querySelectorAll("button").forEach(button => {
 
 
     // ----------------------------------------------
-    // ALL MODULES
-    // ----------------------------------------------
+// ALL MODULES
+// ----------------------------------------------
 
-    const modules = {
+const modules = {
 
     transactions:
         document.getElementById("transactionsSection"),
@@ -8618,10 +9436,15 @@ document.querySelectorAll("button").forEach(button => {
         document.getElementById("propertiesSection"),
 
     insurance:
-    document.querySelector(".insurance-section")
+        document.querySelector(".insurance-section"),
+
+    financialGoals:
+        document.getElementById("financialGoalsSection"),
+
+    fundsAvailable:
+        document.getElementById("fundsAvailableSection")
 
 };
-
     // ----------------------------------------------
     // FIRST HIDE DASHBOARD
     // ----------------------------------------------
@@ -8770,6 +9593,41 @@ if (sidebarMenu) {
 // ==========================================
 
 resetAllModuleUI();
+
+// ==================================================
+// MY FINANCIAL GOALS
+// ==================================================
+
+if (section === "financialGoals") {
+
+    console.log(
+        "🎯 FINANCIAL GOALS SIDEBAR CLICKED"
+    );
+
+    showMasterView(
+        "financialGoals"
+    );
+
+    return;
+}
+
+
+// ==================================================
+// CURRENT BALANCE / FUNDS AVAILABLE
+// ==================================================
+
+if (section === "fundsAvailable") {
+
+    console.log(
+        "💰 FUNDS AVAILABLE SIDEBAR CLICKED"
+    );
+
+    showMasterView(
+        "fundsAvailable"
+    );
+
+    return;
+}
 
 // ==================================================
 // SIDEBAR LOGOUT

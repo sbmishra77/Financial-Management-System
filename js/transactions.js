@@ -1628,6 +1628,104 @@ updateTransactionRowBehavior(newRow);
 
 }
 
+// =========================================
+// DELETE UNSAVED TRANSACTION ROW
+// =========================================
+
+if (transactionEntryBody) {
+
+    transactionEntryBody.addEventListener(
+        "click",
+        (event) => {
+
+            const deleteButton =
+                event.target.closest(
+                    ".delete-transaction-button"
+                );
+
+            if (!deleteButton) {
+                return;
+            }
+
+
+            const row =
+                deleteButton.closest(
+                    ".transaction-entry-row"
+                );
+
+            if (!row) {
+                return;
+            }
+
+
+            const rows =
+                transactionEntryBody.querySelectorAll(
+                    ".transaction-entry-row"
+                );
+
+
+            // =================================
+            // IF ONLY ONE ROW EXISTS
+            // KEEP ONE EMPTY STARTING ROW
+            // =================================
+
+            if (rows.length === 1) {
+
+                row
+                    .querySelectorAll(
+                        "input"
+                    )
+                    .forEach(
+                        (input) => {
+
+                            input.value = "";
+
+                            delete input.dataset.partyId;
+
+                            delete input.dataset.investmentId;
+
+                        }
+                    );
+
+
+                row
+                    .querySelectorAll(
+                        "select"
+                    )
+                    .forEach(
+                        (select) => {
+
+                            select.selectedIndex = 0;
+
+                        }
+                    );
+
+
+                if (
+                    typeof updateTransactionRowBehavior ===
+                    "function"
+                ) {
+
+                    updateTransactionRowBehavior(
+                        row
+                    );
+
+                }
+
+                return;
+            }
+
+
+            // =================================
+            // REMOVE EXTRA ROW
+            // =================================
+
+            row.remove();
+
+        }
+    );
+
+}
 
 // =========================================
 // LOAD ACCOUNTS FOR TRANSACTION FORM
@@ -2971,7 +3069,7 @@ async function initializeTransactionMasterData() {
 
 window.initializeTransactionMasterData =
     initializeTransactionMasterData;
-    
+
 // =========================================
 // INVESTMENT SEARCH / SUGGESTIONS
 // =========================================

@@ -119,21 +119,46 @@
 
 
     <button
-        type="button"
-        class="sidebar-menu-item"
-        data-section="vehicles">
-        🚗
-        <span>Vehicle Management</span>
-    </button>
+    type="button"
+    class="sidebar-menu-item"
+    data-section="vehicles">
+    🚗
+    <span>Vehicle Management</span>
+</button>
+
+<!-- ================================= -->
+<!-- MY FINANCIAL GOALS -->
+<!-- ================================= -->
+
+<button
+    type="button"
+    class="sidebar-menu-item"
+    data-section="financialGoals">
+    🎯
+    <span>My Financial Goals</span>
+</button>
 
 
-    <button
-        type="button"
-        class="sidebar-menu-item"
-        data-section="repairs">
-        🔧
-        <span>Repairs & Maintenance</span>
-    </button>
+<button
+    type="button"
+    class="sidebar-menu-item"
+    data-section="repairs">
+    🔧
+    <span>Repairs & Maintenance</span>
+</button>
+
+
+<!-- ================================= -->
+<!-- CURRENT BALANCE / FUNDS AVAILABLE -->
+<!-- ================================= -->
+
+<button
+    type="button"
+    class="sidebar-menu-item"
+    data-section="fundsAvailable">
+    💰
+    <span>Current Balance / Funds Available</span>
+</button>
 
 
     <button
@@ -1475,6 +1500,65 @@
 
         </button>
 
+        <!-- ========================================= -->
+<!-- MY FINANCIAL GOALS -->
+<!-- ========================================= -->
+
+<button type="button"
+        class="master-module-card"
+        data-section="financialGoals">
+
+    <div class="module-big-icon">🎯</div>
+
+    <div class="module-card-title">
+        MY FINANCIAL GOALS
+    </div>
+
+    <div class="module-card-subtitle">
+        SAVINGS • TARGETS<br>
+        PLANNING • ACHIEVEMENTS
+    </div>
+
+    <div class="module-card-value">
+        →
+    </div>
+
+    <div class="module-card-label">
+        VIEW FINANCIAL GOALS
+    </div>
+
+</button>
+
+<!-- ========================================= -->
+<!-- CURRENT BALANCE / FUNDS AVAILABLE -->
+<!-- ========================================= -->
+
+<button type="button"
+        class="master-module-card"
+        data-section="fundsAvailable">
+
+    <div class="module-big-icon">💰</div>
+
+    <div class="module-card-title">
+        CURRENT BALANCE / FUNDS AVAILABLE
+    </div>
+
+    <div class="module-card-subtitle">
+        BANK ACCOUNTS • CASH<br>
+        WALLETS • AVAILABLE FUNDS
+    </div>
+
+<div
+    class="module-card-value"
+    id="dashboardFundsAvailableValue">
+    ₹0
+</div>
+
+<div class="module-card-label">
+    AVAILABLE FUNDS
+</div>
+
+</button>
 
         <!-- REPORTS -->
         <button type="button"
@@ -1569,6 +1653,585 @@
 
 </div>
 
+<!-- ================================================== -->
+<!-- MY FINANCIAL GOALS -->
+<!-- ================================================== -->
+
+<section
+    id="financialGoalsSection"
+    class="finance-section financial-goals-section"
+    style="display: none;">
+
+    <div class="back-to-dashboard-wrapper">
+
+        <button
+            type="button"
+            class="back-to-dashboard-button">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- HEADER -->
+    <!-- =============================== -->
+
+    <div class="section-header">
+
+        <div class="section-title-area">
+
+            <h2>
+                🎯 My Financial Goals
+            </h2>
+
+        </div>
+
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="financialGoalsSummaryButton"
+                class="section-summary-button">
+
+                📊 Goals Summary
+
+            </button>
+
+
+            <button
+                type="button"
+                id="addFinancialGoalButton"
+                class="add-module-button">
+
+                ➕ Add Financial Goal
+
+            </button>
+
+
+            <button
+                type="button"
+                id="viewAllFinancialGoalsButton"
+                class="view-module-button">
+
+                View All Goals →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- GOALS SUMMARY -->
+    <!-- =============================== -->
+
+    <div
+        id="financialGoalsSummary"
+        class="financial-goals-summary"
+        style="display: none;">
+
+        <div class="financial-goal-summary-card">
+
+            <h3>
+                🎯 Total Goals
+            </h3>
+
+            <strong id="totalFinancialGoals">
+                0
+            </strong>
+
+        </div>
+
+
+        <div class="financial-goal-summary-card">
+
+            <h3>
+                💰 Target Amount
+            </h3>
+
+            <strong id="totalGoalTargetAmount">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="financial-goal-summary-card">
+
+            <h3>
+                💵 Saved Amount
+            </h3>
+
+            <strong id="totalGoalSavedAmount">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div class="financial-goal-summary-card">
+
+            <h3>
+                📈 Remaining Amount
+            </h3>
+
+            <strong id="totalGoalRemainingAmount">
+                ₹0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- ADD FINANCIAL GOAL -->
+    <!-- =============================== -->
+
+    <div
+        id="financialGoalFormContainer"
+        style="display: none;">
+
+        <h3>
+            🎯 Add New Financial Goal
+        </h3>
+
+
+        <form id="financialGoalForm">
+
+            <label for="financialGoalName">
+                Goal Name
+            </label>
+
+            <input
+                type="text"
+                id="financialGoalName"
+                placeholder="जैसे New Car, House, Emergency Fund"
+                required>
+
+
+            <label for="financialGoalTargetAmount">
+                Target Amount
+            </label>
+
+            <input
+                type="number"
+                id="financialGoalTargetAmount"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                required>
+
+
+            <label for="financialGoalSavedAmount">
+                Already Saved Amount
+            </label>
+
+            <input
+                type="number"
+                id="financialGoalSavedAmount"
+                placeholder="0"
+                min="0"
+                step="0.01"
+                value="0">
+
+
+            <label for="financialGoalTargetDate">
+                Target Date
+            </label>
+
+            <input
+                type="date"
+                id="financialGoalTargetDate">
+
+
+            <label for="financialGoalPriority">
+                Priority
+            </label>
+
+            <select
+                id="financialGoalPriority">
+
+                <option value="">
+                    Select Priority
+                </option>
+
+                <option value="high">
+                    🔴 High
+                </option>
+
+                <option value="medium">
+                    🟡 Medium
+                </option>
+
+                <option value="low">
+                    🟢 Low
+                </option>
+
+            </select>
+
+
+            <label for="financialGoalNotes">
+                Notes
+            </label>
+
+            <textarea
+                id="financialGoalNotes"
+                rows="3"
+                placeholder="Optional">
+            </textarea>
+
+
+            <div class="account-form-buttons">
+
+                <button
+                    type="submit"
+                    id="saveFinancialGoalButton">
+
+                    💾 Save Goal
+
+                </button>
+
+
+                <button
+                    type="button"
+                    id="cancelFinancialGoalButton">
+
+                    ❌ Cancel
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- ALL FINANCIAL GOALS -->
+    <!-- =============================== -->
+
+    <div
+        id="allFinancialGoalsView"
+        style="display: none;">
+
+        <div class="section-header">
+
+            <h2>
+                🎯 All Financial Goals
+                (<span id="financialGoalsCount">0</span>)
+            </h2>
+
+
+            <button
+                type="button"
+                id="backToFinancialGoalsDashboardButton">
+
+                ← Back to Goals
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="financialGoalsContainer">
+
+            <p id="noFinancialGoalsMessage">
+                No Financial Goals added yet.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- ================================================== -->
+<!-- CURRENT BALANCE / FUNDS AVAILABLE -->
+<!-- ================================================== -->
+
+<section
+    id="fundsAvailableSection"
+    class="finance-section funds-available-section"
+    style="display: none;">
+
+    <div class="back-to-dashboard-wrapper">
+
+        <button
+            type="button"
+            class="back-to-dashboard-button">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- HEADER -->
+    <!-- =============================== -->
+
+    <div class="section-header">
+
+        <div class="section-title-area">
+
+            <h2>
+                💰 Current Balance / Funds Available
+            </h2>
+
+        </div>
+
+    </div>
+
+
+
+<!-- ========================================= -->
+<!-- FUNDS AVAILABLE DETAILS -->
+<!-- ========================================= -->
+
+<div
+    id="fundsAvailableContainer"
+    class="funds-available-details">
+
+
+    <!-- ================================= -->
+    <!-- BANK ACCOUNTS -->
+    <!-- ================================= -->
+
+    <div class="funds-table-card">
+
+        <div class="funds-table-header bank-header">
+
+            <span>
+                🏦 BANK ACCOUNTS
+                (<span id="availableBankCount">0</span>)
+            </span>
+
+            <strong id="availableBankTotal">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <table class="funds-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Bank Account
+                    </th>
+
+                    <th>
+                        Available Balance
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="availableBankAccountsList">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- CASH -->
+    <!-- ================================= -->
+
+    <div class="funds-table-card">
+
+        <div class="funds-table-header cash-header">
+
+            <span>
+                💵 CASH
+                (<span id="availableCashCount">0</span>)
+            </span>
+
+            <strong id="availableCashTotal">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <table class="funds-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Cash Account
+                    </th>
+
+                    <th>
+                        Available Balance
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="availableCashAccountsList">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+    <!-- ================================= -->
+    <!-- WALLETS -->
+    <!-- ================================= -->
+
+    <div class="funds-table-card">
+
+        <div class="funds-table-header wallet-header">
+
+            <span>
+                👛 WALLETS
+                (<span id="availableWalletCount">0</span>)
+            </span>
+
+            <strong id="availableWalletTotal">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <table class="funds-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>
+                        Wallet
+                    </th>
+
+                    <th>
+                        Available Balance
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="availableWalletAccountsList">
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<!-- ========================================= -->
+<!-- TOTAL AVAILABLE FUNDS -->
+<!-- ========================================= -->
+
+<div
+    class="total-available-funds-card">
+
+    <div class="total-available-funds-title">
+        💰 TOTAL AVAILABLE FUNDS
+    </div>
+
+    <div
+        id="totalAvailableFundsBottom"
+        class="total-available-funds-amount">
+
+        ₹0
+
+    </div>
+
+</div>
+
+
+<!-- ========================================= -->
+<!-- FUNDS DISTRIBUTION CHARTS -->
+<!-- ========================================= -->
+
+<div
+    class="funds-charts-section">
+
+
+    <!-- ================================= -->
+    <!-- PIE CHART -->
+    <!-- ================================= -->
+
+    <div class="funds-chart-card">
+
+        <h3>
+            📊 Funds Distribution
+        </h3>
+
+        <div class="funds-pie-chart-area">
+
+            <div
+                id="fundsPieChart"
+                class="funds-pie-chart">
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="fundsPieLegend"
+            class="funds-chart-legend">
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================= -->
+    <!-- BAR CHART -->
+    <!-- ================================= -->
+
+    <div class="funds-chart-card">
+
+        <h3>
+            📈 Funds Comparison
+        </h3>
+
+        <div
+            id="fundsBarChart"
+            class="funds-bar-chart">
+
+        </div>
+
+    </div>
+
+</div>
+</section>
+
 <section
     id="accountsSection"
     class="accounts-section">
@@ -1578,6 +2241,7 @@
         ← Back to Dashboard
     </button>
     </div>
+
 
 <!-- =============================== -->
 <!-- ACCOUNTS HEADER -->
