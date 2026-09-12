@@ -574,19 +574,7 @@ function loadCategoriesForAllRows() {
         }
     );
 
-    // Restore previously selected category
-if (
-    previousCategory &&
-    Array.from(
-        transactionCategorySelect.options
-    ).some(
-        option =>
-            option.value === previousCategory
-    )
-) {
-    transactionCategorySelect.value =
-        previousCategory;
-}
+
 }
 
 
@@ -3783,23 +3771,90 @@ savedCount++;
 
 
                 // =================================
-                // RESET FORM
-                // =================================
+// RESET FORM
+// =================================
 
-                transactionEntryBody.innerHTML = "";
-
-
-                // =================================
-                // CREATE ONE FRESH ROW
-                // =================================
-
-                const firstRow =
-                    document.createElement("tr");
+const oldFirstRow =
+    transactionEntryBody.querySelector(
+        ".transaction-entry-row"
+    );
 
 
-                firstRow.className =
-                    "transaction-entry-row";
+// =================================
+// CREATE ONE FRESH ROW
+// =================================
 
+let firstRow = null;
+
+if (oldFirstRow) {
+
+    firstRow =
+        oldFirstRow.cloneNode(true);
+
+    // Clear all fields
+    firstRow
+        .querySelectorAll(
+            "input, select, textarea"
+        )
+        .forEach(
+            (element) => {
+
+                element.value = "";
+
+                delete element.dataset.partyId;
+
+                delete element.dataset.investmentId;
+
+                delete element.dataset.editingTransactionId;
+
+            }
+        );
+
+}
+else {
+
+    console.error(
+        "❌ Existing transaction row template not found."
+    );
+
+}
+
+
+// =================================
+// CLEAR OLD ROWS
+// =================================
+
+transactionEntryBody.innerHTML = "";
+
+
+// =================================
+// ADD FRESH ROW BACK
+// =================================
+
+if (firstRow) {
+
+    transactionEntryBody.appendChild(
+        firstRow
+    );
+
+}
+
+
+// =================================
+// RELOAD TRANSACTION DROPDOWNS
+// =================================
+
+if (firstRow) {
+
+    updateTransactionRowBehavior(
+        firstRow
+    );
+
+    loadTransactionCategoriesForRow(
+        firstRow
+    );
+
+}
 
                 // =================================
                 // RELOAD PAGE / FORM

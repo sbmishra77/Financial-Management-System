@@ -9656,6 +9656,7 @@ if (section === "logout") {
     return;
 }
 
+
 // ==================================================
 // LOANS & BORROWINGS — MASTER VIEW
 // ==================================================
@@ -10003,6 +10004,103 @@ if (typeof refreshModuleData === "function") {
 }
 });
 
+// ==================================================
+// MY FINANCIAL GOALS — ADD / CANCEL FORM
+// ==================================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        // =========================================
+        // ADD FINANCIAL GOAL
+        // =========================================
+
+        const addButton =
+            event.target.closest(
+                "#addFinancialGoalButton"
+            );
+
+        if (addButton) {
+
+            const formContainer =
+                document.querySelector(
+                    "#financialGoalFormContainer"
+                );
+
+            if (formContainer) {
+
+                formContainer.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+                formContainer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+
+            addButton.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // CANCEL FINANCIAL GOAL
+        // =========================================
+
+        const cancelButton =
+            event.target.closest(
+                "#cancelFinancialGoalButton"
+            );
+
+        if (cancelButton) {
+
+            const formContainer =
+                document.querySelector(
+                    "#financialGoalFormContainer"
+                );
+
+            const addButton =
+                document.querySelector(
+                    "#addFinancialGoalButton"
+                );
+
+
+            if (formContainer) {
+
+                formContainer.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (addButton) {
+
+                addButton.style.setProperty(
+                    "display",
+                    "inline-block",
+                    "important"
+                );
+
+            }
+
+        }
+
+    }
+);
+
 // ==========================================
 // BACK TO DASHBOARD BUTTON — GLOBAL
 // ==========================================
@@ -10181,6 +10279,7 @@ document.addEventListener("click", function (event) {
     );
 
 });
+
 
 // ==================================================
 // MUTUAL FUND VIEW — NAVIGATION RESET
@@ -11007,3 +11106,3091 @@ document.addEventListener(
     },
     true
 );
+
+// ==================================================
+// MY FINANCIAL GOALS — SAVE GOAL
+// ==================================================
+
+document.addEventListener(
+    "submit",
+    async function (event) {
+
+        const form =
+            event.target.closest(
+                "#financialGoalForm"
+            );
+
+        if (!form) {
+            return;
+        }
+
+
+        event.preventDefault();
+
+
+        // =========================================
+        // LOGIN CHECK
+        // =========================================
+
+        const user =
+            auth.currentUser;
+
+        if (!user) {
+
+            alert(
+                "कृपया पहले login करें।"
+            );
+
+            return;
+
+        }
+
+
+        // =========================================
+        // GET FORM VALUES
+        // =========================================
+
+        const goalName =
+            document.querySelector(
+                "#financialGoalName"
+            )?.value.trim() || "";
+
+
+        const targetAmount =
+            Number(
+                document.querySelector(
+                    "#financialGoalTargetAmount"
+                )?.value || 0
+            );
+
+
+        const savedAmount =
+            Number(
+                document.querySelector(
+                    "#financialGoalSavedAmount"
+                )?.value || 0
+            );
+
+
+        const monthlyPlannedSaving =
+            Number(
+                document.querySelector(
+                    "#financialGoalMonthlySaving"
+                )?.value || 0
+            );
+
+
+        const targetDate =
+            document.querySelector(
+                "#financialGoalTargetDate"
+            )?.value || "";
+
+
+        const priority =
+            document.querySelector(
+                "#financialGoalPriority"
+            )?.value || "";
+
+
+        const notes =
+            document.querySelector(
+                "#financialGoalNotes"
+            )?.value.trim() || "";
+
+
+        // =========================================
+        // VALIDATION
+        // =========================================
+
+        if (!goalName) {
+
+            alert(
+                "कृपया Goal Name भरें।"
+            );
+
+            return;
+
+        }
+
+
+        if (targetAmount <= 0) {
+
+            alert(
+                "कृपया Target Amount भरें।"
+            );
+
+            return;
+
+        }
+
+
+        if (savedAmount < 0) {
+
+            alert(
+                "Saved Amount गलत है।"
+            );
+
+            return;
+
+        }
+
+
+        if (savedAmount > targetAmount) {
+
+            alert(
+                "Already Saved Amount Target Amount से ज्यादा नहीं हो सकता।"
+            );
+
+            return;
+
+        }
+
+
+        // =========================================
+        // CALCULATE REMAINING
+        // =========================================
+
+        const remainingAmount =
+            Math.max(
+                targetAmount - savedAmount,
+                0
+            );
+
+
+        // =========================================
+        // CALCULATE REMAINING MONTHS
+        // =========================================
+
+        let remainingMonths = 0;
+
+
+        if (targetDate) {
+
+            const today =
+                new Date();
+
+            const target =
+                new Date(
+                    targetDate + "T00:00:00"
+                );
+
+
+            if (target > today) {
+
+                const yearDifference =
+                    target.getFullYear() -
+                    today.getFullYear();
+
+                const monthDifference =
+                    target.getMonth() -
+                    today.getMonth();
+
+                remainingMonths =
+                    (
+                        yearDifference * 12
+                    ) +
+                    monthDifference;
+
+                if (
+                    target.getDate() >
+                    today.getDate()
+                ) {
+
+                    remainingMonths++;
+
+                }
+
+                remainingMonths =
+                    Math.max(
+                        remainingMonths,
+                        1
+                    );
+
+            }
+
+        }
+
+
+        // =========================================
+        // REQUIRED MONTHLY SAVING
+        // =========================================
+
+        let requiredMonthlySaving = 0;
+
+
+        if (
+            remainingAmount > 0 &&
+            remainingMonths > 0
+        ) {
+
+            requiredMonthlySaving =
+                remainingAmount /
+                remainingMonths;
+
+        }
+
+
+        // =========================================
+        // GOAL STATUS
+        // =========================================
+
+        let goalStatus =
+            "No Target Date";
+
+
+        if (targetDate) {
+
+            if (
+                remainingAmount <= 0
+            ) {
+
+                goalStatus =
+                    "Completed";
+
+            }
+
+            else if (
+                monthlyPlannedSaving >=
+                requiredMonthlySaving
+            ) {
+
+                goalStatus =
+                    "On Track";
+
+            }
+
+            else {
+
+                goalStatus =
+                    "Needs Attention";
+
+            }
+
+        }
+
+
+        // =========================================
+        // SAVE TO FIRESTORE
+        // =========================================
+
+        try {
+
+            const goalCollection =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "financialGoals"
+                );
+
+
+            const goalData = {
+
+                name:
+                    goalName,
+
+                targetAmount:
+                    targetAmount,
+
+                savedAmount:
+                    savedAmount,
+
+                remainingAmount:
+                    remainingAmount,
+
+                monthlyPlannedSaving:
+                    monthlyPlannedSaving,
+
+                requiredMonthlySaving:
+                    requiredMonthlySaving,
+
+                remainingMonths:
+                    remainingMonths,
+
+                targetDate:
+                    targetDate,
+
+                priority:
+                    priority,
+
+                notes:
+                    notes,
+
+                status:
+                    goalStatus,
+
+                createdAt:
+                    serverTimestamp(),
+
+                updatedAt:
+                    serverTimestamp()
+
+            };
+
+
+            const goalDoc =
+                await addDoc(
+                    goalCollection,
+                    goalData
+                );
+
+
+            console.log(
+                "Financial Goal saved successfully:",
+                {
+                    id:
+                        goalDoc.id,
+                    ...goalData
+                }
+            );
+
+
+            alert(
+                "🎯 Financial Goal successfully save हो गया।"
+            );
+
+
+            // =========================================
+            // RESET FORM
+            // =========================================
+
+            form.reset();
+
+
+            const savedAmountInput =
+                document.querySelector(
+                    "#financialGoalSavedAmount"
+                );
+
+            if (savedAmountInput) {
+
+                savedAmountInput.value =
+                    "0";
+
+            }
+
+
+            const monthlySavingInput =
+                document.querySelector(
+                    "#financialGoalMonthlySaving"
+                );
+
+            if (monthlySavingInput) {
+
+                monthlySavingInput.value =
+                    "0";
+
+            }
+
+
+            // =========================================
+            // HIDE FORM
+            // =========================================
+
+            const formContainer =
+                document.querySelector(
+                    "#financialGoalFormContainer"
+                );
+
+
+            const addButton =
+                document.querySelector(
+                    "#addFinancialGoalButton"
+                );
+
+
+            if (formContainer) {
+
+                formContainer.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (addButton) {
+
+                addButton.style.setProperty(
+                    "display",
+                    "inline-block",
+                    "important"
+                );
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Save Financial Goal Error:",
+                error
+            );
+
+
+            alert(
+                "Financial Goal save नहीं हो पाया। Console में error देखें।"
+            );
+
+        }
+
+    }
+);
+
+// ==================================================
+// MY FINANCIAL GOALS — VIEW ALL / BACK
+// ==================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        // ==================================================
+        // VIEW ALL GOALS
+        // ==================================================
+
+        const viewAllButton =
+            event.target.closest(
+                "#viewAllFinancialGoalsButton"
+            );
+
+        if (viewAllButton) {
+
+            const allGoalsView =
+                document.querySelector(
+                    "#allFinancialGoalsView"
+                );
+
+            const goalsContainer =
+                document.querySelector(
+                    "#financialGoalsContainer"
+                );
+
+            const goalsCount =
+                document.querySelector(
+                    "#financialGoalsCount"
+                );
+
+            const addGoalButton =
+                document.querySelector(
+                    "#addFinancialGoalButton"
+                );
+
+            if (!allGoalsView || !goalsContainer) {
+                return;
+            }
+
+
+            const user =
+                auth.currentUser;
+
+            if (!user) {
+
+                alert(
+                    "कृपया पहले Login करें।"
+                );
+
+                return;
+            }
+
+
+            try {
+
+                // =========================================
+                // LOAD GOALS FROM FIRESTORE
+                // =========================================
+
+                const goalsCollection =
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "financialGoals"
+                    );
+
+
+                const snapshot =
+                    await getDocs(
+                        goalsCollection
+                    );
+
+
+                // =========================================
+                // CLEAR OLD GOALS
+                // =========================================
+
+                goalsContainer.innerHTML = "";
+
+
+                // =========================================
+                // COUNT
+                // =========================================
+
+                if (goalsCount) {
+
+                    goalsCount.textContent =
+                        snapshot.size;
+
+                }
+
+
+                // =========================================
+                // NO GOALS
+                // =========================================
+
+                if (snapshot.empty) {
+
+                    const noGoals =
+                        document.createElement(
+                            "p"
+                        );
+
+                    noGoals.textContent =
+                        "No Financial Goals added yet.";
+
+                    noGoals.style.textAlign =
+                        "center";
+
+                    noGoals.style.fontSize =
+                        "20px";
+
+                    noGoals.style.fontWeight =
+                        "700";
+
+                    goalsContainer.appendChild(
+                        noGoals
+                    );
+
+                }
+
+
+                // =========================================
+                // LOAD EACH GOAL
+                // =========================================
+
+                snapshot.forEach(
+                    (goalDoc) => {
+
+                        const goal =
+                            goalDoc.data();
+
+
+                        const targetAmount =
+                            Number(
+                                goal.targetAmount || 0
+                            );
+
+
+                       // =========================================
+// CURRENT SAVED AMOUNT
+// INITIAL SAVED + MONTHLY ACTUAL SAVINGS
+// =========================================
+
+const initialSavedAmount =
+    Number(
+        goal.savedAmount || 0
+    );
+
+
+const monthlyPlans =
+    Array.isArray(
+        goal.monthlyPlans
+    )
+        ? goal.monthlyPlans
+        : [];
+
+
+const monthlyActualSavings =
+    monthlyPlans.reduce(
+        (
+            total,
+            plan
+        ) => {
+
+            return total +
+                Number(
+                    plan.actual || 0
+                );
+
+        },
+        0
+    );
+
+
+const savedAmount =
+    Math.min(
+        initialSavedAmount +
+        monthlyActualSavings,
+        targetAmount
+    );
+
+
+const remainingAmount =
+    Math.max(
+        targetAmount -
+        savedAmount,
+        0
+    );
+
+                        const requiredMonthlySaving =
+                            Number(
+                                goal.requiredMonthlySaving ||
+                                0
+                            );
+
+
+                        const monthlyPlannedSaving =
+                            Number(
+                                goal.monthlyPlannedSaving ||
+                                0
+                            );
+
+
+                        const progress =
+                            targetAmount > 0
+                                ? Math.min(
+                                    (
+                                        savedAmount /
+                                        targetAmount
+                                    ) * 100,
+                                    100
+                                )
+                                : 0;
+
+
+// =========================================
+// SMART GOAL HEALTH / STATUS
+// =========================================
+
+let calculatedGoalStatus =
+    "No Plan";
+
+
+if (progress >= 100) {
+
+    calculatedGoalStatus =
+        "✅ Completed";
+
+}
+else if (monthlyPlans.length > 0) {
+
+    const currentMonthKey =
+        new Date()
+            .toISOString()
+            .slice(0, 7);
+
+
+    let plannedToDate = 0;
+
+    let actualToDate = 0;
+
+
+    monthlyPlans.forEach(
+        (plan) => {
+
+            const planMonth =
+                plan.month || "";
+
+
+            if (
+                planMonth <=
+                currentMonthKey
+            ) {
+
+                plannedToDate +=
+                    Number(
+                        plan.planned || 0
+                    );
+
+
+                actualToDate +=
+                    Number(
+                        plan.actual || 0
+                    );
+
+            }
+
+        }
+    );
+
+
+    if (
+        plannedToDate > 0
+    ) {
+
+        const achievementRatio =
+            (
+                actualToDate /
+                plannedToDate
+            ) * 100;
+
+
+        if (
+            achievementRatio >=
+            110
+        ) {
+
+            calculatedGoalStatus =
+                "🚀 Ahead of Plan";
+
+        }
+
+        else if (
+            achievementRatio >=
+            90
+        ) {
+
+            calculatedGoalStatus =
+                "🟢 On Track";
+
+        }
+
+        else if (
+            achievementRatio >=
+            70
+        ) {
+
+            calculatedGoalStatus =
+                "🟡 Needs Attention";
+
+        }
+
+        else {
+
+            calculatedGoalStatus =
+                "🔴 At Risk";
+
+        }
+
+    }
+
+}
+
+                        // =================================
+                        // GOAL CARD
+                        // =================================
+
+                        const card =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        card.style.background =
+                            "linear-gradient(145deg, #ffffff, #f4f8fc)";
+
+                        card.style.border =
+                            "1px solid #d8e3ed";
+
+                        card.style.borderRadius =
+                            "18px";
+
+                        card.style.padding =
+                            "24px";
+
+                        card.style.marginBottom =
+                            "20px";
+
+                        card.style.boxShadow =
+                            "0 8px 20px rgba(0,0,0,0.10)";
+
+
+                        // =================================
+// TITLE
+// =================================
+
+const title =
+    document.createElement(
+        "h3"
+    );
+
+title.textContent =
+    "🎯 " +
+    (
+        goal.name ||
+        "Unnamed Goal"
+    );
+
+title.style.margin =
+    "0 0 18px";
+
+title.style.fontSize =
+    "24px";
+
+title.style.color =
+    "#173f6f";
+
+card.appendChild(
+    title
+);
+
+// =================================
+// GOAL ACTION BUTTONS
+// =================================
+
+const goalActions =
+    document.createElement("span");
+
+goalActions.style.display =
+    "inline-flex";
+
+goalActions.style.gap =
+    "8px";
+
+goalActions.style.marginLeft =
+    "10px";
+
+
+// Edit Button
+const editGoalButton =
+    document.createElement("button");
+
+editGoalButton.type =
+    "button";
+
+    editGoalButton.className =
+    "financial-goal-edit-button";
+    
+editGoalButton.textContent =
+    "✏️ Edit Goal";
+
+editGoalButton.dataset.goalId =
+    goalDoc.id;
+
+editGoalButton.style.padding =
+    "6px 10px";
+
+editGoalButton.style.border =
+    "none";
+
+editGoalButton.style.borderRadius =
+    "7px";
+
+editGoalButton.style.background =
+    "#f59e0b";
+
+editGoalButton.style.color =
+    "#ffffff";
+
+editGoalButton.style.fontWeight =
+    "800";
+
+editGoalButton.style.cursor =
+    "pointer";
+
+
+// Delete Button
+const deleteGoalButton =
+    document.createElement("button");
+
+deleteGoalButton.type =
+    "button";
+
+deleteGoalButton.textContent =
+    "🗑️ Delete Goal";
+
+deleteGoalButton.dataset.goalId =
+    goalDoc.id;
+
+deleteGoalButton.style.padding =
+    "6px 10px";
+
+deleteGoalButton.style.border =
+    "none";
+
+deleteGoalButton.style.borderRadius =
+    "7px";
+
+deleteGoalButton.style.background =
+    "#dc2626";
+
+deleteGoalButton.style.color =
+    "#ffffff";
+
+deleteGoalButton.style.fontWeight =
+    "800";
+
+deleteGoalButton.style.cursor =
+    "pointer";
+
+
+goalActions.appendChild(
+    editGoalButton
+);
+
+goalActions.appendChild(
+    deleteGoalButton
+);
+
+
+// Put buttons beside Goal Title
+title.appendChild(
+    goalActions
+);
+
+// =================================
+// DETAILS
+// =================================
+                        const details =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        details.style.display =
+                            "grid";
+
+                        details.style.gridTemplateColumns =
+                            "repeat(2, minmax(0, 1fr))";
+
+                        details.style.gap =
+                            "12px";
+
+// =========================================
+// PLANNED vs ACTUAL SAVING TO DATE
+// =========================================
+
+let goalPlannedToDate = 0;
+let goalActualToDate = 0;
+
+
+const currentMonthKey =
+    new Date()
+        .toISOString()
+        .slice(0, 7);
+
+
+monthlyPlans.forEach(
+    (plan) => {
+
+        const planMonth =
+            plan.month || "";
+
+
+        if (
+            planMonth <=
+            currentMonthKey
+        ) {
+
+            goalPlannedToDate +=
+                Number(
+                    plan.planned || 0
+                );
+
+
+            goalActualToDate +=
+                Number(
+                    plan.actual || 0
+                );
+
+        }
+
+    }
+);
+
+// =========================================
+// SMART REVISED MONTHLY SAVING
+// =========================================
+
+const remainingMonths =
+    Number(
+        goal.remainingMonths || 0
+    );
+
+const revisedCurrentMonthKey =
+    new Date()
+        .toISOString()
+        .slice(0, 7);
+
+const currentMonthPlan =
+    monthlyPlans.find(
+        (plan) =>
+            plan.month === revisedCurrentMonthKey
+    );
+
+const currentMonthActual =
+    currentMonthPlan
+        ? Number(
+            currentMonthPlan.actual || 0
+          )
+        : 0;
+
+
+const monthlyShortfall =
+    Math.max(
+        requiredMonthlySaving -
+        currentMonthActual,
+        0
+    );
+
+
+const monthlyExtraSaving =
+    Math.max(
+        currentMonthActual -
+        requiredMonthlySaving,
+        0
+    );
+
+
+const revisedMonthlySaving =
+    remainingMonths > 0
+        ? Math.max(
+            requiredMonthlySaving +
+            (
+                monthlyShortfall /
+                remainingMonths
+            ) -
+            (
+                monthlyExtraSaving /
+                remainingMonths
+            ),
+            0
+        )
+        : requiredMonthlySaving;
+
+
+// =========================================
+// EXPECTED TARGET DATE
+// =========================================
+
+let expectedTargetDate =
+    goal.targetDate || "Not Set";
+
+
+if (
+    goal.targetDate &&
+    currentMonthActual !==
+    requiredMonthlySaving
+) {
+
+    const differenceAmount =
+        currentMonthActual -
+        requiredMonthlySaving;
+
+
+    const dailySavingRate =
+        requiredMonthlySaving /
+        30;
+
+
+    if (
+        dailySavingRate > 0
+    ) {
+
+        const dateAdjustmentDays =
+            Math.round(
+                differenceAmount /
+                dailySavingRate
+            );
+
+
+        const expectedDate =
+            new Date(
+                goal.targetDate
+            );
+
+
+        expectedDate.setDate(
+            expectedDate.getDate() -
+            dateAdjustmentDays
+        );
+
+
+        const day =
+    String(
+        expectedDate.getDate()
+    ).padStart(2, "0");
+
+const month =
+    String(
+        expectedDate.getMonth() + 1
+    ).padStart(2, "0");
+
+const year =
+    expectedDate.getFullYear();
+
+expectedTargetDate =
+    `${day}-${month}-${year}`;
+    }
+
+}
+
+                        const detailItems = [
+
+                            [
+                                "💰 Target Amount",
+                                targetAmount
+                            ],
+
+                            [
+                                "💵 Saved Amount",
+                                savedAmount
+                            ],
+
+                            [
+                                "📉 Remaining Amount",
+                                remainingAmount
+                            ],
+
+                            [
+    "💸 Required Monthly Saving",
+    requiredMonthlySaving,
+    revisedMonthlySaving
+],
+
+                            [
+    "📋 Planned Till Now",
+    goalPlannedToDate
+],
+
+[
+    "✅ Actual Till Now",
+    goalActualToDate
+],
+
+                            [
+                                "📅 Monthly Planned Saving",
+                                monthlyPlannedSaving
+                            ],
+
+[
+    "📆 Target Date",
+    goal.targetDate
+        ? (() => {
+            const parts =
+                goal.targetDate.split("-");
+
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        })()
+        : "Not Set",
+
+    goal.targetDate &&
+    expectedTargetDate !==
+        `${goal.targetDate.split("-")[2]}-${goal.targetDate.split("-")[1]}-${goal.targetDate.split("-")[0]}`
+        ? "Expected: " + expectedTargetDate
+        : ""
+],
+
+                            [
+                                "⭐ Priority",
+                                goal.priority || "Not Set"
+                            ],
+
+                            [
+    "📊 Status",
+    calculatedGoalStatus
+]
+
+                        ];
+
+
+                        detailItems.forEach(
+                            (item) => {
+
+                                const box =
+                                    document.createElement(
+                                        "div"
+                                    );
+
+
+                                box.style.background =
+                                    "#ffffff";
+
+                                box.style.border =
+                                    "1px solid #e1e8ef";
+
+                                box.style.borderRadius =
+                                    "10px";
+
+                                box.style.padding =
+                                    "12px";
+
+
+                                const label =
+                                    document.createElement(
+                                        "div"
+                                    );
+
+
+                                label.textContent =
+                                    item[0];
+
+                                label.style.fontSize =
+                                    "14px";
+
+                                label.style.fontWeight =
+                                    "700";
+
+                                label.style.color =
+                                    "#64748b";
+
+
+                                const value =
+                                    document.createElement(
+                                        "strong"
+                                    );
+
+
+                                if (
+                                    typeof item[1] ===
+                                    "number"
+                                ) {
+
+                                    value.textContent =
+                                        `₹${item[1].toLocaleString(
+                                            "en-IN",
+                                            {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            }
+                                        )}`;
+
+                                }
+                                else {
+
+                                    value.textContent =
+                                        item[1];
+
+                                }
+
+// =========================================
+// SHOW REVISED MONTHLY SAVING
+// =========================================
+
+if (
+    item[2] !== undefined &&
+    typeof item[2] === "number"
+) {
+
+    const revisedLabel =
+        document.createElement("span");
+
+
+    revisedLabel.textContent =
+        ` (Revised: ₹${item[2].toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}/month)`;
+
+
+    revisedLabel.style.color =
+        "#dc2626";
+
+
+    revisedLabel.style.fontSize =
+        "15px";
+
+
+    revisedLabel.style.fontWeight =
+        "900";
+
+
+    revisedLabel.style.marginLeft =
+        "6px";
+
+
+    value.appendChild(
+        revisedLabel
+    );
+
+}
+
+// =========================================
+// SHOW EXPECTED TARGET DATE
+// =========================================
+
+if (
+    item[2] !== undefined &&
+    typeof item[2] === "string" &&
+    item[2].startsWith("Expected:")
+) {
+
+    const expectedDateLabel =
+        document.createElement("span");
+
+
+    expectedDateLabel.textContent =
+        ` (${item[2]})`;
+
+
+    expectedDateLabel.style.color =
+        "#dc2626";
+
+
+    expectedDateLabel.style.fontSize =
+        "15px";
+
+
+    expectedDateLabel.style.fontWeight =
+        "900";
+
+
+    expectedDateLabel.style.marginLeft =
+        "6px";
+
+
+    value.appendChild(
+        expectedDateLabel
+    );
+
+}
+
+                                value.style.display =
+                                    "block";
+
+                                value.style.marginTop =
+                                    "4px";
+
+                                value.style.fontSize =
+                                    "18px";
+
+                                value.style.color =
+                                    "#173f6f";
+
+
+                                box.appendChild(
+                                    label
+                                );
+
+                                box.appendChild(
+                                    value
+                                );
+
+
+                                details.appendChild(
+                                    box
+                                );
+
+                            }
+                        );
+
+
+                        card.appendChild(
+                            details
+                        );
+
+
+                        // =================================
+                        // PROGRESS
+                        // =================================
+
+                        const progressWrapper =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        progressWrapper.style.marginTop =
+                            "22px";
+
+
+                        const progressLabel =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        progressLabel.textContent =
+                            `Progress — ${progress.toFixed(2)}%`;
+
+                        progressLabel.style.fontSize =
+                            "18px";
+
+                        progressLabel.style.fontWeight =
+                            "900";
+
+                        progressLabel.style.color =
+                            "#173f6f";
+
+
+                        const progressBackground =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        progressBackground.style.width =
+                            "100%";
+
+                        progressBackground.style.height =
+                            "18px";
+
+                        progressBackground.style.background =
+                            "#e2e8f0";
+
+                        progressBackground.style.borderRadius =
+                            "20px";
+
+                        progressBackground.style.overflow =
+                            "hidden";
+
+                        progressBackground.style.marginTop =
+                            "8px";
+
+
+                        const progressBar =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        progressBar.style.width =
+                            `${progress}%`;
+
+                        progressBar.style.height =
+                            "100%";
+
+                        progressBar.style.background =
+                            "linear-gradient(90deg, #1e88e5, #43a047)";
+
+                        progressBar.style.borderRadius =
+                            "20px";
+
+
+                        progressBackground.appendChild(
+                            progressBar
+                        );
+
+
+                        progressWrapper.appendChild(
+                            progressLabel
+                        );
+
+                        progressWrapper.appendChild(
+                            progressBackground
+                        );
+
+
+                        card.appendChild(
+                            progressWrapper
+                        );
+
+
+// =================================
+// MONTHLY PLANNER BUTTON
+// =================================
+
+const monthlyPlannerButton =
+    document.createElement(
+        "button"
+    );
+
+monthlyPlannerButton.type =
+    "button";
+
+    monthlyPlannerButton.className =
+    "financial-goal-monthly-planner";
+
+monthlyPlannerButton.textContent =
+    "📅 Monthly Planner";
+
+monthlyPlannerButton.style.marginTop =
+    "18px";
+
+monthlyPlannerButton.style.padding =
+    "11px 18px";
+
+monthlyPlannerButton.style.border =
+    "none";
+
+monthlyPlannerButton.style.borderRadius =
+    "10px";
+
+monthlyPlannerButton.style.background =
+    "linear-gradient(135deg, #173f6f, #1e88e5)";
+
+monthlyPlannerButton.style.color =
+    "#ffffff";
+
+monthlyPlannerButton.style.fontSize =
+    "16px";
+
+monthlyPlannerButton.style.fontWeight =
+    "800";
+
+monthlyPlannerButton.style.cursor =
+    "pointer";
+
+monthlyPlannerButton.style.boxShadow =
+    "0 4px 10px rgba(0,0,0,0.15)";
+
+
+// Store Goal ID
+monthlyPlannerButton.dataset.goalId =
+    goalDoc.id;
+
+
+card.appendChild(
+    monthlyPlannerButton
+);
+
+                        // =================================
+                        // NOTES
+                        // =================================
+
+                        if (goal.notes) {
+
+                            const notes =
+                                document.createElement(
+                                    "div"
+                                );
+
+
+                            notes.textContent =
+                                "📝 " +
+                                goal.notes;
+
+
+                            notes.style.marginTop =
+                                "16px";
+
+                            notes.style.padding =
+                                "12px";
+
+                            notes.style.background =
+                                "#f8fafc";
+
+                            notes.style.borderRadius =
+                                "10px";
+
+                            notes.style.fontSize =
+                                "15px";
+
+
+                            card.appendChild(
+                                notes
+                            );
+
+                        }
+
+
+                        goalsContainer.appendChild(
+                            card
+                        );
+
+                    }
+                );
+
+
+                // =========================================
+                // SHOW ALL GOALS VIEW
+                // =========================================
+
+                allGoalsView.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+
+                viewAllButton.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+
+                if (addGoalButton) {
+
+                    addGoalButton.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+
+                }
+
+
+                allGoalsView.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+
+                console.log(
+                    "✅ Financial Goals loaded:",
+                    snapshot.size
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Load Financial Goals Error:",
+                    error
+                );
+
+                alert(
+                    "Financial Goals load नहीं हो सके। Console में error देखें।"
+                );
+
+            }
+
+            return;
+        }
+
+
+        // ==================================================
+        // BACK TO GOALS
+        // ==================================================
+
+        const backButton =
+            event.target.closest(
+                "#backToFinancialGoalsDashboardButton"
+            );
+
+        if (backButton) {
+
+            const allGoalsView =
+                document.querySelector(
+                    "#allFinancialGoalsView"
+                );
+
+            const viewAllButton =
+                document.querySelector(
+                    "#viewAllFinancialGoalsButton"
+                );
+
+            const addGoalButton =
+                document.querySelector(
+                    "#addFinancialGoalButton"
+                );
+
+
+            if (allGoalsView) {
+
+                allGoalsView.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (viewAllButton) {
+
+                viewAllButton.style.setProperty(
+                    "display",
+                    "inline-block",
+                    "important"
+                );
+
+            }
+
+
+            if (addGoalButton) {
+
+                addGoalButton.style.setProperty(
+                    "display",
+                    "inline-block",
+                    "important"
+                );
+
+            }
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+
+            console.log(
+                "← Back to Financial Goals Dashboard"
+            );
+
+        }
+
+    }
+);
+
+// =========================================
+// FINANCIAL GOAL — EDIT BUTTON
+// =========================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const editButton =
+            event.target.closest(
+                ".financial-goal-edit-button"
+            );
+
+            console.log(
+    "✏️ EDIT BUTTON CLICKED",
+    editButton
+);
+
+        if (!editButton) {
+            return;
+        }
+
+        const goalId =
+            editButton.dataset.goalId;
+
+        const user =
+            auth.currentUser;
+
+        if (!user) {
+            alert(
+                "कृपया पहले login करें।"
+            );
+            return;
+        }
+
+        try {
+
+            const goalRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "financialGoals",
+                    goalId
+                );
+
+            const goalSnapshot =
+                await getDoc(
+                    goalRef
+                );
+
+console.log(
+    "✏️ EDIT GOAL DATA:",
+    goalSnapshot.exists()
+        ? goalSnapshot.data()
+        : "GOAL NOT FOUND"
+);
+
+            if (
+                !goalSnapshot.exists()
+            ) {
+                alert(
+                    "Financial Goal नहीं मिला।"
+                );
+                return;
+            }
+
+            const goal =
+                goalSnapshot.data();
+
+            // =================================
+            // FILL EXISTING FORM
+            // =================================
+
+            document.querySelector(
+                "#financialGoalName"
+            ).value =
+                goal.name || "";
+
+            document.querySelector(
+                "#financialGoalTargetAmount"
+            ).value =
+                Number(
+                    goal.targetAmount || 0
+                );
+
+            document.querySelector(
+                "#financialGoalSavedAmount"
+            ).value =
+                Number(
+                    goal.savedAmount || 0
+                );
+
+            document.querySelector(
+                "#financialGoalTargetDate"
+            ).value =
+                goal.targetDate || "";
+
+            document.querySelector(
+                "#financialGoalMonthlySaving"
+            ).value =
+                Number(
+                    goal.monthlyPlannedSaving || 0
+                );
+
+            document.querySelector(
+                "#financialGoalPriority"
+            ).value =
+                goal.priority || "";
+
+            document.querySelector(
+                "#financialGoalNotes"
+            ).value =
+                goal.notes || "";
+
+
+            // Store Editing Goal ID
+            const form =
+                document.querySelector(
+                    "#financialGoalForm"
+                );
+
+            form.dataset.editingGoalId =
+                goalId;
+
+
+            // Change form heading
+            const formHeading =
+                document.querySelector(
+                    "#financialGoalFormContainer h3"
+                );
+
+            if (formHeading) {
+
+                formHeading.textContent =
+                    "✏️ Edit Financial Goal";
+            }
+
+
+            // Change Save button text
+            const saveButton =
+                document.querySelector(
+                    "#saveFinancialGoalButton"
+                );
+
+            if (saveButton) {
+
+                saveButton.textContent =
+                    "💾 Update Goal";
+            }
+
+
+            // Show form
+            const formContainer =
+                document.querySelector(
+                    "#financialGoalFormContainer"
+                );
+
+            if (formContainer) {
+
+                formContainer.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+                formContainer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Edit Financial Goal Error:",
+                error
+            );
+
+            alert(
+                "Financial Goal edit form load नहीं हो पाया।"
+            );
+        }
+    }
+);
+
+// ==================================================
+// MY FINANCIAL GOALS — MONTHLY PLANNER VIEW
+// ==================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const plannerButton =
+            event.target.closest(
+                ".financial-goal-monthly-planner"
+            );
+
+        if (!plannerButton) {
+            return;
+        }
+
+
+        const goalId =
+            plannerButton.dataset.goalId;
+
+        if (!goalId) {
+            return;
+        }
+
+
+        const user =
+            auth.currentUser;
+
+        if (!user) {
+
+            alert(
+                "कृपया पहले Login करें।"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            // =========================================
+            // LOAD GOAL
+            // =========================================
+
+            const goalRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "financialGoals",
+                    goalId
+                );
+
+            const goalSnapshot =
+                await getDoc(
+                    goalRef
+                );
+
+
+            if (!goalSnapshot.exists()) {
+
+                alert(
+                    "Financial Goal नहीं मिला।"
+                );
+
+                return;
+            }
+
+
+            const goal =
+                goalSnapshot.data();
+
+
+            const targetAmount =
+                Number(
+                    goal.targetAmount || 0
+                );
+
+
+            const savedAmount =
+                Number(
+                    goal.savedAmount || 0
+                );
+
+
+            const remainingAmount =
+                Number(
+                    goal.remainingAmount ??
+                    Math.max(
+                        targetAmount -
+                        savedAmount,
+                        0
+                    )
+                );
+
+
+            const monthlyPlannedSaving =
+                Number(
+                    goal.monthlyPlannedSaving ||
+                    0
+                );
+
+
+            const requiredMonthlySaving =
+                Number(
+                    goal.requiredMonthlySaving ||
+                    0
+                );
+
+
+            const monthlyPlanAmount =
+                monthlyPlannedSaving > 0
+                    ? monthlyPlannedSaving
+                    : requiredMonthlySaving;
+
+// =========================================
+// SAVED MONTHLY PLANS
+// =========================================
+
+const savedMonthlyPlans =
+    Array.isArray(goal.monthlyPlans)
+        ? goal.monthlyPlans
+        : [];
+
+            const remainingMonths =
+                Number(
+                    goal.remainingMonths || 0
+                );
+
+
+            // =========================================
+            // GET VIEWS
+            // =========================================
+
+            const allGoalsView =
+                document.querySelector(
+                    "#allFinancialGoalsView"
+                );
+
+
+            let plannerView =
+                document.querySelector(
+                    "#financialGoalPlannerView"
+                );
+
+
+            // =========================================
+            // CREATE PLANNER VIEW
+            // =========================================
+
+            if (!plannerView) {
+
+                plannerView =
+                    document.createElement(
+                        "div"
+                    );
+
+                plannerView.id =
+                    "financialGoalPlannerView";
+
+                plannerView.style.marginTop =
+                    "24px";
+
+                plannerView.style.padding =
+                    "24px";
+
+                plannerView.style.background =
+                    "linear-gradient(145deg, #ffffff, #f4f8fc)";
+
+                plannerView.style.border =
+                    "1px solid #d8e3ed";
+
+                plannerView.style.borderRadius =
+                    "20px";
+
+                plannerView.style.boxShadow =
+                    "0 10px 25px rgba(0,0,0,0.10)";
+
+
+                const goalsSection =
+                    document.querySelector(
+                        "#financialGoalsSection"
+                    );
+
+                if (goalsSection) {
+
+                    goalsSection.appendChild(
+                        plannerView
+                    );
+
+                }
+
+            }
+
+
+            plannerView.innerHTML = "";
+
+
+            // =========================================
+            // HEADER
+            // =========================================
+
+            const header =
+                document.createElement(
+                    "div"
+                );
+
+            header.style.display =
+                "flex";
+
+            header.style.justifyContent =
+                "space-between";
+
+            header.style.alignItems =
+                "center";
+
+            header.style.gap =
+                "15px";
+
+            header.style.flexWrap =
+                "wrap";
+
+
+            const title =
+                document.createElement(
+                    "h2"
+                );
+
+            title.textContent =
+                "📅 " +
+                (
+                    goal.name ||
+                    "Financial Goal"
+                ) +
+                " — Monthly Planner";
+
+            title.style.margin =
+                "0";
+
+            title.style.color =
+                "#173f6f";
+
+            title.style.fontSize =
+                "25px";
+
+
+            const backPlannerButton =
+                document.createElement(
+                    "button"
+                );
+
+            backPlannerButton.type =
+                "button";
+
+            backPlannerButton.textContent =
+                "← Back to Goals";
+
+            backPlannerButton.style.padding =
+                "10px 16px";
+
+            backPlannerButton.style.border =
+                "none";
+
+            backPlannerButton.style.borderRadius =
+                "9px";
+
+            backPlannerButton.style.background =
+                "#173f6f";
+
+            backPlannerButton.style.color =
+                "#ffffff";
+
+            backPlannerButton.style.fontWeight =
+                "800";
+
+            backPlannerButton.style.cursor =
+                "pointer";
+
+
+            header.appendChild(
+                title
+            );
+
+            header.appendChild(
+                backPlannerButton
+            );
+
+            plannerView.appendChild(
+                header
+            );
+
+
+            // =========================================
+            // SUMMARY
+            // =========================================
+
+            const summary =
+                document.createElement(
+                    "div"
+                );
+
+            summary.style.display =
+                "grid";
+
+            summary.style.gridTemplateColumns =
+                "repeat(4, minmax(0, 1fr))";
+
+            summary.style.gap =
+                "12px";
+
+            summary.style.marginTop =
+                "22px";
+
+
+            const summaryData = [
+
+                [
+                    "💰 Target",
+                    targetAmount
+                ],
+
+                [
+                    "💵 Saved",
+                    savedAmount
+                ],
+
+                [
+                    "📉 Remaining",
+                    remainingAmount
+                ],
+
+                [
+                    "💸 Required / Month",
+                    requiredMonthlySaving
+                ]
+
+            ];
+
+
+            summaryData.forEach(
+                (item) => {
+
+                    const box =
+                        document.createElement(
+                            "div"
+                        );
+
+                    box.style.padding =
+                        "15px";
+
+                    box.style.background =
+                        "#ffffff";
+
+                    box.style.border =
+                        "1px solid #e1e8ef";
+
+                    box.style.borderRadius =
+                        "12px";
+
+                    box.style.textAlign =
+                        "center";
+
+
+                    const label =
+                        document.createElement(
+                            "div"
+                        );
+
+                    label.textContent =
+                        item[0];
+
+                    label.style.fontSize =
+                        "14px";
+
+                    label.style.fontWeight =
+                        "700";
+
+                    label.style.color =
+                        "#64748b";
+
+
+                    const value =
+                        document.createElement(
+                            "strong"
+                        );
+
+                    value.textContent =
+                        `₹${Number(
+                            item[1]
+                        ).toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        )}`;
+
+                    value.style.display =
+                        "block";
+
+                    value.style.marginTop =
+                        "5px";
+
+                    value.style.fontSize =
+                        "20px";
+
+                    value.style.color =
+                        "#173f6f";
+
+
+                    box.appendChild(
+                        label
+                    );
+
+                    box.appendChild(
+                        value
+                    );
+
+
+                    summary.appendChild(
+                        box
+                    );
+
+                }
+            );
+
+
+            plannerView.appendChild(
+                summary
+            );
+
+
+            // =========================================
+            // TABLE WRAPPER
+            // =========================================
+
+            const tableWrapper =
+                document.createElement(
+                    "div"
+                );
+
+            tableWrapper.style.marginTop =
+                "25px";
+
+            tableWrapper.style.overflowX =
+                "auto";
+
+
+            const table =
+                document.createElement(
+                    "table"
+                );
+
+            table.style.width =
+                "100%";
+
+            table.style.borderCollapse =
+                "collapse";
+
+
+            // =========================================
+            // TABLE HEADER
+            // =========================================
+
+            const thead =
+                document.createElement(
+                    "thead"
+                );
+
+            const headerRow =
+                document.createElement(
+                    "tr"
+                );
+
+
+            [
+                "MONTH",
+                "PLANNED SAVING",
+                "ACTUAL SAVING",
+                "DIFFERENCE",
+                "STATUS"
+            ]
+            .forEach(
+                (text) => {
+
+                    const th =
+                        document.createElement(
+                            "th"
+                        );
+
+                    th.textContent =
+                        text;
+
+                    th.style.padding =
+                        "14px";
+
+                    th.style.background =
+                        "#173f6f";
+
+                    th.style.color =
+                        "#ffffff";
+
+                    th.style.fontSize =
+                        "15px";
+
+                    th.style.fontWeight =
+                        "900";
+
+                    th.style.border =
+                        "1px solid #ffffff";
+
+
+                    headerRow.appendChild(
+                        th
+                    );
+
+                }
+            );
+
+
+            thead.appendChild(
+                headerRow
+            );
+
+            table.appendChild(
+                thead
+            );
+
+
+            const tbody =
+                document.createElement(
+                    "tbody"
+                );
+
+
+            // =========================================
+            // GENERATE MONTHLY PLAN
+            // =========================================
+
+            let planRemaining =
+                remainingAmount;
+
+
+            const totalMonths =
+                remainingMonths > 0
+                    ? remainingMonths
+                    : 1;
+
+
+            for (
+                let monthIndex = 0;
+                monthIndex < totalMonths;
+                monthIndex++
+            ) {
+
+                const currentDate =
+                    new Date();
+
+                currentDate.setDate(
+                    1
+                );
+
+                currentDate.setMonth(
+                    currentDate.getMonth() +
+                    monthIndex
+                );
+
+
+                const monthName =
+                    currentDate.toLocaleDateString(
+                        "en-IN",
+                        {
+                            month: "short",
+                            year: "numeric"
+                        }
+                    );
+
+                    const monthKey =
+    currentDate.toISOString().slice(0, 7);
+
+                let plannedAmount =
+                    monthlyPlanAmount;
+
+
+                // Last month adjustment
+                if (
+                    monthIndex ===
+                    totalMonths - 1
+                ) {
+
+                    plannedAmount =
+                        planRemaining;
+
+                }
+
+                else {
+
+                    plannedAmount =
+                        Math.min(
+                            plannedAmount,
+                            planRemaining
+                        );
+
+                }
+
+
+                plannedAmount =
+                    Math.max(
+                        plannedAmount,
+                        0
+                    );
+
+
+                planRemaining -=
+                    plannedAmount;
+
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+                    row.dataset.month =
+    monthKey;
+
+row.dataset.plannedAmount =
+    plannedAmount;
+
+                row.style.borderBottom =
+                    "1px solid #e2e8f0";
+
+
+                const monthCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                monthCell.textContent =
+                    monthName;
+
+
+                const plannedCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                plannedCell.textContent =
+                    `₹${plannedAmount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    )}`;
+
+
+                const actualCell =
+                    document.createElement(
+                        "td"
+                    );
+
+
+                const actualInput =
+                    document.createElement(
+                        "input"
+                    );
+
+                actualInput.type =
+                    "number";
+
+                actualInput.min =
+                    "0";
+
+                actualInput.step =
+                    "0.01";
+
+                const savedMonthlyPlan =
+    savedMonthlyPlans.find(
+        (plan) =>
+            plan.month === monthKey
+    );
+
+
+actualInput.value =
+    savedMonthlyPlan
+        ? Number(
+            savedMonthlyPlan.actual || 0
+          )
+        : 0;
+
+                actualInput.style.width =
+                    "130px";
+
+                actualInput.style.padding =
+                    "9px";
+
+                actualInput.style.border =
+                    "1px solid #cbd5e1";
+
+                actualInput.style.borderRadius =
+                    "8px";
+
+                actualInput.style.fontSize =
+                    "15px";
+
+
+                const differenceCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                differenceCell.textContent =
+                    `₹${plannedAmount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    )}`;
+
+
+                const statusCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                statusCell.textContent =
+                    "⏳ Pending";
+
+
+                actualInput.addEventListener(
+                    "input",
+                    () => {
+
+                        const actual =
+                            Number(
+                                actualInput.value ||
+                                0
+                            );
+
+
+                        const difference =
+                            actual -
+                            plannedAmount;
+
+
+                        differenceCell.textContent =
+                            `₹${difference.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }
+                            )}`;
+
+
+                        if (
+                            actual >=
+                            plannedAmount
+                        ) {
+
+                            statusCell.textContent =
+                                "🟢 On Track";
+
+                        }
+
+                        else if (
+                            actual > 0
+                        ) {
+
+                            statusCell.textContent =
+                                "🟡 Behind";
+
+                        }
+
+                        else {
+
+                            statusCell.textContent =
+                                "⏳ Pending";
+
+                        }
+
+                    }
+                );
+
+// =========================================
+// RESTORE SAVED DIFFERENCE / STATUS
+// =========================================
+
+const restoredActual =
+    Number(
+        actualInput.value || 0
+    );
+
+
+const restoredDifference =
+    restoredActual -
+    plannedAmount;
+
+
+differenceCell.textContent =
+    `₹${restoredDifference.toLocaleString(
+        "en-IN",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    )}`;
+
+
+if (
+    restoredActual >=
+    plannedAmount
+) {
+
+    statusCell.textContent =
+        "🟢 On Track";
+
+}
+
+else if (
+    restoredActual > 0
+) {
+
+    statusCell.textContent =
+        "🟡 Behind";
+
+}
+
+else {
+
+    statusCell.textContent =
+        "⏳ Pending";
+
+}
+
+                actualCell.appendChild(
+                    actualInput
+                );
+
+
+                [
+                    monthCell,
+                    plannedCell,
+                    actualCell,
+                    differenceCell,
+                    statusCell
+                ]
+                .forEach(
+                    (cell) => {
+
+                        cell.style.padding =
+                            "13px";
+
+                        cell.style.fontSize =
+                            "16px";
+
+                        cell.style.fontWeight =
+                            "700";
+
+                        cell.style.textAlign =
+                            "center";
+
+                        cell.style.border =
+                            "1px solid #e2e8f0";
+
+                    }
+                );
+
+
+                row.appendChild(
+                    monthCell
+                );
+
+                row.appendChild(
+                    plannedCell
+                );
+
+                row.appendChild(
+                    actualCell
+                );
+
+                row.appendChild(
+                    differenceCell
+                );
+
+                row.appendChild(
+                    statusCell
+                );
+
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+
+
+            table.appendChild(
+                tbody
+            );
+
+            tableWrapper.appendChild(
+                table
+            );
+
+            plannerView.appendChild(
+                tableWrapper
+            );
+
+// =========================================
+// SAVE MONTHLY PLAN BUTTON
+// =========================================
+
+const saveMonthlyPlanButton =
+    document.createElement(
+        "button"
+    );
+
+
+saveMonthlyPlanButton.type =
+    "button";
+
+
+saveMonthlyPlanButton.textContent =
+    "💾 Save Monthly Plan";
+
+
+saveMonthlyPlanButton.style.display =
+    "block";
+
+
+saveMonthlyPlanButton.style.margin =
+    "24px auto 0";
+
+
+saveMonthlyPlanButton.style.padding =
+    "13px 24px";
+
+
+saveMonthlyPlanButton.style.border =
+    "none";
+
+
+saveMonthlyPlanButton.style.borderRadius =
+    "10px";
+
+
+saveMonthlyPlanButton.style.background =
+    "linear-gradient(135deg, #173f6f, #1e88e5)";
+
+
+saveMonthlyPlanButton.style.color =
+    "#ffffff";
+
+
+saveMonthlyPlanButton.style.fontSize =
+    "17px";
+
+
+saveMonthlyPlanButton.style.fontWeight =
+    "900";
+
+
+saveMonthlyPlanButton.style.cursor =
+    "pointer";
+
+
+saveMonthlyPlanButton.style.boxShadow =
+    "0 5px 12px rgba(0,0,0,0.15)";
+
+
+plannerView.appendChild(
+    saveMonthlyPlanButton
+);
+
+
+// =========================================
+// SAVE MONTHLY PLAN TO FIRESTORE
+// =========================================
+
+saveMonthlyPlanButton.addEventListener(
+    "click",
+    async () => {
+
+        try {
+
+            const monthlyPlans = [];
+
+
+            const rows =
+                tbody.querySelectorAll(
+                    "tr"
+                );
+
+
+            rows.forEach(
+                (row) => {
+
+                    const actualInput =
+                        row.querySelector(
+                            "input[type='number']"
+                        );
+
+
+                    if (!actualInput) {
+                        return;
+                    }
+
+
+                    const planned =
+                        Number(
+                            row.dataset.plannedAmount ||
+                            0
+                        );
+
+
+                    const actual =
+                        Number(
+                            actualInput.value ||
+                            0
+                        );
+
+
+                    const difference =
+                        actual -
+                        planned;
+
+
+                    let status =
+                        "Pending";
+
+
+                    if (
+                        actual >=
+                        planned
+                    ) {
+
+                        status =
+                            "On Track";
+
+                    }
+
+                    else if (
+                        actual > 0
+                    ) {
+
+                        status =
+                            "Behind";
+
+                    }
+
+
+                    monthlyPlans.push({
+
+                        month:
+                            row.dataset.month,
+
+                        planned:
+                            planned,
+
+                        actual:
+                            actual,
+
+                        difference:
+                            difference,
+
+                        status:
+                            status
+
+                    });
+
+                }
+            );
+
+
+            await updateDoc(
+                goalRef,
+                {
+
+                    monthlyPlans:
+                        monthlyPlans,
+
+                    updatedAt:
+                        serverTimestamp()
+
+                }
+            );
+
+
+            console.log(
+                "Monthly Plan saved successfully:",
+                monthlyPlans
+            );
+
+
+            alert(
+                "📅 Monthly Plan successfully save हो गया।"
+            );
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Save Monthly Plan Error:",
+                error
+            );
+
+
+            alert(
+                "Monthly Plan save नहीं हो पाया। Console में error देखें।"
+            );
+
+        }
+
+    }
+);
+            // =========================================
+            // SHOW PLANNER
+            // =========================================
+
+            if (allGoalsView) {
+
+                allGoalsView.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            plannerView.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+
+            plannerView.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+            // =========================================
+            // BACK BUTTON
+            // =========================================
+
+            backPlannerButton.addEventListener(
+                "click",
+                () => {
+
+                    plannerView.style.setProperty(
+                        "display",
+                        "none",
+                        "important"
+                    );
+
+
+                    if (allGoalsView) {
+
+                        allGoalsView.style.setProperty(
+                            "display",
+                            "block",
+                            "important"
+                        );
+
+
+                        allGoalsView.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+
+                    }
+
+                }
+            );
+
+        }
+        catch (error) {
+
+            console.error(
+                "Monthly Planner Error:",
+                error
+            );
+
+            alert(
+                "Monthly Planner खुल नहीं पाया। Console में error देखें।"
+            );
+
+        }
+
+    }
+);
+
