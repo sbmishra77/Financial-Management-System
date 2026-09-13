@@ -1788,6 +1788,37 @@
 
     </div>
 
+<!-- ======================================================
+     FINANCIAL GOALS CHARTS
+     ====================================================== -->
+
+<div
+    id="financialGoalsCharts"
+    class="financial-goals-charts"
+    style="display: none;">
+
+    <div class="financial-goal-chart-card">
+
+        <h3>📊 Goals Progress</h3>
+
+        <canvas
+            id="financialGoalsPieChart">
+        </canvas>
+
+    </div>
+
+
+    <div class="financial-goal-chart-card">
+
+        <h3>📈 Goal Amount Comparison</h3>
+
+        <canvas
+            id="financialGoalsBarChart">
+        </canvas>
+
+    </div>
+
+</div>
 
     <!-- =============================== -->
     <!-- ADD FINANCIAL GOAL -->
@@ -7808,6 +7839,6 @@ document.addEventListener(
 <script type="module" src="js/transactions.js"></script>
 <script type="module" src="js/rental-properties.js"></script>
 <script src="js/rentalManagement.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>

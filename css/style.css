@@ -8068,3 +8068,156 @@ body {
     font-size: 18px;
 
 }
+
+/* ======================================================
+   FINANCIAL GOALS SUMMARY — PREMIUM STYLE
+   ====================================================== */
+
+.financial-goals-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+    margin: 25px 0;
+    padding: 10px 0;
+}
+
+.financial-goal-summary-card {
+    background: linear-gradient(
+        145deg,
+        #ffffff,
+        #f4f7fb
+    );
+
+    border-radius: 18px;
+
+    padding: 28px 22px;
+
+    text-align: center;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.08),
+        0 2px 6px rgba(0, 0, 0, 0.04);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.financial-goal-summary-card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 14px 30px rgba(0, 0, 0, 0.12);
+}
+
+.financial-goal-summary-card h3 {
+    margin: 0 0 16px;
+
+    font-size: 22px;
+
+    font-weight: 800;
+
+    color: #173f6f;
+}
+
+.financial-goal-summary-card strong {
+    display: block;
+
+    font-size: 36px;
+
+    font-weight: 900;
+
+    color: #173f6f;
+
+    line-height: 1.2;
+}
+
+.financial-goal-summary-card strong {
+    display: block;
+
+    font-size: 32px;
+
+    font-weight: 800;
+
+    color: #173f6f;
+
+    line-height: 1.2;
+}
+
+
+/* ==========================================
+   MOBILE / SMALL SCREEN
+   ========================================== */
+
+@media (max-width: 900px) {
+
+    .financial-goals-summary {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .financial-goals-summary {
+        grid-template-columns:
+            1fr;
+    }
+
+}
+
+/* ======================================================
+   FINANCIAL GOALS CHARTS
+   ====================================================== */
+
+.financial-goals-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 25px;
+    margin-bottom: 30px;
+}
+
+.financial-goal-chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 24px;
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.08);
+
+    min-height: 360px;
+}
+
+.financial-goal-chart-card h3 {
+    margin: 0 0 20px;
+
+    text-align: center;
+
+    font-size: 22px;
+    font-weight: 800;
+
+    color: #173f6f;
+}
+
+.financial-goal-chart-card canvas {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+/* ==========================================
+   MOBILE
+   ========================================== */
+
+@media (max-width: 900px) {
+
+    .financial-goals-charts {
+        grid-template-columns: 1fr;
+    }
+
+}
