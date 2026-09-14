@@ -1266,6 +1266,7 @@
 </div>
 
 </section>
+
 <!-- =========================================================
      MASTER DASHBOARD — INFOGRAPHIC MODULE CARDS
      ========================================================= -->
@@ -1296,15 +1297,29 @@
                 CASH • WALLET
             </div>
 
-            <div class="module-card-value"
-                 id="dashboardAccountsBalance">
-                ₹0
-            </div>
+<!-- Compact Account Summary -->
+<div
+    class="account-dashboard-summary"
+    id="dashboardAccountsSummary">
 
-            <div class="module-card-label">
-                CURRENT BALANCE
-            </div>
+    <span id="dashboardAccountsCompactValue">
+        BANK ₹0 + CASH ₹0 + CARD ₹0 + WALLET ₹0
+    </span>
 
+</div>
+
+<!-- Total Balance -->
+<div
+    class="module-card-value account-dashboard-total"
+    id="dashboardAccountsBalance">
+
+    ₹0
+
+</div>
+
+<div class="module-card-label">
+    CURRENT BALANCE
+</div>
         </button>
 
 
@@ -1324,14 +1339,23 @@
                 TRANSFER • INVESTMENT
             </div>
 
-            <div class="module-card-value"
-                 id="dashboardTransactionsValue">
-                ₹0
-            </div>
+<div
+    class="transaction-dashboard-summary"
+    id="dashboardTransactionsSummary">
 
-            <div class="module-card-label">
-                THIS MONTH
-            </div>
+    <span id="dashboardTransactionsCompactValue">
+        INCOME ₹0 + EXPENSE ₹0 + TRANSFER ₹0 + INVESTMENT ₹0 + WALLET PAYMENT ₹0 + CASHBACK ₹0
+    </span>
+
+</div>
+
+<div class="module-card-value transaction-dashboard-total" id="dashboardTransactionsValue">
+    ₹0
+</div>
+
+<div class="module-card-label">
+    THIS MONTH
+</div>
 
         </button>
 
@@ -1352,10 +1376,17 @@
                 FIXED DEPOSITS • OTHER ASSETS
             </div>
 
-            <div class="module-card-value"
-                 id="dashboardInvestmentsValue">
-                ₹0
-            </div>
+            <div
+    class="investment-dashboard-summary"
+    id="dashboardInvestmentsCompactValue">
+    SHARES ₹0 + MUTUAL FUND ₹0 + FD ₹0 + OTHER ₹0
+</div>
+
+<div
+    class="module-card-value"
+    id="dashboardInvestmentsValue">
+    ₹0
+</div>
 
             <div class="module-card-label">
                 CURRENT VALUE

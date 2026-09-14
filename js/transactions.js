@@ -3998,6 +3998,11 @@ accountsSnapshot.forEach(
         let transactionCount =
             0;
 
+let dashboardTransactionTotals = {};
+let dashboardTransactionTotal = 0;
+
+const currentMonth =
+    new Date().toISOString().slice(0, 7);
 
 // =====================================
 // LOAD EACH TRANSACTION
@@ -4032,6 +4037,28 @@ sortedTransactionDocs.forEach(
 
         transactionCount++;
 
+if (
+    transaction.date &&
+    transaction.date.startsWith(currentMonth)
+) {
+    const transactionType =
+        transaction.type || "other";
+
+    const transactionAmount =
+        Number(transaction.amount || 0);
+
+    dashboardTransactionTotals[transactionType] =
+        (dashboardTransactionTotals[transactionType] || 0) +
+        transactionAmount;
+
+    dashboardTransactionTotal +=
+        transactionAmount;
+}
+
+console.log(
+    "CURRENT MONTH TRANSACTION TOTALS:",
+    dashboardTransactionTotals
+);
 
         const row =
             document.createElement("tr");
@@ -4345,6 +4372,92 @@ else if (
 
         }
 
+// =====================================
+// UPDATE TRANSACTIONS DASHBOARD CARD
+// =====================================
+
+const dashboardTransactionsCompact =
+    document.querySelector(
+        "#dashboardTransactionsCompactValue"
+    );
+
+if (dashboardTransactionsCompact) {
+
+    const typeNames = {
+        income: "INCOME",
+        expense: "EXPENSE",
+        transfer: "TRANSFER",
+        investment: "INVESTMENT",
+        wallet_payment: "WALLET PAYMENT",
+        cashback: "CASHBACK"
+    };
+
+    const summaryParts =
+        Object.entries(
+            dashboardTransactionTotals
+        ).map(
+            ([type, amount]) => {
+
+                let label =
+                    typeNames[type];
+
+                if (!label) {
+
+                    const customOption =
+                        document.querySelector(
+                            `.transaction-type option[value="${type}"]`
+                        );
+
+                    label =
+                        customOption
+                            ? customOption.textContent.trim()
+                            : type.replace(
+                                "custom_",
+                                ""
+                            ).toUpperCase();
+                }
+
+                return (
+                    label +
+                    " ₹" +
+                    Number(amount).toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    )
+                );
+
+            }
+        );
+
+    dashboardTransactionsCompact.textContent =
+        summaryParts.join(" + ");
+
+}
+
+const dashboardTransactionsValue =
+    document.querySelector(
+        "#dashboardTransactionsValue"
+    );
+
+    console.log(
+    "DASHBOARD TRANSACTION TOTAL:",
+    dashboardTransactionTotal
+);
+
+if (dashboardTransactionsValue) {
+    dashboardTransactionsValue.textContent =
+        "₹" +
+        dashboardTransactionTotal.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+}
 
         console.log(
             "Transactions History Loaded:",

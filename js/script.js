@@ -388,6 +388,29 @@ console.log(
 );
 
 // =========================================
+// UPDATE MY ACCOUNTS DASHBOARD SUMMARY
+// =========================================
+
+const dashboardAccountsCompact =
+    document.querySelector(
+        "#dashboardAccountsCompactValue"
+    );
+
+if (dashboardAccountsCompact) {
+
+    dashboardAccountsCompact.textContent =
+        "BANK ₹" +
+        bankBalance.toLocaleString("en-IN") +
+        " + CASH ₹" +
+        cashBalance.toLocaleString("en-IN") +
+        " + CARD ₹" +
+        creditCardBalance.toLocaleString("en-IN") +
+        " + WALLET ₹" +
+        cashbackBalance.toLocaleString("en-IN");
+
+}
+
+// =========================================
 // CURRENT BALANCE / FUNDS AVAILABLE
 // =========================================
 
@@ -1297,6 +1320,54 @@ if (fundsWalletTotalEl) {
             );
 
 // ===============================
+// LOAD SHARES FOR DASHBOARD
+// ===============================
+
+const sharesSnapshot =
+    await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "shares"
+        )
+    );
+
+let dashboardSharesCurrentValue = 0;
+
+sharesSnapshot.forEach(
+    (shareDoc) => {
+
+        const share =
+            shareDoc.data();
+
+        const quantity =
+            Number(
+                share.quantity || 0
+            );
+
+        const currentPrice =
+            Number(
+                share.currentPrice || 0
+            );
+
+        dashboardSharesCurrentValue +=
+            quantity * currentPrice;
+    }
+);
+
+// =========================================
+// LOAD TRANSACTIONS FOR DASHBOARD
+// =========================================
+
+if (
+    typeof loadSavedTransactions ===
+    "function"
+) {
+    await loadSavedTransactions();
+}
+
+// ===============================
 // LOAD FIXED DEPOSITS FOR SUMMARY
 // ===============================
 
@@ -1379,6 +1450,8 @@ if (investmentFixedDepositAmount) {
         let totalInvestmentCurrentValue =
             0;
 
+            let dashboardInvestmentCategoryTotals = {};
+
 
         investmentSnapshot.forEach(
             (investmentDoc) => {
@@ -1386,7 +1459,24 @@ if (investmentFixedDepositAmount) {
                 const investment =
                     investmentDoc.data();
 
+const investmentCategory =
+    investment.category || "other";
 
+const currentInvestmentValue =
+    Number(
+        investment.currentValue || 0
+    );
+
+dashboardInvestmentCategoryTotals[
+    investmentCategory
+] =
+    (
+        dashboardInvestmentCategoryTotals[
+            investmentCategory
+        ] || 0
+    ) +
+    currentInvestmentValue;
+    
                 totalInvestmentCurrentValue +=
                     Number(
                         investment.currentValue || 0
@@ -1399,6 +1489,28 @@ if (investmentFixedDepositAmount) {
         // ===============================
         // CALCULATE TOTAL ASSETS
         // ===============================
+
+        const totalInvestmentDashboardValue =
+    dashboardSharesCurrentValue +
+    totalInvestmentCurrentValue +
+    totalFDPrincipal;
+
+const dashboardInvestmentsValue =
+    document.querySelector(
+        "#dashboardInvestmentsValue"
+    );
+
+if (dashboardInvestmentsValue) {
+    dashboardInvestmentsValue.textContent =
+        "₹" +
+        totalInvestmentDashboardValue.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+}
 
         const totalAssets =
             accountAssets +
@@ -1471,6 +1583,80 @@ if (investmentFixedDepositAmount) {
 
         }
 
+// =========================================
+// UPDATE INVESTMENT DASHBOARD SUMMARY
+// =========================================
+
+const dashboardInvestmentsCompact =
+    document.querySelector(
+        "#dashboardInvestmentsCompactValue"
+    );
+
+    
+
+if (dashboardInvestmentsCompact) {
+
+    const sharesAmount =
+    dashboardSharesCurrentValue;
+
+    const mutualFundAmount =
+        Number(
+            dashboardInvestmentCategoryTotals.sip || 0
+        );
+
+    const npsAmount =
+        Number(
+            dashboardInvestmentCategoryTotals.nps || 0
+        );
+
+    const fixedDepositAmount =
+        Number(
+            totalFDPrincipal || 0
+        );
+
+    const investmentParts = [
+
+        "SHARES ₹" +
+            sharesAmount.toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            ),
+
+        "MUTUAL FUND ₹" +
+            mutualFundAmount.toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            ),
+
+        "FD ₹" +
+            fixedDepositAmount.toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            ),
+
+        "NPS ₹" +
+            npsAmount.toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            )
+    ];
+
+    dashboardInvestmentsCompact.textContent =
+        investmentParts.join(" + ");
+
+}
 
         console.log(
             "Dashboard Summary:",
@@ -1837,7 +2023,7 @@ onAuthStateChanged(auth, (user) => {
 
         }
 
-        // ======================================================
+// ======================================================
 // DASHBOARD PROFILE HEADER
 // ======================================================
 
@@ -2143,6 +2329,21 @@ if (accountsTableBody) {
 
 }
 
+// =========================================
+// DASHBOARD ACCOUNTS TOTAL
+// =========================================
+
+let dashboardAccountsBalance = 0;
+
+// =========================================
+// DASHBOARD ACCOUNT SUMMARY
+// =========================================
+
+let bankTotal = 0;
+let cashTotal = 0;
+let creditCardTotal = 0;
+let walletTotal = 0;
+let totalBalance = 0;
 
         accountsSnapshot.forEach((accountDoc) => {
 
@@ -2207,6 +2408,24 @@ else if (account.type === "cashback") {
 
 }
 
+// =========================================
+// UPDATE DASHBOARD ACCOUNTS CARD
+// =========================================
+
+const dashboardAccountsElement =
+    document.querySelector(
+        "#dashboardAccountsBalance"
+    );
+
+if (dashboardAccountsElement) {
+
+    dashboardAccountsElement.textContent =
+        "₹" +
+        dashboardAccountsBalance.toLocaleString(
+            "en-IN"
+        );
+
+}
 /* =============================== */
 /* BANK BRAND DETECTION */
 /* =============================== */
@@ -2258,6 +2477,19 @@ if (account.type === "bank") {
             const accountBalance =
                 Number(account.balance || 0);
 
+                // Add / subtract account balance
+if (account.type === "credit_card") {
+
+    dashboardAccountsBalance -=
+        accountBalance;
+
+}
+else {
+
+    dashboardAccountsBalance +=
+        accountBalance;
+
+}
 
             const accountCard =
                 document.createElement("div");
@@ -3136,6 +3368,8 @@ async function loadInvestments() {
 
         let totalCurrentValue = 0;
 
+        let investmentCategoryTotals = {};
+
         let investmentItemCount =
             investmentSnapshot.size;
 
@@ -3531,6 +3765,25 @@ document.addEventListener(
                     Number(
                         investment.currentValue || 0
                     );
+
+                    if (investment.category) {
+
+    investmentCategoryTotals[
+        investment.category
+    ] =
+        (
+            investmentCategoryTotals[
+                investment.category
+            ] || 0
+        ) +
+        currentValue;
+
+}
+
+console.log(
+    "INVESTMENT CATEGORY TOTALS:",
+    investmentCategoryTotals
+);
 
                     totalCurrentValue += currentValue;
 
@@ -9513,14 +9766,25 @@ const modules = {
 
     if (view === "dashboard") {
 
-        if (dashboard) {
+    if (dashboard) {
 
-            dashboard.style.display =
-                "block";
-        }
-
-        return;
+        dashboard.style.display =
+            "block";
     }
+
+    console.log(
+    "🏠 DASHBOARD OPEN — LOADING TRANSACTIONS"
+);
+
+    if (
+        typeof loadSavedTransactions ===
+        "function"
+    ) {
+        loadSavedTransactions();
+    }
+
+    return;
+}
 
     
     // ----------------------------------------------
