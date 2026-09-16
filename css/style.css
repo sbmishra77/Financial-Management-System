@@ -9190,3 +9190,959 @@ body {
     font-size: 10px !important;
     margin-top: 4px !important;
 }
+
+/* =========================================
+   DESKTOP SIDEBAR — AUTO HIDE / SLIDE
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .master-sidebar {
+        width: 60px !important;
+        overflow: hidden !important;
+        transition: width 0.75s ease !important;
+    }
+
+    .master-sidebar:hover {
+        width: 225px !important;
+    }
+
+    body {
+        padding-left: 60px !important;
+        transition: padding-left 0.75s ease !important;
+    }
+
+    .master-sidebar:hover ~ body {
+        padding-left: 225px !important;
+    }
+
+    .master-sidebar .sidebar-title,
+    .master-sidebar .sidebar-welcome,
+    .master-sidebar .sidebar-subtitle,
+    .master-sidebar .sidebar-menu-item span,
+    .master-sidebar .sidebar-developer-branding {
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .master-sidebar:hover .sidebar-title,
+    .master-sidebar:hover .sidebar-welcome,
+    .master-sidebar:hover .sidebar-subtitle,
+    .master-sidebar:hover .sidebar-menu-item span,
+    .master-sidebar:hover .sidebar-developer-branding {
+        opacity: 1;
+    }
+
+    .master-sidebar .sidebar-menu-item {
+        justify-content: flex-start;
+        gap: 16px;
+    }
+
+}
+
+/* =========================================
+   PROPERTIES & RENTALS
+   FINAL COMPACT HEADER
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .properties-section-header {
+
+        width: 100% !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        justify-content: flex-start !important;
+        align-items: center !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        gap: 0 !important;
+
+        text-align: center !important;
+    }
+
+
+    /* ===============================
+       HEADING
+       =============================== */
+
+    .properties-section-header
+    .section-title-area {
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        display: block !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        text-align: center !important;
+    }
+
+
+    .properties-section-header
+    .section-title-area h2 {
+
+        display: block !important;
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        text-align: center !important;
+
+        font-size: 34px !important;
+        font-weight: 900 !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    /* ===============================
+       BUTTONS — DIRECTLY BELOW TITLE
+       =============================== */
+
+    .properties-section-header
+    .section-header-buttons {
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        display: flex !important;
+
+        flex-direction: row !important;
+
+        justify-content: center !important;
+        align-items: center !important;
+
+        flex-wrap: wrap !important;
+
+        gap: 10px !important;
+
+        margin: 8px 0 0 0 !important;
+        padding: 0 !important;
+
+        position: static !important;
+
+        transform: none !important;
+    }
+
+
+    /* ===============================
+       BUTTONS
+       =============================== */
+
+    .properties-section-header
+    .section-header-buttons button {
+
+        height: auto !important;
+        min-height: 44px !important;
+
+        margin: 0 !important;
+        padding: 10px 20px !important;
+
+        font-size: 15px !important;
+        font-weight: 700 !important;
+
+        border-radius: 9px !important;
+
+        position: static !important;
+    }
+
+}
+
+/* =========================================
+   PROPERTIES — FORCE BUTTONS UNDER HEADING
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .properties-section-header {
+        position: relative !important;
+    }
+
+    .properties-section-header
+    .section-header-buttons {
+
+        position: absolute !important;
+
+        top: 80px !important;
+
+        left: 50% !important;
+
+        transform: translateX(-50%) !important;
+
+        width: max-content !important;
+
+        display: flex !important;
+
+        justify-content: center !important;
+        align-items: center !important;
+
+        gap: 10px !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+}
+
+/* =========================================
+   PROPERTIES SUMMARY — COMPACT POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #propertySummary {
+        margin-top: 10px !important;
+        padding-top: 0 !important;
+        position: relative !important;
+        top: -140px !important;
+    }
+
+}
+
+/* =========================================
+   PROPERTIES — ADD & VIEW ALL POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #propertyFormContainer,
+    #allPropertiesView {
+
+        position: relative !important;
+
+        top: -140px !important;
+
+        margin-top: 0 !important;
+
+        padding-top: 0 !important;
+    }
+
+}
+
+/* =====================================================
+   INVESTMENTS — STANDARD MODULE HEADER
+   ===================================================== */
+
+.investment-section-header {
+    width: 100% !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    gap: 8px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+}
+
+
+/* ===============================
+   INVESTMENT MAIN HEADING
+   =============================== */
+
+.investment-section-header
+.section-title-area {
+    width: 100% !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.investment-section-header
+.section-title-area h2 {
+    margin: 0 !important;
+    padding: 0 !important;
+
+    text-align: center !important;
+
+    font-size: 32px !important;
+    font-weight: 900 !important;
+
+    line-height: 1.1 !important;
+}
+
+
+/* ===============================
+   ALL INVESTMENT OPTION BUTTONS
+   =============================== */
+
+.investment-section-header
+.section-header-buttons {
+    width: 100% !important;
+
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    justify-content: center !important;
+    align-items: center !important;
+
+    flex-wrap: wrap !important;
+
+    gap: 8px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+
+/* ===============================
+   SUMMARY BUTTON
+   =============================== */
+
+.investment-section-header
+#investmentSummaryButton {
+    margin: 0 !important;
+    padding: 9px 16px !important;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+}
+
+
+/* ===============================
+   OTHER OPTION BUTTONS
+   =============================== */
+
+.investment-section-header
+.section-header-buttons button {
+    margin: 0 !important;
+
+    padding: 9px 16px !important;
+
+    font-size: 14px !important;
+    font-weight: 800 !important;
+
+    min-height: 38px !important;
+}
+
+
+/* ===============================
+   REMOVE OLD SINGLE-LINE BEHAVIOUR
+   =============================== */
+
+.investment-section-header {
+    flex-wrap: nowrap !important;
+}
+
+.investment-section-header
+.section-header-buttons {
+    flex-wrap: wrap !important;
+}
+
+<div
+    class="back-to-dashboard-wrapper"
+    style="
+        position: relative !important;
+        z-index: 99999 !important;
+        pointer-events: auto !important;
+    ">
+
+    <button
+        type="button"
+        class="back-to-dashboard-button"
+        style="
+            position: relative !important;
+            z-index: 100000 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        ">
+
+        ← Back to Dashboard
+
+    </button>
+
+</div>
+
+/* =========================================
+   INVESTMENTS
+   SAME UI AS PROPERTIES & RENTALS
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .investment-section-header {
+
+        width: 100% !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        justify-content: flex-start !important;
+        align-items: center !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        gap: 0 !important;
+
+        text-align: center !important;
+
+        position: relative !important;
+    }
+
+
+    /* ===============================
+       INVESTMENT HEADING
+       =============================== */
+
+    .investment-section-header
+    .section-title-area {
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        display: block !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        text-align: center !important;
+    }
+
+
+    .investment-section-header
+    .section-title-area h2 {
+
+        display: block !important;
+
+        width: 100% !important;
+
+        height: auto !important;
+        min-height: 0 !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        text-align: center !important;
+
+        font-size: 34px !important;
+        font-weight: 900 !important;
+
+        line-height: 1.2 !important;
+    }
+
+
+    /* ===============================
+       BUTTONS — SAME AS PROPERTIES
+       =============================== */
+
+    .investment-section-header
+    .section-header-buttons {
+
+        position: absolute !important;
+
+        top: 80px !important;
+
+        left: 50% !important;
+
+        transform: translateX(-50%) !important;
+
+        width: max-content !important;
+
+        display: flex !important;
+
+        justify-content: center !important;
+        align-items: center !important;
+
+        flex-wrap: wrap !important;
+
+        gap: 10px !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+
+    /* ===============================
+       BUTTON STYLE
+       =============================== */
+
+    .investment-section-header
+    .section-header-buttons button {
+
+        height: auto !important;
+
+        min-height: 44px !important;
+
+        margin: 0 !important;
+
+        padding: 10px 20px !important;
+
+        font-size: 15px !important;
+
+        font-weight: 700 !important;
+
+        border-radius: 9px !important;
+
+        position: static !important;
+    }
+
+}
+
+/* =========================================
+   INVESTMENT HEADER — PROPERTIES STYLE
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #investmentMainHeader
+    .section-title-area {
+
+        position: relative !important;
+
+        top: -140px !important;
+
+    }
+
+    #investmentMainHeader
+    .section-header-buttons {
+
+        position: relative !important;
+
+        top: -220px !important;
+
+        display: flex !important;
+
+        justify-content: center !important;
+
+        align-items: center !important;
+
+        gap: 10px !important;
+
+        margin-top: 0 !important;
+
+        width: 100% !important;
+
+    }
+
+}
+
+/* =========================================
+   INVESTMENTS — BUTTONS POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #investmentMainHeader .section-header-buttons {
+
+        position: relative !important;
+
+        top: -120px !important;
+
+        width: 100% !important;
+
+        display: flex !important;
+
+        justify-content: center !important;
+
+        align-items: center !important;
+
+        flex-wrap: wrap !important;
+
+        gap: 10px !important;
+
+        margin: 0 !important;
+
+        padding: 0 !important;
+    }
+
+}
+
+/* =========================================
+   INVESTMENTS — SUMMARY POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #investmentSummary {
+
+        position: relative !important;
+
+        top: -250px !important;
+
+        margin-top: 0 !important;
+
+        padding-top: 0 !important;
+    }
+
+}
+
+/* =========================================
+   INVESTMENTS — ADD FORM POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #investmentFormContainer {
+
+        position: relative !important;
+
+        top: -250px !important;
+
+        margin-top: 0 !important;
+
+        padding-top: 0 !important;
+    }
+
+}
+
+/* =========================================
+   INVESTMENTS — VIEW ALL TABLE POSITION
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    #investmentTableWrapper {
+
+        position: relative !important;
+
+        top: -250px !important;
+
+        margin-top: 0 !important;
+
+        padding-top: 0 !important;
+    }
+
+}
+
+/* =========================================
+   MY ACCOUNTS — FINAL COMPACT HEADER
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .accounts-section-header {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
+        text-align: center !important;
+        position: relative !important;
+    }
+
+    .accounts-section-header .section-title-area {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        text-align: center !important;
+    }
+
+    .accounts-section-header .section-title-area h2 {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        text-align: center !important;
+        font-size: 34px !important;
+        font-weight: 900 !important;
+        line-height: 1.2 !important;
+    }
+
+    .accounts-section-header .section-header-buttons {
+        width: max-content !important;
+        height: auto !important;
+        min-height: 0 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        margin: 8px auto 0 auto !important;
+        padding: 0 !important;
+        position: static !important;
+        transform: none !important;
+    }
+
+    .accounts-section-header .section-header-buttons button {
+        height: auto !important;
+        min-height: 44px !important;
+        margin: 0 !important;
+        padding: 10px 20px !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        border-radius: 9px !important;
+        position: static !important;
+    }
+
+}
+
+
+/* =========================================
+   MY ACCOUNTS — FORCE BUTTONS UNDER HEADING
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    .accounts-section-header .section-header-buttons {
+        position: absolute !important;
+        top: 80px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: max-content !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+}
+
+/* =========================================
+   INSURANCE — FINAL HEADER ONLY
+   ========================================= */
+
+@media (min-width: 769px) {
+
+    /* INSURANCE HEADER */
+
+    .insurance-section > .section-header {
+        width: 100% !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        align-items: center !important;
+        justify-content: flex-start !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        gap: 0 !important;
+
+        position: static !important;
+        transform: none !important;
+
+        text-align: center !important;
+    }
+
+
+    /* INSURANCE HEADING */
+
+    .insurance-section > .section-header > h2 {
+        width: 100% !important;
+
+        display: block !important;
+
+        margin: 0 0 12px 0 !important;
+        padding: 0 !important;
+
+        text-align: center !important;
+
+        font-size: 38px !important;
+        font-weight: 900 !important;
+        line-height: 1.2 !important;
+
+        position: static !important;
+        transform: none !important;
+    }
+
+
+    /* THREE BUTTONS */
+
+    .insurance-section > .section-header > .section-header-buttons {
+        width: 100% !important;
+
+        display: flex !important;
+
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+
+        flex-wrap: wrap !important;
+
+        gap: 10px !important;
+
+        margin: 0 !important;
+        padding: 0 !important;
+
+        position: static !important;
+        transform: none !important;
+    }
+
+
+    /* BUTTONS */
+
+    .insurance-section > .section-header > .section-header-buttons button {
+        position: static !important;
+        transform: none !important;
+
+        margin: 0 !important;
+
+        min-height: 44px !important;
+
+        padding: 10px 20px !important;
+
+        font-size: 15px !important;
+        font-weight: 700 !important;
+
+        border-radius: 9px !important;
+    }
+
+}
+
+/* =====================================================
+   LOANS — ADD / EDIT FORM
+   FINAL 2-COLUMN DESIGN
+===================================================== */
+
+@media (min-width: 769px) {
+
+    /* Hide loan cards when form is active */
+    #loanFormContainer:not([style*="display: none"]) ~ .loans-list-container,
+    .loans-section:has(#loanFormContainer[style*="display: block"]) .loan-type-grid {
+        display: none !important;
+    }
+
+    /* FORM CONTAINER */
+    #loanFormContainer {
+        width: 90% !important;
+        max-width: 1100px !important;
+        margin: 25px auto !important;
+        padding: 28px 35px !important;
+        box-sizing: border-box !important;
+
+        background: #ffffff !important;
+        border-radius: 16px !important;
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12) !important;
+
+        position: relative !important;
+        top: 0 !important;
+    }
+
+    /* FORM HEADING */
+    #loanFormContainer .loan-form-header {
+        width: 100% !important;
+        text-align: center !important;
+        margin-bottom: 25px !important;
+    }
+
+    #loanFormContainer .loan-form-header h3 {
+        margin: 0 !important;
+        font-size: 28px !important;
+        font-weight: 800 !important;
+        text-align: center !important;
+    }
+
+    /* TWO COLUMN GRID */
+    #loanFormContainer .loan-form-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        column-gap: 45px !important;
+        row-gap: 18px !important;
+        width: 100% !important;
+    }
+
+    /* FIELD */
+    #loanFormContainer .loan-form-field {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 7px !important;
+        width: 100% !important;
+    }
+
+    /* LABEL */
+    #loanFormContainer .loan-form-field label {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+    }
+
+    /* INPUT / SELECT */
+    #loanFormContainer .loan-form-field input,
+    #loanFormContainer .loan-form-field select {
+        width: 100% !important;
+        height: 44px !important;
+        box-sizing: border-box !important;
+
+        padding: 9px 12px !important;
+
+        font-size: 15px !important;
+        border-radius: 7px !important;
+    }
+
+    /* NOTES */
+    #loanFormContainer .loan-form-notes {
+        width: 100% !important;
+        margin-top: 22px !important;
+    }
+
+    #loanFormContainer .loan-form-notes textarea {
+        width: 100% !important;
+        min-height: 90px !important;
+        box-sizing: border-box !important;
+
+        padding: 10px 12px !important;
+        font-size: 15px !important;
+        border-radius: 7px !important;
+        resize: vertical !important;
+    }
+
+    /* BUTTONS */
+    #loanFormContainer .loan-form-actions {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 25px !important;
+    }
+
+    #loanFormContainer .loan-form-actions button {
+        min-width: 130px !important;
+        min-height: 44px !important;
+
+        padding: 10px 20px !important;
+
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+    }
+
+}

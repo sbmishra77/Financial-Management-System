@@ -2947,18 +2947,282 @@
 
 </div>
 
-    <!-- =================================================
-         ADD / EDIT LOAN AREA
-         ================================================= -->
+<!-- =================================================
+     ADD / EDIT LOAN FORM
+================================================= -->
 
-    <div
-        id="loanFormContainer"
-        style="display: none;">
+<div
+    id="loanFormContainer"
+    style="display: none;">
 
-        <!-- FORM WILL BE ADDED IN NEXT STEP -->
+    <div class="loan-form-header">
+        <h3>➕ Add Loan / Borrowing</h3>
+    </div>
+
+
+    <div class="loan-form-grid">
+
+        <!-- LOAN TYPE -->
+
+        <div class="loan-form-field">
+            <label>Loan Type</label>
+
+            <select id="loanType">
+                <option value="">-- Select Loan Type --</option>
+                <option value="Home Loan">🏠 Home Loan</option>
+                <option value="Car Loan">🚗 Car Loan</option>
+                <option value="Gold Loan">🪙 Gold Loan</option>
+                <option value="Mortgage Loan">🏢 Mortgage Loan</option>
+                <option value="KCC Loan">🌾 KCC Loan</option>
+                <option value="Credit Card Loan">💳 Credit Card Loan</option>
+                <option value="Personal Loan">👤 Personal Loan</option>
+                <option value="Other Borrowings">🤝 Other Borrowings</option>
+            </select>
+        </div>
+
+
+        <!-- LOAN NAME -->
+
+        <div class="loan-form-field">
+            <label>Loan Name</label>
+
+            <input
+                type="text"
+                id="loanName"
+                placeholder="e.g. Axis Bank Home Loan">
+        </div>
+
+
+        <!-- LENDER -->
+
+        <div class="loan-form-field">
+            <label>Lender / Bank</label>
+
+            <input
+                type="text"
+                id="loanLender"
+                placeholder="e.g. Axis Bank">
+        </div>
+
+
+        <!-- LOAN ACCOUNT -->
+
+        <div class="loan-form-field">
+            <label>Loan Account Number</label>
+
+            <input
+                type="text"
+                id="loanAccountNumber"
+                placeholder="Loan Account Number">
+        </div>
+
+
+        <!-- ORIGINAL PRINCIPAL -->
+
+        <div class="loan-form-field">
+            <label>Original Loan Amount</label>
+
+            <input
+                type="number"
+                id="loanOriginalAmount"
+                min="0"
+                step="0.01"
+                placeholder="₹0">
+        </div>
+
+
+        <!-- CURRENT OUTSTANDING -->
+
+        <div class="loan-form-field">
+            <label>Current Outstanding Balance</label>
+
+            <input
+                type="number"
+                id="loanOutstandingBalance"
+                min="0"
+                step="0.01"
+                placeholder="₹0">
+        </div>
+
+
+        <!-- INTEREST RATE -->
+
+        <div class="loan-form-field">
+            <label>Current Interest Rate (%)</label>
+
+            <input
+                type="number"
+                id="loanInterestRate"
+                min="0"
+                step="0.01"
+                placeholder="7.40">
+        </div>
+
+
+        <!-- EMI -->
+
+        <div class="loan-form-field">
+            <label>Monthly EMI</label>
+
+            <input
+                type="number"
+                id="loanEMI"
+                min="0"
+                step="0.01"
+                placeholder="₹0">
+        </div>
+
+
+        <!-- START DATE -->
+
+        <div class="loan-form-field">
+            <label>Loan Start Date</label>
+
+            <input
+                type="date"
+                id="loanStartDate">
+        </div>
+
+
+        <!-- ORIGINAL TENURE -->
+
+        <div class="loan-form-field">
+            <label>Original Tenure (Months)</label>
+
+            <input
+                type="number"
+                id="loanOriginalTenure"
+                min="1"
+                placeholder="216">
+        </div>
+
+
+        <!-- REMAINING TENURE -->
+
+        <div class="loan-form-field">
+            <label>Remaining Tenure (Months)</label>
+
+            <input
+                type="number"
+                id="loanRemainingTenure"
+                min="0"
+                placeholder="121">
+        </div>
+
+
+        <!-- EMI DAY -->
+
+        <div class="loan-form-field">
+            <label>EMI Due Date</label>
+
+            <input
+                type="number"
+                id="loanEMIDay"
+                min="1"
+                max="31"
+                placeholder="10">
+        </div>
+
+
+        <!-- EXTRA PRINCIPAL -->
+
+        <div class="loan-form-field">
+            <label>Planned Extra Principal / Month</label>
+
+            <input
+                type="number"
+                id="loanExtraPrincipal"
+                min="0"
+                step="0.01"
+                placeholder="₹20,000">
+        </div>
+
+
+        <!-- EMI PAYMENT ACCOUNT -->
+
+        <div class="loan-form-field">
+    <label>Payment Type</label>
+    <select id="loanPaymentType">
+        <option value="regular_emi">Regular EMI</option>
+        <option value="extra_principal">Extra Principal</option>
+        <option value="other_payment">Other Loan Payment</option>
+    </select>
+</div>
+
+        <div class="loan-form-field">
+            <label>EMI Paid From</label>
+
+            <select id="loanPaymentAccount">
+                <option value="">-- Select Account --</option>
+            </select>
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div class="loan-form-field">
+            <label>Loan Status</label>
+
+            <select id="loanStatus">
+
+                <option value="active">
+                    Active
+                </option>
+
+                <option value="closed">
+                    Closed
+                </option>
+
+                <option value="on_hold">
+                    On Hold
+                </option>
+
+            </select>
+        </div>
 
     </div>
 
+
+    <!-- NOTES -->
+
+    <div class="loan-form-field loan-form-notes">
+
+        <label>Notes</label>
+
+        <textarea
+            id="loanNotes"
+            rows="3"
+            placeholder="Loan related notes..."></textarea>
+
+    </div>
+
+
+    <!-- FORM ACTIONS -->
+
+    <div class="loan-form-actions">
+
+        <button
+            type="button"
+            id="saveLoanButton"
+            class="add-module-button">
+
+            💾 Save Loan
+
+        </button>
+
+
+        <button
+            type="button"
+            id="cancelLoanButton"
+            class="view-module-button">
+
+            ❌ Cancel
+
+        </button>
+
+    </div>
+
+</div>
 
     <!-- =================================================
          LOAN LIST
@@ -3015,291 +3279,133 @@
 <!-- INVESTMENTS HEADER -->
 <!-- =============================== -->
 
-<div class="section-header investment-section-header">
+<div
+    id="investmentMainHeader"
+    class="section-header investment-section-header"
 
+style="
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 8px !important;
+    ">
 
     <!-- INVESTMENT TITLE -->
 
-    <div class="section-title-area">
+    <div
+        class="section-title-area"
+        style="
+            width: 100% !important;
+            text-align: center !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        ">
 
-        <h2 id="investmentsSectionTitle">
+        <h2
+            id="investmentsSectionTitle"
+            style="
+                text-align: center !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                font-size: 32px !important;
+                font-weight: 900 !important;
+            ">
+
             📈 My Investments
+
         </h2>
 
     </div>
 
 
-    <!-- INVESTMENT SUMMARY BUTTON -->
-
-    <button
-        type="button"
-        id="investmentSummaryButton"
-        class="section-summary-button">
-
-        📊 Summary of Investments
-
-    </button>
-
-
     <!-- INVESTMENT ACTION BUTTONS -->
 
-<div class="section-header-buttons">
+<div
+    id="investmentActionButtons"
+    class="section-header-buttons"
+    style="
+        position: relative !important;
+        top: -250px !important;
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        ">
 
-    <style>
-/* =========================================
-   INVESTMENT HEADER - KEEP EVERYTHING
-   ON ONE SINGLE LINE
-   ========================================= */
+        <button
+            type="button"
+            id="investmentSummaryButton"
+            class="section-summary-button">
 
-.investment-section-header {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    width: 100%;
-    overflow-x: auto;
-}
+            📊 Summary of Investments
 
+        </button>
 
-/* Investment title */
-.investment-section-header .section-title-area {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
+        <button
+            type="button"
+            id="addInvestmentButton"
+            class="add-module-button">
 
+            ➕ Add Investment
 
-/* Summary button */
-.investment-section-header .section-summary-button {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
+        </button>
 
+        <button
+            type="button"
+            id="viewAllInvestmentsButton"
+            class="view-module-button">
 
-/* All investment action buttons */
-.investment-section-header .section-header-buttons {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    align-items: center !important;
-    gap: 8px;
-    flex-shrink: 0;
-    white-space: nowrap;
-}
+            View All Investments →
 
+        </button>
 
-/* Individual buttons */
-.investment-section-header .section-header-buttons button {
-    flex-shrink: 0 !important;
-    white-space: nowrap !important;
-}
+        <button
+            type="button"
+            id="viewFixedDepositsFromInvestmentsButton"
+            class="view-module-button">
 
-/* =====================================================
-   FIXED DEPOSIT POPUP
-   ===================================================== */
+            🏦 Fixed Deposits →
 
-#fdFormContainer {
-    position: fixed !important;
+        </button>
 
-    top: 50% !important;
-    left: 50% !important;
+        <button
+            type="button"
+            id="viewSharesFromInvestmentsButton"
+            class="view-module-button">
 
-    transform: translate(-50%, -50%) !important;
+            📈 Shares →
 
-    width: min(720px, 92vw) !important;
-    max-height: 88vh !important;
+        </button>
 
-    overflow-y: auto !important;
+        <button
+            type="button"
+            id="viewMutualFundsFromInvestmentsButton"
+            class="view-module-button">
 
-    background: #ffffff !important;
+            📊 Mutual Funds / SIP →
 
-    padding: 28px !important;
+        </button>
 
-    border-radius: 16px !important;
+        <button
+            type="button"
+            id="viewOtherInvestmentsFromInvestmentsButton"
+            class="view-module-button">
 
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.35) !important;
+            📦 Other Investments →
 
-    z-index: 99999 !important;
+        </button>
 
-    box-sizing: border-box !important;
-}
+    </div>
 
-
-/* FD POPUP TITLE */
-
-#fdFormContainer h3 {
-    margin-top: 0 !important;
-    margin-bottom: 22px !important;
-    text-align: center !important;
-    font-size: 24px !important;
-}
-
-
-/* FD FORM LAYOUT */
-
-#fdFormContainer form {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 14px 18px !important;
-}
-
-
-/* LABELS */
-
-#fdFormContainer label {
-    font-weight: 600 !important;
-}
-
-
-/* INPUTS + SELECT */
-
-#fdFormContainer input,
-#fdFormContainer select {
-    width: 100% !important;
-    box-sizing: border-box !important;
-    padding: 10px !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 7px !important;
-}
-
-
-/* BUTTON AREA */
-
-#fdFormContainer .account-form-buttons {
-    grid-column: 1 / -1 !important;
-
-    display: flex !important;
-    justify-content: center !important;
-    gap: 12px !important;
-
-    margin-top: 12px !important;
-}
-
-
-/* MOBILE */
-
-@media (max-width: 700px) {
-
-    #fdFormContainer {
-        width: 94vw !important;
-        max-height: 90vh !important;
-        padding: 20px !important;
-    }
-
-    #fdFormContainer form {
-        grid-template-columns: 1fr !important;
-    }
-
-}
-
-</style>
-
-    <button
-        type="button"
-        id="addInvestmentButton"
-        class="add-module-button">
-
-        ➕ Add Investment
-
-    </button>
-
-
-    <button
-        type="button"
-        id="viewAllInvestmentsButton"
-        class="view-module-button">
-
-        View All Investments →
-
-    </button>
-
-
-    <button
-        type="button"
-        id="viewFixedDepositsFromInvestmentsButton"
-        class="view-module-button">
-
-        🏦 Fixed Deposits →
-
-    </button>
-
-
-<!-- =============================== -->
-<!-- INVESTMENT HEADER ACTION BUTTONS -->
-<!-- =============================== -->
-
-<style>
-    /* Keep Investment header buttons in one row */
-    .investment-section-header {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .investment-section-header .section-header-buttons {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 8px;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
-
-    .investment-section-header .section-header-buttons button {
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-    }
-</style>
-
-
-<!-- =============================== -->
-<!-- SHARES -->
-<!-- =============================== -->
-
-<button
-    type="button"
-    id="viewSharesFromInvestmentsButton"
-    class="view-module-button">
-
-    📈 Shares →
-
-</button>
-
-
-<!-- =============================== -->
-<!-- MUTUAL FUNDS / SIP -->
-<!-- =============================== -->
-
-<button
-    type="button"
-    id="viewMutualFundsFromInvestmentsButton"
-    class="view-module-button">
-
-    📊 Mutual Funds / SIP →
-
-</button>
-
-<!-- =============================== -->
-<!-- OTHER INVESTMENTS -->
-<!-- =============================== -->
-
-<button
-    type="button"
-    id="viewOtherInvestmentsFromInvestmentsButton"
-    class="view-module-button">
-
-    📦 Other Investments →
-
-</button>
-
-<!-- =============================== -->
-<!-- CLOSE INVESTMENT HEADER -->
-<!-- =============================== -->
-
-</div> <!-- section-header-buttons -->
-
-</div> <!-- investment-section-header -->
-
+</div>
 
 <!-- ================================================= -->
 <!-- MUTUAL FUNDS / SIP VIEW -->
@@ -4139,17 +4245,26 @@ document.addEventListener(
 
 <div class="investment-fd-navigation">
 
+    <button 
+        type="button" 
+        id="viewFixedDepositsFromAllInvestmentsButton" 
+        class="view-module-button"> 
+
+        🏦 View Fixed Deposits → 
+
+    </button>
+
+
     <button
         type="button"
-        id="viewFixedDepositsFromAllInvestmentsButton"
+        id="backToInvestmentsFromAllInvestmentsButton"
         class="view-module-button">
 
-        🏦 View Fixed Deposits →
+        ← Back to Investments
 
     </button>
 
 </div>
-
 </div>
 
 </div>
@@ -7871,5 +7986,6 @@ document.addEventListener(
 <script type="module" src="js/rental-properties.js"></script>
 <script src="js/rentalManagement.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="js/loans.js"></script>
 </body>
 </html>

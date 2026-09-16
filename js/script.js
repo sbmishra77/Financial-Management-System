@@ -15810,3 +15810,104 @@ catch (error) {
 
     }
 );
+
+// =========================================
+// BACK TO INVESTMENTS FROM ALL INVESTMENTS
+// =========================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const backButton =
+            event.target.closest(
+                "#backToInvestmentsFromAllInvestmentsButton"
+            );
+
+        if (!backButton) {
+            return;
+        }
+
+        const investmentTable =
+            document.querySelector(
+                "#investmentTableWrapper"
+            );
+
+        const investmentSummary =
+            document.querySelector(
+                "#investmentSummary"
+            );
+
+        const investmentForm =
+            document.querySelector(
+                "#investmentFormContainer"
+            );
+
+        const investmentActionButtons =
+            document.querySelector(
+                "#investmentActionButtons"
+            );
+
+        const investmentSection =
+            document.querySelector(
+                "#investmentsSection"
+            );
+
+
+        /* CLOSE ALL INVESTMENT SUB-VIEWS */
+
+        if (investmentTable) {
+            investmentTable.style.display =
+                "none";
+        }
+
+        if (investmentSummary) {
+            investmentSummary.style.display =
+                "none";
+        }
+
+        if (investmentForm) {
+            investmentForm.style.display =
+                "none";
+        }
+
+
+        /* SHOW INVESTMENT STARTING POINT */
+
+if (investmentActionButtons) {
+    investmentActionButtons.style.display =
+        "flex";
+}
+
+const addInvestmentButton =
+    document.querySelector(
+        "#addInvestmentButton"
+    );
+
+const viewAllInvestmentsButton =
+    document.querySelector(
+        "#viewAllInvestmentsButton"
+    );
+
+if (addInvestmentButton) {
+    addInvestmentButton.style.display =
+        "";
+}
+
+if (viewAllInvestmentsButton) {
+    viewAllInvestmentsButton.style.display =
+        "";
+}
+
+
+        /* SCROLL TO INVESTMENT TOP */
+
+        if (investmentSection) {
+            investmentSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+        }
+
+    }
+);
