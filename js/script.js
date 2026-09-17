@@ -2283,6 +2283,49 @@ async function loadAccounts() {
             )
         );
 
+        // =========================================
+// LOAD LOANS — DASHBOARD
+// =========================================
+
+const loansSnapshot =
+    await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "loans"
+        )
+    );
+
+let dashboardTotalLoanOutstanding = 0;
+
+loansSnapshot.forEach((loanDoc) => {
+
+    const loan =
+        loanDoc.data();
+
+    dashboardTotalLoanOutstanding +=
+        Number(loan.outstandingBalance || 0);
+
+});
+
+const dashboardLoansValue =
+    document.querySelector(
+        "#dashboardLoansValue"
+    );
+
+if (dashboardLoansValue) {
+
+    dashboardLoansValue.textContent =
+        `₹${dashboardTotalLoanOutstanding.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+
+}
         const allAccountsCount =
     document.querySelector(
         "#allAccountsCount"
@@ -2426,6 +2469,7 @@ if (dashboardAccountsElement) {
         );
 
 }
+
 /* =============================== */
 /* BANK BRAND DETECTION */
 /* =============================== */

@@ -11,8 +11,8 @@ import {
     serverTimestamp,
     deleteDoc,
     doc,
-    updateDoc
-    
+    updateDoc,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ===============================
@@ -3593,7 +3593,7 @@ if (transactionForm) {
                     }
 
 // =================================
-// GET CUSTOM TRANSACTION BEHAVIOR
+// GET TRANSACTION BEHAVIOR
 // =================================
 
 const selectedTypeOption =
@@ -3601,17 +3601,32 @@ const selectedTypeOption =
         ".transaction-type option:checked"
     );
 
-const transactionBehavior =
+let transactionBehavior =
     selectedTypeOption?.dataset.behavior || "";
+
+// =================================
+// CREDIT CARD BILL PAYMENT
+// =================================
+
+if (
+    type === "expense" &&
+    (
+        category === "Credit Card Bill ICICI Amazon" ||
+        category === "Credit Card Bill Kotak"
+    )
+) {
+    transactionBehavior =
+        "money_out_non_expense";
+}
 
 console.log(
     "TRANSACTION BEHAVIOR:",
     {
         type: type,
+        category: category,
         behavior: transactionBehavior
     }
 );
-
                     // =================================
                     // CREATE TRANSACTION DATA
                     // =================================
@@ -3686,16 +3701,324 @@ if (editingTransactionId) {
         );
 
 
-    await updateDoc(
-        transactionRef,
-        {
-            ...transactionData,
+    // =================================
+// EDIT TRANSACTION
+// REVERSE OLD + APPLY NEW BALANCE
+// =================================
 
-            updatedAt:
-                serverTimestamp()
+const oldTransactionSnapshot =
+    await getDoc(transactionRef);
+
+if (oldTransactionSnapshot.exists()) {
+
+    const oldTransaction =
+        oldTransactionSnapshot.data();
+
+    const isOldCreditCardPayment =
+        oldTransaction.type === "expense" &&
+        (
+            oldTransaction.category ===
+                "Credit Card Bill ICICI Amazon" ||
+            oldTransaction.category ===
+                "Credit Card Bill Kotak"
+        );
+
+    // =================================
+    // 1. REVERSE OLD CREDIT CARD PAYMENT
+    // =================================
+
+    if (isOldCreditCardPayment) {
+
+        const oldAmount =
+            Number(oldTransaction.amount || 0);
+
+        // Restore old From Account
+        if (oldTransaction.fromAccountId) {
+
+            const oldFromAccountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    oldTransaction.fromAccountId
+                );
+
+            const oldFromSnapshot =
+                await getDoc(oldFromAccountRef);
+
+            if (oldFromSnapshot.exists()) {
+
+                const oldBalance =
+                    Number(
+                        oldFromSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    oldFromAccountRef,
+                    {
+                        balance:
+                            oldBalance + oldAmount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
         }
-    );
 
+        // Restore old Credit Card
+        const accountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(
+                accountsCollection
+            );
+
+        let oldCreditCardId = null;
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+                if (
+                    account.type ===
+                    "credit_card"
+                ) {
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill ICICI Amazon" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("icici amazon")
+                    ) {
+                        oldCreditCardId =
+                            accountDoc.id;
+                    }
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill Kotak" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("kotak")
+                    ) {
+                        oldCreditCardId =
+                            accountDoc.id;
+                    }
+                }
+            }
+        );
+
+        if (oldCreditCardId) {
+
+            const oldCardRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    oldCreditCardId
+                );
+
+            const oldCardSnapshot =
+                await getDoc(oldCardRef);
+
+            if (oldCardSnapshot.exists()) {
+
+                const oldCardBalance =
+                    Number(
+                        oldCardSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    oldCardRef,
+                    {
+                        balance:
+                            oldCardBalance + oldAmount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+
+    // =================================
+    // 2. APPLY NEW CREDIT CARD PAYMENT
+    // =================================
+
+    const isNewCreditCardPayment =
+        transactionBehavior ===
+            "money_out_non_expense" &&
+        type === "expense" &&
+        (
+            category ===
+                "Credit Card Bill ICICI Amazon" ||
+            category ===
+                "Credit Card Bill Kotak"
+        );
+
+    if (isNewCreditCardPayment) {
+
+        // ---------------------------------
+        // NEW FROM ACCOUNT
+        // ---------------------------------
+
+        if (fromAccountId) {
+
+            const newFromAccountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    fromAccountId
+                );
+
+            const newFromSnapshot =
+                await getDoc(newFromAccountRef);
+
+            if (newFromSnapshot.exists()) {
+
+                const newBalance =
+                    Number(
+                        newFromSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    newFromAccountRef,
+                    {
+                        balance:
+                            newBalance - amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+
+        // ---------------------------------
+        // FIND NEW CREDIT CARD
+        // ---------------------------------
+
+        const newAccountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const newAccountsSnapshot =
+            await getDocs(
+                newAccountsCollection
+            );
+
+        let newCreditCardId = null;
+
+        newAccountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+                if (
+                    account.type ===
+                    "credit_card"
+                ) {
+
+                    if (
+                        category ===
+                            "Credit Card Bill ICICI Amazon" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("icici amazon")
+                    ) {
+                        newCreditCardId =
+                            accountDoc.id;
+                    }
+
+                    if (
+                        category ===
+                            "Credit Card Bill Kotak" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("kotak")
+                    ) {
+                        newCreditCardId =
+                            accountDoc.id;
+                    }
+                }
+            }
+        );
+
+        // ---------------------------------
+        // APPLY NEW CREDIT CARD PAYMENT
+        // ---------------------------------
+
+        if (newCreditCardId) {
+
+            const newCardRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    newCreditCardId
+                );
+
+            const newCardSnapshot =
+                await getDoc(newCardRef);
+
+            if (newCardSnapshot.exists()) {
+
+                const newCardBalance =
+                    Number(
+                        newCardSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    newCardRef,
+                    {
+                        balance:
+                            Math.max(
+                                0,
+                                newCardBalance - amount
+                            ),
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+}
+
+// =================================
+// NOW UPDATE TRANSACTION
+// =================================
+
+await updateDoc(
+    transactionRef,
+    {
+        ...transactionData,
+        updatedAt:
+            serverTimestamp()
+    }
+);
 
     console.log(
         "Transaction updated successfully:",
@@ -3722,17 +4045,189 @@ else {
             transactionData
         );
 
-
     console.log(
         "Transaction saved successfully:",
         {
             id:
                 transactionDoc.id,
-
             ...transactionData
+            
         }
     );
+// =================================
+// UPDATE ACCOUNT BALANCES
+// CREDIT CARD BILL PAYMENT
+// =================================
 
+if (
+    transactionBehavior === "money_out_non_expense" &&
+    type === "expense" &&
+    (
+        category === "Credit Card Bill ICICI Amazon" ||
+        category === "Credit Card Bill Kotak"
+    )
+) {
+    try {
+
+        const accountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(
+                accountsCollection
+            );
+
+        let creditCardAccountId = null;
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+                if (
+                    account.type === "credit_card"
+                ) {
+
+                    if (
+                        category ===
+                        "Credit Card Bill ICICI Amazon" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("icici amazon")
+                    ) {
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
+
+                    if (
+                        category ===
+                        "Credit Card Bill Kotak" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("kotak")
+                    ) {
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
+
+                }
+
+            }
+        );
+
+        // ---------------------------------
+        // FROM BANK ACCOUNT → MONEY OUT
+        // ---------------------------------
+
+        if (fromAccountId) {
+
+            const fromAccountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    fromAccountId
+                );
+
+            const fromAccountSnapshot =
+                await getDoc(
+                    fromAccountRef
+                );
+
+            if (fromAccountSnapshot.exists()) {
+
+                const currentBalance =
+                    Number(
+                        fromAccountSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    fromAccountRef,
+                    {
+                        balance:
+                            currentBalance - amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+            }
+        }
+
+        // ---------------------------------
+        // CREDIT CARD LIABILITY REDUCED
+        // ---------------------------------
+
+        if (creditCardAccountId) {
+
+            const creditCardRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    creditCardAccountId
+                );
+
+            const creditCardSnapshot =
+                await getDoc(
+                    creditCardRef
+                );
+
+            if (
+                creditCardSnapshot.exists()
+            ) {
+
+                const currentCardBalance =
+                    Number(
+                        creditCardSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    creditCardRef,
+                    {
+                        balance:
+                            Math.max(
+                                0,
+                                currentCardBalance - amount
+                            ),
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+            }
+        }
+
+        console.log(
+            "CREDIT CARD PAYMENT ACCOUNT BALANCES UPDATED",
+            {
+                category,
+                amount,
+                fromAccountId,
+                creditCardAccountId
+            }
+        );
+
+    }
+    catch (balanceError) {
+
+        console.error(
+            "ACCOUNT BALANCE UPDATE ERROR:",
+            balanceError
+        );
+
+    }
+}
 }
 
 savedCount++;
@@ -3866,9 +4361,14 @@ if (firstRow) {
             catch (error) {
 
                 console.error(
-                    "Save Transactions Error:",
-                    error
-                );
+    "Save Transactions Error:",
+    error?.message || error
+);
+
+alert(
+    "ERROR: " +
+    (error?.message || error)
+);
 
 
                 alert(
@@ -4551,6 +5051,179 @@ document.addEventListener(
                     transactionId
                 );
 
+                // =================================
+// REVERSE ACCOUNT BALANCES
+// BEFORE DELETING TRANSACTION
+// =================================
+
+const transactionSnapshot =
+    await getDoc(transactionRef);
+
+if (transactionSnapshot.exists()) {
+
+    const oldTransaction =
+        transactionSnapshot.data();
+
+    if (
+        oldTransaction.behavior ===
+            "money_out_non_expense" &&
+        oldTransaction.type === "expense" &&
+        (
+            oldTransaction.category ===
+                "Credit Card Bill ICICI Amazon" ||
+            oldTransaction.category ===
+                "Credit Card Bill Kotak"
+        )
+    ) {
+
+        const amountToReverse =
+            Number(oldTransaction.amount || 0);
+
+        // ---------------------------------
+        // RESTORE BANK BALANCE
+        // ---------------------------------
+
+        if (oldTransaction.fromAccountId) {
+
+            const fromAccountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    oldTransaction.fromAccountId
+                );
+
+            const fromAccountSnapshot =
+                await getDoc(fromAccountRef);
+
+            if (fromAccountSnapshot.exists()) {
+
+                const currentBalance =
+                    Number(
+                        fromAccountSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    fromAccountRef,
+                    {
+                        balance:
+                            currentBalance +
+                            amountToReverse,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+
+        // ---------------------------------
+        // RESTORE CREDIT CARD LIABILITY
+        // ---------------------------------
+
+        const accountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(
+                accountsCollection
+            );
+
+        let creditCardAccountId = null;
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+                if (
+                    account.type ===
+                    "credit_card"
+                ) {
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill ICICI Amazon" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("icici amazon")
+                    ) {
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill Kotak" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("kotak")
+                    ) {
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
+                }
+            }
+        );
+
+        if (creditCardAccountId) {
+
+            const creditCardRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    creditCardAccountId
+                );
+
+            const creditCardSnapshot =
+                await getDoc(creditCardRef);
+
+            if (
+                creditCardSnapshot.exists()
+            ) {
+
+                const currentCardBalance =
+                    Number(
+                        creditCardSnapshot.data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    creditCardRef,
+                    {
+                        balance:
+                            currentCardBalance +
+                            amountToReverse,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+
+        console.log(
+            "CREDIT CARD PAYMENT BALANCE REVERSED BEFORE DELETE",
+            {
+                category:
+                    oldTransaction.category,
+                amount:
+                    amountToReverse,
+                fromAccountId:
+                    oldTransaction.fromAccountId,
+                creditCardAccountId
+            }
+        );
+    }
+}
             // =================================
             // DELETE FROM FIRESTORE
             // =================================

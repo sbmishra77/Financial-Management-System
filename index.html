@@ -2753,66 +2753,418 @@
          LOAN SUMMARY
          ================================================= -->
 
-    <div
-        id="loanSummary"
-        class="loan-summary"
-        style="display: none;">
+    <!-- =================================================
+     LOAN SUMMARY — INFOGRAPHIC DASHBOARD
+================================================= -->
 
-        <div class="loan-summary-card">
+<div
+    id="loanSummary"
+    class="loan-summary"
+    style="display: none;">
 
-            <h3>
-                💰 Total Loans
-            </h3>
+    <!-- SUMMARY TITLE -->
 
-            <p id="totalLoansAmount">
-                ₹0
-            </p>
+    <div class="loan-summary-heading">
+
+        <div>
+            <h3>📊 Loan Summary</h3>
+            <p>Quick overview of all your loans and borrowings</p>
+        </div>
+
+        <div class="loan-summary-tag">
+            📈 Keep track, stay on top, be financially free
+        </div>
+
+    </div>
+
+
+    <!-- ===============================
+         FOUR SUMMARY CARDS
+    =============================== -->
+
+    <div class="loan-summary-metrics">
+
+
+        <!-- TOTAL LOANS -->
+
+        <div class="loan-metric-card loan-metric-blue">
+
+            <div class="loan-metric-icon">
+                🪙
+            </div>
+
+            <div class="loan-metric-content">
+
+                <h4>Total Loans</h4>
+
+                <span>
+                    Total amount sanctioned
+                </span>
+
+                <p id="totalLoansAmount">
+                    ₹0
+                </p>
+
+            </div>
+
+            <div class="loan-metric-decoration">
+                🏦
+            </div>
 
         </div>
 
 
-        <div class="loan-summary-card">
+        <!-- OUTSTANDING -->
 
-            <h3>
-                📉 Outstanding
-            </h3>
+        <div class="loan-metric-card loan-metric-pink">
 
-            <p id="outstandingLoansAmount">
-                ₹0
-            </p>
+            <div class="loan-metric-icon">
+                📉
+            </div>
+
+            <div class="loan-metric-content">
+
+                <h4>Outstanding</h4>
+
+                <span>
+                    Amount yet to be paid
+                </span>
+
+                <p id="outstandingLoansAmount">
+                    ₹0
+                </p>
+
+                <div class="loan-outstanding-bar">
+                    <div id="loanOutstandingProgress"></div>
+                </div>
+
+                <small id="loanOutstandingPercentage">
+                    0% of total loan amount
+                </small>
+
+            </div>
+
+            <div class="loan-metric-decoration">
+                📈
+            </div>
 
         </div>
 
 
-        <div class="loan-summary-card">
+        <!-- MONTHLY EMI -->
 
-            <h3>
-                💵 Monthly EMI
-            </h3>
+        <div class="loan-metric-card loan-metric-green">
 
-            <p id="monthlyLoanEMI">
-                ₹0
-            </p>
+            <div class="loan-metric-icon">
+                💵
+            </div>
+
+            <div class="loan-metric-content">
+
+                <h4>Monthly EMI</h4>
+
+                <span>
+                    Total monthly obligation
+                </span>
+
+                <p id="monthlyLoanEMI">
+                    ₹0
+                </p>
+
+            </div>
+
+            <div class="loan-metric-decoration">
+                📅
+            </div>
 
         </div>
 
 
-        <div class="loan-summary-card">
+        <!-- ACTIVE LOANS -->
 
-            <h3>
-                📅 Active Loans
-            </h3>
+        <div class="loan-metric-card loan-metric-yellow">
 
-            <p id="activeLoansCount">
-                0
-            </p>
+            <div class="loan-metric-icon">
+                👥
+            </div>
+
+            <div class="loan-metric-content">
+
+                <h4>Active Loans</h4>
+
+                <span>
+                    Currently active
+                </span>
+
+                <p id="activeLoansCount">
+                    0
+                </p>
+
+                <small id="activeLoansSubtitle">
+                    0 of 0 total loans
+                </small>
+
+            </div>
+
+            <div class="loan-metric-decoration">
+                📄
+            </div>
 
         </div>
 
     </div>
 
 
-    <!-- ==================================================
+    <!-- ===============================
+         LOWER INFORMATION AREA
+    =============================== -->
+
+    <div class="loan-summary-lower">
+
+
+        <!-- LOAN DISTRIBUTION -->
+
+        <div class="loan-distribution-card">
+
+            <div class="loan-summary-subtitle">
+
+                <div class="loan-summary-subtitle-icon">
+                    🥧
+                </div>
+
+                <div>
+                    <h3>Loan Distribution</h3>
+                    <p>Share of total loan amount</p>
+                </div>
+
+            </div>
+
+
+            <div class="loan-distribution-content">
+
+                <div class="loan-donut-wrapper">
+
+                    <div
+                        id="loanDistributionDonut"
+                        class="loan-distribution-donut">
+
+                        <div class="loan-donut-center">
+                            <span>Total</span>
+                            <strong id="loanDistributionTotal">
+                                ₹0
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="loanDistributionLegend"
+                    class="loan-distribution-legend">
+
+                    <!-- Dynamic loan categories -->
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- KEY INSIGHTS -->
+
+        <div class="loan-insights-card">
+
+            <div class="loan-summary-subtitle">
+
+                <div class="loan-summary-subtitle-icon">
+                    📊
+                </div>
+
+                <div>
+                    <h3>Key Insights</h3>
+                    <p>Your current loan position</p>
+                </div>
+
+            </div>
+
+
+            <div class="loan-insight-list">
+
+
+                <div class="loan-insight-row">
+
+                    <div class="loan-insight-icon">
+                        🏠
+                    </div>
+
+                    <div class="loan-insight-text">
+                        <strong>Largest Loan</strong>
+                        <span id="largestLoanName">
+                            —
+                        </span>
+                    </div>
+
+                    <b id="largestLoanAmount">
+                        ₹0
+                    </b>
+
+                </div>
+
+
+                <div class="loan-insight-row">
+
+                    <div class="loan-insight-icon">
+                        %
+                    </div>
+
+                    <div class="loan-insight-text">
+                        <strong>Outstanding %</strong>
+                        <span>
+                            of total loan amount
+                        </span>
+                    </div>
+
+                    <b id="loanInsightOutstandingPercentage">
+                        0%
+                    </b>
+
+                </div>
+
+
+                <div class="loan-insight-row">
+
+                    <div class="loan-insight-icon">
+                        📅
+                    </div>
+
+                    <div class="loan-insight-text">
+                        <strong>Monthly EMI Burden</strong>
+                        <span>
+                            on your finances
+                        </span>
+                    </div>
+
+                    <b id="loanInsightEMI">
+                        ₹0
+                    </b>
+
+                </div>
+
+
+                <div class="loan-insight-row">
+
+                    <div class="loan-insight-icon">
+                        📈
+                    </div>
+
+                    <div class="loan-insight-text">
+                        <strong>Active Loans</strong>
+                        <span>
+                            currently running
+                        </span>
+                    </div>
+
+                    <b id="loanInsightActiveLoans">
+                        0
+                    </b>
+
+                </div>
+
+<div class="loan-insight-row">
+
+    <div class="loan-insight-icon">
+        💰
+    </div>
+
+    <div class="loan-insight-text">
+        <strong>Principal Paid</strong>
+        <span>
+            amount already repaid
+        </span>
+    </div>
+
+    <b id="loanInsightPrincipalPaid">
+        ₹0
+    </b>
+
+</div>
+
+
+<div class="loan-insight-row">
+
+    <div class="loan-insight-icon">
+        ➕
+    </div>
+
+    <div class="loan-insight-text">
+        <strong>Extra Principal</strong>
+        <span>
+            planned monthly prepayment
+        </span>
+    </div>
+
+    <b id="loanInsightExtraPrincipal">
+        ₹0
+    </b>
+
+</div>
+
+
+<div class="loan-insight-row">
+
+    <div class="loan-insight-icon">
+        💸
+    </div>
+
+    <div class="loan-insight-text">
+        <strong>Total Monthly Outflow</strong>
+        <span>
+            EMI + Extra Principal
+        </span>
+    </div>
+
+    <b id="loanInsightMonthlyOutflow">
+        ₹0
+    </b>
+
+</div>
+
+
+
+
+
+
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FINANCIAL QUOTE -->
+
+    <div class="loan-summary-quote">
+
+        🌱
+
+        <span>
+            “A loan is a responsibility today, but a step towards a bigger tomorrow.”
+        </span>
+
+        <strong>
+            — Your Financial Companion
+        </strong>
+
+    </div>
+
+</div>
+
+<!-- ==================================================
      LOAN TYPE CARDS
 ================================================== -->
 
