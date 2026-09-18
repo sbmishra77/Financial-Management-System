@@ -3701,7 +3701,7 @@ if (editingTransactionId) {
         );
 
 
-    // =================================
+// =================================
 // EDIT TRANSACTION
 // REVERSE OLD + APPLY NEW BALANCE
 // =================================
@@ -3715,13 +3715,15 @@ if (oldTransactionSnapshot.exists()) {
         oldTransactionSnapshot.data();
 
     const isOldCreditCardPayment =
-        oldTransaction.type === "expense" &&
-        (
-            oldTransaction.category ===
-                "Credit Card Bill ICICI Amazon" ||
-            oldTransaction.category ===
-                "Credit Card Bill Kotak"
-        );
+    oldTransaction.behavior ===
+        "money_out_non_expense" &&
+    oldTransaction.type === "expense" &&
+    (
+        oldTransaction.category ===
+            "Credit Card Bill ICICI Amazon" ||
+        oldTransaction.category ===
+            "Credit Card Bill Kotak"
+    );
 
     // =================================
     // 1. REVERSE OLD CREDIT CARD PAYMENT
@@ -4008,6 +4010,241 @@ if (oldTransactionSnapshot.exists()) {
 }
 
 // =================================
+// REVERSE OLD + APPLY NEW
+// BANK ACCOUNT BALANCE
+// =================================
+
+try {
+
+        const oldTransaction =
+        oldTransactionSnapshot.data();
+
+    // Credit Card Bill Payment को यहाँ ignore करेंगे
+    // क्योंकि उसका balance logic पहले से अलग है
+    const isOldCreditCardBill =
+        oldTransaction.category ===
+            "Credit Card Bill ICICI Amazon" ||
+        oldTransaction.category ===
+            "Credit Card Bill Kotak";
+
+    const isNewCreditCardBill =
+        category ===
+            "Credit Card Bill ICICI Amazon" ||
+        category ===
+            "Credit Card Bill Kotak";
+
+
+    // =================================
+    // 1. REVERSE OLD INCOME
+    // =================================
+
+    if (
+        oldTransaction.type === "income" &&
+        oldTransaction.toAccountId &&
+        !isOldCreditCardBill
+    ) {
+
+        const oldToAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                oldTransaction.toAccountId
+            );
+
+        const oldToAccountSnapshot =
+            await getDoc(oldToAccountRef);
+
+        if (oldToAccountSnapshot.exists()) {
+
+            const oldAccount =
+                oldToAccountSnapshot.data();
+
+            if (oldAccount.type === "bank") {
+
+                const currentBalance =
+                    Number(oldAccount.balance || 0);
+
+                await updateDoc(
+                    oldToAccountRef,
+                    {
+                        balance:
+                            currentBalance -
+                            Number(oldTransaction.amount || 0),
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+
+
+    // =================================
+    // 2. REVERSE OLD EXPENSE
+    // =================================
+
+    if (
+        oldTransaction.type === "expense" &&
+        oldTransaction.fromAccountId &&
+        !isOldCreditCardBill
+    ) {
+
+        const oldFromAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                oldTransaction.fromAccountId
+            );
+
+        const oldFromAccountSnapshot =
+            await getDoc(oldFromAccountRef);
+
+        if (oldFromAccountSnapshot.exists()) {
+
+            const oldAccount =
+                oldFromAccountSnapshot.data();
+
+            if (oldAccount.type === "bank") {
+
+                const currentBalance =
+                    Number(oldAccount.balance || 0);
+
+                await updateDoc(
+                    oldFromAccountRef,
+                    {
+                        balance:
+                            currentBalance +
+                            Number(oldTransaction.amount || 0),
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+
+
+    // =================================
+    // 3. APPLY NEW INCOME
+    // =================================
+
+    if (
+        type === "income" &&
+        toAccountId &&
+        !isNewCreditCardBill
+    ) {
+
+        const newToAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                toAccountId
+            );
+
+        const newToAccountSnapshot =
+            await getDoc(newToAccountRef);
+
+        if (newToAccountSnapshot.exists()) {
+
+            const newAccount =
+                newToAccountSnapshot.data();
+
+            if (newAccount.type === "bank") {
+
+                const currentBalance =
+                    Number(newAccount.balance || 0);
+
+                await updateDoc(
+                    newToAccountRef,
+                    {
+                        balance:
+                            currentBalance + amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+
+
+    // =================================
+    // 4. APPLY NEW EXPENSE
+    // =================================
+
+    if (
+        type === "expense" &&
+        fromAccountId &&
+        !isNewCreditCardBill
+    ) {
+
+        const newFromAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                fromAccountId
+            );
+
+        const newFromAccountSnapshot =
+            await getDoc(newFromAccountRef);
+
+        if (newFromAccountSnapshot.exists()) {
+
+            const newAccount =
+                newFromAccountSnapshot.data();
+
+            if (newAccount.type === "bank") {
+
+                const currentBalance =
+                    Number(newAccount.balance || 0);
+
+                await updateDoc(
+                    newFromAccountRef,
+                    {
+                        balance:
+                            currentBalance - amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+    }
+
+
+    console.log(
+        "BANK BALANCE UPDATED AFTER TRANSACTION EDIT",
+        {
+            oldType:
+                oldTransaction.type,
+            oldAmount:
+                oldTransaction.amount,
+            newType:
+                type,
+            newAmount:
+                amount
+        }
+    );
+
+}
+catch (bankEditError) {
+
+    console.error(
+        "BANK BALANCE EDIT ERROR:",
+        bankEditError
+    );
+
+}
+
+// =================================
 // NOW UPDATE TRANSACTION
 // =================================
 
@@ -4054,6 +4291,125 @@ else {
             
         }
     );
+
+    // =================================
+// UPDATE BANK ACCOUNT BALANCE
+// INCOME → TO ACCOUNT = ADD
+// EXPENSE → FROM ACCOUNT = SUBTRACT
+// =================================
+
+try {
+
+    // INCOME → TO ACCOUNT
+    if (
+        type === "income" &&
+        toAccountId
+    ) {
+
+        const toAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                toAccountId
+            );
+
+        const toAccountSnapshot =
+            await getDoc(toAccountRef);
+
+        if (toAccountSnapshot.exists()) {
+
+            const account =
+                toAccountSnapshot.data();
+
+            if (account.type === "bank") {
+
+                const currentBalance =
+                    Number(account.balance || 0);
+
+                await updateDoc(
+                    toAccountRef,
+                    {
+                        balance:
+                            currentBalance + amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "BANK BALANCE INCREASED:",
+                    {
+                        account:
+                            account.name,
+                        amount: amount
+                    }
+                );
+            }
+        }
+    }
+
+    // EXPENSE → FROM ACCOUNT
+    if (
+        type === "expense" &&
+        fromAccountId
+    ) {
+
+        const fromAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                fromAccountId
+            );
+
+        const fromAccountSnapshot =
+            await getDoc(fromAccountRef);
+
+        if (fromAccountSnapshot.exists()) {
+
+            const account =
+                fromAccountSnapshot.data();
+
+            if (account.type === "bank") {
+
+                const currentBalance =
+                    Number(account.balance || 0);
+
+                await updateDoc(
+                    fromAccountRef,
+                    {
+                        balance:
+                            currentBalance - amount,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "BANK BALANCE DECREASED:",
+                    {
+                        account:
+                            account.name,
+                        amount: amount
+                    }
+                );
+            }
+        }
+    }
+
+}
+catch (bankBalanceError) {
+
+    console.error(
+        "BANK BALANCE UPDATE ERROR:",
+        bankBalanceError
+    );
+
+}
+
 // =================================
 // UPDATE ACCOUNT BALANCES
 // CREDIT CARD BILL PAYMENT
