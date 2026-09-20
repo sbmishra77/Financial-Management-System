@@ -599,6 +599,27 @@
 
                         </select>
 
+                        
+    <!-- VEHICLE SELECTION -->
+
+<select
+    class="transaction-vehicle"
+    style="
+        display: none;
+        width: 100%;
+        margin-top: 6px;
+        padding: 7px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 13px;
+    ">
+
+    <option value="">
+        🚗 Select Vehicle
+    </option>
+
+</select>
                     </td>
 
 
@@ -1259,6 +1280,7 @@
             ❌ Cancel
         </button>
 
+        
     </div>
 
 </form>
@@ -1531,7 +1553,9 @@
 
         </button>
 
-        <!-- ========================================= -->
+
+
+<!-- ========================================= -->
 <!-- MY FINANCIAL GOALS -->
 <!-- ========================================= -->
 
@@ -1683,6 +1707,1172 @@
     </div>
 
 </div>
+
+<!-- ========================================= -->
+<!-- VEHICLE MANAGEMENT MODULE -->
+<!-- ========================================= -->
+
+<section id="vehiclesSection"
+         class="vehicles-section"
+         style="display: none;">
+
+    <div class="back-to-dashboard-wrapper">
+
+    <!-- BACK TO DASHBOARD -->
+
+    <button type="button"
+            class="back-to-dashboard-button">
+        ← Back to Dashboard
+    </button>
+
+
+    <!-- BACK TO VEHICLE MANAGEMENT -->
+
+    <button type="button"
+            id="backToVehicleManagementButton"
+            class="back-to-vehicle-management-button"
+            style="display: none;">
+        ← Back to Vehicle Management
+    </button>
+
+</div>
+
+    <div class="section-header vehicles-section-header">
+
+        <div class="section-title-area">
+
+            <h2>🚗 Vehicle Management</h2>
+
+            <p>
+                Manage vehicles, documents, insurance,
+                service & expenses
+            </p>
+
+        </div>
+
+        <div class="section-header-buttons">
+
+            <button type="button"
+                    id="vehicleSummaryButton"
+                    class="section-summary-button">
+                📊 Vehicle Summary
+            </button>
+
+            <button type="button"
+                    id="addVehicleButton"
+                    class="add-module-button">
+                ➕ Add Vehicle
+            </button>
+
+            <button type="button"
+                    id="viewAllVehiclesButton"
+                    class="view-module-button">
+                View All Vehicles →
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- VEHICLE SUMMARY -->
+
+    <div id="vehicleSummary"
+         class="vehicle-summary"
+         style="display: none;">
+
+    </div>
+
+
+    <!-- VEHICLE CARDS -->
+
+<div id="vehicleTypeGrid"
+     class="vehicle-type-grid">
+
+    <!-- ================= CAR ================= -->
+
+    <div class="vehicle-detail-card">
+
+        <div class="vehicle-card-header">
+            <div class="vehicle-card-icon">🚗</div>
+
+            <div class="vehicle-card-heading">
+                <div class="vehicle-type-title">CAR</div>
+                <div class="vehicle-type-subtitle">
+                    Personal • Family • Business
+                </div>
+            </div>
+
+            <button type="button"
+                    class="vehicle-view-details-button">
+                View Details →
+            </button>
+        </div>
+
+
+        <div class="vehicle-metrics-grid">
+
+            <div class="vehicle-metric">
+                <span>🚗 Total Vehicles</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📅 Purchase Date</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📄 RC Expiry</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>💰 Total Cost</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>🛡️ Total IDV</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>☂️ Insurance Due</span>
+                <strong>—</strong>
+            </div>
+
+        </div>
+
+
+        <div class="vehicle-operational-expense">
+
+            <div>
+                <span>🔧 Total Operational Exp.</span>
+
+                <small>
+                    Insurance, Fuel, Maintenance, Challans, Other Exp.
+                </small>
+            </div>
+
+            <strong>₹0</strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= BIKE ================= -->
+
+    <div class="vehicle-detail-card">
+
+        <div class="vehicle-card-header">
+            <div class="vehicle-card-icon">🏍️</div>
+
+            <div class="vehicle-card-heading">
+                <div class="vehicle-type-title">
+                    BIKE / TWO WHEELER
+                </div>
+
+                <div class="vehicle-type-subtitle">
+                    Motorcycle • Scooter • Moped
+                </div>
+            </div>
+
+            <button type="button"
+                    class="vehicle-view-details-button">
+                View Details →
+            </button>
+        </div>
+
+
+        <div class="vehicle-metrics-grid">
+
+            <div class="vehicle-metric">
+                <span>🏍️ Total Vehicles</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📅 Purchase Date</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📄 RC Expiry</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>💰 Total Cost</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>🛡️ Total IDV</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>☂️ Insurance Due</span>
+                <strong>—</strong>
+            </div>
+
+        </div>
+
+
+        <div class="vehicle-operational-expense">
+
+            <div>
+                <span>🔧 Total Operational Exp.</span>
+
+                <small>
+                    Insurance, Fuel, Maintenance, Challans, Other Exp.
+                </small>
+            </div>
+
+           <strong id="bikeOperationalExpense">₹0</strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= SUV / MUV ================= -->
+
+    <div class="vehicle-detail-card">
+
+        <div class="vehicle-card-header">
+            <div class="vehicle-card-icon">🚙</div>
+
+            <div class="vehicle-card-heading">
+                <div class="vehicle-type-title">
+                    SUV / MUV
+                </div>
+
+                <div class="vehicle-type-subtitle">
+                    SUV • MUV • Utility
+                </div>
+            </div>
+
+            <button type="button"
+                    class="vehicle-view-details-button">
+                View Details →
+            </button>
+        </div>
+
+
+        <div class="vehicle-metrics-grid">
+
+            <div class="vehicle-metric">
+                <span>🚙 Total Vehicles</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📅 Purchase Date</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📄 RC Expiry</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>💰 Total Cost</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>🛡️ Total IDV</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>☂️ Insurance Due</span>
+                <strong>—</strong>
+            </div>
+
+        </div>
+
+
+        <div class="vehicle-operational-expense">
+
+            <div>
+                <span>🔧 Total Operational Exp.</span>
+
+                <small>
+                    Insurance, Fuel, Maintenance, Challans, Other Exp.
+                </small>
+            </div>
+
+            <strong>₹0</strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= COMMERCIAL ================= -->
+
+    <div class="vehicle-detail-card">
+
+        <div class="vehicle-card-header">
+            <div class="vehicle-card-icon">🚚</div>
+
+            <div class="vehicle-card-heading">
+                <div class="vehicle-type-title">
+                    COMMERCIAL
+                </div>
+
+                <div class="vehicle-type-subtitle">
+                    Goods • Transport • Business
+                </div>
+            </div>
+
+            <button type="button"
+                    class="vehicle-view-details-button">
+                View Details →
+            </button>
+        </div>
+
+
+        <div class="vehicle-metrics-grid">
+
+            <div class="vehicle-metric">
+                <span>🚚 Total Vehicles</span>
+                <strong>0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📅 Purchase Date</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>📄 RC Expiry</span>
+                <strong>—</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>💰 Total Cost</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>🛡️ Total IDV</span>
+                <strong>₹0</strong>
+            </div>
+
+            <div class="vehicle-metric">
+                <span>☂️ Insurance Due</span>
+                <strong>—</strong>
+            </div>
+
+        </div>
+
+
+        <div class="vehicle-operational-expense">
+
+            <div>
+                <span>🔧 Total Operational Exp.</span>
+
+                <small>
+                    Insurance, Fuel, Maintenance, Challans, Other Exp.
+                </small>
+            </div>
+
+            <strong>₹0</strong>
+
+        </div>
+
+    </div>
+
+</div>
+    
+
+
+    <!-- =========================================
+     ADD / EDIT VEHICLE FORM
+     ========================================= -->
+
+<div id="vehicleFormContainer"
+     style="display: none;">
+
+    <div class="vehicle-form-card">
+
+        <!-- FORM HEADER -->
+
+        <div class="vehicle-form-header">
+
+            <div>
+                <h3>➕ Add Vehicle</h3>
+
+                <p>
+                    Add vehicle, RC and insurance details
+                </p>
+            </div>
+
+        </div>
+
+        <!-- VEHICLE PHOTO -->
+<div class="vehicle-photo-upload-section">
+
+    <div class="vehicle-photo-upload-header">
+        <span>📷 Vehicle Photo</span>
+        <small>Upload vehicle image</small>
+    </div>
+
+    <div class="vehicle-photo-upload-content">
+
+        <div class="vehicle-photo-preview" id="vehicleImagePreview">
+            <span>🚗</span>
+            <p>No photo selected</p>
+        </div>
+
+        <div class="vehicle-photo-upload-controls">
+
+            <label for="vehicleImageInput" class="vehicle-photo-upload-button">
+                📷 Choose Photo
+            </label>
+
+            <input
+                type="file"
+                id="vehicleImageInput"
+                accept="image/jpeg,image/png,image/webp"
+                style="display:none;"
+            >
+
+            <p class="vehicle-photo-upload-hint">
+                JPG, PNG or WEBP • Recommended: clear vehicle photo
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+        <!-- =================================
+             BASIC VEHICLE DETAILS
+             ================================= -->
+
+        <div class="vehicle-form-section">
+
+            <h4>🚗 Basic Vehicle Details</h4>
+
+            <div class="vehicle-form-grid">
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Registration Number *
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleRegistrationNumber"
+                        placeholder="e.g. MP09BS8798"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Vehicle Type *
+                    </label>
+
+                    <select id="vehicleType">
+
+                        <option value="">
+                            Select Vehicle Type
+                        </option>
+
+                        <option value="Car">
+                            🚗 Car
+                        </option>
+
+                        <option value="Bike / Two Wheeler">
+                            🏍️ Bike / Two Wheeler
+                        </option>
+
+                        <option value="SUV / MUV">
+                            🚙 SUV / MUV
+                        </option>
+
+                        <option value="Commercial">
+                            🚚 Commercial
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Manufacturer
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleManufacturer"
+                        placeholder="e.g. TVS MOTOR COMPANY LTD"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Model
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleModel"
+                        placeholder="e.g. TVS RONIN"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Colour
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleColour"
+                        placeholder="e.g. Pearl White"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Body Type
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleBodyType"
+                        placeholder="e.g. Solo with Pillion"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Fuel Type
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleFuelType"
+                        placeholder="e.g. Petrol (E20)"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Seating Capacity
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleSeatingCapacity"
+                        placeholder="e.g. 2"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Cubic Capacity (CC)
+                    </label>
+
+                    <input
+                        type="number"
+                        step="0.01"
+                        id="vehicleCubicCapacity"
+                        placeholder="e.g. 225.90"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Power (BHP / kW)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehiclePower"
+                        placeholder="e.g. 20.11"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Wheel Base (mm)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleWheelBase"
+                        placeholder="e.g. 1357"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Unladen Weight (Kg)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleUnladenWeight"
+                        placeholder="e.g. 161"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Number of Cylinders
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleCylinders"
+                        placeholder="e.g. 1"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Manufacturing Month / Year
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleManufacturingDate"
+                        placeholder="MM-YYYY"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             RC DETAILS
+             ================================= -->
+
+        <div class="vehicle-form-section">
+
+            <h4>📄 Registration Certificate (RC) Details</h4>
+
+            <div class="vehicle-form-grid">
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Registration Date
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleRegistrationDate"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        RC Valid Till
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleRcValidTill"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Chassis Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleChassisNumber"
+                        placeholder="Enter chassis number"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Engine / Motor Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleEngineNumber"
+                        placeholder="Enter engine / motor number"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Owner Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleOwnerName"
+                        placeholder="Enter owner name"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Son / Wife / Daughter of
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleOwnerRelation"
+                        placeholder="C/O / S/O / W/O / D/O"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Ownership
+                    </label>
+
+                    <select id="vehicleOwnership">
+
+                        <option value="">
+                            Select Ownership
+                        </option>
+
+                        <option value="Individual">
+                            Individual
+                        </option>
+
+                        <option value="Company">
+                            Company
+                        </option>
+
+                        <option value="Joint">
+                            Joint
+                        </option>
+
+                        <option value="Other">
+                            Other
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Emission Norm
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleEmissionNorm"
+                        placeholder="e.g. Bharat Stage VI"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Registration Authority
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleRegistrationAuthority"
+                        placeholder="e.g. Indore RTO"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field vehicle-form-field-full">
+
+                    <label>
+                        Registered Address
+                    </label>
+
+                    <textarea
+                        id="vehicleRegisteredAddress"
+                        rows="3"
+                        placeholder="Enter registered address"
+                    ></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             PURCHASE DETAILS
+             ================================= -->
+
+        <div class="vehicle-form-section">
+
+            <h4>💰 Purchase Details</h4>
+
+            <div class="vehicle-form-grid">
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Purchase Date
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehiclePurchaseDate"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Purchase Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehiclePurchasePrice"
+                        placeholder="₹ 0"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Current Value
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleCurrentValue"
+                        placeholder="₹ 0"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             INSURANCE DETAILS
+             ================================= -->
+
+        <div class="vehicle-form-section">
+
+            <h4>🛡️ Insurance Details</h4>
+
+            <div class="vehicle-form-grid">
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Insurance Company
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleInsuranceCompany"
+                        placeholder="Enter insurance company"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Policy Number
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleInsurancePolicyNumber"
+                        placeholder="Enter policy number"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Policy Type
+                    </label>
+
+                    <select id="vehicleInsuranceType">
+
+                        <option value="">
+                            Select Policy Type
+                        </option>
+
+                        <option value="Comprehensive">
+                            Comprehensive
+                        </option>
+
+                        <option value="Third Party">
+                            Third Party
+                        </option>
+
+                        <option value="Own Damage">
+                            Own Damage
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Policy Start Date
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleInsuranceStartDate"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Policy Expiry Date
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleInsuranceExpiryDate"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        IDV
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleInsuranceIdv"
+                        placeholder="₹ 0"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Insurance Premium
+                    </label>
+
+                    <input
+                        type="number"
+                        id="vehicleInsurancePremium"
+                        placeholder="₹ 0"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Third Party Expiry
+                    </label>
+
+                    <input
+                        type="text"
+                        id="vehicleThirdPartyExpiry"
+                        placeholder="dd-mm-yyyy"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             DOCUMENTS
+             ================================= -->
+
+        <div class="vehicle-form-section">
+
+            <h4>📎 Documents</h4>
+
+            <div class="vehicle-form-grid">
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        RC Document
+                    </label>
+
+                    <input
+                        type="file"
+                        id="vehicleRcDocument"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                    >
+
+                </div>
+
+
+                <div class="vehicle-form-field">
+
+                    <label>
+                        Insurance Document
+                    </label>
+
+                    <input
+                        type="file"
+                        id="vehicleInsuranceDocument"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================
+             FORM BUTTONS
+             ================================= -->
+
+        <div class="vehicle-form-actions">
+
+            <button
+                type="button"
+                id="saveVehicleButton"
+                class="save-vehicle-button">
+
+                💾 Save Vehicle
+
+            </button>
+
+
+            <button
+                type="button"
+                id="cancelVehicleButton"
+                class="cancel-vehicle-button">
+
+                ❌ Cancel
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+    <!-- ALL VEHICLES -->
+
+    <div id="vehiclesListContainer"
+         style="display: none;">
+
+    </div>
+
+</section>
 
 <!-- ================================================== -->
 <!-- MY FINANCIAL GOALS -->
@@ -2678,7 +3868,7 @@
 
 <!-- =====================================================
      LOANS & BORROWINGS MODULE
-     ===================================================== -->
+===================================================== -->
 
 <section
     id="loansSection"
@@ -8339,5 +9529,6 @@ document.addEventListener(
 <script src="js/rentalManagement.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="js/loans.js"></script>
+<script type="module" src="js/vehicle.js"></script>
 </body>
 </html>

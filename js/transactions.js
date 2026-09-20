@@ -47,6 +47,358 @@ const cancelTransactionButton =
         "#cancelTransactionButton"
     );
 
+    const recalculateBankBalancesButton =
+    document.querySelector(
+        "#recalculateBankBalancesButton"
+    );
+
+    if (recalculateBankBalancesButton) {
+
+    recalculateBankBalancesButton.addEventListener(
+        "click",
+        async () => {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("पहले login करें।");
+                return;
+            }
+
+            const confirmed = confirm(
+                "Bank balances को पुराने Transactions के आधार पर recalculate करना है?\n\n" +
+                "April 2026, May 2026, June 2026 और September 2026 की entries process होंगी.\n\n" +
+                "Continue?"
+            );
+
+            if (!confirmed) return;
+
+            try {
+
+                const transactionsSnapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            "users",
+                            user.uid,
+                            "transactions"
+                        )
+                    );
+
+                const accountsSnapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            "users",
+                            user.uid,
+                            "accounts"
+                        )
+                    );
+
+                const bankAccounts = {};
+const creditCardAdjustments = {};
+const creditCardAccounts = {};
+
+                accountsSnapshot.forEach(
+                    (accountDoc) => {
+
+                        const account =
+                            accountDoc.data();
+
+                        if (
+                            account.type === "bank"
+                        ) {
+
+                            bankAccounts[
+                                accountDoc.id
+                            ] = {
+                                balance:
+                                    Number(
+                                        account.balance || 0
+                                    ),
+                                adjustment: 0
+                            };
+
+                        }
+
+                        if (
+    account.type === "credit_card"
+) {
+
+    const accountName =
+        (account.name || "").toLowerCase();
+
+    if (
+        accountName.includes("icici") &&
+        accountName.includes("amazon")
+    ) {
+
+        creditCardAccounts.icici =
+            accountDoc.id;
+
+    }
+
+    else if (
+        accountName.includes("kotak")
+    ) {
+
+        creditCardAccounts.kotak =
+            accountDoc.id;
+
+    }
+
+}
+                    }
+                );
+
+                let totalTransactionsProcessed = 0;
+
+                transactionsSnapshot.forEach(
+                    (transactionDoc) => {
+
+                        const transaction =
+                            transactionDoc.data();
+
+                        const date =
+                            transaction.date || "";
+
+                        const isTargetPeriod =
+                            (
+                                date >= "2026-04-01" &&
+                                date <= "2026-06-30"
+                            ) ||
+                            (
+                                date >= "2026-09-01" &&
+                                date <= "2026-09-30"
+                            );
+
+                        if (!isTargetPeriod) return;
+
+                        const amount =
+                            Number(
+                                transaction.amount || 0
+                            );
+
+                        if (!amount) return;
+
+                        const type =
+                            transaction.type || "";
+
+                        const fromAccountId =
+                            transaction.fromAccountId || "";
+
+                        const toAccountId =
+                            transaction.toAccountId || "";
+
+                            const category =
+    transaction.category || "";
+
+const isCreditCardPayment =
+    type === "expense" &&
+    (
+        category === "Credit Card Bill ICICI Amazon" ||
+        category === "Credit Card Bill Kotak"
+    );
+
+    if (isCreditCardPayment) {
+
+    if (
+        category === "Credit Card Bill ICICI Amazon" &&
+        creditCardAccounts.icici
+    ) {
+
+        creditCardAdjustments[
+            creditCardAccounts.icici
+        ] =
+            (
+                creditCardAdjustments[
+                    creditCardAccounts.icici
+                ] || 0
+            ) - amount;
+
+    }
+
+    else if (
+        category === "Credit Card Bill Kotak" &&
+        creditCardAccounts.kotak
+    ) {
+
+        creditCardAdjustments[
+            creditCardAccounts.kotak
+        ] =
+            (
+                creditCardAdjustments[
+                    creditCardAccounts.kotak
+                ] || 0
+            ) - amount;
+
+    }
+
+}
+                        if (
+                            type === "income" &&
+                            bankAccounts[toAccountId]
+                        ) {
+
+                            bankAccounts[
+                                toAccountId
+                            ].adjustment += amount;
+
+                            totalTransactionsProcessed++;
+
+                        }
+
+                        else if (
+                            type === "expense" &&
+                            bankAccounts[fromAccountId]
+                        ) {
+
+                            bankAccounts[
+                                fromAccountId
+                            ].adjustment -= amount;
+
+                            totalTransactionsProcessed++;
+
+                        }
+
+                        else if (
+                            type === "investment"
+                        ) {
+
+                            if (
+                                bankAccounts[fromAccountId]
+                            ) {
+
+                                bankAccounts[
+                                    fromAccountId
+                                ].adjustment -= amount;
+
+                            }
+
+                            if (
+                                bankAccounts[toAccountId]
+                            ) {
+
+                                bankAccounts[
+                                    toAccountId
+                                ].adjustment += amount;
+
+                            }
+
+                            if (
+                                bankAccounts[fromAccountId] ||
+                                bankAccounts[toAccountId]
+                            ) {
+
+                                totalTransactionsProcessed++;
+
+                            }
+
+                        }
+
+                    }
+                );
+
+                for (
+                    const accountId
+                    of Object.keys(bankAccounts)
+                ) {
+
+                    const accountRef =
+                        doc(
+                            db,
+                            "users",
+                            user.uid,
+                            "accounts",
+                            accountId
+                        );
+
+                    const accountData =
+                        bankAccounts[accountId];
+
+                    const newBalance =
+                        accountData.balance +
+                        accountData.adjustment;
+
+                    await updateDoc(
+                        accountRef,
+                        {
+                            balance: newBalance,
+                            updatedAt:
+                                serverTimestamp()
+                        }
+                    );
+
+                }
+
+                for (
+    const accountId
+    of Object.keys(creditCardAdjustments)
+) {
+
+    const accountRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            accountId
+        );
+
+    const accountSnapshot =
+        await getDoc(accountRef);
+
+    if (!accountSnapshot.exists()) {
+        continue;
+    }
+
+    const currentBalance =
+        Number(
+            accountSnapshot.data().balance || 0
+        );
+
+    const newBalance =
+        currentBalance +
+        creditCardAdjustments[accountId];
+
+    await updateDoc(
+        accountRef,
+        {
+            balance: newBalance,
+            updatedAt:
+                serverTimestamp()
+        }
+    );
+
+}
+
+                await loadSavedTransactions();
+
+                alert(
+                    "Bank balances successfully recalculated.\n\n" +
+                    "Transactions processed: " +
+                    totalTransactionsProcessed
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "RECALCULATE BANK BALANCES ERROR:",
+                    error
+                );
+
+                alert(
+                    "Bank balance recalculation failed.\n\n" +
+                    (error?.message || error)
+                );
+
+            }
+
+        }
+    );
+
+}
 
 // ===============================
 // ELEMENT CHECK
@@ -97,6 +449,10 @@ if (addTransactionButton) {
                     await loadTransactionInvestments();
 
                     await loadCustomTransactionTypes();
+
+                    console.log("🚗 ABOUT TO LOAD VEHICLES");
+
+                    loadTransactionVehicleDropdowns();
 
                     loadSavedTransactions();
 
@@ -279,21 +635,27 @@ const categoryOptions = {
     ],
 
     expense: [
-        "Food",
-        "Grocery",
-        "Mobile Recharge",
-        "Electricity Bill",
-        "Gas",
-        "Shopping",
-        "Clothing",
-        "Medical",
-        "Education",
-        "Property Tax",
-        "Home Loan EMI",
-        "Principal Prepayment – Home Loan",
-        "Other Expense"
-    ],
+    "Food",
+    "Grocery",
+    "Mobile Recharge",
+    "Electricity Bill",
+    "Gas",
+    "Shopping",
+    "Clothing",
+    "Medical",
+    "Education",
+    "Property Tax",
+    "Home Loan EMI",
+    "Principal Prepayment – Home Loan",
 
+    "Vehicle Fuel",
+    "Vehicle Insurance",
+    "Vehicle Maintenance",
+    "Vehicle Challan",
+    "Vehicle Other Expense",
+
+    "Other Expense"
+],
     investment: [
         "Fixed Deposit",
         "Stock / Shares",
@@ -333,7 +695,7 @@ const categoryOptions = {
 // ===============================
 
 function loadTransactionCategoriesForRow(row) {
-
+console.log("🔍 CATEGORY LOADER CALLED", row);
     if (!row) {
         return;
     }
@@ -601,7 +963,7 @@ document.addEventListener(
                 row
             );
 
-            // =================================
+// =================================
 // REFRESH ACCOUNT DROPDOWNS
 // =================================
 
@@ -1603,13 +1965,15 @@ if (
             }
 
 
-            transactionEntryBody.appendChild(
-                newRow
-            );
+           transactionEntryBody.appendChild(
+    newRow
+);
 
-            loadCustomTransactionTypes();
+loadCustomTransactionTypes();
 
 updateTransactionRowBehavior(newRow);
+
+loadTransactionVehicleDropdowns();
 
         }
     );
@@ -2505,6 +2869,152 @@ document.addEventListener(
 );
 
 // =========================================
+// LOAD VEHICLES FOR TRANSACTION DROPDOWN
+// =========================================
+
+function loadTransactionVehicleDropdowns() {
+console.log("🚗 VEHICLE DROPDOWN LOADER CALLED");
+    const vehicles =
+        JSON.parse(
+            localStorage.getItem(
+                "financialERP_vehicles"
+            ) || "[]"
+        );
+
+
+    const rows =
+        document.querySelectorAll(
+            ".transaction-entry-row"
+        );
+
+
+    rows.forEach(
+        (row) => {
+
+            const vehicleSelect =
+                row.querySelector(
+                    ".transaction-vehicle"
+                );
+
+
+            if (!vehicleSelect) {
+                return;
+            }
+
+
+            // Remember currently selected vehicle
+            const previousVehicle =
+                vehicleSelect.value;
+
+
+            // Clear existing options
+            vehicleSelect.innerHTML = "";
+
+
+            // Default option
+            const defaultOption =
+                document.createElement(
+                    "option"
+                );
+
+            defaultOption.value = "";
+
+            defaultOption.textContent =
+                "🚗 Select Vehicle";
+
+            vehicleSelect.appendChild(
+                defaultOption
+            );
+
+
+            // No vehicles available
+            if (!vehicles.length) {
+
+                const noVehicleOption =
+                    document.createElement(
+                        "option"
+                    );
+
+                noVehicleOption.value = "";
+
+                noVehicleOption.textContent =
+                    "No Vehicle Added";
+
+                noVehicleOption.disabled = true;
+
+                vehicleSelect.appendChild(
+                    noVehicleOption
+                );
+
+                return;
+            }
+
+
+            // Add all vehicles
+            vehicles.forEach(
+                (vehicle) => {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+
+                    option.value =
+                        vehicle.id;
+
+
+                    const vehicleName =
+                        [
+                            vehicle.manufacturer,
+                            vehicle.model
+                        ]
+                        .filter(Boolean)
+                        .join(" ");
+
+
+                    const registration =
+                        vehicle.registrationNumber ||
+                        "";
+
+
+                    option.textContent =
+                        vehicleName
+                            ? `${vehicleName} - ${registration}`
+                            : registration;
+
+
+                    vehicleSelect.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+
+            // Restore previous selection
+            if (
+                previousVehicle &&
+                Array.from(
+                    vehicleSelect.options
+                ).some(
+                    option =>
+                        option.value ===
+                        previousVehicle
+                )
+            ) {
+
+                vehicleSelect.value =
+                    previousVehicle;
+
+            }
+
+        }
+    );
+
+}
+
+// =========================================
 // SMART TRANSACTION ROW BEHAVIOR
 // =========================================
 
@@ -2701,6 +3211,50 @@ setCellVisible(
 
     }
 
+// =====================================
+// VEHICLE FIELD
+// =====================================
+
+const vehicleSelect =
+    row.querySelector(
+        ".transaction-vehicle"
+    );
+
+if (vehicleSelect) {
+
+    const vehicleCategories = [
+        "Vehicle Fuel",
+        "Vehicle Insurance",
+        "Vehicle Maintenance",
+        "Vehicle Challan",
+        "Vehicle Other Expense"
+    ];
+
+    const selectedCategory =
+        row.querySelector(
+            ".transaction-category"
+        )?.value || "";
+
+    if (
+        selectedType === "expense" &&
+        vehicleCategories.includes(
+            selectedCategory
+        )
+    ) {
+
+        vehicleSelect.style.display =
+            "block";
+
+    } else {
+
+        vehicleSelect.style.display =
+            "none";
+
+        vehicleSelect.value = "";
+
+    }
+
+}
 
 // =====================================
 // TRANSFER
@@ -2746,35 +3300,35 @@ else if (
     }
 
 }
-    // =====================================
-    // INVESTMENT
-    // =====================================
+    
+// =====================================
+// INVESTMENT
+// =====================================
 
-    else if (
-        selectedType === "investment"
-    ) {
+else if (
+    selectedType === "investment"
+) {
 
-        setCellVisible(
-            fromAccountCell,
-            true
-        );
+    // From Account → Investment purchase
+    setCellVisible(
+        fromAccountCell,
+        true
+    );
 
+    // To Account → Investment return / redemption
+    setCellVisible(
+        toAccountCell,
+        true
+    );
 
-        setCellVisible(
-            toAccountCell,
-            false
-        );
+    if (partyInput) {
 
-
-        if (partyInput) {
-
-            partyInput.placeholder =
-                "Institution / Broker / AMC";
-
-        }
+        partyInput.placeholder =
+            "Institution / Broker / AMC";
 
     }
 
+}
 
     // =====================================
     // WALLET PAYMENT
@@ -2891,6 +3445,7 @@ else if (
         }
 
     }
+
 }
 
 // =========================================
@@ -3357,6 +3912,10 @@ if (transactionForm) {
                     "transactions"
                 );
 
+                console.log(
+    "💾 TRANSACTION SAVE USER UID:",
+    user.uid
+);
 
             let savedCount = 0;
 
@@ -3489,6 +4048,43 @@ if (transactionForm) {
                         paymentMethodSelect?.value
                             || "";
 
+                            // =================================
+// VEHICLE INFORMATION
+// =================================
+
+const vehicleSelect =
+    row.querySelector(
+        ".transaction-vehicle"
+    );
+
+const vehicleId =
+    vehicleSelect?.value || null;
+
+const selectedVehicle =
+    vehicleId
+        ? JSON.parse(
+            localStorage.getItem(
+                "financialERP_vehicles"
+            ) || "[]"
+        ).find(
+            vehicle =>
+                vehicle.id === vehicleId
+        )
+        : null;
+
+const vehicleName =
+    selectedVehicle
+        ? [
+            selectedVehicle.manufacturer,
+            selectedVehicle.model
+        ]
+            .filter(Boolean)
+            .join(" ")
+        : "";
+
+const vehicleRegistrationNumber =
+    selectedVehicle?.registrationNumber
+        || "";
 
                     const linkedModule =
                         linkedModuleSelect?.value
@@ -3575,23 +4171,6 @@ if (transactionForm) {
                     }
 
 
-                    // =================================
-                    // INVESTMENT VALIDATION
-                    // =================================
-
-                    if (
-                        type === "investment" &&
-                        !investmentId
-                    ) {
-
-                        alert(
-                            "कृपया Investment / Asset Master से Investment select करें।"
-                        );
-
-                        return;
-
-                    }
-
 // =================================
 // GET TRANSACTION BEHAVIOR
 // =================================
@@ -3664,6 +4243,15 @@ console.log(
                         paymentMethod:
                             paymentMethod,
 
+vehicleId:
+    vehicleId,
+
+vehicleName:
+    vehicleName,
+
+vehicleRegistrationNumber:
+    vehicleRegistrationNumber,
+
                         linkedModule:
                             linkedModule,
 
@@ -3684,6 +4272,20 @@ console.log(
 const editingTransactionId =
     row.dataset.editingTransactionId || null;
 
+if (
+    editingTransactionId &&
+    !(await getDoc(
+        doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            editingTransactionId
+        )
+    )).exists()
+) {
+    row.dataset.editingTransactionId = "";
+}
 
 // =================================
 // EDIT EXISTING TRANSACTION
@@ -4014,13 +4616,13 @@ if (oldTransactionSnapshot.exists()) {
 // BANK ACCOUNT BALANCE
 // =================================
 
-try {
+if (oldTransactionSnapshot.exists()) {
 
-        const oldTransaction =
+    const oldTransaction =
         oldTransactionSnapshot.data();
 
     // Credit Card Bill Payment को यहाँ ignore करेंगे
-    // क्योंकि उसका balance logic पहले से अलग है
+    // क्योंकि उसका अलग balance logic है
     const isOldCreditCardBill =
         oldTransaction.category ===
             "Credit Card Bill ICICI Amazon" ||
@@ -4033,215 +4635,257 @@ try {
         category ===
             "Credit Card Bill Kotak";
 
+    try {
 
-    // =================================
-    // 1. REVERSE OLD INCOME
-    // =================================
+        // =================================
+        // COMMON BANK BALANCE FUNCTION
+        // =================================
 
-    if (
-        oldTransaction.type === "income" &&
-        oldTransaction.toAccountId &&
-        !isOldCreditCardBill
-    ) {
+        const updateBankBalance =
+            async (accountId, changeAmount) => {
 
-        const oldToAccountRef =
-            doc(
-                db,
-                "users",
-                user.uid,
-                "accounts",
-                oldTransaction.toAccountId
-            );
+                if (!accountId) return;
 
-        const oldToAccountSnapshot =
-            await getDoc(oldToAccountRef);
+                const accountRef =
+                    doc(
+                        db,
+                        "users",
+                        user.uid,
+                        "accounts",
+                        accountId
+                    );
 
-        if (oldToAccountSnapshot.exists()) {
+                const accountSnapshot =
+                    await getDoc(accountRef);
 
-            const oldAccount =
-                oldToAccountSnapshot.data();
+                if (!accountSnapshot.exists()) return;
 
-            if (oldAccount.type === "bank") {
+                const account =
+                    accountSnapshot.data();
 
-                const currentBalance =
-                    Number(oldAccount.balance || 0);
-
-                await updateDoc(
-                    oldToAccountRef,
-                    {
-                        balance:
-                            currentBalance -
-                            Number(oldTransaction.amount || 0),
-                        updatedAt:
-                            serverTimestamp()
-                    }
-                );
-            }
-        }
-    }
-
-
-    // =================================
-    // 2. REVERSE OLD EXPENSE
-    // =================================
-
-    if (
-        oldTransaction.type === "expense" &&
-        oldTransaction.fromAccountId &&
-        !isOldCreditCardBill
-    ) {
-
-        const oldFromAccountRef =
-            doc(
-                db,
-                "users",
-                user.uid,
-                "accounts",
-                oldTransaction.fromAccountId
-            );
-
-        const oldFromAccountSnapshot =
-            await getDoc(oldFromAccountRef);
-
-        if (oldFromAccountSnapshot.exists()) {
-
-            const oldAccount =
-                oldFromAccountSnapshot.data();
-
-            if (oldAccount.type === "bank") {
+                if (account.type !== "bank") return;
 
                 const currentBalance =
-                    Number(oldAccount.balance || 0);
+                    Number(account.balance || 0);
 
                 await updateDoc(
-                    oldFromAccountRef,
+                    accountRef,
                     {
                         balance:
                             currentBalance +
-                            Number(oldTransaction.amount || 0),
+                            changeAmount,
                         updatedAt:
                             serverTimestamp()
                     }
                 );
-            }
-        }
-    }
+            };
 
 
-    // =================================
-    // 3. APPLY NEW INCOME
-    // =================================
+        // =================================
+        // 1. REVERSE OLD INCOME
+        // =================================
 
-    if (
-        type === "income" &&
-        toAccountId &&
-        !isNewCreditCardBill
-    ) {
+        if (
+            oldTransaction.type === "income" &&
+            oldTransaction.toAccountId &&
+            !isOldCreditCardBill
+        ) {
 
-        const newToAccountRef =
-            doc(
-                db,
-                "users",
-                user.uid,
-                "accounts",
-                toAccountId
+            await updateBankBalance(
+                oldTransaction.toAccountId,
+                -Number(
+                    oldTransaction.amount || 0
+                )
             );
-
-        const newToAccountSnapshot =
-            await getDoc(newToAccountRef);
-
-        if (newToAccountSnapshot.exists()) {
-
-            const newAccount =
-                newToAccountSnapshot.data();
-
-            if (newAccount.type === "bank") {
-
-                const currentBalance =
-                    Number(newAccount.balance || 0);
-
-                await updateDoc(
-                    newToAccountRef,
-                    {
-                        balance:
-                            currentBalance + amount,
-                        updatedAt:
-                            serverTimestamp()
-                    }
-                );
-            }
         }
-    }
 
 
-    // =================================
-    // 4. APPLY NEW EXPENSE
-    // =================================
+        // =================================
+        // 2. REVERSE OLD EXPENSE
+        // =================================
 
-    if (
-        type === "expense" &&
-        fromAccountId &&
-        !isNewCreditCardBill
-    ) {
+        if (
+            oldTransaction.type === "expense" &&
+            oldTransaction.fromAccountId &&
+            !isOldCreditCardBill
+        ) {
 
-        const newFromAccountRef =
-            doc(
-                db,
-                "users",
-                user.uid,
-                "accounts",
-                fromAccountId
+            await updateBankBalance(
+                oldTransaction.fromAccountId,
+                Number(
+                    oldTransaction.amount || 0
+                )
             );
+        }
 
-        const newFromAccountSnapshot =
-            await getDoc(newFromAccountRef);
 
-        if (newFromAccountSnapshot.exists()) {
+        // =================================
+        // 3. REVERSE OLD INVESTMENT
+        // =================================
 
-            const newAccount =
-                newFromAccountSnapshot.data();
+        if (
+            oldTransaction.type === "investment"
+        ) {
 
-            if (newAccount.type === "bank") {
+            // Old From → पैसा वापस
+            if (
+                oldTransaction.fromAccountId
+            ) {
 
-                const currentBalance =
-                    Number(newAccount.balance || 0);
+                await updateBankBalance(
+                    oldTransaction.fromAccountId,
+                    Number(
+                        oldTransaction.amount || 0
+                    )
+                );
+            }
 
-                await updateDoc(
-                    newFromAccountRef,
-                    {
-                        balance:
-                            currentBalance - amount,
-                        updatedAt:
-                            serverTimestamp()
-                    }
+            // Old To → पैसा वापस निकालें
+            if (
+                oldTransaction.toAccountId
+            ) {
+
+                await updateBankBalance(
+                    oldTransaction.toAccountId,
+                    -Number(
+                        oldTransaction.amount || 0
+                    )
                 );
             }
         }
-    }
 
+// =================================
+// CASHBACK EDIT
+// REVERSE OLD + APPLY NEW
+// =================================
 
-    console.log(
-        "BANK BALANCE UPDATED AFTER TRANSACTION EDIT",
-        {
-            oldType:
-                oldTransaction.type,
-            oldAmount:
-                oldTransaction.amount,
-            newType:
-                type,
-            newAmount:
-                amount
-        }
+// REVERSE OLD CASHBACK
+if (
+    oldTransaction.type === "cashback" &&
+    oldTransaction.toAccountId
+) {
+
+    await updateBankBalance(
+        oldTransaction.toAccountId,
+        -Number(
+            oldTransaction.amount || 0
+        )
     );
-
 }
-catch (bankEditError) {
 
-    console.error(
-        "BANK BALANCE EDIT ERROR:",
-        bankEditError
+
+// APPLY NEW CASHBACK
+if (
+    type === "cashback" &&
+    toAccountId
+) {
+
+    await updateBankBalance(
+        toAccountId,
+        amount
     );
+}
 
+        // =================================
+        // 4. APPLY NEW INCOME
+        // =================================
+
+        if (
+            type === "income" &&
+            toAccountId &&
+            !isNewCreditCardBill
+        ) {
+
+            await updateBankBalance(
+                toAccountId,
+                amount
+            );
+        }
+
+
+        // =================================
+        // 5. APPLY NEW EXPENSE
+        // =================================
+
+        if (
+            type === "expense" &&
+            fromAccountId &&
+            !isNewCreditCardBill
+        ) {
+
+            await updateBankBalance(
+                fromAccountId,
+                -amount
+            );
+        }
+
+
+        // =================================
+        // 6. APPLY NEW INVESTMENT
+        // =================================
+
+        if (
+            type === "investment"
+        ) {
+
+            // New From → Bank से पैसा कम
+            if (fromAccountId) {
+
+                await updateBankBalance(
+                    fromAccountId,
+                    -amount
+                );
+            }
+
+            // New To → Bank में पैसा बढ़े
+            if (toAccountId) {
+
+                await updateBankBalance(
+                    toAccountId,
+                    amount
+                );
+            }
+        }
+
+
+        console.log(
+            "BANK BALANCE UPDATED AFTER TRANSACTION EDIT",
+            {
+                oldType:
+                    oldTransaction.type,
+
+                oldAmount:
+                    oldTransaction.amount,
+
+                newType:
+                    type,
+
+                newAmount:
+                    amount,
+
+                oldFromAccountId:
+                    oldTransaction.fromAccountId,
+
+                oldToAccountId:
+                    oldTransaction.toAccountId,
+
+                newFromAccountId:
+                    fromAccountId,
+
+                newToAccountId:
+                    toAccountId
+            }
+        );
+
+    }
+    catch (bankEditError) {
+
+        console.error(
+            "BANK BALANCE EDIT ERROR:",
+            bankEditError
+        );
+
+    }
 }
 
 // =================================
@@ -4292,7 +4936,61 @@ else {
         }
     );
 
+
     // =================================
+// CASHBACK → TO ACCOUNT
+// FULL AMOUNT SHOULD BE ADDED
+// =================================
+
+if (
+    type === "cashback" &&
+    toAccountId
+) {
+
+    const cashbackAccountRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            toAccountId
+        );
+
+    const cashbackAccountSnapshot =
+        await getDoc(cashbackAccountRef);
+
+    if (cashbackAccountSnapshot.exists()) {
+
+        const account =
+            cashbackAccountSnapshot.data();
+
+        if (account.type === "bank") {
+
+            const currentBalance =
+                Number(account.balance || 0);
+
+            await updateDoc(
+                cashbackAccountRef,
+                {
+                    balance:
+                        currentBalance + amount,
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+            console.log(
+                "CASHBACK BANK BALANCE INCREASED:",
+                {
+                    account: account.name,
+                    amount: amount
+                }
+            );
+        }
+    }
+}
+
+// =================================
 // UPDATE BANK ACCOUNT BALANCE
 // INCOME → TO ACCOUNT = ADD
 // EXPENSE → FROM ACCOUNT = SUBTRACT
@@ -4397,6 +5095,38 @@ try {
                     }
                 );
             }
+
+            // =================================
+// CREDIT CARD → EXPENSE
+// EXPENSE increases outstanding balance
+// =================================
+
+if (account.type === "credit_card") {
+
+     account.type === "cashback_wallet" 
+    const currentBalance =
+        Number(account.balance || 0);
+
+    await updateDoc(
+        fromAccountRef,
+        {
+            balance:
+                currentBalance + amount,
+            updatedAt:
+                serverTimestamp()
+        }
+    );
+
+    console.log(
+        "CREDIT CARD BALANCE INCREASED:",
+        {
+            account:
+                account.name,
+            amount:
+                amount
+        }
+    );
+}
         }
     }
 
@@ -4407,6 +5137,122 @@ catch (bankBalanceError) {
         "BANK BALANCE UPDATE ERROR:",
         bankBalanceError
     );
+
+}
+
+// =================================
+// UPDATE BANK BALANCE
+// INVESTMENT → FROM = SUBTRACT
+// INVESTMENT → TO = ADD
+// =================================
+
+if (type === "investment") {
+
+    try {
+
+        // INVESTMENT PURCHASE
+        // FROM ACCOUNT → MONEY OUT
+        if (fromAccountId) {
+
+            const fromInvestmentRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    fromAccountId
+                );
+
+            const fromInvestmentSnapshot =
+                await getDoc(fromInvestmentRef);
+
+            if (fromInvestmentSnapshot.exists()) {
+
+                const account =
+                    fromInvestmentSnapshot.data();
+
+                if (account.type === "bank") {
+
+                    const currentBalance =
+                        Number(account.balance || 0);
+
+                    await updateDoc(
+                        fromInvestmentRef,
+                        {
+                            balance:
+                                currentBalance - amount,
+                            updatedAt:
+                                serverTimestamp()
+                        }
+                    );
+
+                    console.log(
+                        "INVESTMENT BANK BALANCE DECREASED:",
+                        {
+                            account: account.name,
+                            amount: amount
+                        }
+                    );
+                }
+            }
+        }
+
+        // INVESTMENT RETURN / REDEMPTION
+        // TO ACCOUNT → MONEY IN
+        if (toAccountId) {
+
+            const toInvestmentRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    toAccountId
+                );
+
+            const toInvestmentSnapshot =
+                await getDoc(toInvestmentRef);
+
+            if (toInvestmentSnapshot.exists()) {
+
+                const account =
+                    toInvestmentSnapshot.data();
+
+                if (account.type === "bank") {
+
+                    const currentBalance =
+                        Number(account.balance || 0);
+
+                    await updateDoc(
+                        toInvestmentRef,
+                        {
+                            balance:
+                                currentBalance + amount,
+                            updatedAt:
+                                serverTimestamp()
+                        }
+                    );
+
+                    console.log(
+                        "INVESTMENT BANK BALANCE INCREASED:",
+                        {
+                            account: account.name,
+                            amount: amount
+                        }
+                    );
+                }
+            }
+        }
+
+    }
+    catch (investmentBankError) {
+
+        console.error(
+            "INVESTMENT BANK BALANCE UPDATE ERROR:",
+            investmentBankError
+        );
+
+    }
 
 }
 
@@ -5407,7 +6253,7 @@ document.addEventListener(
                     transactionId
                 );
 
-                // =================================
+// =================================
 // REVERSE ACCOUNT BALANCES
 // BEFORE DELETING TRANSACTION
 // =================================
@@ -5420,7 +6266,126 @@ if (transactionSnapshot.exists()) {
     const oldTransaction =
         transactionSnapshot.data();
 
-    if (
+    const amountToReverse =
+        Number(oldTransaction.amount || 0);
+
+
+    // =================================
+    // COMMON BANK BALANCE UPDATE
+    // =================================
+
+    const updateBankBalance =
+        async (accountId, changeAmount) => {
+
+            if (!accountId) return;
+
+            const accountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    accountId
+                );
+
+            const accountSnapshot =
+                await getDoc(accountRef);
+
+            if (!accountSnapshot.exists()) return;
+
+            const account =
+                accountSnapshot.data();
+
+
+// =================================
+// CREDIT CARD EXPENSE REVERSAL
+// DELETE EXPENSE → CREDIT CARD BALANCE DECREASES
+// =================================
+
+if (
+    account.type === "credit_card" &&
+    oldTransaction.type === "expense" &&
+    oldTransaction.fromAccountId === accountId
+) {
+
+    const currentBalance =
+        Number(account.balance || 0);
+
+    await updateDoc(
+        accountRef,
+        {
+            balance:
+                Math.max(
+                    0,
+                    currentBalance -
+                    amountToReverse
+                ),
+            updatedAt:
+                serverTimestamp()
+        }
+    );
+
+    console.log(
+        "CREDIT CARD EXPENSE REVERSED:",
+        {
+            account:
+                account.name,
+            amount:
+                amountToReverse
+        }
+    );
+
+    return;
+}
+                
+            if (account.type !== "bank") return;
+
+            const currentBalance =
+                Number(account.balance || 0);
+
+            await updateDoc(
+                accountRef,
+                {
+                    balance:
+                        currentBalance +
+                        changeAmount,
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+        };
+
+
+// =================================
+// REVERSE OLD CASHBACK
+// CASHBACK DELETE → TO ACCOUNT से पैसा कम
+// =================================
+
+if (
+    oldTransaction.type === "cashback" &&
+    oldTransaction.toAccountId
+) {
+
+    await updateBankBalance(
+        oldTransaction.toAccountId,
+        -amountToReverse
+    );
+
+    console.log(
+        "CASHBACK BANK BALANCE REVERSED ON DELETE:",
+        {
+            accountId:
+                oldTransaction.toAccountId,
+            amount:
+                amountToReverse
+        }
+    );
+}
+    // =================================
+    // CREDIT CARD BILL PAYMENT
+    // =================================
+
+    const isCreditCardPayment =
         oldTransaction.behavior ===
             "money_out_non_expense" &&
         oldTransaction.type === "expense" &&
@@ -5429,55 +6394,22 @@ if (transactionSnapshot.exists()) {
                 "Credit Card Bill ICICI Amazon" ||
             oldTransaction.category ===
                 "Credit Card Bill Kotak"
-        )
-    ) {
+        );
 
-        const amountToReverse =
-            Number(oldTransaction.amount || 0);
 
-        // ---------------------------------
-        // RESTORE BANK BALANCE
-        // ---------------------------------
+    if (isCreditCardPayment) {
 
+        // Restore From Bank
         if (oldTransaction.fromAccountId) {
 
-            const fromAccountRef =
-                doc(
-                    db,
-                    "users",
-                    user.uid,
-                    "accounts",
-                    oldTransaction.fromAccountId
-                );
-
-            const fromAccountSnapshot =
-                await getDoc(fromAccountRef);
-
-            if (fromAccountSnapshot.exists()) {
-
-                const currentBalance =
-                    Number(
-                        fromAccountSnapshot.data()
-                            .balance || 0
-                    );
-
-                await updateDoc(
-                    fromAccountRef,
-                    {
-                        balance:
-                            currentBalance +
-                            amountToReverse,
-                        updatedAt:
-                            serverTimestamp()
-                    }
-                );
-            }
+            await updateBankBalance(
+                oldTransaction.fromAccountId,
+                amountToReverse
+            );
         }
 
-        // ---------------------------------
-        // RESTORE CREDIT CARD LIABILITY
-        // ---------------------------------
 
+        // Restore Credit Card Balance
         const accountsCollection =
             collection(
                 db,
@@ -5511,6 +6443,7 @@ if (transactionSnapshot.exists()) {
                             ?.toLowerCase()
                             .includes("icici amazon")
                     ) {
+
                         creditCardAccountId =
                             accountDoc.id;
                     }
@@ -5522,12 +6455,14 @@ if (transactionSnapshot.exists()) {
                             ?.toLowerCase()
                             .includes("kotak")
                     ) {
+
                         creditCardAccountId =
                             accountDoc.id;
                     }
                 }
             }
         );
+
 
         if (creditCardAccountId) {
 
@@ -5543,13 +6478,12 @@ if (transactionSnapshot.exists()) {
             const creditCardSnapshot =
                 await getDoc(creditCardRef);
 
-            if (
-                creditCardSnapshot.exists()
-            ) {
+            if (creditCardSnapshot.exists()) {
 
-                const currentCardBalance =
+                const currentBalance =
                     Number(
-                        creditCardSnapshot.data()
+                        creditCardSnapshot
+                            .data()
                             .balance || 0
                     );
 
@@ -5557,7 +6491,7 @@ if (transactionSnapshot.exists()) {
                     creditCardRef,
                     {
                         balance:
-                            currentCardBalance +
+                            currentBalance +
                             amountToReverse,
                         updatedAt:
                             serverTimestamp()
@@ -5566,20 +6500,96 @@ if (transactionSnapshot.exists()) {
             }
         }
 
-        console.log(
-            "CREDIT CARD PAYMENT BALANCE REVERSED BEFORE DELETE",
-            {
-                category:
-                    oldTransaction.category,
-                amount:
-                    amountToReverse,
-                fromAccountId:
-                    oldTransaction.fromAccountId,
-                creditCardAccountId
-            }
+    }
+
+
+    // =================================
+    // NORMAL INCOME
+    // =================================
+
+    else if (
+        oldTransaction.type === "income" &&
+        oldTransaction.toAccountId
+    ) {
+
+        // Income हटाते समय Bank से पैसा घटे
+        await updateBankBalance(
+            oldTransaction.toAccountId,
+            -amountToReverse
         );
     }
+
+
+    // =================================
+    // NORMAL EXPENSE
+    // =================================
+
+    else if (
+        oldTransaction.type === "expense" &&
+        oldTransaction.fromAccountId
+    ) {
+
+        // Expense हटाते समय Bank में पैसा वापस
+        await updateBankBalance(
+            oldTransaction.fromAccountId,
+            amountToReverse
+        );
+    }
+
+
+    // =================================
+    // INVESTMENT
+    // =================================
+
+    else if (
+        oldTransaction.type === "investment"
+    ) {
+
+        // Investment From हटाते समय
+        // पैसा वापस Bank में
+        if (
+            oldTransaction.fromAccountId
+        ) {
+
+            await updateBankBalance(
+                oldTransaction.fromAccountId,
+                amountToReverse
+            );
+        }
+
+
+        // Investment To हटाते समय
+        // Bank से received पैसा वापस निकले
+        if (
+            oldTransaction.toAccountId
+        ) {
+
+            await updateBankBalance(
+                oldTransaction.toAccountId,
+                -amountToReverse
+            );
+        }
+    }
+
+
+    console.log(
+        "ACCOUNT BALANCE REVERSED BEFORE DELETE",
+        {
+            type:
+                oldTransaction.type,
+
+            amount:
+                amountToReverse,
+
+            fromAccountId:
+                oldTransaction.fromAccountId,
+
+            toAccountId:
+                oldTransaction.toAccountId
+        }
+    );
 }
+
             // =================================
             // DELETE FROM FIRESTORE
             // =================================
@@ -9504,4 +10514,168 @@ document.addEventListener(
 
     },
     true
+);
+
+// =========================================
+// TEMPORARY DELETE ALL TRANSACTION HISTORY
+// =========================================
+
+const deleteAllTransactionsButton =
+    document.querySelector(
+        "#deleteAllTransactionsButton"
+    );
+
+if (deleteAllTransactionsButton) {
+
+    deleteAllTransactionsButton.addEventListener(
+        "click",
+        async () => {
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("पहले login करें।");
+                return;
+            }
+
+            const confirmed = confirm(
+                "⚠️ WARNING\n\n" +
+                "क्या आप सभी Transaction History entries delete करना चाहते हैं?\n\n" +
+                "सिर्फ Transactions delete होंगी।\n" +
+                "Accounts, Investments, Properties, Insurance, Loans आदि को touch नहीं किया जाएगा.\n\n" +
+                "यह action वापस नहीं किया जा सकता।\n\n" +
+                "Continue?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+
+                const transactionsCollection =
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactions"
+                    );
+
+                const snapshot =
+                    await getDocs(
+                        transactionsCollection
+                    );
+
+                let deletedCount = 0;
+
+                for (
+                    const transactionDoc
+                    of snapshot.docs
+                ) {
+
+                    await deleteDoc(
+                        transactionDoc.ref
+                    );
+
+                    deletedCount++;
+
+                }
+
+                await loadSavedTransactions();
+
+                alert(
+                    deletedCount +
+                    " Transaction History entries deleted successfully."
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "DELETE ALL TRANSACTIONS ERROR:",
+                    error
+                );
+
+                alert(
+                    "Transaction History delete नहीं हो सकी.\n\n" +
+                    (error?.message || error)
+                );
+
+            }
+
+        }
+    );
+
+}
+
+// =========================================
+// VEHICLE FIELD — CATEGORY CHANGE
+// =========================================
+
+document.addEventListener(
+    "change",
+    (event) => {
+
+        if (
+            !event.target.classList.contains(
+                "transaction-category"
+            )
+        ) {
+            return;
+        }
+
+        const row =
+            event.target.closest(
+                ".transaction-entry-row"
+            );
+
+        if (!row) {
+            return;
+        }
+
+        const type =
+            row.querySelector(
+                ".transaction-type"
+            )?.value || "";
+
+        const category =
+            event.target.value || "";
+
+        const vehicleSelect =
+            row.querySelector(
+                ".transaction-vehicle"
+            );
+
+        if (!vehicleSelect) {
+            return;
+        }
+
+        const vehicleCategories = [
+            "Vehicle Fuel",
+            "Vehicle Insurance",
+            "Vehicle Maintenance",
+            "Vehicle Challan",
+            "Vehicle Other Expense"
+        ];
+
+        if (
+            type === "expense" &&
+            vehicleCategories.includes(category)
+        ) {
+
+            vehicleSelect.style.display =
+                "block";
+
+                loadTransactionVehicleDropdowns();
+
+        } else {
+
+            vehicleSelect.style.display =
+                "none";
+
+            vehicleSelect.value = "";
+
+        }
+
+    }
 );

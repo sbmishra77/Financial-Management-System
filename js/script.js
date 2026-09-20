@@ -490,8 +490,14 @@ if (totalAvailableFundsBottom) {
 
 if (dashboardFundsAvailableValue) {
 
+    const currentAvailableBalance =
+        bankBalance +
+        cashBalance +
+        cashbackBalance -
+        creditCardBalance;
+
     dashboardFundsAvailableValue.textContent =
-        `₹${totalAccountAssets.toLocaleString(
+        `₹${currentAvailableBalance.toLocaleString(
             "en-IN",
             {
                 minimumFractionDigits: 2,
@@ -1495,6 +1501,104 @@ dashboardInvestmentCategoryTotals[
     totalInvestmentCurrentValue +
     totalFDPrincipal;
 
+// =========================================
+// LOAD PROPERTIES — DASHBOARD
+// =========================================
+
+const dashboardPropertiesSnapshot =
+    await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "properties"
+        )
+    );
+
+let dashboardPropertyTotalValue = 0;
+
+dashboardPropertiesSnapshot.forEach(
+    (propertyDoc) => {
+
+        const property =
+            propertyDoc.data();
+
+        dashboardPropertyTotalValue +=
+            Number(
+                property.currentValue || 0
+            );
+
+    }
+);
+
+// =========================================
+// UPDATE PROPERTIES DASHBOARD CARD
+// =========================================
+
+const dashboardPropertyValue =
+    document.querySelector(
+        "#dashboardPropertyValue"
+    );
+
+if (dashboardPropertyValue) {
+
+    dashboardPropertyValue.textContent =
+        "₹" +
+        dashboardPropertyTotalValue.toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+
+}
+
+// =========================================
+// LOAD INSURANCE — DASHBOARD
+// =========================================
+
+const dashboardInsuranceSnapshot =
+    await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "insurance"
+        )
+    );
+
+let dashboardActiveInsuranceCount = 0;
+
+dashboardInsuranceSnapshot.forEach(
+    (insuranceDoc) => {
+
+        const policy =
+            insuranceDoc.data();
+
+        if (policy.status === "active") {
+            dashboardActiveInsuranceCount++;
+        }
+
+    }
+);
+
+// =========================================
+// UPDATE INSURANCE DASHBOARD CARD
+// =========================================
+
+const dashboardInsuranceValue =
+    document.querySelector(
+        "#dashboardInsuranceValue"
+    );
+
+if (dashboardInsuranceValue) {
+
+    dashboardInsuranceValue.textContent =
+        dashboardActiveInsuranceCount;
+
+}
+
 const dashboardInvestmentsValue =
     document.querySelector(
         "#dashboardInvestmentsValue"
@@ -2451,24 +2555,6 @@ else if (account.type === "cashback") {
 
 }
 
-// =========================================
-// UPDATE DASHBOARD ACCOUNTS CARD
-// =========================================
-
-const dashboardAccountsElement =
-    document.querySelector(
-        "#dashboardAccountsBalance"
-    );
-
-if (dashboardAccountsElement) {
-
-    dashboardAccountsElement.textContent =
-        "₹" +
-        dashboardAccountsBalance.toLocaleString(
-            "en-IN"
-        );
-
-}
 
 /* =============================== */
 /* BANK BRAND DETECTION */
@@ -2659,6 +2745,26 @@ if (accountsTableBody) {
 
 }
         });
+
+
+        // =========================================
+// UPDATE DASHBOARD ACCOUNTS CARD
+// =========================================
+
+const dashboardAccountsElement =
+    document.querySelector(
+        "#dashboardAccountsBalance"
+    );
+
+if (dashboardAccountsElement) {
+
+    dashboardAccountsElement.textContent =
+        "₹" +
+        dashboardAccountsBalance.toLocaleString(
+            "en-IN"
+        );
+
+}
 
 
         console.log(
@@ -9768,11 +9874,15 @@ const modules = {
     insurance:
         document.querySelector(".insurance-section"),
 
-    financialGoals:
-        document.getElementById("financialGoalsSection"),
+            vehicles:
+        document.getElementById("vehiclesSection"),
 
-    fundsAvailable:
-        document.getElementById("fundsAvailableSection")
+    financialGoals:
+    document.getElementById("financialGoalsSection"),
+
+fundsAvailable:
+    document.getElementById("fundsAvailableSection"),
+
 
 };
     // ----------------------------------------------
@@ -9898,6 +10008,118 @@ if (view === "financialGoals") {
         );
 
     }
+
+}
+
+// ----------------------------------------------
+// VEHICLE MANAGEMENT — RESET TO MAIN SCREEN
+// ----------------------------------------------
+
+if (view === "vehicles") {
+
+    // =====================================
+    // VEHICLE HEADER
+    // =====================================
+
+    const vehicleHeader =
+        document.querySelector(
+            ".vehicles-section-header"
+        );
+
+    if (vehicleHeader) {
+
+        vehicleHeader.style.setProperty(
+            "display",
+            "flex",
+            "important"
+        );
+
+    }
+
+
+    // =====================================
+    // VEHICLE SUMMARY
+    // =====================================
+
+    const vehicleSummary =
+        document.getElementById(
+            "vehicleSummary"
+        );
+
+    if (vehicleSummary) {
+
+        vehicleSummary.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // =====================================
+    // VEHICLE CATEGORY CARDS
+    // =====================================
+
+    const vehicleGrid =
+        document.getElementById(
+            "vehicleTypeGrid"
+        );
+
+    if (vehicleGrid) {
+
+        vehicleGrid.style.setProperty(
+            "display",
+            "grid",
+            "important"
+        );
+
+    }
+
+
+    // =====================================
+    // ADD VEHICLE FORM
+    // =====================================
+
+    const vehicleForm =
+        document.getElementById(
+            "vehicleFormContainer"
+        );
+
+    if (vehicleForm) {
+
+        vehicleForm.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // =====================================
+    // VEHICLE MASTER LIST
+    // =====================================
+
+    const vehiclesList =
+        document.getElementById(
+            "vehiclesListContainer"
+        );
+
+    if (vehiclesList) {
+
+        vehiclesList.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    console.log(
+        "🚗 VEHICLE MODULE RESET — MAIN SCREEN"
+    );
 
 }
 
@@ -10143,6 +10365,27 @@ if (section !== "dashboard") {
 
     // Open Loans Module
     showMasterView("loans");
+
+    return;
+}
+
+// ==================================================
+// VEHICLE MANAGEMENT — MASTER VIEW
+// ==================================================
+
+if (section === "vehicles") {
+
+    // Highlight Vehicle Management
+    document
+        .querySelectorAll(".sidebar-menu-item")
+        .forEach(button => {
+            button.classList.remove("active");
+        });
+
+    menuButton.classList.add("active");
+
+    // Open Vehicle Management Module
+    showMasterView("vehicles");
 
     return;
 }
