@@ -1788,6 +1788,175 @@
 <div id="vehicleTypeGrid"
      class="vehicle-type-grid">
 
+     <!-- ================= BIKE / TWO WHEELER SUMMARY ================= -->
+
+<div class="vehicle-detail-card vehicle-summary-card bike-summary-card">
+
+    <!-- CARD HEADER -->
+    <div class="vehicle-card-header">
+
+        <div class="vehicle-card-icon">
+            🏍️
+        </div>
+
+        <div class="vehicle-card-heading">
+
+            <div class="vehicle-type-title">
+                BIKE / TWO WHEELER
+            </div>
+
+            <div class="vehicle-type-subtitle">
+                Motorcycle • Scooter • Moped
+            </div>
+
+        </div>
+
+        <div class="vehicle-summary-total">
+
+            <span>
+                🏍️ Total Vehicles
+            </span>
+
+            <strong id="bikeTotalVehicles">
+                0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- SUMMARY METRICS -->
+    <div class="vehicle-metrics-grid">
+
+        <div class="vehicle-metric">
+            <span>💰 Total Purchase Cost</span>
+            <strong id="bikeTotalPurchaseCost">
+                ₹0
+            </strong>
+        </div>
+
+
+        <div class="vehicle-metric">
+            <span>🛡️ Total Current Value</span>
+            <strong id="bikeTotalCurrentValue">
+                ₹0
+            </strong>
+        </div>
+
+
+        <div class="vehicle-metric">
+            <span>🔧 Operational Expense</span>
+            <strong id="bikeTotalOperationalExpense">
+                ₹0
+            </strong>
+        </div>
+
+
+        <div class="vehicle-metric">
+            <span>📅 Latest Purchase</span>
+            <strong id="bikeLatestPurchaseDate">
+                —
+            </strong>
+        </div>
+
+
+        <div class="vehicle-metric">
+            <span>📄 Nearest RC Expiry</span>
+            <strong id="bikeNearestRCExpiry">
+                —
+            </strong>
+        </div>
+
+
+        <div class="vehicle-metric">
+            <span>☂️ Insurance Due</span>
+            <strong id="bikeInsuranceDue">
+                —
+            </strong>
+        </div>
+
+    </div>
+
+
+    <!-- VEHICLE DETAILS TABLE -->
+    <div class="vehicle-summary-table-wrapper">
+
+        <table class="vehicle-summary-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>#</th>
+
+                    <th>
+                        Make & Model
+                    </th>
+
+                    <th>
+                        Registration
+                    </th>
+
+                    <th>
+                        Purchase On
+                    </th>
+
+                    <th>
+                        RC Valid Upto
+                    </th>
+
+                    <th>
+                        Insurance Upto
+                    </th>
+
+                    <th>
+                        Renewal Due
+                    </th>
+
+                    <th>
+                        Service Due
+                    </th>
+
+                    <th>
+    View Details
+</th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody id="bikeVehicleSummaryBody">
+
+                <tr>
+
+                    <td colspan="8">
+                        No Bike / Two Wheeler added yet.
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- MOTIVATIONAL / SAFETY QUOTE -->
+    <div class="vehicle-summary-quote">
+
+        🛣️
+        <span>
+            “Safe driving today means a safer journey tomorrow.”
+        </span>
+
+    </div>
+
+</div>
+
+
     <!-- ================= CAR ================= -->
 
     <div class="vehicle-detail-card">
@@ -1859,83 +2028,6 @@
         </div>
 
     </div>
-
-
-    <!-- ================= BIKE ================= -->
-
-    <div class="vehicle-detail-card">
-
-        <div class="vehicle-card-header">
-            <div class="vehicle-card-icon">🏍️</div>
-
-            <div class="vehicle-card-heading">
-                <div class="vehicle-type-title">
-                    BIKE / TWO WHEELER
-                </div>
-
-                <div class="vehicle-type-subtitle">
-                    Motorcycle • Scooter • Moped
-                </div>
-            </div>
-
-            <button type="button"
-                    class="vehicle-view-details-button">
-                View Details →
-            </button>
-        </div>
-
-
-        <div class="vehicle-metrics-grid">
-
-            <div class="vehicle-metric">
-                <span>🏍️ Total Vehicles</span>
-                <strong>0</strong>
-            </div>
-
-            <div class="vehicle-metric">
-                <span>📅 Purchase Date</span>
-                <strong>—</strong>
-            </div>
-
-            <div class="vehicle-metric">
-                <span>📄 RC Expiry</span>
-                <strong>—</strong>
-            </div>
-
-            <div class="vehicle-metric">
-                <span>💰 Total Cost</span>
-                <strong>₹0</strong>
-            </div>
-
-            <div class="vehicle-metric">
-                <span>🛡️ Total IDV</span>
-                <strong>₹0</strong>
-            </div>
-
-            <div class="vehicle-metric">
-                <span>☂️ Insurance Due</span>
-                <strong>—</strong>
-            </div>
-
-        </div>
-
-
-        <div class="vehicle-operational-expense">
-
-            <div>
-                <span>🔧 Total Operational Exp.</span>
-
-                <small>
-                    Insurance, Fuel, Maintenance, Challans, Other Exp.
-                </small>
-            </div>
-
-           <strong id="bikeOperationalExpense">₹0</strong>
-
-        </div>
-
-    </div>
-
 
     <!-- ================= SUV / MUV ================= -->
 
@@ -2783,8 +2875,22 @@
                     >
 
                 </div>
+                
 
             </div>
+            <div class="vehicle-form-field">
+
+    <label>
+        Service Due Date
+    </label>
+
+    <input
+        type="text"
+        id="vehicleServiceDueDate"
+        placeholder="dd-mm-yyyy"
+    >
+
+</div>
 
         </div>
 

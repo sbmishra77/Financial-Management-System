@@ -5460,7 +5460,13 @@ savedCount++;
                     " Transaction successfully save हो गई।"
                 );
 
+// =========================================
+// NOTIFY VEHICLE MODULE
+// =========================================
 
+window.dispatchEvent(
+    new CustomEvent("vehicleTransactionUpdated")
+);
                 console.log(
                     "All transactions saved successfully:",
                     savedCount
@@ -6606,6 +6612,14 @@ if (
             alert(
                 "Transaction successfully delete हो गई।"
             );
+
+// =========================================
+// NOTIFY VEHICLE MODULE AFTER DELETE
+// =========================================
+
+window.dispatchEvent(
+    new CustomEvent("vehicleTransactionUpdated")
+);
 
             // =================================
             // REFRESH HISTORY

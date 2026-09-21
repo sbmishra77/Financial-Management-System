@@ -12548,3 +12548,503 @@ body {
     font-size: 12px;
     color: #64748b;
 }
+
+/* =========================================
+   VEHICLE SUMMARY - FULL WIDTH CARDS
+   ========================================= */
+
+.vehicle-summary-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.vehicle-summary-card .vehicle-summary-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.vehicle-summary-card .vehicle-summary-table {
+    width: 100%;
+    min-width: 900px;
+}
+
+/* =========================================
+   VEHICLE SUMMARY - ONE CARD PER ROW
+   ========================================= */
+
+#vehicleTypeGrid {
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+}
+
+#vehicleTypeGrid .vehicle-detail-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   VEHICLE SUMMARY - PREMIUM BIKE CARD
+   ========================================= */
+
+.bike-summary-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ecfff5 0%,
+            #d9fbea 45%,
+            #c8f5df 100%
+        ) !important;
+
+    border: 1px solid #a7ebc7 !important;
+    border-radius: 18px !important;
+
+    padding: 14px !important;
+
+    box-shadow:
+        0 8px 22px rgba(22, 163, 74, 0.12) !important;
+
+    overflow: hidden;
+}
+
+
+/* =========================================
+   BIKE HEADER
+   ========================================= */
+
+.bike-summary-card .vehicle-card-header {
+
+    background:
+        linear-gradient(
+            135deg,
+            #d9fbea,
+            #bff3d7
+        ) !important;
+
+    border-radius: 14px !important;
+
+    padding: 14px 18px !important;
+
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* Decorative bike background */
+
+.bike-summary-card .vehicle-card-header::after {
+
+    content: "🏍️";
+
+    position: absolute;
+
+    right: 120px;
+    top: 50%;
+
+    transform:
+        translateY(-50%)
+        scale(3.8);
+
+    opacity: 0.07;
+
+    pointer-events: none;
+}
+
+
+/* Bike icon */
+
+.bike-summary-card .vehicle-card-icon {
+
+    width: 58px;
+    height: 58px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,0.10);
+
+    flex-shrink: 0;
+}
+
+
+/* Heading */
+
+.bike-summary-card .vehicle-card-heading {
+
+    margin-left: 16px;
+
+    position: relative;
+    z-index: 2;
+}
+
+.bike-summary-card .vehicle-type-title {
+
+    font-size: 21px !important;
+
+    font-weight: 800 !important;
+
+    color: #063b24 !important;
+
+    letter-spacing: 0.3px;
+}
+
+.bike-summary-card .vehicle-type-subtitle {
+
+    margin-top: 3px;
+
+    font-size: 13px !important;
+
+    color: #185c3b !important;
+}
+
+
+/* =========================================
+   TOTAL VEHICLE BADGE
+   ========================================= */
+
+.bike-summary-card .vehicle-summary-total {
+
+    margin-left: auto;
+
+    min-width: 125px;
+
+    padding: 10px 18px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #16a34a,
+            #059669
+        );
+
+    color: white;
+
+    text-align: left;
+
+    box-shadow:
+        0 5px 12px rgba(5, 150, 105, 0.25);
+
+    position: relative;
+    z-index: 3;
+}
+
+.bike-summary-card .vehicle-summary-total span {
+
+    display: block;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    opacity: 0.95;
+}
+
+.bike-summary-card .vehicle-summary-total strong {
+
+    display: block;
+
+    margin-top: 2px;
+
+    font-size: 21px;
+
+    font-weight: 800;
+}
+
+
+/* =========================================
+   METRICS
+   ========================================= */
+
+.bike-summary-card .vehicle-metrics-grid {
+
+    display: grid !important;
+
+    grid-template-columns:
+        repeat(3, 1fr) !important;
+
+    gap: 10px !important;
+
+    margin-top: 10px;
+}
+
+
+.bike-summary-card .vehicle-metric {
+
+    background: rgba(255,255,255,0.82) !important;
+
+    border-radius: 11px !important;
+
+    padding: 12px 14px !important;
+
+    border: 1px solid rgba(255,255,255,0.9);
+
+    min-height: 58px;
+
+    box-shadow:
+        0 2px 7px rgba(0,0,0,0.04);
+
+    text-align: center;
+}
+
+.bike-summary-card .vehicle-metric span {
+
+    display: block;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    color: #17405c;
+}
+
+.bike-summary-card .vehicle-metric strong {
+
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    color: #063b24;
+}
+
+
+/* =========================================
+   VEHICLE TABLE
+   ========================================= */
+
+.bike-summary-card
+.vehicle-summary-table-wrapper {
+
+    margin-top: 12px;
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    border-radius: 11px;
+}
+
+
+.bike-summary-card
+.vehicle-summary-table {
+
+    width: 100%;
+
+    min-width: 850px;
+
+    border-collapse: separate;
+
+    border-spacing: 0;
+
+    overflow: hidden;
+
+    background: rgba(255,255,255,0.88);
+
+    border-radius: 11px;
+}
+
+
+.bike-summary-card
+.vehicle-summary-table th {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e7f8ef,
+            #d8f3e4
+        );
+
+    color: #164e35;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    padding: 10px 8px;
+
+    white-space: nowrap;
+
+    border-bottom: 1px solid #bde6ce;
+}
+
+
+.bike-summary-card
+.vehicle-summary-table td {
+
+    padding: 10px 8px;
+
+    font-size: 12px;
+
+    color: #17324d;
+
+    border-bottom: 1px solid #e3edf0;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
+
+
+.bike-summary-card
+.vehicle-summary-table tbody tr:hover {
+
+    background: #f0fff6;
+}
+
+
+/* =========================================
+   RENEWAL / SERVICE BADGES
+   ========================================= */
+
+.bike-summary-card .renewal-safe {
+
+    display: inline-block;
+
+    padding: 4px 10px;
+
+    border-radius: 20px;
+
+    background: #dcfce7;
+
+    color: #166534;
+
+    border: 1px solid #86efac;
+
+    font-weight: 800;
+}
+
+
+.bike-summary-card .renewal-warning {
+
+    display: inline-block;
+
+    padding: 4px 10px;
+
+    border-radius: 20px;
+
+    background: #fef3c7;
+
+    color: #92400e;
+
+    border: 1px solid #facc15;
+
+    font-weight: 800;
+}
+
+
+.bike-summary-card .renewal-danger {
+
+    display: inline-block;
+
+    padding: 4px 10px;
+
+    border-radius: 20px;
+
+    background: #fee2e2;
+
+    color: #b91c1c;
+
+    border: 1px solid #f87171;
+
+    font-weight: 800;
+}
+
+
+/* =========================================
+   SAFETY QUOTE
+   ========================================= */
+
+.bike-summary-card .vehicle-summary-quote {
+
+    margin-top: 10px;
+
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ecfdf5,
+            #f0fdf4
+        );
+
+    color: #166534;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    font-style: italic;
+
+    font-weight: 600;
+
+    border: 1px solid #bbf7d0;
+}
+
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+
+@media (max-width: 900px) {
+
+    .bike-summary-card
+    .vehicle-metrics-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr) !important;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .bike-summary-card
+    .vehicle-card-header {
+
+        flex-wrap: wrap;
+    }
+
+    .bike-summary-card
+    .vehicle-summary-total {
+
+        width: 100%;
+
+        margin-top: 10px;
+
+        margin-left: 0;
+    }
+
+    .bike-summary-card
+    .vehicle-metrics-grid {
+
+        grid-template-columns:
+            1fr !important;
+    }
+
+}

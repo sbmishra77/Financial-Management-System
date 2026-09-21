@@ -143,37 +143,83 @@ snapshot.forEach((docSnapshot) => {
             vehicleExpenses
         );
 
-        const bikeExpenseElement =
-    document.getElementById(
-        "bikeOperationalExpense"
+        
+// =========================================
+// BIKE SUMMARY DATA
+// =========================================
+
+const vehicles =
+    JSON.parse(
+        localStorage.getItem(
+            "financialERP_vehicles"
+        ) || "[]"
     );
 
-if (bikeExpenseElement) {
+const bikeVehicles =
+    vehicles.filter(
+        vehicle =>
+            vehicle.vehicleType ===
+            "Bike / Two Wheeler"
+    );
 
-    const vehicles =
-        JSON.parse(
-            localStorage.getItem(
-                "financialERP_vehicles"
-            ) || "[]"
-        );
+const bikeTotalVehicles =
+    document.getElementById(
+        "bikeTotalVehicles"
+    );
 
-    const bikeVehicles =
-        vehicles.filter(
-            vehicle =>
-                vehicle.vehicleType ===
-                "Bike / Two Wheeler"
-        );
+if (bikeTotalVehicles) {
 
-    const totalBikeExpense =
+    bikeTotalVehicles.textContent =
+        bikeVehicles.length;
+
+}
+
+// =========================================
+// BIKE TOTAL OPERATIONAL EXPENSE
+// =========================================
+
+const bikeOperationalExpense =
+    bikeVehicles.reduce(
+        (total, vehicle) => {
+            return (
+                total +
+                Number(
+                    vehicleExpenses[vehicle.id] || 0
+                )
+            );
+        },
+        0
+    );
+
+const bikeTotalOperationalExpense =
+    document.getElementById(
+        "bikeTotalOperationalExpense"
+    );
+
+if (bikeTotalOperationalExpense) {
+    bikeTotalOperationalExpense.textContent =
+        `₹${bikeOperationalExpense.toLocaleString("en-IN")}`;
+}
+
+// =========================================
+// BIKE TOTAL PURCHASE COST
+// =========================================
+
+const bikeTotalPurchaseCost =
+    document.getElementById(
+        "bikeTotalPurchaseCost"
+    );
+
+if (bikeTotalPurchaseCost) {
+
+    const totalPurchaseCost =
         bikeVehicles.reduce(
             (total, vehicle) => {
 
                 return (
                     total +
                     Number(
-                        vehicleExpenses[
-                            vehicle.id
-                        ] || 0
+                        vehicle.purchasePrice || 0
                     )
                 );
 
@@ -181,10 +227,363 @@ if (bikeExpenseElement) {
             0
         );
 
-    bikeExpenseElement.textContent =
-        `₹${totalBikeExpense.toLocaleString("en-IN")}`;
+    bikeTotalPurchaseCost.textContent =
+        `₹${totalPurchaseCost.toLocaleString("en-IN")}`;
 
 }
+
+const bikeTotalCurrentValue =
+    document.getElementById(
+        "bikeTotalCurrentValue"
+    );
+
+if (bikeTotalCurrentValue) {
+
+    const totalCurrentValue =
+        bikeVehicles.reduce(
+            (total, vehicle) =>
+                total +
+                Number(
+                    vehicle.currentValue || 0
+                ),
+            0
+        );
+
+    bikeTotalCurrentValue.textContent =
+        `₹${totalCurrentValue.toLocaleString("en-IN")}`;
+
+}
+
+function formatVehicleDate(dateValue) {
+
+    if (!dateValue) {
+        return "—";
+    }
+
+    const value =
+        String(dateValue).trim();
+
+    // DD-MM-YYYY
+    if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+
+        return value;
+
+    }
+
+    // YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+
+        const parts =
+            value.split("-");
+
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+    }
+
+    return value;
+}
+
+// =========================================
+// BIKE SUMMARY - NEAREST RC EXPIRY
+// =========================================
+
+const bikeNearestRCExpiry =
+    document.getElementById(
+        "bikeNearestRCExpiry"
+    );
+
+if (bikeNearestRCExpiry) {
+
+    const rcDates =
+        bikeVehicles
+            .map(vehicle => vehicle.rcValidTill)
+            .filter(Boolean)
+            .sort();
+
+    if (rcDates.length > 0) {
+
+        bikeNearestRCExpiry.textContent =
+            formatVehicleDate(rcDates[0]);
+
+    } else {
+
+        bikeNearestRCExpiry.textContent =
+            "—";
+
+    }
+
+}
+
+// =========================================
+// BIKE SUMMARY - INSURANCE DUE
+// =========================================
+
+const bikeInsuranceDue =
+    document.getElementById(
+        "bikeInsuranceDue"
+    );
+
+if (bikeInsuranceDue) {
+
+    const insuranceDates =
+        bikeVehicles
+            .map(
+                vehicle =>
+                    vehicle.insuranceExpiryDate ||
+                    vehicle.thirdPartyExpiry ||
+                    ""
+            )
+            .filter(Boolean)
+            .sort();
+
+    if (insuranceDates.length > 0) {
+
+        bikeInsuranceDue.textContent =
+            formatVehicleDate(
+                insuranceDates[0]
+            );
+
+    } else {
+
+        bikeInsuranceDue.textContent =
+            "—";
+
+    }
+
+}
+
+// =========================================
+// BIKE VEHICLE SUMMARY TABLE
+// =========================================
+
+const bikeVehicleSummaryBody =
+    document.getElementById(
+        "bikeVehicleSummaryBody"
+    );
+
+if (bikeVehicleSummaryBody) {
+
+    if (!bikeVehicles.length) {
+
+        bikeVehicleSummaryBody.innerHTML = `
+            <tr>
+                <td colspan="9">
+                    🏍️ No Bike / Two Wheeler added yet.
+                </td>
+            </tr>
+        `;
+
+    } else {
+
+        bikeVehicleSummaryBody.innerHTML =
+            bikeVehicles.map(
+                (vehicle, index) => {
+
+                    return `
+                        <tr>
+
+                            <td>
+                                ${index + 1}
+                            </td>
+
+                            <td>
+                                <strong>
+                                    ${
+                                        [
+                                            vehicle.manufacturer,
+                                            vehicle.model
+                                        ]
+                                        .filter(Boolean)
+                                        .join(" ")
+                                    }
+                                </strong>
+                            </td>
+
+                            <td>
+                                ${
+                                    vehicle.registrationNumber ||
+                                    "—"
+                                }
+                            </td>
+
+                            <td>
+                                ${
+                                    formatVehicleDate(
+                                        vehicle.purchaseDate
+                                    )
+                                }
+                            </td>
+
+                            <td>
+                                ${
+                                    formatVehicleDate(
+                                        vehicle.rcValidTill
+                                    )
+                                }
+                            </td>
+
+                            <td>
+                                ${
+                                    formatVehicleDate(
+                                        vehicle.insuranceExpiryDate ||
+                                        vehicle.thirdPartyExpiry
+                                    )
+                                }
+                            </td>
+
+                            <td>
+                            ${(() => {
+
+    const insuranceDate =
+        vehicle.insuranceExpiryDate ||
+        vehicle.thirdPartyExpiry ||
+        "";
+
+    if (!insuranceDate) {
+        return "—";
+    }
+
+    const expiryDate =
+        new Date(insuranceDate);
+
+    if (isNaN(expiryDate.getTime())) {
+        return "—";
+    }
+
+    const today =
+        new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    expiryDate.setHours(0, 0, 0, 0);
+
+    const daysLeft =
+        Math.ceil(
+            (
+                expiryDate.getTime() -
+                today.getTime()
+            ) /
+            (1000 * 60 * 60 * 24)
+        );
+
+    if (daysLeft < 0) {
+
+        return `
+            <span class="renewal-danger">
+                Expired
+            </span>
+        `;
+
+    }
+
+    if (daysLeft <= 30) {
+
+        return `
+            <span class="renewal-danger">
+                ${daysLeft} Days
+            </span>
+        `;
+
+    }
+
+    if (daysLeft <= 90) {
+
+        return `
+            <span class="renewal-warning">
+                ${daysLeft} Days
+            </span>
+        `;
+
+    }
+
+    return `
+        <span class="renewal-safe">
+            ${daysLeft} Days
+        </span>
+    `;
+
+})()}    
+
+
+
+                            </td>
+
+                            <td>
+                                
+${(() => {
+
+    const serviceDate =
+        vehicle.serviceDueDate ||
+        vehicle.nextServiceDate ||
+        "";
+
+    if (!serviceDate) {
+        return "—";
+    }
+
+    return formatVehicleDate(serviceDate);
+
+})()}
+
+
+                            </td>
+<td>
+    <button
+        type="button"
+        class="vehicle-view-details-button vehicle-summary-view-details-button"
+        data-vehicle-id="${vehicle.id}">
+        View Details →
+    </button>
+</td>
+
+                        </tr>
+                    `;
+
+                }
+            ).join("");
+
+    }
+
+}
+
+// =========================================
+// BIKE SUMMARY - LATEST PURCHASE
+// =========================================
+
+const bikeLatestPurchaseDate =
+    document.getElementById(
+        "bikeLatestPurchaseDate"
+    );
+
+if (bikeLatestPurchaseDate) {
+
+    const purchaseDates =
+        bikeVehicles
+            .map(vehicle => vehicle.purchaseDate)
+            .filter(Boolean)
+            .sort()
+            .reverse();
+
+    if (purchaseDates.length > 0) {
+
+        const latestDate =
+            purchaseDates[0];
+
+        const parts =
+            latestDate.split("-");
+
+        bikeLatestPurchaseDate.textContent =
+    formatVehicleDate(latestDate);
+
+    } else {
+
+        bikeLatestPurchaseDate.textContent =
+            "—";
+
+    }
+
+}
+
         return vehicleExpenses;
 
     } catch (error) {
@@ -199,10 +598,73 @@ if (bikeExpenseElement) {
     }
 }
 
+
     const addVehicleButton =
         document.getElementById(
             "addVehicleButton"
         );
+
+
+        
+// =========================================
+// VEHICLE SUMMARY TOGGLE
+// =========================================
+
+const vehicleSummaryButton =
+    document.getElementById(
+        "vehicleSummaryButton"
+    );
+
+const vehicleTypeGrid =
+    document.getElementById(
+        "vehicleTypeGrid"
+    );
+
+if (
+    vehicleSummaryButton &&
+    vehicleTypeGrid
+) {
+
+    // Summary cards initially hidden
+    hideVehicleElement(
+        vehicleTypeGrid
+    );
+
+    vehicleSummaryButton.addEventListener(
+        "click",
+        function () {
+
+            const isHidden =
+                vehicleTypeGrid.style.display ===
+                "none";
+
+            if (isHidden) {
+
+loadVehicleOperationalExpenses();
+
+                showVehicleElement(
+                    vehicleTypeGrid,
+                    "grid"
+                );
+
+                vehicleSummaryButton.innerHTML =
+                    "🙈 Hide Vehicle Summary";
+
+            } else {
+
+                hideVehicleElement(
+                    vehicleTypeGrid
+                );
+
+                vehicleSummaryButton.innerHTML =
+                    "📊 Vehicle Summary";
+
+            }
+
+        }
+    );
+
+}
 
         const backToVehicleManagementButton =
     document.getElementById(
@@ -752,7 +1214,11 @@ imageUrl:
                         "vehicleThirdPartyExpiry"
                     )?.value.trim() || "",
 
-
+serviceDueDate:
+    document.getElementById(
+        "vehicleServiceDueDate"
+    )?.value.trim() || "",
+    
                 // =================================
                 // CREATED DATE
                 // =================================
@@ -1026,6 +1492,18 @@ if (savedImagePreview) {
     );
 
 }
+
+// =========================================
+// REFRESH VEHICLE EXPENSE ON TRANSACTION UPDATE
+// =========================================
+
+window.addEventListener(
+    "vehicleTransactionUpdated",
+    function () {
+        loadVehicleOperationalExpenses();
+    }
+);
+
 
 // =========================================
 // FIREBASE AUTH STATE
