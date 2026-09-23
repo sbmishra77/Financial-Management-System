@@ -2981,6 +2981,299 @@
 </section>
 
 <!-- ================================================== -->
+<!-- REPAIR & MAINTENANCE MODULE -->
+<!-- ================================================== -->
+
+<section
+    id="repairsSection"
+    class="finance-section repairs-section"
+    style="display: none;">
+
+<div class="back-to-dashboard-wrapper">
+
+    <button
+        type="button"
+        class="back-to-dashboard-button">
+
+        ← Back to Dashboard
+
+    </button>
+
+    <button
+        type="button"
+        id="backToRepairFromSummary"
+        class="back-to-dashboard-button"
+        style="display: none;">
+
+        ← Back to Repair & Maintenance
+
+    </button>
+
+</div>
+
+    <!-- =============================== -->
+    <!-- HEADER -->
+    <!-- =============================== -->
+
+    <div class="section-header vehicles-section-header">
+
+        <div class="section-title-area">
+
+            <h2>
+                🔧 Repair & Maintenance
+            </h2>
+
+            <p>
+                Manage repairs, maintenance,
+                service & related expenses
+            </p>
+
+        </div>
+
+
+        <div class="section-header-buttons">
+
+            <button
+                type="button"
+                id="repairSummaryButton"
+                class="section-summary-button">
+
+                📊 Maintenance Summary
+
+            </button>
+
+
+            <button
+                type="button"
+                id="addRepairButton"
+                class="add-module-button">
+
+                ➕ Add Repair / Maintenance
+
+            </button>
+
+
+            <button
+                type="button"
+                id="viewAllRepairsButton"
+                class="view-module-button">
+
+                View All Records →
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- REPAIR SUMMARY -->
+    <!-- =============================== -->
+
+    <div
+    id="repairSummary"
+    class="repair-summary"
+    style="display: none;">
+
+    
+    <div id="repairSummaryContent"></div>
+
+</div>
+
+
+    <!-- =============================== -->
+    <!-- REPAIR / MAINTENANCE CONTENT -->
+    <!-- =============================== -->
+
+    <div
+        id="repairDashboardContainer">
+
+        
+    </div>
+
+
+    <!-- =============================== -->
+    <!-- REPAIR FORM CONTAINER -->
+    <!-- =============================== -->
+
+    <div
+    id="repairFormContainer"
+    style="display: none;">
+
+<div
+    style="
+        width:100%;
+        display:flex;
+        justify-content:flex-start;
+        margin-bottom:15px;
+    "
+>
+    <button
+        type="button"
+        id="backToRepairFromFormButton"
+        class="back-to-repair-button"
+    >
+        ← Back to Repair & Maintenance
+    </button>
+</div>
+
+    <div class="repair-form-card">
+
+        <div class="repair-form-header">
+            <h2>🔧 Add Repair / Maintenance</h2>
+            <p>Enter repair, service or maintenance details</p>
+        </div>
+
+        <div class="repair-form-grid">
+
+            <!-- Repair Type -->
+            <div class="repair-form-field">
+                <label>Repair / Maintenance Type</label>
+
+                <select id="repairType">
+                    <option value="">Select Type</option>
+                    <option value="Vehicle Service">
+                        Vehicle Service
+                    </option>
+                    <option value="Vehicle Repair">
+                        Vehicle Repair
+                    </option>
+                    <option value="Home Repair">
+                        Home Repair
+                    </option>
+                    <option value="Property Maintenance">
+                        Property Maintenance
+                    </option>
+                    <option value="Appliance Repair">
+                        Appliance Repair
+                    </option>
+                    <option value="Electronic Repair">
+                        Electronic Repair
+                    </option>
+                    <option value="Other Maintenance">
+                        Other Maintenance
+                    </option>
+                    <option value="__add_new__">
+    ＋ Add New
+</option>
+
+                </select>
+            </div>
+
+
+            <!-- Date -->
+            <div class="repair-form-field">
+                <label>Repair / Maintenance Date</label>
+
+                <input
+                    type="text"
+                    id="repairDate"
+                    placeholder="dd-mm-yyyy">
+            </div>
+
+
+            <!-- Vehicle / Asset -->
+            <div class="repair-form-field">
+                <label>Vehicle / Asset</label>
+
+                <select id="repairVehicle">
+                    <option value="">
+                        Select Vehicle / Asset
+                    </option>
+                </select>
+            </div>
+
+
+            <!-- Vendor -->
+            <div class="repair-form-field">
+                <label>Vendor / Service Center</label>
+
+                <input
+                    type="text"
+                    id="repairVendor"
+                    placeholder="Enter vendor / service center">
+            </div>
+
+
+            <!-- Amount -->
+            <div class="repair-form-field">
+                <label>Amount</label>
+
+                <input
+                    type="number"
+                    id="repairAmount"
+                    placeholder="₹ Enter amount"
+                    min="0"
+                    step="0.01">
+            </div>
+
+
+            <!-- Description -->
+            <div class="repair-form-field repair-form-field-full">
+                <label>Service / Repair Description</label>
+
+                <textarea
+                    id="repairDescription"
+                    rows="4"
+                    placeholder="Describe the repair / maintenance work">
+                </textarea>
+            </div>
+
+
+            <!-- Remarks -->
+            <div class="repair-form-field repair-form-field-full">
+                <label>Remarks</label>
+
+                <textarea
+                    id="repairRemarks"
+                    rows="3"
+                    placeholder="Optional remarks">
+                </textarea>
+            </div>
+
+        </div>
+
+
+        <div class="repair-form-actions">
+
+            <button
+                type="button"
+                id="cancelRepairButton"
+                class="repair-cancel-button">
+
+                ✖ Cancel
+
+            </button>
+
+            <button
+                type="button"
+                id="saveRepairButton"
+                class="repair-save-button">
+
+                💾 Save Repair
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- =============================== -->
+    <!-- ALL REPAIR RECORDS -->
+    <!-- =============================== -->
+
+    <div
+        id="repairsListContainer"
+        style="display: none;">
+
+    </div>
+
+</section>
+
+<!-- ================================================== -->
 <!-- MY FINANCIAL GOALS -->
 <!-- ================================================== -->
 

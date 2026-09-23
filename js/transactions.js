@@ -4663,7 +4663,11 @@ if (oldTransactionSnapshot.exists()) {
                 const account =
                     accountSnapshot.data();
 
-                if (account.type !== "bank") return;
+                if (
+    account.type !== "bank" &&
+    account.type !== "cash" &&
+    account.type !== "cashback"
+) return;
 
                 const currentBalance =
                     Number(account.balance || 0);
@@ -4937,7 +4941,7 @@ else {
     );
 
 
-    // =================================
+// =================================
 // CASHBACK → TO ACCOUNT
 // FULL AMOUNT SHOULD BE ADDED
 // =================================
@@ -4964,7 +4968,26 @@ if (
         const account =
             cashbackAccountSnapshot.data();
 
-        if (account.type === "bank") {
+        if (
+    account.type === "bank" ||
+    account.type === "cash" ||
+    account.type === "cashback"
+) {
+    console.log(
+    "🔎 CASHBACK BALANCE DEBUG:",
+    {
+        accountId:
+            toAccountId,
+        accountName:
+            account.name,
+        accountType:
+            account.type,
+        oldBalance:
+            account.balance,
+        cashbackAmount:
+            amount
+    }
+);
 
             const currentBalance =
                 Number(account.balance || 0);
@@ -5021,8 +5044,11 @@ try {
             const account =
                 toAccountSnapshot.data();
 
-            if (account.type === "bank") {
-
+            if (
+    account.type === "bank" ||
+    account.type === "cash" ||
+    account.type === "cashback"
+) {
                 const currentBalance =
                     Number(account.balance || 0);
 
@@ -5071,7 +5097,11 @@ try {
             const account =
                 fromAccountSnapshot.data();
 
-            if (account.type === "bank") {
+          if (
+    account.type === "bank" ||
+    account.type === "cash" ||
+    account.type === "cashback"
+) {
 
                 const currentBalance =
                     Number(account.balance || 0);
@@ -5096,7 +5126,7 @@ try {
                 );
             }
 
-            // =================================
+// =================================
 // CREDIT CARD → EXPENSE
 // EXPENSE increases outstanding balance
 // =================================
@@ -5131,6 +5161,8 @@ if (account.type === "credit_card") {
     }
 
 }
+
+
 catch (bankBalanceError) {
 
     console.error(
@@ -6344,7 +6376,11 @@ if (
     return;
 }
                 
-            if (account.type !== "bank") return;
+            if (
+    account.type !== "bank" &&
+    account.type !== "cash" &&
+    account.type !== "cashback"
+) return;
 
             const currentBalance =
                 Number(account.balance || 0);

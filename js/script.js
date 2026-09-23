@@ -111,6 +111,1873 @@ const accountFormContainer = document.querySelector("#accountFormContainer");
 const cancelAccountButton = document.querySelector("#cancelAccountButton");
 const accountForm = document.querySelector("#accountForm");
 
+// =========================================
+// REPAIR & MAINTENANCE — OPEN FORM
+// =========================================
+
+const addRepairButton =
+    document.getElementById(
+        "addRepairButton"
+    );
+
+// =========================================
+// REPAIR & MAINTENANCE — SUMMARY BUTTON
+// =========================================
+
+function hideAllRepairViews() {
+
+    document.getElementById(
+        "repairDashboardContainer"
+    )?.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+    document.getElementById(
+        "repairSummary"
+    )?.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+    document.getElementById(
+        "repairFormContainer"
+    )?.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+    document.getElementById(
+        "repairsListContainer"
+    )?.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+const repairSummaryButton =
+    document.getElementById(
+        "repairSummaryButton"
+    );
+
+const repairSummary =
+    document.getElementById(
+        "repairSummary"
+    );
+
+if (
+    repairSummaryButton &&
+    repairSummary
+) {
+
+    repairSummaryButton.addEventListener(
+        "click",
+        async function () {
+
+// ==============================================
+// SUMMARY TOGGLE
+// ==============================================
+
+const summaryIsOpen =
+    repairSummary.style.display === "block";
+
+if (summaryIsOpen) {
+
+    // Summary बंद करें
+
+    repairSummary.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+    // Starting point वापस दिखाएँ
+
+    document.getElementById(
+    "repairDashboardContainer"
+)?.style.setProperty(
+    "display",
+    "block",
+    "important"
+);
+
+const repairEmptyState =
+    document.querySelector(
+        ".repair-empty-state"
+    );
+
+if (repairEmptyState) {
+
+    repairEmptyState.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+    return;
+}
+
+
+            // ==============================================
+// REPAIR SUMMARY — SHOW ONLY SUMMARY VIEW
+// ==============================================
+
+document.getElementById(
+    "repairDashboardContainer"
+)?.style.setProperty(
+    "display",
+    "none",
+    "important"
+);
+
+document.getElementById(
+    "repairFormContainer"
+)?.style.setProperty(
+    "display",
+    "none",
+    "important"
+);
+
+document.getElementById(
+    "repairsListContainer"
+)?.style.setProperty(
+    "display",
+    "none",
+    "important"
+);
+
+            const user =
+                auth.currentUser;
+
+            if (!user) {
+
+                alert(
+                    "कृपया पहले login करें।"
+                );
+
+                return;
+            }
+
+            try {
+
+                const repairsRef =
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "repairs"
+                    );
+
+                const snapshot =
+                    await getDocs(
+                        repairsRef
+                    );
+
+                let totalRecords = 0;
+                let totalAmount = 0;
+                let vehicleRepairs = 0;
+                let homePropertyRepairs = 0;
+                let otherRepairs = 0;
+
+                snapshot.forEach(
+                    (docSnapshot) => {
+
+                        const data =
+                            docSnapshot.data();
+
+                        totalRecords++;
+
+                        totalAmount +=
+                            Number(
+                                data.amount || 0
+                            );
+
+                        const type =
+                            data.repairType || "";
+
+                        if (
+                            type === "Vehicle Service" ||
+                            type === "Vehicle Repair"
+                        ) {
+
+                            vehicleRepairs++;
+
+                        } else if (
+                            type === "Home Repair" ||
+                            type === "Property Maintenance"
+                        ) {
+
+                            homePropertyRepairs++;
+
+                        } else {
+
+                            otherRepairs++;
+
+                        }
+
+                    }
+                );
+
+                document.getElementById(
+    "repairSummaryContent"
+).innerHTML = `
+    <div class="repair-summary-grid">
+
+                        <div class="repair-summary-card">
+                            <div class="repair-summary-icon">
+                                🔧
+                            </div>
+                            <div class="repair-summary-value">
+                                ${totalRecords}
+                            </div>
+                            <div class="repair-summary-label">
+                                TOTAL RECORDS
+                            </div>
+                        </div>
+
+                        <div class="repair-summary-card">
+                            <div class="repair-summary-icon">
+                                💰
+                            </div>
+                            <div class="repair-summary-value">
+                                ₹${totalAmount.toLocaleString("en-IN")}
+                            </div>
+                            <div class="repair-summary-label">
+                                TOTAL EXPENSE
+                            </div>
+                        </div>
+
+                        <div class="repair-summary-card">
+                            <div class="repair-summary-icon">
+                                🚗
+                            </div>
+                            <div class="repair-summary-value">
+                                ${vehicleRepairs}
+                            </div>
+                            <div class="repair-summary-label">
+                                VEHICLE
+                            </div>
+                        </div>
+
+                        <div class="repair-summary-card">
+                            <div class="repair-summary-icon">
+                                🏠
+                            </div>
+                            <div class="repair-summary-value">
+                                ${homePropertyRepairs}
+                            </div>
+                            <div class="repair-summary-label">
+                                HOME / PROPERTY
+                            </div>
+                        </div>
+
+                        <div class="repair-summary-card">
+                            <div class="repair-summary-icon">
+                                🛠️
+                            </div>
+                            <div class="repair-summary-value">
+                                ${otherRepairs}
+                            </div>
+                            <div class="repair-summary-label">
+                                OTHER
+                            </div>
+                        </div>
+
+                    </div>
+
+                `;
+
+                const repairDashboardContainer =
+    document.getElementById(
+        "repairDashboardContainer"
+    );
+
+if (repairDashboardContainer) {
+
+    repairDashboardContainer.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+
+                repairSummary.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+                repairSummary.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            } catch (error) {
+
+                console.error(
+                    "Repair Summary Error:",
+                    error
+                );
+
+                alert(
+                    "Maintenance Summary load नहीं हो पाया।"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+const repairFormContainer =
+    document.getElementById(
+        "repairFormContainer"
+    );
+
+if (
+    addRepairButton &&
+    repairFormContainer
+) {
+
+    addRepairButton.addEventListener(
+        "click",
+        function () {
+
+            hideAllRepairViews();
+
+repairFormContainer.style.setProperty(
+    "display",
+    "block",
+    "important"
+);
+
+// Repair Type के अनुसार Vehicle field दिखाएँ / छिपाएँ
+
+const repairTypeSelect =
+    document.getElementById("repairType");
+
+const repairVehicleField =
+    document
+        .getElementById("repairVehicle")
+        ?.closest(".repair-form-field");
+
+if (
+    repairTypeSelect &&
+    repairVehicleField
+) {
+
+    function updateRepairVehicleField() {
+
+        const selectedType =
+            repairTypeSelect.value;
+
+        if (
+    selectedType === "Vehicle Service" ||
+    selectedType === "Vehicle Repair"
+) {
+
+    repairVehicleField.style.removeProperty(
+        "display"
+    );
+
+} else {
+
+    repairVehicleField.style.display =
+        "none";
+
+}
+    }
+
+    repairTypeSelect.addEventListener(
+        "change",
+        updateRepairVehicleField
+    );
+
+    updateRepairVehicleField();
+}
+
+            repairFormContainer.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+            console.log(
+                "🔧 REPAIR FORM OPENED"
+            );
+
+        }
+    );
+
+}
+
+// ==================================================
+// BACK FROM REPAIR SUMMARY
+// ==================================================
+
+const backToRepairFromSummary =
+    document.getElementById(
+        "backToRepairFromSummary"
+    );
+
+if (backToRepairFromSummary) {
+
+    backToRepairFromSummary.addEventListener(
+        "click",
+        function () {
+
+            const backRepairSummary =
+                document.getElementById(
+                    "repairSummary"
+                );
+
+            const backRepairDashboard =
+                document.getElementById(
+                    "repairDashboardContainer"
+                );
+
+            const backRepairForm =
+                document.getElementById(
+                    "repairFormContainer"
+                );
+
+            const backRepairsList =
+                document.getElementById(
+                    "repairsListContainer"
+                );
+
+            if (backRepairSummary) {
+
+                backRepairSummary.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (backRepairForm) {
+
+                backRepairForm.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (backRepairsList) {
+
+                backRepairsList.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+            if (backRepairDashboard) {
+
+                backRepairDashboard.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+            }
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        }
+    );
+
+}
+
+// =========================================
+// REPAIR & MAINTENANCE — CLOSE FORM
+// =========================================
+
+const cancelRepairButton =
+    document.getElementById(
+        "cancelRepairButton"
+    );
+
+if (
+    cancelRepairButton &&
+    repairFormContainer
+) {
+
+    cancelRepairButton.addEventListener(
+        "click",
+        function () {
+
+            repairFormContainer.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+            console.log(
+                "🔧 REPAIR FORM CLOSED"
+            );
+
+        }
+    );
+
+}
+
+// =========================================
+// BACK TO REPAIR & MAINTENANCE — FORM
+// =========================================
+
+const backToRepairFromFormButton =
+    document.getElementById(
+        "backToRepairFromFormButton"
+    );
+
+if (backToRepairFromFormButton) {
+
+    backToRepairFromFormButton.addEventListener(
+        "click",
+        function () {
+
+            // Hide Repair Form
+
+            repairFormContainer.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+
+            // Show Repair Dashboard
+
+            document.getElementById(
+                "repairDashboardContainer"
+            )?.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+
+            // Scroll to Repair section
+
+            document.getElementById(
+                "repairsSection"
+            )?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+            console.log(
+                "← BACK TO REPAIR & MAINTENANCE"
+            );
+
+        }
+    );
+
+}
+
+// =========================================
+// REPAIR & MAINTENANCE — SAVE REPAIR
+// =========================================
+
+const saveRepairButton =
+    document.getElementById(
+        "saveRepairButton"
+    );
+
+if (saveRepairButton) {
+
+    saveRepairButton.addEventListener(
+        "click",
+        async function () {
+
+            try {
+
+                const user = auth.currentUser;
+
+                if (!user) {
+
+                    alert(
+                        "कृपया पहले login करें।"
+                    );
+
+                    return;
+                }
+
+
+                const repairType =
+                    document.getElementById(
+                        "repairType"
+                    )?.value.trim() || "";
+
+
+                const repairDate =
+                    document.getElementById(
+                        "repairDate"
+                    )?.value.trim() || "";
+
+
+                const repairVehicle =
+                    document.getElementById(
+                        "repairVehicle"
+                    )?.value.trim() || "";
+
+
+                const repairVendor =
+                    document.getElementById(
+                        "repairVendor"
+                    )?.value.trim() || "";
+
+
+                const repairAmount =
+                    Number(
+                        document.getElementById(
+                            "repairAmount"
+                        )?.value || 0
+                    );
+
+
+                const repairDescription =
+                    document.getElementById(
+                        "repairDescription"
+                    )?.value.trim() || "";
+
+
+                const repairRemarks =
+                    document.getElementById(
+                        "repairRemarks"
+                    )?.value.trim() || "";
+
+
+                // Basic validation
+
+                if (!repairType) {
+
+                    alert(
+                        "कृपया Repair / Maintenance Type चुनें।"
+                    );
+
+                    return;
+                }
+
+
+                if (!repairDate) {
+
+                    alert(
+                        "कृपया Repair / Maintenance Date डालें।"
+                    );
+
+                    return;
+                }
+
+
+                if (repairAmount <= 0) {
+
+                    alert(
+                        "कृपया valid Amount डालें।"
+                    );
+
+                    return;
+                }
+
+
+                // Firestore document
+
+const repairForm =
+    document.getElementById(
+        "repairFormContainer"
+    );
+
+const editingRepairId =
+    repairForm?.dataset.editingRepairId || "";
+
+
+let repairRef;
+
+
+if (editingRepairId) {
+
+    // UPDATE existing Repair
+
+    repairRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "repairs",
+            editingRepairId
+        );
+
+} else {
+
+    // CREATE new Repair
+
+    repairRef =
+        doc(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "repairs"
+            )
+        );
+
+}
+
+
+await setDoc(
+    repairRef,
+    {
+        repairType:
+            repairType,
+
+        repairDate:
+            repairDate,
+
+        vehicle:
+            repairVehicle,
+
+        vendor:
+            repairVendor,
+
+        amount:
+            repairAmount,
+
+        description:
+            repairDescription,
+
+        remarks:
+            repairRemarks,
+
+        updatedAt:
+            serverTimestamp(),
+
+        ...(editingRepairId
+            ? {}
+            : {
+                createdAt:
+                    serverTimestamp()
+            })
+    },
+    {
+        merge: true
+    }
+);
+                console.log(
+                    "✅ Repair saved successfully"
+                );
+
+
+                alert(
+                    "Repair / Maintenance successfully saved!"
+                );
+
+                // Refresh All Repair Records immediately
+
+if (editingRepairId) {
+
+    const viewAllButton =
+        document.getElementById(
+            "viewAllRepairsButton"
+        );
+
+    if (viewAllButton) {
+
+        viewAllButton.click();
+
+    }
+
+}
+                // Clear Repair Form
+
+document.getElementById("repairType").value = "";
+document.getElementById("repairDate").value = "";
+document.getElementById("repairVehicle").value = "";
+document.getElementById("repairVendor").value = "";
+document.getElementById("repairAmount").value = "";
+document.getElementById("repairDescription").value = "";
+document.getElementById("repairRemarks").value = "";
+
+
+// Close Repair Form
+
+if (repairFormContainer) {
+
+    repairFormContainer.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+           } catch (error) {
+
+    console.error(
+        "Save Repair Error:",
+        error
+    );
+
+    alert(
+        "Firestore Error: " +
+        (error.message || error)
+    );
+
+    alert(
+        "Repair save नहीं हो पाया।"
+    );
+
+}
+
+        }
+    );
+
+}
+
+
+// =========================================
+// REPAIR & MAINTENANCE — VIEW ALL RECORDS
+// =========================================
+
+const viewAllRepairsButton =
+    document.getElementById(
+        "viewAllRepairsButton"
+    );
+
+if (viewAllRepairsButton) {
+
+    viewAllRepairsButton.addEventListener(
+        "click",
+        async function () {
+
+            hideAllRepairViews();
+            const user = auth.currentUser;
+
+            if (!user) {
+
+                alert(
+                    "कृपया पहले login करें।"
+                );
+
+                return;
+            }
+
+            const repairsListContainer =
+                document.getElementById(
+                    "repairsListContainer"
+                );
+
+                const repairDashboardContainer =
+    document.getElementById(
+        "repairDashboardContainer"
+    );
+
+if (repairDashboardContainer) {
+
+    repairDashboardContainer.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+            if (!repairsListContainer) {
+                return;
+            }
+
+            repairsListContainer.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+            repairsListContainer.innerHTML = `
+                <div style="
+                    padding:30px;
+                    text-align:center;
+                ">
+                    Loading Repair Records...
+                </div>
+            `;
+
+            try {
+
+                const repairsRef =
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "repairs"
+                    );
+
+                const snapshot =
+                    await getDocs(
+                        repairsRef
+                    );
+
+                console.log(
+                    "Repair records found:",
+                    snapshot.size
+                );
+
+                if (snapshot.empty) {
+
+                    repairsListContainer.innerHTML = `
+                        <div style="
+                            padding:40px;
+                            text-align:center;
+                        ">
+                            <h3>
+                                🔧 No Repair Records
+                            </h3>
+
+                            <p>
+                                अभी कोई Repair / Maintenance
+                                record उपलब्ध नहीं है।
+                            </p>
+                        </div>
+                    `;
+
+                    return;
+
+                    // Hide main empty state because records exist
+
+const repairEmptyState =
+    document.getElementById(
+        "repairEmptyState"
+    );
+
+if (repairEmptyState) {
+
+    repairEmptyState.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+                }
+
+                let tableRows = "";
+
+snapshot.forEach(
+    (docSnapshot) => {
+
+        const data =
+            docSnapshot.data();
+
+        const repairId =
+            docSnapshot.id;
+
+
+        tableRows += `
+            <tr>
+
+                <td>
+                    ${data.repairDate || "—"}
+                </td>
+
+                <td>
+                    ${data.repairType || "—"}
+                </td>
+
+                <td>
+                    ${data.vehicle || "—"}
+                </td>
+
+                <td>
+                    ${data.vendor || "—"}
+                </td>
+
+                <td>
+                    ₹${Number(
+                        data.amount || 0
+                    ).toLocaleString("en-IN")}
+                </td>
+
+<td>
+
+    <button
+        type="button"
+        class="repair-edit-button"
+        data-repair-id="${repairId}">
+
+        ✏️ Edit
+
+    </button>
+
+    <button
+        type="button"
+        class="repair-delete-button"
+        data-repair-id="${repairId}">
+
+        🗑️ Delete
+
+    </button>
+
+</td>
+
+            </tr>
+        `;
+
+    }
+);
+
+                repairsListContainer.innerHTML = `
+<div
+    style="
+        width:100%;
+        display:flex;
+        justify-content:flex-start;
+        margin-bottom:15px;
+    "
+>
+    <button
+        type="button"
+        id="backToRepairFromListButton"
+        class="back-to-repair-button"
+    >
+        ← Back to Repair & Maintenance
+    </button>
+</div>
+
+                    <div class="repair-records-card">
+
+                        <div class="repair-records-header">
+
+                            <h2>
+                                📋 All Repair Records
+                            </h2>
+
+                            <p>
+                                Repair & Maintenance History
+                            </p>
+
+                        </div>
+
+                        <div style="
+                            overflow-x:auto;
+                        ">
+
+                            <table
+                                class="repair-records-table"
+                                style="
+                                    width:100%;
+                                    border-collapse:collapse;
+                                "
+                            >
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>Date</th>
+
+                                        <th>Type</th>
+
+                                        <th>
+                                            Vehicle / Asset
+                                        </th>
+
+                                        <th>
+                                            Vendor / Service Center
+                                        </th>
+
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    ${tableRows}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+                `;
+
+                repairsListContainer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+// =========================================
+// BACK TO REPAIR & MAINTENANCE — VIEW ALL
+// =========================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const backButton =
+            event.target.closest(
+                "#backToRepairFromListButton"
+            );
+
+        if (!backButton) {
+            return;
+        }
+
+
+        const repairsListContainer =
+            document.getElementById(
+                "repairsListContainer"
+            );
+
+        if (repairsListContainer) {
+
+            repairsListContainer.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        const repairDashboardContainer =
+            document.getElementById(
+                "repairDashboardContainer"
+            );
+
+        if (repairDashboardContainer) {
+
+            repairDashboardContainer.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+        }
+
+
+        document.getElementById(
+            "repairsSection"
+        )?.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+
+        console.log(
+            "← BACK TO REPAIR & MAINTENANCE FROM RECORDS"
+        );
+
+    }
+);
+
+// =========================================
+// REPAIR & MAINTENANCE — EDIT BUTTON
+// =========================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const editButton =
+            event.target.closest(
+                ".repair-edit-button"
+            );
+
+        if (!editButton) {
+            return;
+        }
+
+
+        const repairId =
+            editButton.dataset.repairId;
+
+
+        console.log(
+            "✏️ EDIT REPAIR BUTTON:",
+            repairId
+        );
+
+
+        if (!repairId) {
+
+            alert(
+                "Repair ID नहीं मिला।"
+            );
+
+            return;
+        }
+
+
+        const user =
+            auth.currentUser;
+
+
+        if (!user) {
+
+            alert(
+                "कृपया पहले login करें।"
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const repairRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "repairs",
+                    repairId
+                );
+
+
+            const repairSnapshot =
+                await getDoc(
+                    repairRef
+                );
+
+
+            if (
+                !repairSnapshot.exists()
+            ) {
+
+                alert(
+                    "Repair record नहीं मिला।"
+                );
+
+                return;
+            }
+
+
+            const repair =
+                repairSnapshot.data();
+
+
+            console.log(
+                "✏️ EDIT REPAIR DATA:",
+                repair
+            );
+
+
+            // Fill existing Repair form
+
+            document.getElementById(
+                "repairType"
+            ).value =
+                repair.repairType || "";
+
+
+            document.getElementById(
+                "repairDate"
+            ).value =
+                repair.repairDate || "";
+
+
+            document.getElementById(
+                "repairVehicle"
+            ).value =
+                repair.vehicle || "";
+
+
+            document.getElementById(
+                "repairVendor"
+            ).value =
+                repair.vendor || "";
+
+
+            document.getElementById(
+                "repairAmount"
+            ).value =
+                Number(
+                    repair.amount || 0
+                );
+
+
+            document.getElementById(
+                "repairDescription"
+            ).value =
+                repair.description || "";
+
+
+            document.getElementById(
+                "repairRemarks"
+            ).value =
+                repair.remarks || "";
+
+
+            // Store editing Repair ID
+
+            const repairForm =
+                document.getElementById(
+                    "repairFormContainer"
+                );
+
+
+            repairForm.dataset.editingRepairId =
+                String(repairId);
+
+
+            // Change heading
+
+            const formHeading =
+                repairForm.querySelector(
+                    ".repair-form-header h2"
+                );
+
+
+            if (formHeading) {
+
+                formHeading.textContent =
+                    "✏️ Edit Repair / Maintenance";
+
+            }
+
+
+            // Change Save button text
+
+            const saveButton =
+                document.getElementById(
+                    "saveRepairButton"
+                );
+
+
+            if (saveButton) {
+
+                saveButton.textContent =
+                    "💾 Update Repair";
+
+            }
+
+
+            // Show form
+
+            repairForm.style.setProperty(
+                "display",
+                "block",
+                "important"
+            );
+
+
+            repairForm.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Edit Repair Error:",
+                error
+            );
+
+
+            alert(
+                "Repair edit form load नहीं हो पाया।"
+            );
+
+        }
+
+    }
+);
+
+// =========================================
+// DELETE REPAIR RECORD
+// =========================================
+
+const deleteButtons =
+    repairsListContainer.querySelectorAll(
+        ".repair-delete-button"
+    );
+
+deleteButtons.forEach(
+    (button) => {
+
+        button.addEventListener(
+            "click",
+            async function () {
+
+                const repairId =
+                    this.dataset.repairId;
+
+
+                if (!repairId) {
+
+                    alert(
+                        "Repair record ID नहीं मिला।"
+                    );
+
+                    return;
+                }
+
+
+                const confirmDelete =
+                    confirm(
+                        "क्या आप इस Repair / Maintenance record को delete करना चाहते हैं?"
+                    );
+
+
+                if (!confirmDelete) {
+
+                    return;
+
+                }
+
+
+                try {
+
+                    await deleteDoc(
+                        doc(
+                            db,
+                            "users",
+                            user.uid,
+                            "repairs",
+                            repairId
+                        )
+                    );
+
+
+                    alert(
+                        "Repair / Maintenance record successfully deleted!"
+                    );
+
+
+                    // Reload All Records
+
+                    viewAllRepairsButton.click();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Delete Repair Error:",
+                        error
+                    );
+
+
+                    alert(
+                        "Repair record delete नहीं हो पाया।"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+            } catch (error) {
+
+                console.error(
+                    "Load Repair Records Error:",
+                    error
+                );
+
+                alert(
+                    "Repair records load नहीं हो पाए।"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+// =========================================
+// EDIT REPAIR RECORD — CLICK TEST
+// =========================================
+
+const editButtons =
+    repairsListContainer.querySelectorAll(
+        ".repair-edit-button"
+    );
+
+editButtons.forEach(
+    (button) => {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                const repairId =
+                    this.dataset.repairId;
+
+                console.log(
+                    "✏️ EDIT REPAIR CLICKED:",
+                    repairId
+                );
+
+                alert(
+                    "Edit button working!\n\nRepair ID: " +
+                    repairId
+                );
+
+            }
+        );
+
+    }
+);
+
+// =========================================
+// REPAIR & MAINTENANCE — ADD NEW TYPE
+// =========================================
+
+const repairType =
+    document.getElementById("repairType");
+
+if (repairType) {
+
+    repairType.addEventListener(
+        "change",
+        async function () {
+
+            if (this.value !== "__add_new__") {
+                return;
+            }
+
+            const newType =
+                prompt(
+                    "Enter new Repair / Maintenance Type:"
+                );
+
+            if (
+    newType &&
+    newType.trim() !== ""
+) {
+
+    const cleanType =
+        newType.trim();
+
+
+    // Save permanently in Firestore
+
+    const saved =
+        await saveRepairType(
+            cleanType
+        );
+
+
+    if (!saved) {
+
+        repairType.value = "";
+
+        return;
+
+    }
+
+
+    // Add to dropdown
+
+    const newOption =
+        document.createElement("option");
+
+    newOption.value =
+        cleanType;
+
+    newOption.textContent =
+        cleanType;
+
+
+    repairType.insertBefore(
+        newOption,
+        repairType.querySelector(
+            'option[value="__add_new__"]'
+        )
+    );
+
+
+    repairType.value =
+        cleanType;
+
+} 
+            
+            else {
+
+                repairType.value = "";
+
+            }
+
+        }
+    );
+
+}
+
+// =========================================
+// REPAIR & MAINTENANCE — SAVE NEW TYPE
+// =========================================
+
+async function saveRepairType(typeName) {
+
+    try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+            alert("कृपया पहले login करें।");
+
+            return false;
+        }
+
+
+        const repairTypeRef = doc(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "repairTypes"
+            )
+        );
+
+
+        await setDoc(
+            repairTypeRef,
+            {
+                name: typeName,
+                createdAt: serverTimestamp()
+            }
+        );
+
+
+        console.log(
+            "Repair Type saved:",
+            typeName
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        console.error(
+            "Save Repair Type Error:",
+            error
+        );
+
+        alert(
+    "Firestore Error: " +
+    (error.message || error)
+);
+
+        alert(
+            "Repair Type save नहीं हो पाया।"
+        );
+
+        return false;
+    }
+
+}
+
+// =========================================
+// LOAD SAVED REPAIR TYPES
+// =========================================
+
+async function loadRepairTypes() {
+
+    try {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            return;
+        }
+
+
+        const repairType =
+            document.getElementById("repairType");
+
+        if (!repairType) {
+            return;
+        }
+
+
+        const repairTypesRef =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "repairTypes"
+            );
+
+
+        const snapshot =
+            await getDocs(repairTypesRef);
+
+
+        const addNewOption =
+            repairType.querySelector(
+                'option[value="__add_new__"]'
+            );
+
+
+        snapshot.forEach((docSnapshot) => {
+
+            const data =
+                docSnapshot.data();
+
+            const typeName =
+                data.name;
+
+            if (!typeName) {
+                return;
+            }
+
+
+            // Prevent duplicate options
+
+            const alreadyExists =
+                Array.from(
+                    repairType.options
+                ).some(
+                    option =>
+                        option.value === typeName
+                );
+
+
+            if (alreadyExists) {
+                return;
+            }
+
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                typeName;
+
+            option.textContent =
+                typeName;
+
+
+            if (addNewOption) {
+
+                repairType.insertBefore(
+                    option,
+                    addNewOption
+                );
+
+            } else {
+
+                repairType.appendChild(
+                    option
+                );
+
+            }
+
+        });
+
+
+        console.log(
+            "✅ Repair Types loaded successfully"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Load Repair Types Error:",
+            error
+        );
+
+    }
+
+}
+
+onAuthStateChanged(auth, (user) => {
+
+    if (user) {
+
+        loadRepairTypes();
+
+    }
+
+});
+
+// =========================================
+// LOAD REPAIR VEHICLES
+// =========================================
+
+function loadRepairVehicleDropdown() {
+
+    const repairVehicle =
+        document.getElementById("repairVehicle");
+
+    if (!repairVehicle) {
+        return;
+    }
+
+    const vehicles =
+        JSON.parse(
+            localStorage.getItem(
+                "financialERP_vehicles"
+            ) || "[]"
+        );
+
+    repairVehicle.innerHTML =
+        `<option value="">Select Vehicle No. </option>`;
+
+    vehicles.forEach(
+        vehicle => {
+
+            const option =
+                document.createElement("option");
+
+            option.value =
+                vehicle.id;
+
+            option.textContent =
+                [
+                    vehicle.manufacturer,
+                    vehicle.model
+                ]
+                .filter(Boolean)
+                .join(" ")
+                +
+                " - " +
+                (
+                    vehicle.registrationNumber ||
+                    ""
+                );
+
+            repairVehicle.appendChild(option);
+
+        }
+    );
+
+    console.log(
+        "🚗 Repair vehicles loaded:",
+        vehicles.length
+    );
+}
+
+loadRepairVehicleDropdown();
+
 // ===============================
 // UPDATE DASHBOARD SUMMARY
 // ===============================
@@ -9806,6 +11673,92 @@ if (backToInvestmentsDashboardButton) {
     );
 }
 
+
+// ------------------------------------------
+// RESET REPAIRS & MAINTENANCE
+// ------------------------------------------
+
+const repairSummary =
+    document.getElementById(
+        "repairSummary"
+    );
+
+const repairForm =
+    document.getElementById(
+        "repairFormContainer"
+    );
+
+const repairList =
+    document.getElementById(
+        "repairsListContainer"
+    );
+
+const repairDashboard =
+    document.getElementById(
+        "repairDashboardContainer"
+    );
+
+const backToRepairSummary =
+    document.getElementById(
+        "backToRepairFromSummary"
+    );
+
+
+if (repairSummary) {
+
+    repairSummary.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+
+if (repairForm) {
+
+    repairForm.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+
+if (repairList) {
+
+    repairList.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+
+if (repairDashboard) {
+
+    repairDashboard.style.setProperty(
+        "display",
+        "block",
+        "important"
+    );
+
+}
+
+
+if (backToRepairSummary) {
+
+    backToRepairSummary.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+
     // ------------------------------------------
     // RESET SCROLL POSITION
     // ------------------------------------------
@@ -9880,6 +11833,9 @@ const modules = {
     financialGoals:
     document.getElementById("financialGoalsSection"),
 
+repairs:
+    document.getElementById("repairsSection"),
+
 fundsAvailable:
     document.getElementById("fundsAvailableSection"),
 
@@ -9940,8 +11896,10 @@ fundsAvailable:
     return;
 }
 
-    
-    // ----------------------------------------------
+
+
+
+// ----------------------------------------------
 // FINANCIAL GOALS — RESET SUB-VIEWS
 // ----------------------------------------------
 
@@ -10123,6 +12081,8 @@ if (view === "vehicles") {
 
 }
 
+
+
 // ----------------------------------------------
 // SHOW SELECTED MODULE ONLY
 // ----------------------------------------------
@@ -10282,6 +12242,125 @@ if (section === "fundsAvailable") {
     showMasterView(
         "fundsAvailable"
     );
+
+    return;
+}
+
+// ==================================================
+// REPAIRS & MAINTENANCE
+// ==================================================
+
+if (section === "repairs") {
+
+    console.log(
+        "🔧 REPAIRS & MAINTENANCE SIDEBAR CLICKED"
+    );
+
+    showMasterView(
+        "repairs"
+    );
+
+
+    // ==============================================
+    // REPAIR MODULE — ALWAYS OPEN MAIN SCREEN
+    // ==============================================
+
+    const repairSummary =
+        document.getElementById(
+            "repairSummary"
+        );
+
+    const repairForm =
+        document.getElementById(
+            "repairFormContainer"
+        );
+
+    const repairList =
+        document.getElementById(
+            "repairsListContainer"
+        );
+
+    const repairDashboard =
+        document.getElementById(
+            "repairDashboardContainer"
+        );
+
+    const summaryBackButton =
+        document.getElementById(
+            "backToRepairFromSummary"
+        );
+
+
+    // Hide Summary
+
+    if (repairSummary) {
+
+        repairSummary.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // Hide Add Repair Form
+
+    if (repairForm) {
+
+        repairForm.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // Hide All Records
+
+    if (repairList) {
+
+        repairList.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    // Show Repair Starting Point
+
+    if (repairDashboard) {
+
+        repairDashboard.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+    }
+
+
+    // Hide Summary Back Button
+
+    if (summaryBackButton) {
+
+        summaryBackButton.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+    }
+
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+
 
     return;
 }

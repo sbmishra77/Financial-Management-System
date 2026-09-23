@@ -13048,3 +13048,456 @@ body {
     }
 
 }
+
+/* =========================================
+   REPAIR & MAINTENANCE FORM
+   CLEAN TWO-COLUMN ALIGNMENT
+   ========================================= */
+
+.repair-form-card {
+    width: 100%;
+    max-width: 1100px;
+    margin: 25px auto;
+    padding: 30px 35px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+}
+
+.repair-form-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.repair-form-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.repair-form-header p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+
+/* ---------- FORM GRID ---------- */
+
+.repair-form-grid {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    column-gap: 25px;
+    row-gap: 20px;
+    align-items: center;
+}
+
+
+/* ---------- EACH FIELD ---------- */
+
+.repair-form-field {
+    display: contents;
+}
+
+.repair-form-field label {
+    grid-column: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    text-align: right;
+    padding-right: 5px;
+}
+
+.repair-form-field input,
+.repair-form-field select,
+.repair-form-field textarea {
+    grid-column: 2;
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 11px 13px;
+
+    border: 1px solid #d5d5d5;
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    font-size: 14px;
+    font-family: inherit;
+
+    outline: none;
+    transition: 0.2s;
+}
+
+
+/* ---------- FOCUS ---------- */
+
+.repair-form-field input:focus,
+.repair-form-field select:focus,
+.repair-form-field textarea:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.10);
+}
+
+
+/* ---------- TEXTAREA ---------- */
+
+.repair-form-field-full {
+    display: contents;
+}
+
+.repair-form-field-full label {
+    grid-column: 1;
+    align-self: start;
+    padding-top: 11px;
+}
+
+.repair-form-field-full textarea {
+    grid-column: 2;
+    resize: vertical;
+    min-height: 90px;
+}
+
+
+/* ---------- BUTTONS ---------- */
+
+.repair-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eeeeee;
+}
+
+.repair-cancel-button,
+.repair-save-button {
+    padding: 11px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.repair-cancel-button {
+    background: #eeeeee;
+    color: #333;
+}
+
+.repair-save-button {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 700px) {
+
+    .repair-form-card {
+        padding: 20px;
+    }
+
+    .repair-form-grid {
+        grid-template-columns: 1fr;
+        row-gap: 8px;
+    }
+
+    .repair-form-field label,
+    .repair-form-field-full label {
+        grid-column: 1;
+        text-align: left;
+        padding: 0;
+        margin-top: 10px;
+    }
+
+    .repair-form-field input,
+    .repair-form-field select,
+    .repair-form-field textarea,
+    .repair-form-field-full textarea {
+        grid-column: 1;
+    }
+
+    .repair-form-actions {
+        flex-direction: column;
+    }
+
+    .repair-cancel-button,
+    .repair-save-button {
+        width: 100%;
+    }
+}
+
+<style>
+
+/* ================================================= */
+/* REPAIR & MAINTENANCE — PREMIUM SUMMARY */
+/* ================================================= */
+
+.repair-summary {
+    width: 100%;
+    margin: 25px auto;
+    padding: 10px 0 30px;
+}
+
+
+/* ============================= */
+/* SUMMARY GRID */
+/* ============================= */
+
+.repair-summary-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
+    gap: 18px;
+
+    width: 100%;
+
+}
+
+
+/* ============================= */
+/* SUMMARY CARD */
+/* ============================= */
+
+.repair-summary-card {
+
+    position: relative;
+
+    min-height: 145px;
+
+    padding: 22px 20px;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    border: 1px solid
+        rgba(255,255,255,0.7);
+
+    box-shadow:
+        0 10px 25px
+        rgba(30,50,90,0.12);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+
+}
+
+
+/* ============================= */
+/* HOVER */
+/* ============================= */
+
+.repair-summary-card:hover {
+
+    transform:
+        translateY(-5px);
+
+    box-shadow:
+        0 16px 35px
+        rgba(30,50,90,0.18);
+
+}
+
+
+/* ============================= */
+/* COLORFUL CARDS */
+/* ============================= */
+
+.repair-summary-card:nth-child(1) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #d9ecff,
+            #b9dcff
+        );
+
+}
+
+
+.repair-summary-card:nth-child(2) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #d8f8e4,
+            #b7efcf
+        );
+
+}
+
+
+.repair-summary-card:nth-child(3) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffdbe5,
+            #ffc3d2
+        );
+
+}
+
+
+.repair-summary-card:nth-child(4) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffe8cc,
+            #ffd6a8
+        );
+
+}
+
+
+.repair-summary-card:nth-child(5) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e7d8ff,
+            #d3baff
+        );
+
+}
+
+
+/* ============================= */
+/* ICON */
+/* ============================= */
+
+.repair-summary-icon {
+
+    width: 58px;
+
+    height: 58px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 28px;
+
+    margin-bottom: 10px;
+
+    background:
+        rgba(255,255,255,0.75);
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,0.10);
+
+}
+
+
+/* ============================= */
+/* VALUE */
+/* ============================= */
+
+.repair-summary-value {
+
+    font-size: 28px;
+
+    font-weight: 800;
+
+    line-height: 1.1;
+
+    color: #172554;
+
+}
+
+
+/* ============================= */
+/* LABEL */
+/* ============================= */
+
+.repair-summary-label {
+
+    margin-top: 7px;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.6px;
+
+    color: #334155;
+
+}
+
+
+/* ============================= */
+/* RESPONSIVE */
+/* ============================= */
+
+@media (max-width: 1100px) {
+
+    .repair-summary-grid {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .repair-summary-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .repair-summary-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+}
+
+</style>
+
+/* ================================================= */
+/* REPAIR SUMMARY - TOP SPACING */
+/* ================================================= */
+
+#repairSummary {
+    margin-top: 35px !important;
+}
+
+#repairSummary .repair-summary-grid {
+    margin-top: 15px;
+}
