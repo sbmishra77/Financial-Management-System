@@ -4790,6 +4790,57 @@ if (
     );
 }
 
+// =================================
+// TRANSFER EDIT
+// REVERSE OLD + APPLY NEW
+// =================================
+
+// REVERSE OLD TRANSFER
+if (
+    oldTransaction.type === "transfer" &&
+    oldTransaction.fromAccountId &&
+    oldTransaction.toAccountId
+) {
+
+    const oldAmount =
+        Number(
+            oldTransaction.amount || 0
+        );
+
+    // Old FROM → पैसा वापस
+    await updateBankBalance(
+        oldTransaction.fromAccountId,
+        oldAmount
+    );
+
+    // Old TO → पैसा वापस निकालें
+    await updateBankBalance(
+        oldTransaction.toAccountId,
+        -oldAmount
+    );
+}
+
+
+// APPLY NEW TRANSFER
+if (
+    type === "transfer" &&
+    fromAccountId &&
+    toAccountId
+) {
+
+    // New FROM → पैसा कम
+    await updateBankBalance(
+        fromAccountId,
+        -amount
+    );
+
+    // New TO → पैसा बढ़े
+    await updateBankBalance(
+        toAccountId,
+        amount
+    );
+}   
+
         // =================================
         // 4. APPLY NEW INCOME
         // =================================
@@ -5163,11 +5214,135 @@ if (account.type === "credit_card") {
 }
 
 
+
 catch (bankBalanceError) {
 
     console.error(
         "BANK BALANCE UPDATE ERROR:",
         bankBalanceError
+    );
+
+}
+
+// =================================
+// TRANSFER → FROM ACCOUNT SUBTRACT
+// TRANSFER → TO ACCOUNT ADD
+// =================================
+
+if (
+    type === "transfer" &&
+    fromAccountId &&
+    toAccountId
+) {
+
+    // FROM ACCOUNT
+    const transferFromRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            fromAccountId
+        );
+
+    const transferFromSnapshot =
+        await getDoc(
+            transferFromRef
+        );
+
+    if (
+        transferFromSnapshot.exists()
+    ) {
+
+        const fromAccount =
+            transferFromSnapshot.data();
+
+        if (
+            fromAccount.type === "bank" ||
+            fromAccount.type === "cash" ||
+            fromAccount.type === "cashback"
+        ) {
+
+            const currentFromBalance =
+                Number(
+                    fromAccount.balance || 0
+                );
+
+            await updateDoc(
+                transferFromRef,
+                {
+                    balance:
+                        currentFromBalance - amount,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+        }
+    }
+
+
+    // TO ACCOUNT
+    const transferToRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            toAccountId
+        );
+
+    const transferToSnapshot =
+        await getDoc(
+            transferToRef
+        );
+
+    if (
+        transferToSnapshot.exists()
+    ) {
+
+        const toAccount =
+            transferToSnapshot.data();
+
+        if (
+            toAccount.type === "bank" ||
+            toAccount.type === "cash" ||
+            toAccount.type === "cashback"
+        ) {
+
+            const currentToBalance =
+                Number(
+                    toAccount.balance || 0
+                );
+
+            await updateDoc(
+                transferToRef,
+                {
+                    balance:
+                        currentToBalance + amount,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+
+        }
+    }
+
+
+    console.log(
+        "TRANSFER BALANCE UPDATED:",
+        {
+            fromAccountId:
+                fromAccountId,
+
+            toAccountId:
+                toAccountId,
+
+            amount:
+                amount
+        }
     );
 
 }
@@ -6420,6 +6595,134 @@ if (
                 oldTransaction.toAccountId,
             amount:
                 amountToReverse
+        }
+    );
+}
+
+// =================================
+// TRANSFER DELETE
+// REVERSE TRANSFER
+// =================================
+
+if (
+    oldTransaction.type === "transfer" &&
+    oldTransaction.fromAccountId &&
+    oldTransaction.toAccountId
+) {
+
+    const transferDeleteAmount =
+        Number(
+            oldTransaction.amount || 0
+        );
+
+
+    // FROM ACCOUNT → पैसा वापस ADD
+    const transferDeleteFromRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            oldTransaction.fromAccountId
+        );
+
+    const transferDeleteFromSnapshot =
+        await getDoc(
+            transferDeleteFromRef
+        );
+
+    if (
+        transferDeleteFromSnapshot.exists()
+    ) {
+
+        const account =
+            transferDeleteFromSnapshot.data();
+
+        if (
+            account.type === "bank" ||
+            account.type === "cash" ||
+            account.type === "cashback"
+        ) {
+
+            const currentBalance =
+                Number(
+                    account.balance || 0
+                );
+
+            await updateDoc(
+                transferDeleteFromRef,
+                {
+                    balance:
+                        currentBalance +
+                        transferDeleteAmount,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+        }
+    }
+
+
+    // TO ACCOUNT → पैसा वापस SUBTRACT
+    const transferDeleteToRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            oldTransaction.toAccountId
+        );
+
+    const transferDeleteToSnapshot =
+        await getDoc(
+            transferDeleteToRef
+        );
+
+    if (
+        transferDeleteToSnapshot.exists()
+    ) {
+
+        const account =
+            transferDeleteToSnapshot.data();
+
+        if (
+            account.type === "bank" ||
+            account.type === "cash" ||
+            account.type === "cashback"
+        ) {
+
+            const currentBalance =
+                Number(
+                    account.balance || 0
+                );
+
+            await updateDoc(
+                transferDeleteToRef,
+                {
+                    balance:
+                        currentBalance -
+                        transferDeleteAmount,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
+        }
+    }
+
+
+    console.log(
+        "TRANSFER BALANCE REVERSED ON DELETE:",
+        {
+            fromAccountId:
+                oldTransaction.fromAccountId,
+
+            toAccountId:
+                oldTransaction.toAccountId,
+
+            amount:
+                transferDeleteAmount
         }
     );
 }
