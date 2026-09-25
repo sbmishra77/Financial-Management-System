@@ -179,6 +179,8 @@ if (
         "click",
         async function () {
 
+
+
 // ==============================================
 // SUMMARY TOGGLE
 // ==============================================
@@ -224,7 +226,7 @@ if (repairEmptyState) {
 }
 
 
-            // ==============================================
+// ==============================================
 // REPAIR SUMMARY — SHOW ONLY SUMMARY VIEW
 // ==============================================
 
@@ -324,74 +326,895 @@ document.getElementById(
                     }
                 );
 
-                document.getElementById(
-    "repairSummaryContent"
-).innerHTML = `
-    <div class="repair-summary-grid">
+// ==============================================
+// NEW REPAIR INFOGRAPHIC SUMMARY DATA
+// ==============================================
 
-                        <div class="repair-summary-card">
-                            <div class="repair-summary-icon">
-                                🔧
-                            </div>
-                            <div class="repair-summary-value">
-                                ${totalRecords}
-                            </div>
-                            <div class="repair-summary-label">
-                                TOTAL RECORDS
-                            </div>
-                        </div>
+document.getElementById(
+    "repairInfoTotalRecords"
+).textContent = totalRecords;
 
-                        <div class="repair-summary-card">
-                            <div class="repair-summary-icon">
-                                💰
-                            </div>
-                            <div class="repair-summary-value">
-                                ₹${totalAmount.toLocaleString("en-IN")}
-                            </div>
-                            <div class="repair-summary-label">
-                                TOTAL EXPENSE
-                            </div>
-                        </div>
+document.getElementById(
+    "repairInfoTotalExpense"
+).textContent =
+    "₹" + totalAmount.toLocaleString("en-IN");
 
-                        <div class="repair-summary-card">
-                            <div class="repair-summary-icon">
-                                🚗
-                            </div>
-                            <div class="repair-summary-value">
-                                ${vehicleRepairs}
-                            </div>
-                            <div class="repair-summary-label">
-                                VEHICLE
-                            </div>
-                        </div>
+document.getElementById(
+    "repairInfoVehicleRecords"
+).textContent =
+    vehicleRepairs;
 
-                        <div class="repair-summary-card">
-                            <div class="repair-summary-icon">
-                                🏠
-                            </div>
-                            <div class="repair-summary-value">
-                                ${homePropertyRepairs}
-                            </div>
-                            <div class="repair-summary-label">
-                                HOME / PROPERTY
-                            </div>
-                        </div>
+document.getElementById(
+    "repairInfoHomeRecords"
+).textContent =
+    homePropertyRepairs;
 
-                        <div class="repair-summary-card">
-                            <div class="repair-summary-icon">
-                                🛠️
-                            </div>
-                            <div class="repair-summary-value">
-                                ${otherRepairs}
-                            </div>
-                            <div class="repair-summary-label">
-                                OTHER
-                            </div>
-                        </div>
+document.getElementById(
+    "repairInfoOtherRecords"
+).textContent =
+    otherRepairs;
 
-                    </div>
+// ==============================================
+// REPAIR SUMMARY — EXPENSE BY CATEGORY CHART
+// ==============================================
 
-                `;
+let vehicleExpense = 0;
+let homePropertyExpense = 0;
+let otherExpense = 0;
+
+snapshot.forEach(
+    (docSnapshot) => {
+
+        const data =
+            docSnapshot.data();
+
+        const amount =
+            Number(data.amount || 0);
+
+        const type =
+            data.repairType || "";
+
+        if (
+            type === "Vehicle Service" ||
+            type === "Vehicle Repair"
+        ) {
+
+            vehicleExpense += amount;
+
+        } else if (
+            type === "Home Repair" ||
+            type === "Property Maintenance"
+        ) {
+
+            homePropertyExpense += amount;
+
+        } else {
+
+            otherExpense += amount;
+
+        }
+    }
+);
+
+// ==============================================
+// REPAIR SUMMARY — CATEGORY CARD AMOUNT & %
+// ==============================================
+
+const categoryTotalExpense =
+    vehicleExpense +
+    homePropertyExpense +
+    otherExpense;
+
+const vehicleExpensePercent =
+    categoryTotalExpense > 0
+        ? Math.round(
+            (vehicleExpense /
+                categoryTotalExpense) * 100
+        )
+        : 0;
+
+const homePropertyExpensePercent =
+    categoryTotalExpense > 0
+        ? Math.round(
+            (homePropertyExpense /
+                categoryTotalExpense) * 100
+        )
+        : 0;
+
+const otherExpensePercent =
+    categoryTotalExpense > 0
+        ? Math.round(
+            (otherExpense /
+                categoryTotalExpense) * 100
+        )
+        : 0;
+
+
+// Vehicle
+const vehicleExpenseElement =
+    document.getElementById(
+        "repairInfoVehicleExpense"
+    );
+
+if (vehicleExpenseElement) {
+
+    vehicleExpenseElement.textContent =
+        "₹" +
+        vehicleExpense.toLocaleString(
+            "en-IN"
+        ) +
+        " (" +
+        vehicleExpensePercent +
+        "%)";
+}
+
+
+// Home / Property
+const homeExpenseElement =
+    document.getElementById(
+        "repairInfoHomeExpense"
+    );
+
+if (homeExpenseElement) {
+
+    homeExpenseElement.textContent =
+        "₹" +
+        homePropertyExpense.toLocaleString(
+            "en-IN"
+        ) +
+        " (" +
+        homePropertyExpensePercent +
+        "%)";
+}
+
+
+// Other
+const otherExpenseElement =
+    document.getElementById(
+        "repairInfoOtherExpense"
+    );
+
+if (otherExpenseElement) {
+
+    otherExpenseElement.textContent =
+        "₹" +
+        otherExpense.toLocaleString(
+            "en-IN"
+        ) +
+        " (" +
+        otherExpensePercent +
+        "%)";
+}
+
+const repairCategoryCanvas =
+    document.getElementById(
+        "repairExpenseCategoryChart"
+    );
+
+if (
+    repairCategoryCanvas &&
+    typeof Chart !== "undefined"
+) {
+
+
+    // Destroy previous chart before creating a new one
+const existingRepairCategoryChart =
+    Chart.getChart(
+        repairCategoryCanvas
+    );
+
+if (existingRepairCategoryChart) {
+
+    existingRepairCategoryChart.destroy();
+
+}
+
+    new Chart(
+        repairCategoryCanvas,
+        {
+            type: "doughnut",
+
+            data: {
+                labels: [
+                    "Vehicle",
+                    "Home / Property",
+                    "Other"
+                ],
+
+                datasets: [
+                    {
+                        data: [
+                            vehicleExpense,
+                            homePropertyExpense,
+                            otherExpense
+                        ]
+                    }
+                ]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ==============================================
+// REPAIR SUMMARY — MONTHLY MAINTENANCE TREND
+// ==============================================
+
+const monthlyRepairExpenses = {};
+
+snapshot.forEach((docSnapshot) => {
+
+    const data = docSnapshot.data();
+
+    const amount =
+        Number(data.amount || 0);
+
+    const repairDate =
+        String(data.repairDate || "").trim();
+
+    if (!repairDate || amount <= 0) {
+        return;
+    }
+
+    let monthKey = "";
+
+    if (/^\d{2}-\d{2}-\d{4}$/.test(repairDate)) {
+
+        const parts = repairDate.split("-");
+
+        monthKey =
+            parts[2] + "-" + parts[1];
+
+    } else if (
+        /^\d{4}-\d{2}-\d{2}$/.test(repairDate)
+    ) {
+
+        monthKey =
+            repairDate.substring(0, 7);
+
+    }
+
+    if (!monthKey) {
+        return;
+    }
+
+    monthlyRepairExpenses[monthKey] =
+        (monthlyRepairExpenses[monthKey] || 0) +
+        amount;
+
+});
+
+const repairMonths =
+    Object.keys(
+        monthlyRepairExpenses
+    ).sort();
+
+const repairMonthLabels =
+    repairMonths.map((month) => {
+
+        const parts =
+            month.split("-");
+
+        const monthNumber =
+            Number(parts[1]);
+
+        const year =
+            parts[0];
+
+        const monthName =
+            new Date(
+                year,
+                monthNumber - 1,
+                1
+            ).toLocaleString(
+                "en-IN",
+                {
+                    month: "short"
+                }
+            );
+
+        return monthName + " " + year;
+
+    });
+
+const repairMonthValues =
+    repairMonths.map(
+        (month) =>
+            monthlyRepairExpenses[month]
+    );
+
+const monthlyChartCanvas =
+    document.getElementById(
+        "repairMonthlyTrendChart"
+    );
+
+if (
+    monthlyChartCanvas &&
+    typeof Chart !== "undefined"
+) {
+
+    const oldMonthlyChart =
+        Chart.getChart(
+            monthlyChartCanvas
+        );
+
+    if (oldMonthlyChart) {
+        oldMonthlyChart.destroy();
+    }
+
+    new Chart(
+        monthlyChartCanvas,
+        {
+            type: "bar",
+
+            data: {
+                labels:
+                    repairMonthLabels,
+
+                datasets: [
+                    {
+                        label:
+                            "Maintenance Expense",
+
+                        data:
+                            repairMonthValues
+                    }
+                ]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        }
+    );
+}
+
+// ==============================================
+// REPAIR SUMMARY — TOP REPAIR / MAINTENANCE ITEMS
+// ==============================================
+
+const repairItemExpenses = {};
+
+snapshot.forEach((docSnapshot) => {
+
+    const data =
+        docSnapshot.data();
+
+    const amount =
+        Number(data.amount || 0);
+
+    const type =
+        data.repairType || "Other Maintenance";
+
+    if (amount <= 0) {
+        return;
+    }
+
+    repairItemExpenses[type] =
+        (repairItemExpenses[type] || 0) +
+        amount;
+
+});
+
+const topRepairItems =
+    Object.entries(
+        repairItemExpenses
+    )
+    .sort(
+        (a, b) =>
+            b[1] - a[1]
+    )
+    .slice(0, 5);
+
+const topRepairLabels =
+    topRepairItems.map(
+        (item) =>
+            item[0]
+    );
+
+const topRepairValues =
+    topRepairItems.map(
+        (item) =>
+            item[1]
+    );
+
+const topRepairCanvas =
+    document.getElementById(
+        "repairTopItemsChart"
+    );
+
+if (
+    topRepairCanvas &&
+    typeof Chart !== "undefined"
+) {
+
+    const oldTopRepairChart =
+        Chart.getChart(
+            topRepairCanvas
+        );
+
+    if (oldTopRepairChart) {
+
+        oldTopRepairChart.destroy();
+
+    }
+
+    new Chart(
+        topRepairCanvas,
+        {
+            type: "bar",
+
+            data: {
+                labels:
+                    topRepairLabels,
+
+                datasets: [
+                    {
+                        label:
+                            "Maintenance Expense",
+
+                        data:
+                            topRepairValues
+                    }
+                ]
+            },
+
+            options: {
+                indexAxis: "y",
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+
+                scales: {
+
+                    x: {
+                        beginAtZero: true
+                    }
+
+                }
+            }
+        }
+    );
+}
+
+// ==============================================
+// REPAIR SUMMARY — RECENT RECORDS
+// ==============================================
+
+const recentRepairRecords =
+    [];
+
+snapshot.forEach((docSnapshot) => {
+
+    const data =
+        docSnapshot.data();
+
+    recentRepairRecords.push({
+        id:
+            docSnapshot.id,
+
+        date:
+            data.repairDate || "—",
+
+        type:
+            data.repairType || "—",
+
+        vehicle:
+            data.vehicle || "—",
+
+        vendor:
+            data.vendor || "—",
+
+        amount:
+            Number(data.amount || 0)
+    });
+
+});
+
+const recentRepairRecordsSorted =
+    recentRepairRecords
+        .slice()
+        .sort((a, b) => {
+
+            const parseDate = (value) => {
+
+                if (
+                    /^\d{2}-\d{2}-\d{4}$/.test(
+                        value
+                    )
+                ) {
+
+                    const parts =
+                        value.split("-");
+
+                    return new Date(
+                        parts[2],
+                        parts[1] - 1,
+                        parts[0]
+                    ).getTime();
+
+                }
+
+                return 0;
+            };
+
+            return (
+                parseDate(b.date) -
+                parseDate(a.date)
+            );
+
+        })
+        .slice(0, 5);
+
+const recentRecordsContainer =
+    document.getElementById(
+        "repairSummaryRecentRecords"
+    );
+
+if (recentRecordsContainer) {
+
+    if (
+        recentRepairRecordsSorted.length === 0
+    ) {
+
+        recentRecordsContainer.innerHTML = `
+            <div style="
+                text-align:center;
+                padding:30px;
+                color:#64748b;
+            ">
+                No repair / maintenance records found.
+            </div>
+        `;
+
+    } else {
+
+        recentRecordsContainer.innerHTML = `
+            <div style="
+                overflow-x:auto;
+            ">
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    font-size:13px;
+                ">
+
+                    <thead>
+
+                        <tr>
+
+                            <th style="padding:10px;text-align:left;">
+                                Date
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
+                                Type
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
+                                Vehicle / Asset
+                            </th>
+
+                            <th style="padding:10px;text-align:left;">
+                                Vendor
+                            </th>
+
+                            <th style="padding:10px;text-align:right;">
+                                Amount
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${recentRepairRecordsSorted.map(
+                            (record) => `
+
+                            <tr>
+
+                                <td style="padding:10px;">
+                                    ${record.date}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    ${record.type}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    ${record.vehicle}
+                                </td>
+
+                                <td style="padding:10px;">
+                                    ${record.vendor}
+                                </td>
+
+                                <td style="
+                                    padding:10px;
+                                    text-align:right;
+                                    font-weight:700;
+                                ">
+                                    ₹${record.amount.toLocaleString(
+                                        "en-IN"
+                                    )}
+                                </td>
+
+                            </tr>
+
+                        `
+                        ).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        `;
+
+    }
+
+}
+
+// ==============================================
+// REPAIR SUMMARY — MAINTENANCE INSIGHTS
+// ==============================================
+
+const repairInsightsContainer =
+    document.getElementById(
+        "repairSummaryInsights"
+    );
+
+if (repairInsightsContainer) {
+
+    let totalInsightExpense = 0;
+
+    const insightTypeExpenses = {};
+
+    let latestRepairDate = "";
+    let latestRepairType = "";
+    let latestRepairAmount = 0;
+
+    snapshot.forEach((docSnapshot) => {
+
+        const data =
+            docSnapshot.data();
+
+        const amount =
+            Number(data.amount || 0);
+
+        const type =
+            data.repairType ||
+            "Other Maintenance";
+
+        const date =
+            data.repairDate ||
+            "";
+
+        totalInsightExpense += amount;
+
+        insightTypeExpenses[type] =
+            (insightTypeExpenses[type] || 0) +
+            amount;
+
+        if (
+            /^\d{2}-\d{2}-\d{4}$/.test(date)
+        ) {
+
+            const parts =
+                date.split("-");
+
+            const currentDate =
+                new Date(
+                    parts[2],
+                    parts[1] - 1,
+                    parts[0]
+                ).getTime();
+
+            let latestDateTime = 0;
+
+            if (
+                /^\d{2}-\d{2}-\d{4}$/.test(
+                    latestRepairDate
+                )
+            ) {
+
+                const latestParts =
+                    latestRepairDate.split("-");
+
+                latestDateTime =
+                    new Date(
+                        latestParts[2],
+                        latestParts[1] - 1,
+                        latestParts[0]
+                    ).getTime();
+            }
+
+            if (
+                currentDate > latestDateTime
+            ) {
+
+                latestRepairDate =
+                    date;
+
+                latestRepairType =
+                    type;
+
+                latestRepairAmount =
+                    amount;
+            }
+        }
+    });
+
+    const insightTypes =
+        Object.entries(
+            insightTypeExpenses
+        )
+        .sort(
+            (a, b) =>
+                b[1] - a[1]
+        );
+
+    const highestExpenseType =
+        insightTypes.length > 0
+            ? insightTypes[0][0]
+            : "—";
+
+    const highestExpenseAmount =
+        insightTypes.length > 0
+            ? insightTypes[0][1]
+            : 0;
+
+    const totalInsightRecords =
+        snapshot.size;
+
+    const averageExpense =
+        totalInsightRecords > 0
+            ? totalInsightExpense /
+              totalInsightRecords
+            : 0;
+
+    repairInsightsContainer.innerHTML = `
+
+        <div style="
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        ">
+
+            <div style="
+                padding:14px 16px;
+                border-radius:12px;
+                background:#eff6ff;
+                border-left:4px solid #2563eb;
+            ">
+                <strong>💰 Total Maintenance Expense</strong>
+
+                <div style="
+                    margin-top:5px;
+                    font-size:20px;
+                    font-weight:800;
+                    color:#172554;
+                ">
+                    ₹${totalInsightExpense.toLocaleString(
+                        "en-IN"
+                    )}
+                </div>
+            </div>
+
+            <div style="
+                padding:14px 16px;
+                border-radius:12px;
+                background:#fef3c7;
+                border-left:4px solid #f59e0b;
+            ">
+                <strong>🏆 Highest Expense Type</strong>
+
+                <div style="
+                    margin-top:5px;
+                    font-weight:700;
+                    color:#92400e;
+                ">
+                    ${highestExpenseType}
+                </div>
+
+                <div style="
+                    margin-top:3px;
+                    font-size:12px;
+                    color:#92400e;
+                ">
+                    ₹${highestExpenseAmount.toLocaleString(
+                        "en-IN"
+                    )}
+                </div>
+            </div>
+
+            <div style="
+                padding:14px 16px;
+                border-radius:12px;
+                background:#ecfdf5;
+                border-left:4px solid #10b981;
+            ">
+                <strong>📊 Average Expense / Record</strong>
+
+                <div style="
+                    margin-top:5px;
+                    font-size:18px;
+                    font-weight:800;
+                    color:#065f46;
+                ">
+                    ₹${Math.round(
+                        averageExpense
+                    ).toLocaleString(
+                        "en-IN"
+                    )}
+                </div>
+            </div>
+
+            <div style="
+                padding:14px 16px;
+                border-radius:12px;
+                background:#fdf2f8;
+                border-left:4px solid #ec4899;
+            ">
+                <strong>🔧 Latest Maintenance</strong>
+
+                <div style="
+                    margin-top:5px;
+                    font-weight:700;
+                    color:#831843;
+                ">
+                    ${latestRepairType}
+                </div>
+
+                <div style="
+                    margin-top:3px;
+                    font-size:12px;
+                    color:#831843;
+                ">
+                    ${latestRepairDate || "—"}
+                    &nbsp; • &nbsp;
+                    ₹${latestRepairAmount.toLocaleString(
+                        "en-IN"
+                    )}
+                </div>
+            </div>
+
+        </div>
+
+    `;
+
+}
 
                 const repairDashboardContainer =
     document.getElementById(
@@ -438,7 +1261,47 @@ if (repairDashboardContainer) {
 
 }
 
+// ==============================================
+// REPAIR SUMMARY — VIEW ALL BUTTON
+// ==============================================
+
+const repairSummaryViewAllButton =
+    document.getElementById(
+        "repairSummaryViewAllButton"
+    );
+
+if (repairSummaryViewAllButton) {
+
+    repairSummaryViewAllButton.addEventListener(
+        "click",
+        function () {
+
+            document.getElementById(
+                "repairSummary"
+            )?.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+            const viewAllButton =
+                document.getElementById(
+                    "viewAllRepairsButton"
+                );
+
+            if (viewAllButton) {
+
+                viewAllButton.click();
+
+            }
+
+        }
+    );
+
+}
+
 const repairFormContainer =
+
     document.getElementById(
         "repairFormContainer"
     );
@@ -518,6 +1381,8 @@ if (
     );
 
 }
+
+
 
 // ==================================================
 // BACK FROM REPAIR SUMMARY
@@ -3628,6 +4493,7 @@ if (dashboardInvestmentsCompact) {
         investmentParts.join(" + ");
 
 }
+
 
         console.log(
             "Dashboard Summary:",

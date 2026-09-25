@@ -3067,17 +3067,345 @@
     </div>
 
 
-    <!-- =============================== -->
-    <!-- REPAIR SUMMARY -->
-    <!-- =============================== -->
+    <!-- ========================================= -->
+<!-- REPAIR & MAINTENANCE INFOGRAPHIC SUMMARY -->
+<!-- ========================================= -->
 
-    <div
+<div
     id="repairSummary"
     class="repair-summary"
     style="display: none;">
 
-    
-    <div id="repairSummaryContent"></div>
+    <!-- SUMMARY HEADER -->
+
+    <div class="repair-infographic-header">
+
+        <div>
+
+            <h2>
+                📊 Maintenance Summary
+            </h2>
+
+            <p>
+                Overview of your repair,
+                maintenance & service expenses
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- TOP SUMMARY CARDS -->
+    <!-- ========================================= -->
+
+    <div class="repair-infographic-cards">
+
+        <!-- TOTAL RECORDS -->
+
+        <div class="repair-info-card repair-info-blue">
+
+            <div class="repair-info-icon">
+                🔧
+            </div>
+
+            <div
+                id="repairInfoTotalRecords"
+                class="repair-info-value">
+                0
+            </div>
+
+            <div class="repair-info-label">
+                TOTAL RECORDS
+            </div>
+
+            <div class="repair-info-subtext">
+                All maintenance entries
+            </div>
+
+        </div>
+
+
+        <!-- TOTAL EXPENSE -->
+
+        <div class="repair-info-card repair-info-green">
+
+            <div class="repair-info-icon">
+                💰
+            </div>
+
+            <div
+                id="repairInfoTotalExpense"
+                class="repair-info-value">
+                ₹0
+            </div>
+
+            <div class="repair-info-label">
+                TOTAL EXPENSE
+            </div>
+
+            <div class="repair-info-subtext">
+                Overall maintenance cost
+            </div>
+
+        </div>
+
+
+        <!-- VEHICLE -->
+
+        <div class="repair-info-card repair-info-pink">
+
+            <div class="repair-info-icon">
+                🚗
+            </div>
+
+            <div
+                id="repairInfoVehicleRecords"
+                class="repair-info-value">
+                0
+            </div>
+
+            <div class="repair-info-label">
+                VEHICLE
+            </div>
+
+            <div
+                id="repairInfoVehicleExpense"
+                class="repair-info-subtext">
+                ₹0 (0%)
+            </div>
+
+        </div>
+
+
+        <!-- HOME / PROPERTY -->
+
+        <div class="repair-info-card repair-info-orange">
+
+            <div class="repair-info-icon">
+                🏠
+            </div>
+
+            <div
+                id="repairInfoHomeRecords"
+                class="repair-info-value">
+                0
+            </div>
+
+            <div class="repair-info-label">
+                HOME / PROPERTY
+            </div>
+
+            <div
+                id="repairInfoHomeExpense"
+                class="repair-info-subtext">
+                ₹0 (0%)
+            </div>
+
+        </div>
+
+
+        <!-- OTHER -->
+
+        <div class="repair-info-card repair-info-purple">
+
+            <div class="repair-info-icon">
+                🛠️
+            </div>
+
+            <div
+                id="repairInfoOtherRecords"
+                class="repair-info-value">
+                0
+            </div>
+
+            <div class="repair-info-label">
+                OTHER
+            </div>
+
+            <div
+                id="repairInfoOtherExpense"
+                class="repair-info-subtext">
+                ₹0 (0%)
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- CHART ROW -->
+    <!-- ========================================= -->
+
+    <div class="repair-infographic-chart-row">
+
+
+        <!-- EXPENSE BY CATEGORY -->
+
+        <div class="repair-chart-card">
+
+            <div class="repair-chart-header">
+
+                <h3>
+                    🥧 Expense by Category
+                </h3>
+
+                <p>
+                    Distribution of maintenance expenses
+                </p>
+
+            </div>
+
+            <div class="repair-chart-body">
+
+                <canvas
+                    id="repairExpenseCategoryChart">
+                </canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- MONTHLY TREND -->
+
+        <div class="repair-chart-card">
+
+            <div class="repair-chart-header">
+
+                <h3>
+                    📊 Monthly Maintenance Trend
+                </h3>
+
+                <p>
+                    Maintenance expenses over time
+                </p>
+
+            </div>
+
+            <div class="repair-chart-body">
+
+                <canvas
+                    id="repairMonthlyTrendChart">
+                </canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOP ITEMS -->
+
+        <div class="repair-chart-card">
+
+            <div class="repair-chart-header">
+
+                <h3>
+                    📈 Top Repair / Maintenance Items
+                </h3>
+
+                <p>
+                    Highest maintenance expenses
+                </p>
+
+            </div>
+
+            <div class="repair-chart-body">
+
+                <canvas
+                    id="repairTopItemsChart">
+                </canvas>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- RECENT RECORDS + INSIGHTS -->
+    <!-- ========================================= -->
+
+    <div class="repair-infographic-bottom-row">
+
+
+        <!-- RECENT RECORDS -->
+
+        <div class="repair-infographic-panel">
+
+            <div class="repair-panel-header">
+
+                <div>
+
+                    <h3>
+                        📋 Recent Repair / Maintenance
+                    </h3>
+
+                    <p>
+                        Latest maintenance records
+                    </p>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="repairSummaryViewAllButton"
+                    class="repair-summary-view-button">
+
+                    View All →
+
+                </button>
+
+            </div>
+
+
+            <div
+                id="repairSummaryRecentRecords"
+                class="repair-summary-recent-records">
+
+                Loading records...
+
+            </div>
+
+        </div>
+
+
+        <!-- INSIGHTS -->
+
+        <div class="repair-infographic-panel">
+
+            <div class="repair-panel-header">
+
+                <div>
+
+                    <h3>
+                        💡 Maintenance Insights
+                    </h3>
+
+                    <p>
+                        Useful observations from your records
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="repairSummaryInsights"
+                class="repair-summary-insights">
+
+                Loading insights...
+
+            </div>
+
+        </div>
+
+    </div>
+
 
 </div>
 

@@ -13501,3 +13501,451 @@ body {
 #repairSummary .repair-summary-grid {
     margin-top: 15px;
 }
+
+/* ===================================================== */
+/* REPAIR & MAINTENANCE — INFOGRAPHIC SUMMARY */
+/* ===================================================== */
+
+.repair-infographic-header {
+    width: 100%;
+    margin: 10px 0 22px;
+    text-align: center;
+}
+
+.repair-infographic-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    color: #172554;
+}
+
+.repair-infographic-header p {
+    margin: 7px 0 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+
+/* ===================================================== */
+/* TOP SUMMARY CARDS */
+/* ===================================================== */
+
+.repair-infographic-cards {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.repair-info-card {
+    position: relative;
+    min-height: 165px;
+    padding: 22px 18px;
+    border-radius: 20px;
+    text-align: center;
+    overflow: hidden;
+
+    border: 1px solid rgba(255,255,255,0.8);
+
+    box-shadow:
+        0 10px 25px rgba(30,50,90,0.12);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.repair-info-card::before {
+    content: "";
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: -45px;
+    right: -35px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.28);
+}
+
+.repair-info-card:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 16px 35px rgba(30,50,90,0.18);
+}
+
+
+/* CARD COLORS */
+
+.repair-info-blue {
+    background:
+        linear-gradient(
+            135deg,
+            #dceeff,
+            #b9dcff
+        );
+}
+
+.repair-info-green {
+    background:
+        linear-gradient(
+            135deg,
+            #d9f8e5,
+            #b7efcf
+        );
+}
+
+.repair-info-pink {
+    background:
+        linear-gradient(
+            135deg,
+            #ffe0e8,
+            #ffc5d4
+        );
+}
+
+.repair-info-orange {
+    background:
+        linear-gradient(
+            135deg,
+            #ffebd4,
+            #ffd6aa
+        );
+}
+
+.repair-info-purple {
+    background:
+        linear-gradient(
+            135deg,
+            #eadcff,
+            #d5bcff
+        );
+}
+
+
+/* CARD ICON */
+
+.repair-info-icon {
+    position: relative;
+    z-index: 1;
+
+    width: 58px;
+    height: 58px;
+
+    margin: 0 auto 10px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 27px;
+
+    background:
+        rgba(255,255,255,0.78);
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,0.10);
+}
+
+
+/* CARD VALUE */
+
+.repair-info-value {
+    position: relative;
+    z-index: 1;
+
+    font-size: 29px;
+    line-height: 1.1;
+
+    font-weight: 800;
+
+    color: #172554;
+}
+
+
+/* CARD LABEL */
+
+.repair-info-label {
+    position: relative;
+    z-index: 1;
+
+    margin-top: 7px;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: 0.7px;
+
+    color: #334155;
+}
+
+
+/* CARD SUBTEXT */
+
+.repair-info-subtext {
+    position: relative;
+    z-index: 1;
+
+    margin-top: 5px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    color: #64748b;
+}
+
+
+/* ===================================================== */
+/* CHART ROW */
+/* ===================================================== */
+
+.repair-infographic-chart-row {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+
+/* CHART CARD */
+
+.repair-chart-card {
+    min-height: 360px;
+
+    padding: 20px;
+
+    background: #ffffff;
+
+    border-radius: 20px;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 8px 22px rgba(30,50,90,0.08);
+}
+
+
+/* CHART HEADER */
+
+.repair-chart-header h3 {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    color: #172554;
+}
+
+.repair-chart-header p {
+    margin: 5px 0 14px;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+
+/* CHART AREA */
+
+.repair-chart-body {
+    position: relative;
+
+    width: 100%;
+    height: 270px;
+}
+
+.repair-chart-body canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+
+/* ===================================================== */
+/* BOTTOM PANELS */
+/* ===================================================== */
+
+.repair-infographic-bottom-row {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.5fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+}
+
+
+/* PANEL */
+
+.repair-infographic-panel {
+    background: #ffffff;
+
+    border-radius: 20px;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 8px 22px rgba(30,50,90,0.08);
+
+    overflow: hidden;
+}
+
+
+/* PANEL HEADER */
+
+.repair-panel-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid #e2e8f0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fbff,
+            #ffffff
+        );
+}
+
+.repair-panel-header h3 {
+    margin: 0;
+
+    font-size: 17px;
+    font-weight: 800;
+
+    color: #172554;
+}
+
+.repair-panel-header p {
+    margin: 5px 0 0;
+
+    font-size: 12px;
+
+    color: #64748b;
+}
+
+
+/* VIEW ALL BUTTON */
+
+.repair-summary-view-button {
+    border: none;
+
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.repair-summary-view-button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 6px 14px rgba(37,99,235,0.25);
+}
+
+
+/* RECENT RECORDS */
+
+.repair-summary-recent-records {
+    min-height: 150px;
+
+    padding: 20px;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* INSIGHTS */
+
+.repair-summary-insights {
+    min-height: 150px;
+
+    padding: 20px;
+
+    color: #475569;
+
+    font-size: 13px;
+}
+
+
+/* ===================================================== */
+/* RESPONSIVE */
+/* ===================================================== */
+
+@media (max-width: 1200px) {
+
+    .repair-infographic-cards {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .repair-infographic-chart-row {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .repair-infographic-cards {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+
+    .repair-infographic-chart-row {
+        grid-template-columns:
+            1fr;
+    }
+
+    .repair-infographic-bottom-row {
+        grid-template-columns:
+            1fr;
+    }
+
+}
+
+
+@media (max-width: 520px) {
+
+    .repair-infographic-cards {
+        grid-template-columns:
+            1fr;
+    }
+
+    .repair-infographic-header h2 {
+        font-size: 23px;
+    }
+
+}
