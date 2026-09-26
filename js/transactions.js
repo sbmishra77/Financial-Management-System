@@ -5106,6 +5106,40 @@ if (
     row.dataset.editingTransactionId = "";
 }
 
+
+// =================================
+// BLOCK EDITING DELETED TRANSACTION
+// =================================
+
+if (editingTransactionId) {
+
+    const editCheckRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            editingTransactionId
+        );
+
+    const editCheckSnapshot =
+        await getDoc(editCheckRef);
+
+    if (
+        editCheckSnapshot.exists() &&
+        editCheckSnapshot.data().deleted === true
+    ) {
+
+        alert(
+            "यह Transaction पहले ही delete हो चुका है। इसे Edit नहीं किया जा सकता।"
+        );
+
+        transactionSaveInProgress = false;
+
+        return;
+    }
+}
+
 // =================================
 // EDIT EXISTING TRANSACTION
 // =================================
