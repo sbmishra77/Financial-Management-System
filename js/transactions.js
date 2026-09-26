@@ -4663,6 +4663,19 @@ if (transactionForm) {
 
             event.preventDefault();
 
+// =========================================
+// DUPLICATE SAVE PROTECTION
+// =========================================
+
+if (transactionSaveInProgress) {
+
+    alert("Transaction save पहले से चल रहा है। कृपया थोड़ा इंतजार करें।");
+
+    return;
+
+}
+
+transactionSaveInProgress = true;
 
             // =========================================
             // LOGIN CHECK
@@ -6420,6 +6433,8 @@ savedCount++;
                         "Save करने के लिए कोई Transaction नहीं है।"
                     );
 
+                    transactionSaveInProgress = false;
+
                     return;
 
                 }
@@ -6428,6 +6443,8 @@ savedCount++;
                 // =================================
                 // SUCCESS
                 // =================================
+
+                transactionSaveInProgress = false;
 
                 alert(
                     savedCount +
@@ -6557,6 +6574,7 @@ alert(
                     "Transaction save नहीं हो सकी। Console में error देखें।"
                 );
 
+                transactionSaveInProgress = false;
             }
 
         }
