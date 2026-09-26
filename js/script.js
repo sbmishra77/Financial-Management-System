@@ -5046,6 +5046,7 @@ if (accountForm) {
                     name: accountName,
                     type: accountType,
                     balance: accountBalance,
+                    openingBalance: accountBalance,
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp()
                 }

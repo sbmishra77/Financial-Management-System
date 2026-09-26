@@ -3494,175 +3494,6 @@ console.log(
     }
 );
 
-// ==========================================
-// MIGRATE ACCOUNT OPENING BALANCES
-// ONE-TIME SETUP
-// ==========================================
-
-async function migrateAccountOpeningBalances() {
-
-    const user = auth.currentUser;
-
-    if (!user) {
-
-        alert(
-            "कृपया पहले login करें।"
-        );
-
-        return;
-    }
-
-    try {
-
-        const accountsRef =
-            collection(
-                db,
-                "users",
-                user.uid,
-                "accounts"
-            );
-
-
-        const accountsSnapshot =
-            await getDocs(accountsRef);
-
-
-        const openingBalances = {
-
-            "PNB-Punjab National Bank":
-                8632.62,
-
-            "SBI-State Bank of India":
-                9747.35,
-
-            "KMB-Kotak Mahindra Bank":
-                10846.87,
-
-            "Amazon Pay Wallet":
-                335.30,
-
-            "ICICI Amazon Pay Credit Card":
-                -44560.25,
-
-            "Cred Wallet Balance":
-                23,
-
-            "Kotak Mahindra Credit Card":
-                -13711,
-
-            "Cash":
-                280,
-
-            "Navi Wallet":
-                5
-
-        };
-
-
-        let updatedCount = 0;
-
-
-        for (
-            const accountDoc
-            of accountsSnapshot.docs
-        ) {
-
-            const account =
-                accountDoc.data();
-
-
-            const accountName =
-                account.name || "";
-
-
-            if (
-                Object.prototype.hasOwnProperty.call(
-                    openingBalances,
-                    accountName
-                )
-            ) {
-
-                const openingBalance =
-                    openingBalances[
-                        accountName
-                    ];
-
-
-                await updateDoc(
-                    accountDoc.ref,
-                    {
-                        openingBalance:
-                            openingBalance,
-
-                        updatedAt:
-                            serverTimestamp()
-                    }
-                );
-
-
-                updatedCount++;
-
-
-                console.log(
-                    "OPENING BALANCE UPDATED:",
-                    {
-                        account:
-                            accountName,
-
-                        openingBalance:
-                            openingBalance
-                    }
-                );
-
-            }
-
-        }
-
-
-        console.log(
-            "======================================"
-        );
-
-
-        console.log(
-            "ACCOUNT OPENING BALANCE MIGRATION DONE"
-        );
-
-
-        console.log(
-            "Accounts updated:",
-            updatedCount
-        );
-
-
-        console.log(
-            "======================================"
-        );
-
-
-        alert(
-            "All account opening balances updated successfully."
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "OPENING BALANCE MIGRATION ERROR:",
-            error
-        );
-
-
-        alert(
-            "Opening balances update नहीं हो सके। Console देखें।"
-        );
-
-    }
-}
-
-window.migrateAccountOpeningBalances =
-    migrateAccountOpeningBalances;
-
 // ======================================================
 // SEPTEMBER 2026 BANK BALANCE REBUILD ENGINE
 // ======================================================
@@ -3680,143 +3511,87 @@ async function rebuildSeptemberBankBalances() {
 
     try {
 
-// ==================================================
-// SEPTEMBER OPENING BALANCES
-// READ DIRECTLY FROM ACCOUNT MASTER
-// ==================================================
+        // ==================================================
+        // SEPTEMBER OPENING BALANCES
+        // ==================================================
 
-const openingBalances = {};
+        const openingBalances = {
 
+            "PNB-Punjab National Bank":
+                8632.62,
 
-// ==================================================
-// LOAD ALL ACCOUNTS
-// ==================================================
+            "SBI-State Bank of India":
+                9747.35,
 
-const accountsSnapshot =
-    await getDocs(
-        collection(
-            db,
-            "users",
-            user.uid,
-            "accounts"
-        )
-    );
+            "KMB-Kotak Mahindra Bank":
+                10846.87
+
+        };
 
 
-accountsSnapshot.forEach(
-    (accountDoc) => {
+        // ==================================================
+        // LOAD ACCOUNTS
+        // ==================================================
 
-        const account =
-            accountDoc.data();
-
-        const accountName =
-            account.name || "";
-
-
-        if (
-            account.openingBalance !== undefined
-        ) {
-
-            openingBalances[
-                accountName
-            ] =
-                Number(
-                    account.openingBalance || 0
-                );
-
-        }
-
-    }
-);
+        const accountsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
+            );
 
 
-console.log(
-    "DYNAMIC OPENING BALANCES:",
-    openingBalances
-);
-
-console.log(
-    "ALL ACCOUNT TYPES:",
-    accountsSnapshot.docs.map(
-        (accountDoc) => {
-
-            const account =
-                accountDoc.data();
-
-            return {
-                name:
-                    account.name,
-
-                type:
-                    account.type,
-
-                openingBalance:
-                    account.openingBalance
-            };
-        }
-    )
-);
-
-// ==================================================
-// LOAD ACCOUNTS
-// USE DYNAMIC OPENING BALANCES
-// ==================================================
-
-const bankAccounts = {};
-
-accountsSnapshot.forEach(
-    (accountDoc) => {
-
-        const account =
-            accountDoc.data();
-
-        const accountName =
-            account.name || "";
+        const bankAccounts = {};
 
 
-        // ==========================================
-        // INCLUDE ANY BANK ACCOUNT
-        // THAT HAS AN OPENING BALANCE
-        // ==========================================
+        accountsSnapshot.forEach(
+            (accountDoc) => {
 
-        if (
-    (
-    account.type === "bank" ||
-    account.type === "cash" ||
-    account.type === "cashback"
-) &&
-    Object.prototype.hasOwnProperty.call(
-        openingBalances,
-        accountName
-    )
-) {
+                const account =
+                    accountDoc.data();
 
-            bankAccounts[
-                accountDoc.id
-            ] = {
+                const accountName =
+                    account.name || "";
 
-                id:
-                    accountDoc.id,
 
-                name:
-                    accountName,
+                if (
+                    account.type === "bank" &&
+                    Object.prototype.hasOwnProperty.call(
+                        openingBalances,
+                        accountName
+                    )
+                ) {
 
-                opening:
-                    Number(
-                        openingBalances[
-                            accountName
-                        ]
-                    ),
+                    bankAccounts[
+                        accountDoc.id
+                    ] = {
 
-                movement:
-                    0
+                        id:
+                            accountDoc.id,
 
-            };
+                        name:
+                            accountName,
 
-        }
+                        opening:
+                            Number(
+                                openingBalances[
+                                    accountName
+                                ]
+                            ),
 
-    }
-);
+                        movement:
+                            0
+
+                    };
+
+                }
+
+            }
+        );
+
 
         // ==================================================
         // LOAD ALL TRANSACTIONS
@@ -4645,11 +4420,6 @@ async function diagnoseSeptemberKotakBalance() {
 window.diagnoseSeptemberKotakBalance =
     diagnoseSeptemberKotakBalance;
 
-// =========================================
-// TRANSACTION SAVE PROTECTION
-// =========================================
-
-let transactionSaveInProgress = false;
 
 // =========================================
 // SAVE ALL TRANSACTIONS
@@ -7381,6 +7151,7 @@ document.addEventListener(
             );
 
             return;
+
         }
 
         const confirmDelete =
@@ -7389,7 +7160,9 @@ document.addEventListener(
             );
 
         if (!confirmDelete) {
+
             return;
+
         }
 
         const user =
@@ -7402,6 +7175,7 @@ document.addEventListener(
             );
 
             return;
+
         }
 
         try {
@@ -7419,106 +7193,526 @@ document.addEventListener(
                     transactionId
                 );
 
+// =================================
+// REVERSE ACCOUNT BALANCES
+// BEFORE DELETING TRANSACTION
+// =================================
 
-            // =================================
-            // CHECK TRANSACTION
-            // =================================
+const transactionSnapshot =
+    await getDoc(transactionRef);
 
-            const transactionSnapshot =
-                await getDoc(transactionRef);
+if (transactionSnapshot.exists()) {
+
+    const oldTransaction =
+        transactionSnapshot.data();
+
+    const amountToReverse =
+        Number(oldTransaction.amount || 0);
 
 
-            if (!transactionSnapshot.exists()) {
+    // =================================
+    // COMMON BANK BALANCE UPDATE
+    // =================================
 
-                alert(
-                    "यह Transaction नहीं मिला।"
+    const updateBankBalance =
+        async (accountId, changeAmount) => {
+
+            if (!accountId) return;
+
+            const accountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    accountId
                 );
 
-                return;
-            }
+            const accountSnapshot =
+                await getDoc(accountRef);
+
+            if (!accountSnapshot.exists()) return;
+
+            const account =
+                accountSnapshot.data();
 
 
-            const transaction =
-                transactionSnapshot.data();
+// =================================
+// CREDIT CARD EXPENSE REVERSAL
+// DELETE EXPENSE → CREDIT CARD BALANCE DECREASES
+// =================================
 
+if (
+    account.type === "credit_card" &&
+    oldTransaction.type === "expense" &&
+    oldTransaction.fromAccountId === accountId
+) {
 
-            // =================================
-            // PREVENT DOUBLE DELETE
-            // =================================
+    const currentBalance =
+        Number(account.balance || 0);
 
-            if (transaction.deleted === true) {
+    await updateDoc(
+        accountRef,
+        {
+            balance:
+                Math.max(
+                    0,
+                    currentBalance -
+                    amountToReverse
+                ),
+            updatedAt:
+                serverTimestamp()
+        }
+    );
 
-                alert(
-                    "यह Transaction पहले ही delete हो चुका है।"
-                );
+    console.log(
+        "CREDIT CARD EXPENSE REVERSED:",
+        {
+            account:
+                account.name,
+            amount:
+                amountToReverse
+        }
+    );
 
-                return;
-            }
+    return;
+}
+                
+            if (
+    account.type !== "bank" &&
+    account.type !== "cash" &&
+    account.type !== "cashback"
+) return;
 
-
-            // =================================
-            // SOFT DELETE TRANSACTION
-            // =================================
+            const currentBalance =
+                Number(account.balance || 0);
 
             await updateDoc(
-                transactionRef,
+                accountRef,
                 {
-                    deleted: true,
-
-                    deletedAt:
-                        serverTimestamp(),
-
-                    deletedBy:
-                        user.uid,
-
+                    balance:
+                        currentBalance +
+                        changeAmount,
                     updatedAt:
                         serverTimestamp()
                 }
             );
+        };
 
 
-            console.log(
-                "TRANSACTION SOFT DELETED:",
-                {
-                    transactionId:
-                        transactionId
+// =================================
+// REVERSE OLD CASHBACK
+// CASHBACK DELETE → TO ACCOUNT से पैसा कम
+// =================================
+
+if (
+    oldTransaction.type === "cashback" &&
+    oldTransaction.toAccountId
+) {
+
+    await updateBankBalance(
+        oldTransaction.toAccountId,
+        -amountToReverse
+    );
+
+    console.log(
+        "CASHBACK BANK BALANCE REVERSED ON DELETE:",
+        {
+            accountId:
+                oldTransaction.toAccountId,
+            amount:
+                amountToReverse
+        }
+    );
+}
+
+// =================================
+// TRANSFER DELETE
+// REVERSE TRANSFER
+// =================================
+
+if (
+    oldTransaction.type === "transfer" &&
+    oldTransaction.fromAccountId &&
+    oldTransaction.toAccountId
+) {
+
+    const transferDeleteAmount =
+        Number(
+            oldTransaction.amount || 0
+        );
+
+
+    // FROM ACCOUNT → पैसा वापस ADD
+    const transferDeleteFromRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            oldTransaction.fromAccountId
+        );
+
+    const transferDeleteFromSnapshot =
+        await getDoc(
+            transferDeleteFromRef
+        );
+
+    if (
+        transferDeleteFromSnapshot.exists()
+    ) {
+
+        const account =
+            transferDeleteFromSnapshot.data();
+
+        const currentBalance =
+    Number(
+        account.balance || 0
+    );
+
+const newFromBalance =
+    account.type === "credit_card"
+        ? currentBalance - transferDeleteAmount
+        : currentBalance + transferDeleteAmount;
+
+await updateDoc(
+    transferDeleteFromRef,
+    {
+        balance:
+            newFromBalance,
+
+        updatedAt:
+            serverTimestamp()
+    }
+);
+    }
+
+
+    // TO ACCOUNT → पैसा वापस SUBTRACT
+    const transferDeleteToRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            oldTransaction.toAccountId
+        );
+
+    const transferDeleteToSnapshot =
+        await getDoc(
+            transferDeleteToRef
+        );
+
+    if (
+        transferDeleteToSnapshot.exists()
+    ) {
+
+        const account =
+            transferDeleteToSnapshot.data();
+
+       const currentBalance =
+    Number(
+        account.balance || 0
+    );
+
+const newToBalance =
+    account.type === "credit_card"
+        ? currentBalance + transferDeleteAmount
+        : currentBalance - transferDeleteAmount;
+
+await updateDoc(
+    transferDeleteToRef,
+    {
+        balance:
+            newToBalance,
+
+        updatedAt:
+            serverTimestamp()
+    }
+);
+    }
+
+
+    console.log(
+        "TRANSFER BALANCE REVERSED ON DELETE:",
+        {
+            fromAccountId:
+                oldTransaction.fromAccountId,
+
+            toAccountId:
+                oldTransaction.toAccountId,
+
+            amount:
+                transferDeleteAmount
+        }
+    );
+}
+    // =================================
+    // CREDIT CARD BILL PAYMENT
+    // =================================
+
+    const isCreditCardPayment =
+        oldTransaction.behavior ===
+            "money_out_non_expense" &&
+        oldTransaction.type === "expense" &&
+        (
+            oldTransaction.category ===
+                "Credit Card Bill ICICI Amazon" ||
+            oldTransaction.category ===
+                "Credit Card Bill Kotak"
+        );
+
+
+    if (isCreditCardPayment) {
+
+        // Restore From Bank
+        if (oldTransaction.fromAccountId) {
+
+            await updateBankBalance(
+                oldTransaction.fromAccountId,
+                amountToReverse
+            );
+        }
+
+
+        // Restore Credit Card Balance
+        const accountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(
+                accountsCollection
+            );
+
+        let creditCardAccountId = null;
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+                if (
+                    account.type ===
+                    "credit_card"
+                ) {
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill ICICI Amazon" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("icici amazon")
+                    ) {
+
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
+
+                    if (
+                        oldTransaction.category ===
+                            "Credit Card Bill Kotak" &&
+                        account.name
+                            ?.toLowerCase()
+                            .includes("kotak")
+                    ) {
+
+                        creditCardAccountId =
+                            accountDoc.id;
+                    }
                 }
+            }
+        );
+
+
+        if (creditCardAccountId) {
+
+            const creditCardRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    creditCardAccountId
+                );
+
+            const creditCardSnapshot =
+                await getDoc(creditCardRef);
+
+            if (creditCardSnapshot.exists()) {
+
+                const currentBalance =
+                    Number(
+                        creditCardSnapshot
+                            .data()
+                            .balance || 0
+                    );
+
+                await updateDoc(
+                    creditCardRef,
+                    {
+                        balance:
+                            currentBalance +
+                            amountToReverse,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+            }
+        }
+
+    }
+
+
+    // =================================
+    // NORMAL INCOME
+    // =================================
+
+    else if (
+        oldTransaction.type === "income" &&
+        oldTransaction.toAccountId
+    ) {
+
+        // Income हटाते समय Bank से पैसा घटे
+        await updateBankBalance(
+            oldTransaction.toAccountId,
+            -amountToReverse
+        );
+    }
+
+
+    // =================================
+    // NORMAL EXPENSE
+    // =================================
+
+    else if (
+        oldTransaction.type === "expense" &&
+        oldTransaction.fromAccountId
+    ) {
+
+        // Expense हटाते समय Bank में पैसा वापस
+        await updateBankBalance(
+            oldTransaction.fromAccountId,
+            amountToReverse
+        );
+    }
+
+
+    // =================================
+    // INVESTMENT
+    // =================================
+
+    else if (
+        oldTransaction.type === "investment"
+    ) {
+
+        // Investment From हटाते समय
+        // पैसा वापस Bank में
+        if (
+            oldTransaction.fromAccountId
+        ) {
+
+            await updateBankBalance(
+                oldTransaction.fromAccountId,
+                amountToReverse
             );
+        }
 
 
-            // =================================
-            // REBUILD ALL SEPTEMBER BALANCES
-            // =================================
+        // Investment To हटाते समय
+        // Bank से received पैसा वापस निकले
+        if (
+            oldTransaction.toAccountId
+        ) {
 
-            await rebuildSeptemberBankBalances();
-
-
-            console.log(
-                "BALANCES REBUILT AFTER TRANSACTION DELETE"
+            await updateBankBalance(
+                oldTransaction.toAccountId,
+                -amountToReverse
             );
+        }
+    }
 
+
+    console.log(
+        "ACCOUNT BALANCE REVERSED BEFORE DELETE",
+        {
+            type:
+                oldTransaction.type,
+
+            amount:
+                amountToReverse,
+
+            fromAccountId:
+                oldTransaction.fromAccountId,
+
+            toAccountId:
+                oldTransaction.toAccountId
+        }
+    );
+}
+
+// =================================
+// SOFT DELETE TRANSACTION
+// =================================
+
+await updateDoc(
+    transactionRef,
+    {
+        deleted: true,
+        deletedAt: serverTimestamp(),
+        deletedBy: user.uid,
+        updatedAt: serverTimestamp()
+    }
+);
+
+// ==========================================
+// REBUILD BALANCES AFTER SOFT DELETE
+// ==========================================
+
+await rebuildSeptemberBankBalances();
+
+console.log(
+    "BALANCES REBUILT AFTER TRANSACTION DELETE"
+);
+
+console.log(
+    "Transaction soft deleted successfully:",
+    transactionId
+);
+
+alert(
+    "Transaction delete कर दी गई है।"
+);
+
+// =========================================
+// NOTIFY VEHICLE MODULE AFTER DELETE
+// =========================================
+
+window.dispatchEvent(
+    new CustomEvent("vehicleTransactionUpdated")
+);
 
             // =================================
-            // RELOAD TRANSACTION HISTORY
+            // REFRESH HISTORY
             // =================================
 
             await loadSavedTransactions();
-
-
-            alert(
-                "Transaction successfully deleted."
-            );
 
         }
         catch (error) {
 
             console.error(
-                "DELETE TRANSACTION ERROR:",
+                "Delete Transaction Error:",
                 error
             );
 
             alert(
-                "Transaction delete करने में समस्या हुई। कृपया Console देखें।"
+                "Transaction delete नहीं हो सकी। Console में error देखें।"
             );
 
         }
@@ -11575,215 +11769,3 @@ document.addEventListener(
 
     }
 );
-
-// ======================================================
-// CHECK DELETED ₹44 GEHU PISAI TRANSACTION
-// READ ONLY - DOES NOT CHANGE ANY DATA
-// ======================================================
-
-async function checkDeletedGehuTransaction() {
-
-    const user = auth.currentUser;
-
-    if (!user) {
-        console.log("User not logged in.");
-        return;
-    }
-
-    try {
-
-        const transactionsRef =
-            collection(
-                db,
-                "users",
-                user.uid,
-                "transactions"
-            );
-
-        const snapshot =
-            await getDocs(
-                transactionsRef
-            );
-
-        let found = false;
-
-        snapshot.forEach(
-            (transactionDoc) => {
-
-                const transaction =
-                    transactionDoc.data();
-
-                if (
-                    Number(transaction.amount) === 44 &&
-                    (
-                        transaction.category || ""
-                    )
-                        .toLowerCase()
-                        .includes("gehu")
-                ) {
-
-                    found = true;
-
-                    console.log(
-                        "₹44 GEHU PISAI TRANSACTION FOUND:",
-                        {
-                            transactionId:
-                                transactionDoc.id,
-
-                            date:
-                                transaction.date,
-
-                            type:
-                                transaction.type,
-
-                            category:
-                                transaction.category,
-
-                            amount:
-                                transaction.amount,
-
-                            fromAccountId:
-                                transaction.fromAccountId,
-
-                            deleted:
-                                transaction.deleted,
-
-                            deletedAt:
-                                transaction.deletedAt,
-
-                            deletedBy:
-                                transaction.deletedBy
-                        }
-                    );
-
-                }
-
-            }
-        );
-
-        if (!found) {
-
-            console.log(
-                "₹44 GEHU PISAI TRANSACTION NOT FOUND"
-            );
-
-        }
-
-    }
-    catch (error) {
-
-        console.error(
-            "CHECK DELETED GEHU TRANSACTION ERROR:",
-            error
-        );
-
-    }
-
-}
-
-window.checkDeletedGehuTransaction =
-    checkDeletedGehuTransaction;
-
-    // ======================================================
-// FIND ALL ₹44 TRANSACTIONS
-// READ ONLY - DOES NOT CHANGE ANY DATA
-// ======================================================
-
-async function findAll44Transactions() {
-
-    const user = auth.currentUser;
-
-    if (!user) {
-        console.log("User not logged in.");
-        return;
-    }
-
-    try {
-
-        const transactionsRef =
-            collection(
-                db,
-                "users",
-                user.uid,
-                "transactions"
-            );
-
-        const snapshot =
-            await getDocs(transactionsRef);
-
-        let count = 0;
-
-        snapshot.forEach(
-            (transactionDoc) => {
-
-                const transaction =
-                    transactionDoc.data();
-
-                if (
-                    Number(transaction.amount) === 44
-                ) {
-
-                    count++;
-
-                    console.log(
-                        "₹44 TRANSACTION FOUND:",
-                        {
-                            transactionId:
-                                transactionDoc.id,
-
-                            date:
-                                transaction.date,
-
-                            type:
-                                transaction.type,
-
-                            category:
-                                transaction.category,
-
-                            amount:
-                                transaction.amount,
-
-                            fromAccountId:
-                                transaction.fromAccountId,
-
-                            toAccountId:
-                                transaction.toAccountId,
-
-                            partyName:
-                                transaction.partyName,
-
-                            notes:
-                                transaction.notes,
-
-                            deleted:
-                                transaction.deleted,
-
-                            deletedAt:
-                                transaction.deletedAt
-                        }
-                    );
-
-                }
-
-            }
-        );
-
-        console.log(
-            "TOTAL ₹44 TRANSACTIONS FOUND:",
-            count
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "FIND ₹44 TRANSACTIONS ERROR:",
-            error
-        );
-
-    }
-
-}
-
-window.findAll44Transactions =
-    findAll44Transactions;
