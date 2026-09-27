@@ -5495,14 +5495,13 @@
 
 
 <!-- =================================================
-     LOAN REPAYMENT MANAGEMENT
+     LEGACY LOAN REPAYMENT MANAGEMENT
      ================================================= -->
 
 <div
-    id="loanRepaymentSection"
+    id="loanRepaymentLegacySection"
     class="loan-repayment-section"
-    style="margin-top: 25px;">
-
+    style="display: none !important;">
     <!-- REPAYMENT HEADER -->
 
     <div
@@ -6060,7 +6059,1335 @@
 
 </section>
 
+<!-- =================================================
+     LOAN REPAYMENT DASHBOARD
+================================================= -->
 
+<div
+    id="loanRepaymentSection"
+    class="loan-repayment-dashboard"
+    style="
+        margin-top: 22px;
+        width: 100%;
+        box-sizing: border-box;
+    ">
+
+    <!-- =================================================
+         DASHBOARD HEADER
+    ================================================= -->
+
+<!-- =================================================
+     DASHBOARD HEADER
+================================================= -->
+
+<div
+    style="
+        display:grid;
+        grid-template-columns:32% 68%;
+        width:100%;
+        background:linear-gradient(135deg,#123f82,#2563b8,#4f46a5);
+        color:#ffffff;
+        border-radius:16px 16px 0 0;
+        overflow:hidden;
+        box-shadow:0 5px 18px rgba(30,64,175,0.20);
+    ">
+
+    <!-- LEFT HEADER : MY LOANS -->
+
+    <div
+        style="
+            padding:14px 20px;
+            border-right:1px solid rgba(255,255,255,0.30);
+            display:flex;
+            align-items:center;
+        ">
+
+        <div>
+
+            <div
+                style="
+                    font-size:19px;
+                    font-weight:800;
+                    margin:0;
+                ">
+                🏦 My Loans
+            </div>
+
+            <div
+                style="
+                    margin-top:4px;
+                    font-size:11px;
+                    opacity:0.90;
+                ">
+                Select a loan to manage repayments
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RIGHT HEADER : REPAYMENT MANAGEMENT -->
+
+    <div
+        style="
+            padding:14px 24px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:15px;
+        ">
+
+        <div>
+
+            <div
+                style="
+                    font-size:19px;
+                    font-weight:800;
+                    margin:0;
+                ">
+                💳 Loan Repayment Management
+            </div>
+
+            <div
+                style="
+                    margin-top:4px;
+                    font-size:11px;
+                    opacity:0.92;
+                ">
+                EMI • Principal • Interest • Prepayment • Loan Tracking
+            </div>
+
+        </div>
+
+        <div
+            style="
+                background:rgba(255,255,255,0.16);
+                border:1px solid rgba(255,255,255,0.25);
+                padding:7px 13px;
+                border-radius:20px;
+                font-size:11px;
+                font-weight:700;
+                white-space:nowrap;
+            ">
+            🏦 Loan Dashboard
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- =================================================
+         MAIN TWO COLUMN AREA
+    ================================================= -->
+
+    <div
+        style="
+            display:grid;
+            grid-template-columns:minmax(250px, 0.32fr) minmax(500px, 0.68fr);
+            gap:16px;
+            padding:16px;
+            background:#f3f7fc;
+            border:1px solid #d8e1ee;
+            border-top:none;
+        ">
+
+        <!-- =================================================
+             LEFT : LOAN CARDS
+        ================================================= -->
+
+        <div>
+
+            
+
+            <!-- HOME LOAN -->
+
+            <button
+                type="button"
+                class="loan-repayment-select-card"
+                data-loan-type="Home Loan"
+                style="
+                    width:100%;
+                    text-align:left;
+                    border:2px solid #2563b8;
+                    background:linear-gradient(135deg,#ffffff,#eef5ff);
+                    border-radius:14px;
+                    padding:16px;
+                    margin-bottom:10px;
+                    cursor:pointer;
+                    box-shadow:0 5px 15px rgba(37,99,184,0.12);
+                ">
+
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:12px;
+                    ">
+
+                    <div
+                        style="
+                            width:44px;
+                            height:44px;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            border-radius:12px;
+                            background:#dbeafe;
+                            font-size:23px;
+                        ">
+                        🏠
+                    </div>
+
+                    <div style="flex:1;">
+
+                        <div
+                            style="
+                                font-size:15px;
+                                font-weight:800;
+                                color:#173f78;
+                            ">
+                            Home Loan
+                        </div>
+
+                        <div
+                            style="
+                                font-size:11px;
+                                color:#718096;
+                                margin-top:3px;
+                            ">
+                            Housing / Property Loan
+                        </div>
+
+                    </div>
+
+                    <span
+                        id="repaymentHomeLoanStatus"
+                        style="
+                            background:#dcfce7;
+                            color:#166534;
+                            padding:4px 8px;
+                            border-radius:12px;
+                            font-size:10px;
+                            font-weight:800;
+                        ">
+                        ● Active
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:1fr 1fr;
+                        gap:8px;
+                        margin-top:14px;
+                    ">
+
+                    <div>
+
+                        <small
+                            style="
+                                display:block;
+                                color:#718096;
+                                font-size:10px;
+                            ">
+                            Outstanding
+                        </small>
+
+                        <strong
+                            id="repaymentHomeLoanBalance"
+                            style="
+                                display:block;
+                                margin-top:3px;
+                                color:#123f82;
+                                font-size:15px;
+                            ">
+                            ₹43,36,743
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <small
+                            style="
+                                display:block;
+                                color:#718096;
+                                font-size:10px;
+                            ">
+                            EMI
+                        </small>
+
+                        <strong
+                            id="repaymentHomeLoanEMI"
+                            style="
+                                display:block;
+                                margin-top:3px;
+                                color:#123f82;
+                                font-size:15px;
+                            ">
+                            ₹51,240
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </button>
+
+
+            <!-- OTHER LOAN CARDS -->
+
+            <div
+                style="
+                    display:grid;
+                    grid-template-columns:1fr;
+                    gap:8px;
+                ">
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Car Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    🚗
+                    <strong style="margin-left:7px;">
+                        Car Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Gold Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    🪙
+                    <strong style="margin-left:7px;">
+                        Gold Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Mortgage Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    🏢
+                    <strong style="margin-left:7px;">
+                        Mortgage Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="KCC Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    🌾
+                    <strong style="margin-left:7px;">
+                        KCC Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Credit Card Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    💳
+                    <strong style="margin-left:7px;">
+                        Credit Card Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Personal Loan"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    👤
+                    <strong style="margin-left:7px;">
+                        Personal Loan
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="loan-repayment-select-card"
+                    data-loan-type="Other Borrowings"
+                    style="
+                        width:100%;
+                        border:1px solid #dbe3ef;
+                        background:#ffffff;
+                        border-radius:12px;
+                        padding:12px;
+                        text-align:left;
+                        cursor:pointer;
+                    ">
+
+                    🤝
+                    <strong style="margin-left:7px;">
+                        Other Borrowings
+                    </strong>
+
+                    <span
+                        style="
+                            float:right;
+                            font-size:10px;
+                            color:#718096;
+                        ">
+                        0 Active
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             RIGHT : REPAYMENT DASHBOARD
+        ================================================= -->
+
+        <div>
+
+            <!-- TOP SUMMARY CARDS -->
+
+            <div
+                style="
+                    display:grid;
+                    grid-template-columns:repeat(4,minmax(130px,1fr));
+                    gap:10px;
+                    margin-bottom:14px;
+                ">
+
+                <div
+                    style="
+                        background:linear-gradient(135deg,#ffffff,#e8f1ff);
+                        border:1px solid #cdddf4;
+                        border-radius:12px;
+                        padding:14px;
+                    ">
+
+                    <small style="color:#64748b;">
+                        💰 Current Balance
+                    </small>
+
+                    <strong
+                        id="repaymentCurrentBalance"
+                        style="
+                            display:block;
+                            margin-top:7px;
+                            font-size:18px;
+                            color:#123f82;
+                        ">
+                        ₹43,36,743
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:linear-gradient(135deg,#ffffff,#e9fff4);
+                        border:1px solid #ccebd9;
+                        border-radius:12px;
+                        padding:14px;
+                    ">
+
+                    <small style="color:#64748b;">
+                        💳 Monthly EMI
+                    </small>
+
+                    <strong
+                        id="repaymentCurrentEMI"
+                        style="
+                            display:block;
+                            margin-top:7px;
+                            font-size:18px;
+                            color:#087443;
+                        ">
+                        ₹51,240
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:linear-gradient(135deg,#ffffff,#fff5df);
+                        border:1px solid #f0dfb8;
+                        border-radius:12px;
+                        padding:14px;
+                    ">
+
+                    <small style="color:#64748b;">
+                        📈 Interest Rate
+                    </small>
+
+                    <strong
+                        id="repaymentCurrentRate"
+                        style="
+                            display:block;
+                            margin-top:7px;
+                            font-size:18px;
+                            color:#a16207;
+                        ">
+                        7.40%
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        background:linear-gradient(135deg,#ffffff,#f3eaff);
+                        border:1px solid #dfcdf5;
+                        border-radius:12px;
+                        padding:14px;
+                    ">
+
+                    <small style="color:#64748b;">
+                        📅 Next EMI
+                    </small>
+
+                    <strong
+                        id="repaymentNextEMIDate"
+                        style="
+                            display:block;
+                            margin-top:7px;
+                            font-size:16px;
+                            color:#6b21a8;
+                        ">
+                        —
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- LATEST PAYMENT -->
+
+            <div
+                style="
+                    background:#ffffff;
+                    border:1px solid #dbe3ef;
+                    border-radius:14px;
+                    padding:16px;
+                    margin-bottom:14px;
+                ">
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:10px;
+                        flex-wrap:wrap;
+                    ">
+
+                    <div>
+
+                        <h3
+                            style="
+                                margin:0;
+                                color:#173f78;
+                                font-size:16px;
+                            ">
+                            📌 Latest Payment
+                        </h3>
+
+                        <small style="color:#718096;">
+                            Most recent Home Loan repayment
+                        </small>
+
+                    </div>
+
+                    <span
+                        id="repaymentLatestPaymentDate"
+                        style="
+                            background:#eef5ff;
+                            color:#2563b8;
+                            padding:5px 9px;
+                            border-radius:15px;
+                            font-size:11px;
+                            font-weight:700;
+                        ">
+                        —
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:repeat(4,1fr);
+                        gap:10px;
+                        margin-top:14px;
+                    ">
+
+                    <div>
+                        <small style="color:#718096;">Payment</small>
+                        <strong
+                            id="repaymentLatestAmount"
+                            style="display:block;margin-top:4px;">
+                            ₹0
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small style="color:#718096;">Principal</small>
+                        <strong
+                            id="repaymentLatestPrincipal"
+                            style="display:block;margin-top:4px;color:#087443;">
+                            ₹0
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small style="color:#718096;">Interest</small>
+                        <strong
+                            id="repaymentLatestInterest"
+                            style="display:block;margin-top:4px;color:#b45309;">
+                            ₹0
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small style="color:#718096;">Outstanding</small>
+                        <strong
+                            id="repaymentLatestOutstanding"
+                            style="display:block;margin-top:4px;color:#123f82;">
+                            ₹0
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LOAN PROGRESS -->
+
+            <div
+                style="
+                    background:#ffffff;
+                    border:1px solid #dbe3ef;
+                    border-radius:14px;
+                    padding:16px;
+                    margin-bottom:14px;
+                ">
+
+                <h3
+                    style="
+                        margin:0;
+                        color:#173f78;
+                        font-size:16px;
+                    ">
+                    📊 Loan Progress
+                </h3>
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:repeat(3,1fr);
+                        gap:10px;
+                        margin-top:13px;
+                    ">
+
+                    <div>
+                        <small style="color:#718096;">
+                            Principal Paid
+                        </small>
+
+                        <strong
+                            id="loanDashboardPrincipalPaid"
+                            style="
+                                display:block;
+                                margin-top:4px;
+                                color:#087443;
+                            ">
+                            ₹0
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small style="color:#718096;">
+                            Interest Paid
+                        </small>
+
+                        <strong
+                            id="loanDashboardInterestPaid"
+                            style="
+                                display:block;
+                                margin-top:4px;
+                                color:#b45309;
+                            ">
+                            ₹0
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small style="color:#718096;">
+                            Extra Principal
+                        </small>
+
+                        <strong
+                            id="loanDashboardPrepayment"
+                            style="
+                                display:block;
+                                margin-top:4px;
+                                color:#7c3aed;
+                            ">
+                            ₹0
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 REPAYMENT ENTRY
+            ================================================= -->
+
+            <div
+                style="
+                    background:#ffffff;
+                    border:1px solid #cdddf4;
+                    border-radius:14px;
+                    padding:18px;
+                    box-shadow:0 3px 10px rgba(30,64,175,0.06);
+                ">
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        margin-bottom:14px;
+                    ">
+
+                    <div>
+
+                        <h3
+                            style="
+                                margin:0;
+                                color:#173f78;
+                                font-size:16px;
+                            ">
+                            🧾 Add Loan Repayment
+                        </h3>
+
+                        <small style="color:#718096;">
+                            Linked with Transaction Entry
+                        </small>
+
+                    </div>
+
+                    <span
+                        style="
+                            background:#ecfdf5;
+                            color:#047857;
+                            padding:5px 9px;
+                            border-radius:15px;
+                            font-size:10px;
+                            font-weight:800;
+                        ">
+                        🔗 TRANSACTION LINKED
+                    </span>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:grid;
+                        grid-template-columns:repeat(2,minmax(180px,1fr));
+                        gap:12px;
+                    ">
+
+                    <div class="loan-form-field">
+                        <label>Loan</label>
+
+                        <select id="repaymentLoan">
+                            <option value="">
+                                -- Select Loan --
+                            </option>
+                        </select>
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>Payment Date</label>
+
+                        <input
+                            type="date"
+                            id="repaymentPaymentDate">
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>EMI Due Date</label>
+
+                        <input
+                            type="date"
+                            id="repaymentDueDate">
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>Payment Type</label>
+
+                        <select id="repaymentType">
+
+                            <option value="regular_emi">
+                                Regular EMI
+                            </option>
+
+                            <option value="principal_prepayment">
+                                Principal Prepayment
+                            </option>
+
+                            <option value="part_prepayment">
+                                Part Prepayment
+                            </option>
+
+                            <option value="full_closure">
+                                Full Closure
+                            </option>
+
+                            <option value="other_payment">
+                                Other Loan Payment
+                            </option>
+
+                        </select>
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>EMI / Payment Amount</label>
+
+                        <input
+                            type="number"
+                            id="repaymentAmount"
+                            min="0"
+                            step="0.01"
+                            placeholder="₹51,240">
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>Paid From Account</label>
+
+                        <select id="repaymentAccount">
+                            <option value="">
+                                -- Select Account --
+                            </option>
+                        </select>
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>Paid By</label>
+
+                        <select id="repaymentPaidBy">
+
+                            <option value="">
+                                -- Select Person --
+                            </option>
+
+                            <option value="shashi_bhushan_mishra">
+                                शशी भूषण मिश्र
+                            </option>
+
+                            <option value="aadesh">
+                                आदेश
+                            </option>
+
+                            <option value="shashi_mishra">
+                                शशी मिश्रा
+                            </option>
+
+                            <option value="other">
+                                Other
+                            </option>
+
+                        </select>
+                    </div>
+
+
+                    <div class="loan-form-field">
+                        <label>Reference / Cheque No.</label>
+
+                        <input
+                            type="text"
+                            id="repaymentReference"
+                            placeholder="Optional">
+                    </div>
+
+                </div>
+
+
+                <!-- CALCULATED VALUES -->
+
+                <div
+                    style="
+                        margin-top:14px;
+                        padding:13px;
+                        background:#f8fafc;
+                        border:1px dashed #b7c5d8;
+                        border-radius:10px;
+                    ">
+
+                    <div
+                        style="
+                            font-size:12px;
+                            font-weight:800;
+                            color:#173f78;
+                            margin-bottom:10px;
+                        ">
+                        🧮 Auto Calculated
+                    </div>
+
+
+                    <div
+                        style="
+                            display:grid;
+                            grid-template-columns:repeat(5,1fr);
+                            gap:10px;
+                        ">
+
+                        <div>
+                            <small>Rate</small>
+                            <strong
+                                id="repaymentApplicableRate"
+                                style="display:block;margin-top:4px;">
+                                —
+                            </strong>
+                        </div>
+
+                        <div>
+                            <small>Opening Principal</small>
+                            <strong
+                                id="repaymentOpeningPrincipal"
+                                style="display:block;margin-top:4px;">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <small>Interest</small>
+                            <strong
+                                id="repaymentInterestAmount"
+                                style="display:block;margin-top:4px;">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <small>Principal</small>
+                            <strong
+                                id="repaymentPrincipalAmount"
+                                style="display:block;margin-top:4px;">
+                                ₹0
+                            </strong>
+                        </div>
+
+                        <div>
+                            <small>Closing Balance</small>
+                            <strong
+                                id="repaymentClosingPrincipal"
+                                style="display:block;margin-top:4px;">
+                                ₹0
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="loan-form-field"
+                    style="margin-top:12px;">
+
+                    <label>Notes</label>
+
+                    <textarea
+                        id="repaymentNotes"
+                        rows="2"
+                        placeholder="Repayment related notes..."></textarea>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:flex;
+                        gap:10px;
+                        flex-wrap:wrap;
+                        margin-top:12px;
+                    ">
+
+                    <button
+                        type="button"
+                        id="saveRepaymentButton"
+                        class="add-module-button">
+
+                        💾 Save Repayment
+
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="cancelRepaymentButton"
+                        class="view-module-button">
+
+                        ❌ Cancel
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         REPAYMENT SUMMARY STRIP
+    ================================================= -->
+
+    <div
+        style="
+            display:grid;
+            grid-template-columns:repeat(4,1fr);
+            gap:10px;
+            padding:14px;
+            background:#f3f7fc;
+            border-left:1px solid #d8e1ee;
+            border-right:1px solid #d8e1ee;
+        ">
+
+        <div
+            style="
+                background:#ffffff;
+                border-radius:11px;
+                padding:12px;
+                border:1px solid #dbe3ef;
+            ">
+
+            <small>Total Repaid</small>
+
+            <strong
+                id="loanTotalRepaid"
+                style="
+                    display:block;
+                    margin-top:5px;
+                    font-size:18px;
+                    color:#123f82;
+                ">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background:#ffffff;
+                border-radius:11px;
+                padding:12px;
+                border:1px solid #dbe3ef;
+            ">
+
+            <small>Principal Paid</small>
+
+            <strong
+                id="loanTotalPrincipalPaid"
+                style="
+                    display:block;
+                    margin-top:5px;
+                    font-size:18px;
+                    color:#087443;
+                ">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background:#ffffff;
+                border-radius:11px;
+                padding:12px;
+                border:1px solid #dbe3ef;
+            ">
+
+            <small>Interest Paid</small>
+
+            <strong
+                id="loanTotalInterestPaid"
+                style="
+                    display:block;
+                    margin-top:5px;
+                    font-size:18px;
+                    color:#b45309;
+                ">
+                ₹0
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background:#ffffff;
+                border-radius:11px;
+                padding:12px;
+                border:1px solid #dbe3ef;
+            ">
+
+            <small>Extra Principal / Prepayment</small>
+
+            <strong
+                id="loanTotalPrepayment"
+                style="
+                    display:block;
+                    margin-top:5px;
+                    font-size:18px;
+                    color:#7c3aed;
+                ">
+                ₹0
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         REPAYMENT HISTORY
+    ================================================= -->
+
+    <div
+        style="
+            background:#ffffff;
+            padding:18px;
+            border:1px solid #d8e1ee;
+            border-top:none;
+            border-radius:0 0 16px 16px;
+        ">
+
+        <div
+            style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:12px;
+            ">
+
+            <div>
+
+                <h3
+                    style="
+                        margin:0;
+                        color:#173f78;
+                        font-size:17px;
+                    ">
+                    📜 Latest Repayment History
+                </h3>
+
+                <small style="color:#718096;">
+                    Loan repayment records linked with transactions
+                </small>
+
+            </div>
+
+            <span
+                style="
+                    font-size:11px;
+                    color:#64748b;
+                ">
+                🔗 Transaction Linked
+            </span>
+
+        </div>
+
+
+        <div style="overflow-x:auto;">
+
+            <table
+                class="loans-table"
+                style="
+                    width:100%;
+                    min-width:950px;
+                ">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>Loan</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Rate</th>
+                        <th>Paid By</th>
+                        <th>Account</th>
+                        <th>Outstanding</th>
+                        <th>Transaction</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="loanRepaymentHistoryBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
 
 <!-- =============================== -->
 <!-- MY INVESTMENTS -->

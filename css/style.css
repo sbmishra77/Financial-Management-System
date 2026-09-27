@@ -14215,3 +14215,97 @@ body {
     text-align: right;
 
 }
+
+/* =========================================
+   LOANS & BORROWINGS
+   HIDE TOP 8 LARGE LOAN TYPE CARDS
+   ========================================= */
+
+.loan-type-grid {
+    display: none !important;
+}
+
+/* =========================================================
+   LOAN REPAYMENT DASHBOARD - TWO PART BLUE HEADER
+   ========================================================= */
+
+#loanRepaymentSection {
+    width: 100%;
+    margin-top: 18px;
+}
+
+/* Blue header */
+#loanRepaymentSection .loan-repayment-dashboard-header {
+    display: grid !important;
+    grid-template-columns: 32% 68% !important;
+    width: 100%;
+    min-height: 58px;
+    background: linear-gradient(135deg, #164a96, #304fb3) !important;
+    color: #ffffff;
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+}
+
+/* LEFT - My Loans */
+#loanRepaymentSection .loan-dashboard-header-left {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    border-right: 1px solid rgba(255,255,255,0.35);
+}
+
+/* RIGHT - Loan Repayment Management */
+#loanRepaymentSection .loan-dashboard-header-right {
+    display: flex;
+    align-items: center;
+    padding: 10px 22px;
+}
+
+/* Header title */
+#loanRepaymentSection .loan-dashboard-header-left h3,
+#loanRepaymentSection .loan-dashboard-header-right h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+/* Header subtitle */
+#loanRepaymentSection .loan-dashboard-header-left p,
+#loanRepaymentSection .loan-dashboard-header-right p {
+    margin: 3px 0 0;
+    font-size: 11px;
+    opacity: 0.92;
+}
+
+/* =========================================================
+   MY LOANS - LARGER & CLEARER CARDS
+   ========================================================= */
+
+.loan-repayment-select-card {
+    min-height: 62px !important;
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+}
+
+
+/* Loan name */
+.loan-repayment-select-card strong {
+    font-size: 15px !important;
+}
+
+/* Small description */
+.loan-repayment-select-card small {
+    font-size: 11px !important;
+}
+
+/* Active status */
+.loan-repayment-select-card span[id$="Status"] {
+    font-size: 11px !important;
+}
+
+/* Loan icon */
+.loan-repayment-select-card > div:first-child > div:first-child {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 25px !important;
+}

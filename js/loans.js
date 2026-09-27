@@ -1043,3 +1043,446 @@ if (loanSummaryButton) {
 
 }
 
+// =========================================================
+// LOAN REPAYMENT CARD SELECTION
+// =========================================================
+
+document.addEventListener("click", async function (event) {
+
+    const loanCard =
+        event.target.closest(".loan-repayment-select-card");
+
+    if (!loanCard) return;
+
+    const selectedLoanType =
+        loanCard.dataset.loanType;
+
+    if (!selectedLoanType) return;
+
+    console.log(
+        "Selected Repayment Loan:",
+        selectedLoanType
+    );
+
+
+// =====================================================
+// RESET ALL LOAN CARDS TO NORMAL SIZE
+// =====================================================
+
+document
+    .querySelectorAll(".loan-repayment-select-card")
+    .forEach(card => {
+
+        // Normal size for every unselected card
+        card.style.setProperty(
+            "height",
+            "62px",
+            "important"
+        );
+
+        card.style.setProperty(
+            "min-height",
+            "62px",
+            "important"
+        );
+
+        card.style.setProperty(
+            "max-height",
+            "62px",
+            "important"
+        );
+
+        card.style.setProperty(
+            "padding",
+            "14px 16px",
+            "important"
+        );
+
+        card.style.setProperty(
+            "overflow",
+            "hidden",
+            "important"
+        );
+
+        card.style.setProperty(
+            "border",
+            "1px solid #dbe3ef",
+            "important"
+        );
+
+        card.style.setProperty(
+            "box-shadow",
+            "none",
+            "important"
+        );
+
+        card.style.setProperty(
+            "background",
+            "#ffffff",
+            "important"
+        );
+
+    });
+
+
+// =====================================================
+// MAKE ONLY SELECTED CARD BIGGER
+// =====================================================
+
+loanCard.style.setProperty(
+    "height",
+    "120px",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "min-height",
+    "120px",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "max-height",
+    "120px",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "padding",
+    "16px",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "overflow",
+    "visible",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "border",
+    "2px solid #2563b8",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "box-shadow",
+    "0 5px 15px rgba(37,99,184,0.12)",
+    "important"
+);
+
+loanCard.style.setProperty(
+    "background",
+    "linear-gradient(135deg,#ffffff,#eef5ff)",
+    "important"
+);
+
+    // =====================================================
+    // DEFAULT VALUES
+    // =====================================================
+
+    let selectedLoan = null;
+
+
+    // =====================================================
+    // LOAD LOAN FROM FIRESTORE
+    // =====================================================
+
+    if (auth.currentUser) {
+
+        try {
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(loansRef);
+
+
+            loansSnapshot.forEach(loanDoc => {
+
+                const loan =
+                    loanDoc.data();
+
+                if (
+                    !selectedLoan &&
+                    loan.loanType === selectedLoanType &&
+                    loan.status === "active"
+                ) {
+
+                    selectedLoan = {
+                        id: loanDoc.id,
+                        ...loan
+                    };
+
+                }
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "Error loading selected loan:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // VALUES
+    // =====================================================
+
+    const outstanding =
+        Number(
+            selectedLoan?.outstandingBalance || 0
+        );
+
+    const emi =
+        Number(
+            selectedLoan?.emi || 0
+        );
+
+    const interestRate =
+        Number(
+            selectedLoan?.interestRate || 0
+        );
+
+
+    // =====================================================
+    // FORMAT MONEY
+    // =====================================================
+
+    function formatLoanAmount(amount) {
+
+        return (
+            "₹" +
+            Number(amount || 0).toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 2
+                }
+            )
+        );
+
+    }
+
+
+    // =====================================================
+    // UPDATE TOP SUMMARY CARDS
+    // =====================================================
+
+    const balanceElement =
+        document.getElementById(
+            "repaymentCurrentBalance"
+        );
+
+    const emiElement =
+        document.getElementById(
+            "repaymentCurrentEMI"
+        );
+
+    const rateElement =
+        document.getElementById(
+            "repaymentCurrentRate"
+        );
+
+
+    if (balanceElement) {
+
+        balanceElement.textContent =
+            formatLoanAmount(outstanding);
+
+    }
+
+
+    if (emiElement) {
+
+        emiElement.textContent =
+            formatLoanAmount(emi);
+
+    }
+
+
+    if (rateElement) {
+
+        rateElement.textContent =
+            interestRate > 0
+                ? `${interestRate.toFixed(2)}%`
+                : "—";
+
+    }
+
+
+    // =====================================================
+    // UPDATE REPAYMENT LOAN DROPDOWN
+    // =====================================================
+
+    const repaymentLoanSelect =
+        document.getElementById(
+            "repaymentLoan"
+        );
+
+    if (repaymentLoanSelect) {
+
+        const option =
+            Array.from(
+                repaymentLoanSelect.options
+            ).find(
+                item =>
+                    item.value === selectedLoanType ||
+                    item.textContent.trim() === selectedLoanType
+            );
+
+        if (option) {
+
+            repaymentLoanSelect.value =
+                option.value;
+
+        }
+
+    }
+
+
+    // =====================================================
+    // UPDATE OPENING PRINCIPAL
+    // =====================================================
+
+    const openingPrincipalElement =
+        document.getElementById(
+            "repaymentOpeningPrincipal"
+        );
+
+    if (openingPrincipalElement) {
+
+        openingPrincipalElement.textContent =
+            formatLoanAmount(outstanding);
+
+    }
+
+
+    // =====================================================
+    // UPDATE LEFT HOME LOAN CARD
+    // =====================================================
+
+    if (selectedLoanType === "Home Loan") {
+
+        const homeBalance =
+            document.getElementById(
+                "repaymentHomeLoanBalance"
+            );
+
+        const homeEMI =
+            document.getElementById(
+                "repaymentHomeLoanEMI"
+            );
+
+        if (homeBalance) {
+
+            homeBalance.textContent =
+                formatLoanAmount(outstanding);
+
+        }
+
+        if (homeEMI) {
+
+            homeEMI.textContent =
+                formatLoanAmount(emi);
+
+        }
+
+    }
+
+
+    // =====================================================
+    // NEXT EMI DATE
+    // =====================================================
+
+    const nextEMIElement =
+        document.getElementById(
+            "repaymentNextEMIDate"
+        );
+
+    if (nextEMIElement) {
+
+        if (
+            selectedLoan &&
+            selectedLoan.emiDay
+        ) {
+
+            const today =
+                new Date();
+
+            let year =
+                today.getFullYear();
+
+            let month =
+                today.getMonth();
+
+            let dueDate =
+                new Date(
+                    year,
+                    month,
+                    Number(selectedLoan.emiDay)
+                );
+
+
+            if (dueDate <= today) {
+
+                dueDate =
+                    new Date(
+                        year,
+                        month + 1,
+                        Number(selectedLoan.emiDay)
+                    );
+
+            }
+
+
+            const day =
+                String(
+                    dueDate.getDate()
+                ).padStart(2, "0");
+
+            const monthNumber =
+                String(
+                    dueDate.getMonth() + 1
+                ).padStart(2, "0");
+
+            const dueYear =
+                dueDate.getFullYear();
+
+
+            nextEMIElement.textContent =
+                `${day}-${monthNumber}-${dueYear}`;
+
+        } else {
+
+            nextEMIElement.textContent =
+                "—";
+
+        }
+
+    }
+
+
+    // =====================================================
+    // CONSOLE TEST
+    // =====================================================
+
+    console.log(
+        "REPAYMENT DASHBOARD UPDATED:",
+        {
+            loanType: selectedLoanType,
+            loanId: selectedLoan?.id || null,
+            outstanding: outstanding,
+            emi: emi,
+            interestRate: interestRate
+        }
+    );
+
+});
