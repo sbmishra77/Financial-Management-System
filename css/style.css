@@ -13949,3 +13949,269 @@ body {
     }
 
 }
+
+/* =========================================
+   TRANSACTION HISTORY - COMPACT SINGLE SCREEN
+   ========================================= */
+
+.transaction-history-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+
+.transaction-history-table {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+
+/* =========================================
+   COMPACT CELLS + TEXT WRAP
+   ========================================= */
+
+.transaction-history-table th,
+.transaction-history-table td {
+
+    padding: 6px 6px;
+
+    white-space: normal;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    vertical-align: middle;
+
+    font-size: 11px;
+
+    line-height: 1.25;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   COLUMN WIDTHS
+   ========================================= */
+
+.transaction-history-table th:nth-child(1),
+.transaction-history-table td:nth-child(1) {
+    width: 7%;
+}
+
+
+.transaction-history-table th:nth-child(2),
+.transaction-history-table td:nth-child(2) {
+    width: 7%;
+}
+
+
+.transaction-history-table th:nth-child(3),
+.transaction-history-table td:nth-child(3) {
+    width: 9%;
+}
+
+
+.transaction-history-table th:nth-child(4),
+.transaction-history-table td:nth-child(4) {
+    width: 11%;
+}
+
+
+.transaction-history-table th:nth-child(5),
+.transaction-history-table td:nth-child(5) {
+    width: 8%;
+}
+
+
+.transaction-history-table th:nth-child(6),
+.transaction-history-table td:nth-child(6) {
+    width: 7%;
+}
+
+
+.transaction-history-table th:nth-child(7),
+.transaction-history-table td:nth-child(7) {
+    width: 11%;
+}
+
+
+.transaction-history-table th:nth-child(8),
+.transaction-history-table td:nth-child(8) {
+    width: 10%;
+}
+
+
+.transaction-history-table th:nth-child(9),
+.transaction-history-table td:nth-child(9) {
+    width: 8%;
+}
+
+
+.transaction-history-table th:nth-child(10),
+.transaction-history-table td:nth-child(10) {
+    width: 8%;
+}
+
+
+.transaction-history-table th:nth-child(11),
+.transaction-history-table td:nth-child(11) {
+    width: 9%;
+}
+
+
+.transaction-history-table th:nth-child(12),
+.transaction-history-table td:nth-child(12) {
+    width: 5%;
+}
+
+
+/* =========================================
+   ACTION COLUMN
+   ========================================= */
+
+.transaction-history-table th:last-child,
+.transaction-history-table td:last-child {
+
+    min-width: 0;
+    width: 5%;
+
+    text-align: center;
+
+    white-space: normal;
+}
+
+
+.transaction-history-table td:last-child button {
+
+    display: block;
+
+    width: 100%;
+
+    margin: 2px 0;
+
+    padding: 4px 2px;
+
+    font-size: 10px;
+
+    white-space: normal;
+
+}
+
+/* =========================================
+   TRANSACTION HISTORY - BEAUTIFUL GRID
+   ========================================= */
+
+/* -----------------------------------------
+   LARGER & CLEARER FONT
+   ----------------------------------------- */
+
+.transaction-history-table th,
+.transaction-history-table td {
+
+    font-size: 14px;
+
+    line-height: 1.35;
+
+    border: 1px solid #c7c7c7;
+
+    padding: 8px 7px;
+
+}
+
+
+/* -----------------------------------------
+   TABLE HEADER
+   ----------------------------------------- */
+
+.transaction-history-table thead th {
+
+    background: #164a96;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    border: 1px solid #0f3670;
+
+    text-align: center;
+
+}
+
+
+/* =========================================
+   ATTRACTIVE ALTERNATING ROW COLORS
+   ========================================= */
+
+.transaction-history-table tbody tr:nth-child(odd) td {
+
+    background-color: #eef5ff;
+
+}
+
+
+.transaction-history-table tbody tr:nth-child(even) td {
+
+    background-color: #f8f5ff;
+
+}
+
+
+/* =========================================
+   ROW HOVER
+   ========================================= */
+
+.transaction-history-table tbody tr:hover td {
+
+    background-color: #fff1c7;
+
+}
+
+/* -----------------------------------------
+   CLEAN GRID
+   ----------------------------------------- */
+
+.transaction-history-table {
+
+    border: 1px solid #aeb8c4;
+
+}
+
+
+.transaction-history-table tbody tr {
+
+    border-bottom: 1px solid #bfc7d1;
+
+}
+
+
+/* -----------------------------------------
+   ACTION COLUMN
+   ----------------------------------------- */
+
+.transaction-history-table td:last-child {
+
+    text-align: center;
+
+}
+
+
+/* -----------------------------------------
+   BETTER VISIBILITY FOR AMOUNT
+   ----------------------------------------- */
+
+.transaction-history-table td:nth-child(6) {
+
+    font-weight: 600;
+
+    text-align: right;
+
+}

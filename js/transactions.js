@@ -4216,6 +4216,46 @@ accountsSnapshot.forEach(
 }
 
 window.rebuildSeptemberBankBalances = rebuildSeptemberBankBalances;
+window.inspectICICIOneRupeeTransaction = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("USER NOT LOGGED IN");
+        return;
+    }
+
+    const transactionsSnapshot = await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "transactions"
+        )
+    );
+
+    transactionsSnapshot.forEach((transactionDoc) => {
+
+        const transaction = transactionDoc.data();
+
+        if (
+            transaction.date === "2026-09-23" &&
+            Number(transaction.amount) === 1 &&
+            transaction.category ===
+                "Credit Card Bill ICICI Amazon"
+        ) {
+
+            console.log(
+                "₹1 ICICI TRANSACTION:",
+                transactionDoc.id,
+                transaction
+            );
+
+        }
+
+    });
+
+};
 
 // ======================================================
 // KOTAK SEPTEMBER BALANCE DIAGNOSTIC
@@ -11839,3 +11879,68 @@ async function findAll44Transactions() {
 
 window.findAll44Transactions =
     findAll44Transactions;
+
+    // =========================================
+// TEMP DIAGNOSTIC - INSPECT ₹1 ICICI BILL
+// =========================================
+
+async function inspectICICIOneRupeeTransaction() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.error("USER NOT LOGGED IN");
+        return;
+    }
+
+    const transactionsRef =
+        collection(
+            db,
+            "users",
+            user.uid,
+            "transactions"
+        );
+
+    const transactionsSnapshot =
+        await getDocs(transactionsRef);
+
+    let found = false;
+
+    transactionsSnapshot.forEach(
+        (transactionDoc) => {
+
+            const transaction =
+                transactionDoc.data();
+
+            if (
+                transaction.date === "2026-09-23" &&
+                Number(transaction.amount) === 1 &&
+                transaction.category ===
+                    "Credit Card Bill ICICI Amazon"
+            ) {
+
+                found = true;
+
+                console.log(
+                    "₹1 ICICI TRANSACTION FOUND:",
+                    {
+                        transactionId:
+                            transactionDoc.id,
+
+                        fullData:
+                            transaction
+                    }
+                );
+            }
+        }
+    );
+
+    if (!found) {
+        console.log(
+            "₹1 ICICI TRANSACTION NOT FOUND"
+        );
+    }
+}
+
+window.inspectICICIOneRupeeTransaction =
+    inspectICICIOneRupeeTransaction;
