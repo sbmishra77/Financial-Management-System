@@ -11944,3 +11944,51 @@ async function inspectICICIOneRupeeTransaction() {
 
 window.inspectICICIOneRupeeTransaction =
     inspectICICIOneRupeeTransaction;
+
+    // =========================================
+// TEMP DIAGNOSTIC - NAVI & ICICI BALANCES
+// =========================================
+
+window.checkNaviAndICICIBalances = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("USER NOT LOGGED IN");
+        return;
+    }
+
+    const accountsSnapshot = await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "accounts"
+        )
+    );
+
+    accountsSnapshot.forEach((accountDoc) => {
+
+        const account = accountDoc.data();
+
+        if (
+            account.name === "Navi Wallet" ||
+            account.name === "ICICI Amazon Pay Credit Card"
+        ) {
+
+            console.log(
+                "ACCOUNT BALANCE:",
+                {
+                    id: accountDoc.id,
+                    name: account.name,
+                    type: account.type,
+                    balance: account.balance,
+                    openingBalance: account.openingBalance
+                }
+            );
+
+        }
+
+    });
+
+};
