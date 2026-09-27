@@ -11776,7 +11776,7 @@ async function checkDeletedGehuTransaction() {
 window.checkDeletedGehuTransaction =
     checkDeletedGehuTransaction;
 
-    // ======================================================
+// ======================================================
 // FIND ALL ₹44 TRANSACTIONS
 // READ ONLY - DOES NOT CHANGE ANY DATA
 // ======================================================
@@ -11945,6 +11945,99 @@ async function inspectICICIOneRupeeTransaction() {
 window.inspectICICIOneRupeeTransaction =
     inspectICICIOneRupeeTransaction;
 
+
+ // =========================================
+// TEMP DIAGNOSTIC - NAVI TRANSACTIONS
+// =========================================
+
+window.inspectNaviTransactions = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("USER NOT LOGGED IN");
+        return;
+    }
+
+    // FIND NAVI ACCOUNT
+    const accountsSnapshot = await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "accounts"
+        )
+    );
+
+    let naviAccountId = null;
+
+    accountsSnapshot.forEach((accountDoc) => {
+
+        const account = accountDoc.data();
+
+        if (account.name === "Navi Wallet") {
+
+            naviAccountId = accountDoc.id;
+
+            console.log(
+                "NAVI ACCOUNT FOUND:",
+                naviAccountId,
+                account
+            );
+        }
+
+    });
+
+    if (!naviAccountId) {
+
+        console.log(
+            "NAVI ACCOUNT NOT FOUND"
+        );
+
+        return;
+    }
+
+    // FIND ALL TRANSACTIONS CONNECTED TO NAVI
+    const transactionsSnapshot = await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "transactions"
+        )
+    );
+
+    let count = 0;
+
+    transactionsSnapshot.forEach((transactionDoc) => {
+
+        const transaction = transactionDoc.data();
+
+        if (
+            transaction.fromAccountId ===
+                naviAccountId ||
+            transaction.toAccountId ===
+                naviAccountId
+        ) {
+
+            count++;
+
+            console.log(
+                "NAVI TRANSACTION:",
+                transactionDoc.id,
+                transaction
+            );
+        }
+
+    });
+
+    console.log(
+        "TOTAL NAVI TRANSACTIONS:",
+        count
+    );
+
+};
+
     // =========================================
 // TEMP DIAGNOSTIC - NAVI & ICICI BALANCES
 // =========================================
@@ -11984,6 +12077,61 @@ window.checkNaviAndICICIBalances = async function () {
                     type: account.type,
                     balance: account.balance,
                     openingBalance: account.openingBalance
+                }
+            );
+
+        }
+
+    });
+
+};
+
+// =========================================
+// TEMP DIAGNOSTIC - NAVI TRANSACTION DETAILS
+// =========================================
+
+window.inspectNaviTransactionDetails = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("USER NOT LOGGED IN");
+        return;
+    }
+
+    const transactionsSnapshot = await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "transactions"
+        )
+    );
+
+    transactionsSnapshot.forEach((transactionDoc) => {
+
+        const transaction = transactionDoc.data();
+
+        if (
+            transactionDoc.id ===
+                "QIMBEBYujY9mpKWxQj2a" ||
+            transactionDoc.id ===
+                "UGdw0uxGTBy2ymOPKFHw"
+        ) {
+
+            console.log(
+                "NAVI TRANSACTION DETAILS:",
+                {
+                    transactionId: transactionDoc.id,
+                    date: transaction.date,
+                    type: transaction.type,
+                    category: transaction.category,
+                    amount: transaction.amount,
+                    behavior: transaction.behavior,
+                    fromAccountId: transaction.fromAccountId,
+                    toAccountId: transaction.toAccountId,
+                    partyName: transaction.partyName,
+                    notes: transaction.notes
                 }
             );
 
