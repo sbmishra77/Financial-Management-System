@@ -302,7 +302,7 @@ const categoryOptions = {
     "Vehicle Maintenance",
     "Vehicle Challan",
     "Vehicle Other Expense",
-
+     "Credit Card Bill Discount",   
     "Other Expense"
 ],
     investment: [
@@ -335,6 +335,10 @@ const categoryOptions = {
         "Wallet Cashback",
         "Other Cashback"
     ]
+
+    credit_card_discount: [
+    "Credit Card Bill Discount"
+],
 
 };
 
@@ -3494,6 +3498,158 @@ console.log(
     }
 );
 
+// =========================================
+// FIX NAVI WALLET OPENING BALANCE
+// =========================================
+
+async function setNaviOpeningBalanceToZero() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    try {
+
+        const accountsRef =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(accountsRef);
+
+        for (const accountDoc of accountsSnapshot.docs) {
+
+            const account =
+                accountDoc.data();
+
+            if (
+                account.name === "Navi Wallet"
+            ) {
+
+                await updateDoc(
+                    accountDoc.ref,
+                    {
+                        openingBalance: 0,
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "NAVI OPENING BALANCE UPDATED TO ₹0"
+                );
+
+                alert(
+                    "Navi Wallet opening balance अब ₹0 कर दिया गया है।"
+                );
+
+                return;
+            }
+        }
+
+        console.log(
+            "Navi Wallet account नहीं मिला।"
+        );
+
+        alert(
+            "Navi Wallet account नहीं मिला।"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "NAVI OPENING BALANCE UPDATE ERROR:",
+            error
+        );
+
+        alert(
+            "Navi opening balance update नहीं हो सका। Console देखें।"
+        );
+    }
+}
+
+window.setNaviOpeningBalanceToZero =
+    setNaviOpeningBalanceToZero;
+
+async function setNaviCurrentBalanceToZero() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    try {
+
+        const accountsRef =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(accountsRef);
+
+        for (const accountDoc of accountsSnapshot.docs) {
+
+            const account =
+                accountDoc.data();
+
+            if (
+                account.name ===
+                "Navi Wallet"
+            ) {
+
+                await updateDoc(
+                    accountDoc.ref,
+                    {
+                        balance: 0,
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "NAVI CURRENT BALANCE SET TO ₹0"
+                );
+
+                alert(
+                    "Navi Wallet current balance अब ₹0 है।"
+                );
+
+                return;
+            }
+        }
+
+        alert(
+            "Navi Wallet account नहीं मिला।"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "NAVI BALANCE UPDATE ERROR:",
+            error
+        );
+
+        alert(
+            "Navi balance update नहीं हो सका।"
+        );
+    }
+}
+
+window.setNaviCurrentBalanceToZero =
+    setNaviCurrentBalanceToZero;
+    
 // ==========================================
 // MIGRATE ACCOUNT OPENING BALANCES
 // ONE-TIME SETUP
@@ -5057,6 +5213,18 @@ if (
         "money_out_non_expense";
 }
 
+// =========================================
+// CREDIT CARD BILL DISCOUNT
+// =========================================
+
+if (
+    type === "expense" &&
+    category === "Credit Card Bill Discount"
+) {
+    transactionBehavior =
+        "credit_card_bill_discount";
+}
+
 console.log(
     "TRANSACTION BEHAVIOR:",
     {
@@ -5350,6 +5518,19 @@ if (oldTransactionSnapshot.exists()) {
             }
         }
     }
+
+// =========================================
+// CREDIT CARD BILL DISCOUNT
+// =========================================
+
+const isNewCreditCardDiscount =
+    transactionBehavior ===
+        "credit_card_bill_discount" &&
+    type === "expense" &&
+    category ===
+        "Credit Card Bill Discount";
+
+
 
     // =================================
     // 2. APPLY NEW CREDIT CARD PAYMENT
