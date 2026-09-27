@@ -5493,6 +5493,536 @@
 
 </div>
 
+
+<!-- =================================================
+     LOAN REPAYMENT MANAGEMENT
+     ================================================= -->
+
+<div
+    id="loanRepaymentSection"
+    class="loan-repayment-section"
+    style="margin-top: 25px;">
+
+    <!-- REPAYMENT HEADER -->
+
+    <div
+        style="
+            background: linear-gradient(135deg, #164a96, #2563b8);
+            color: #ffffff;
+            padding: 18px 20px;
+            border-radius: 12px 12px 0 0;
+        ">
+
+        <h3 style="margin: 0 0 6px 0;">
+            💳 Loan Repayment Management
+        </h3>
+
+        <p style="margin: 0; opacity: 0.95;">
+            EMI, Principal Repayment, Interest & Prepayment Management
+        </p>
+
+    </div>
+
+
+    <!-- REPAYMENT SUMMARY -->
+
+    <div
+        style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            padding: 16px;
+            background: #f5f8fc;
+            border: 1px solid #d8e0ea;
+            border-top: none;
+        ">
+
+        <div
+            style="
+                background: #ffffff;
+                padding: 14px;
+                border-radius: 10px;
+                border: 1px solid #d8e0ea;
+            ">
+
+            <small>Total Repaid</small>
+
+            <strong
+                id="loanTotalRepaid"
+                style="
+                    display: block;
+                    margin-top: 6px;
+                    font-size: 20px;
+                ">
+
+                ₹0
+
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background: #ffffff;
+                padding: 14px;
+                border-radius: 10px;
+                border: 1px solid #d8e0ea;
+            ">
+
+            <small>Principal Paid</small>
+
+            <strong
+                id="loanTotalPrincipalPaid"
+                style="
+                    display: block;
+                    margin-top: 6px;
+                    font-size: 20px;
+                ">
+
+                ₹0
+
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background: #ffffff;
+                padding: 14px;
+                border-radius: 10px;
+                border: 1px solid #d8e0ea;
+            ">
+
+            <small>Interest Paid</small>
+
+            <strong
+                id="loanTotalInterestPaid"
+                style="
+                    display: block;
+                    margin-top: 6px;
+                    font-size: 20px;
+                ">
+
+                ₹0
+
+            </strong>
+
+        </div>
+
+
+        <div
+            style="
+                background: #ffffff;
+                padding: 14px;
+                border-radius: 10px;
+                border: 1px solid #d8e0ea;
+            ">
+
+            <small>Extra Principal / Prepayment</small>
+
+            <strong
+                id="loanTotalPrepayment"
+                style="
+                    display: block;
+                    margin-top: 6px;
+                    font-size: 20px;
+                ">
+
+                ₹0
+
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <!-- REPAYMENT ENTRY AREA -->
+
+    <div
+        style="
+            background: #ffffff;
+            padding: 20px;
+            border: 1px solid #d8e0ea;
+            border-top: none;
+        ">
+
+        <h4 style="margin-top: 0;">
+            ➕ Add Loan Repayment
+        </h4>
+
+
+        <div
+            style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+                gap: 15px;
+            ">
+
+            <!-- LOAN -->
+
+            <div class="loan-form-field">
+
+                <label>Loan</label>
+
+                <select id="repaymentLoan">
+
+                    <option value="">
+                        -- Select Loan --
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- PAYMENT DATE -->
+
+            <div class="loan-form-field">
+
+                <label>Payment Date</label>
+
+                <input
+                    type="date"
+                    id="repaymentPaymentDate">
+
+            </div>
+
+
+            <!-- DUE DATE -->
+
+            <div class="loan-form-field">
+
+                <label>EMI Due Date</label>
+
+                <input
+                    type="date"
+                    id="repaymentDueDate">
+
+            </div>
+
+
+            <!-- PAYMENT TYPE -->
+
+            <div class="loan-form-field">
+
+                <label>Payment Type</label>
+
+                <select id="repaymentType">
+
+                    <option value="regular_emi">
+                        Regular EMI
+                    </option>
+
+                    <option value="principal_prepayment">
+                        Principal Prepayment
+                    </option>
+
+                    <option value="part_prepayment">
+                        Part Prepayment
+                    </option>
+
+                    <option value="full_closure">
+                        Full Closure
+                    </option>
+
+                    <option value="other_payment">
+                        Other Loan Payment
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- EMI / PAYMENT AMOUNT -->
+
+            <div class="loan-form-field">
+
+                <label>EMI / Payment Amount</label>
+
+                <input
+                    type="number"
+                    id="repaymentAmount"
+                    min="0"
+                    step="0.01"
+                    placeholder="₹51,240">
+
+            </div>
+
+
+            <!-- PAID FROM -->
+
+            <div class="loan-form-field">
+
+                <label>Paid From Account</label>
+
+                <select id="repaymentAccount">
+
+                    <option value="">
+                        -- Select Account --
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- PAID BY -->
+
+            <div class="loan-form-field">
+
+                <label>Paid By</label>
+
+                <select id="repaymentPaidBy">
+
+                    <option value="">
+                        -- Select Person --
+                    </option>
+
+                    <option value="shashi_bhushan_mishra">
+                        शशी भूषण मिश्र
+                    </option>
+
+                    <option value="aadesh">
+                        आदेश
+                    </option>
+
+                    <option value="shashi_mishra">
+                        शशी मिश्रा
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- REFERENCE -->
+
+            <div class="loan-form-field">
+
+                <label>Reference / Cheque No.</label>
+
+                <input
+                    type="text"
+                    id="repaymentReference"
+                    placeholder="Optional">
+
+            </div>
+
+        </div>
+
+
+        <!-- CALCULATED VALUES -->
+
+        <div
+            style="
+                margin-top: 20px;
+                padding: 16px;
+                background: #f8fafc;
+                border: 1px dashed #aeb8c4;
+                border-radius: 10px;
+            ">
+
+            <h4 style="margin-top: 0;">
+                🧮 Auto Calculated
+            </h4>
+
+            <div
+                style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    gap: 12px;
+                ">
+
+                <div>
+
+                    <small>Applicable Interest Rate</small>
+
+                    <strong
+                        id="repaymentApplicableRate"
+                        style="display:block; margin-top:5px;">
+
+                        —
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <small>Opening Principal</small>
+
+                    <strong
+                        id="repaymentOpeningPrincipal"
+                        style="display:block; margin-top:5px;">
+
+                        ₹0
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <small>Interest Component</small>
+
+                    <strong
+                        id="repaymentInterestAmount"
+                        style="display:block; margin-top:5px;">
+
+                        ₹0
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <small>Principal Component</small>
+
+                    <strong
+                        id="repaymentPrincipalAmount"
+                        style="display:block; margin-top:5px;">
+
+                        ₹0
+
+                    </strong>
+
+                </div>
+
+
+                <div>
+
+                    <small>Closing Outstanding</small>
+
+                    <strong
+                        id="repaymentClosingPrincipal"
+                        style="display:block; margin-top:5px;">
+
+                        ₹0
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOTES -->
+
+        <div
+            class="loan-form-field"
+            style="margin-top: 15px;">
+
+            <label>Notes</label>
+
+            <textarea
+                id="repaymentNotes"
+                rows="3"
+                placeholder="Repayment related notes..."></textarea>
+
+        </div>
+
+
+        <!-- BUTTONS -->
+
+        <div
+            style="
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+                flex-wrap: wrap;
+            ">
+
+            <button
+                type="button"
+                id="saveRepaymentButton"
+                class="add-module-button">
+
+                💾 Save Repayment
+
+            </button>
+
+
+            <button
+                type="button"
+                id="cancelRepaymentButton"
+                class="view-module-button">
+
+                ❌ Cancel
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- REPAYMENT HISTORY -->
+
+    <div
+        style="
+            background: #ffffff;
+            padding: 20px;
+            border: 1px solid #d8e0ea;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+        ">
+
+        <h4 style="margin-top: 0;">
+            📜 Repayment History
+        </h4>
+
+        <div style="overflow-x: auto;">
+
+            <table
+                class="loans-table"
+                style="width: 100%;">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+                        <th>Loan</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Rate</th>
+                        <th>Paid By</th>
+                        <th>Account</th>
+                        <th>Outstanding</th>
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="loanRepaymentHistoryBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
     <!-- =================================================
          LOAN LIST
          ================================================= -->
@@ -5529,6 +6059,8 @@
     </div>
 
 </section>
+
+
 
 <!-- =============================== -->
 <!-- MY INVESTMENTS -->

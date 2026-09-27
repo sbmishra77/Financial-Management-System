@@ -12264,6 +12264,74 @@ window.checkNaviAndICICIBalances = async function () {
 };
 
 // =========================================
+// FIX NAVI ₹1 CREDIT CARD BILL DISCOUNT
+// =========================================
+
+async function fixNaviOneRupeeDiscount() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले login करें।");
+        return;
+    }
+
+    try {
+
+        const transactionRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "transactions",
+                "UGdw0uxGTBy2ymOPKFHw"
+            );
+
+        const transactionSnapshot =
+            await getDoc(transactionRef);
+
+        if (!transactionSnapshot.exists()) {
+
+            alert("23-09 वाली ₹1 transaction नहीं मिली।");
+            return;
+        }
+
+        await updateDoc(
+            transactionRef,
+            {
+                category: "Credit Card Bill Discount",
+                behavior: "credit_card_bill_discount",
+                fromAccountId: null,
+                toAccountId: null,
+                updatedAt: serverTimestamp()
+            }
+        );
+
+        console.log(
+            "NAVI ₹1 DISCOUNT TRANSACTION FIXED"
+        );
+
+        alert(
+            "23-09 की ₹1 Credit Card Bill Discount transaction सही कर दी गई है।"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "NAVI ₹1 DISCOUNT FIX ERROR:",
+            error
+        );
+
+        alert(
+            "₹1 transaction update नहीं हो सकी। Console देखें।"
+        );
+    }
+}
+
+window.fixNaviOneRupeeDiscount =
+    fixNaviOneRupeeDiscount;
+
+// =========================================
 // TEMP DIAGNOSTIC - NAVI TRANSACTION DETAILS
 // =========================================
 
