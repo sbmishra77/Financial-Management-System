@@ -336,10 +336,6 @@ const categoryOptions = {
         "Other Cashback"
     ]
 
-    credit_card_discount: [
-    "Credit Card Bill Discount"
-],
-
 };
 
 
@@ -3649,7 +3645,7 @@ async function setNaviCurrentBalanceToZero() {
 
 window.setNaviCurrentBalanceToZero =
     setNaviCurrentBalanceToZero;
-    
+
 // ==========================================
 // MIGRATE ACCOUNT OPENING BALANCES
 // ONE-TIME SETUP
