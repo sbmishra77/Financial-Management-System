@@ -14309,3 +14309,96 @@ body {
     height: 46px !important;
     font-size: 25px !important;
 }
+
+/* =========================================================
+   LOAN REPAYMENT MANAGEMENT
+   FINAL FORM - 3 + 5 COLUMN ALIGNMENT
+   ========================================================= */
+
+#repaymentFormGrid {
+    display: grid !important;
+    grid-template-columns: repeat(15, minmax(0, 1fr)) !important;
+    column-gap: 24px !important;
+    row-gap: 18px !important;
+    width: 100% !important;
+    align-items: end !important;
+}
+
+#repaymentFormGrid > .loan-form-field {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* ==============================
+   ROW 1 — THREE COLUMNS
+   ============================== */
+
+#repaymentFormGrid > .loan-form-field:nth-child(1) {
+    grid-column: 1 / 6 !important;
+    grid-row: 1 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(2) {
+    grid-column: 6 / 11 !important;
+    grid-row: 1 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(3) {
+    grid-column: 11 / 16 !important;
+    grid-row: 1 !important;
+}
+
+/* ==============================
+   ROW 2 — FIVE COLUMNS
+   ============================== */
+
+#repaymentFormGrid > .loan-form-field:nth-child(4) {
+    grid-column: 1 / 4 !important;
+    grid-row: 2 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(5) {
+    grid-column: 4 / 7 !important;
+    grid-row: 2 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(6) {
+    grid-column: 7 / 10 !important;
+    grid-row: 2 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(7) {
+    grid-column: 10 / 13 !important;
+    grid-row: 2 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(8) {
+    grid-column: 13 / 16 !important;
+    grid-row: 2 !important;
+}
+
+/* ==============================
+   LABELS
+   ============================== */
+
+#repaymentFormGrid .loan-form-field label {
+    display: block !important;
+    margin-bottom: 7px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+/* ==============================
+   INPUTS / SELECTS
+   ============================== */
+
+#repaymentFormGrid .loan-form-field input,
+#repaymentFormGrid .loan-form-field select {
+    width: 100% !important;
+    min-height: 40px !important;
+    box-sizing: border-box !important;
+    padding: 8px 10px !important;
+    font-size: 14px !important;
+}
