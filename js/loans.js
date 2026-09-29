@@ -7174,6 +7174,9 @@ window.testActualHomeLoanPaymentEMIEngine =
                     const repayment =
                         repaymentDoc.data();
 
+                        if (repayment.test === true) {
+    return;
+}
                     records.push({
 
                         id:
@@ -7182,6 +7185,7 @@ window.testActualHomeLoanPaymentEMIEngine =
                         ...repayment
 
                     });
+
 
                 }
             );
@@ -8111,16 +8115,25 @@ window.testActualHomeLoanPaymentEMIEngine =
                 rateApplied:
                     annualRate,
 
-                balanceTenureBefore:
-                    Number(
-                        selectedLoan.remainingTenure || 0
-                    ),
-
                 balanceTenureAfter:
-                    Number(
-                        selectedLoan.remainingTenure || 0
-                    ),
-
+    repaymentType?.value === "regular_emi"
+        ? Math.max(
+            0,
+            Number(selectedLoan.remainingTenure || 0) - 1
+          )
+        : Number(
+            getField("repaymentBalanceTenure")?.value ||
+            selectedLoan.remainingTenure ||
+            0
+          ),
+                balanceTenureAfter:
+    Number(
+        document.getElementById(
+            "repaymentBalanceTenure"
+        )?.value || 
+        selectedLoan.remainingTenure ||
+        0
+    ),
                 paymentAccount:
                     account.value,
 
@@ -8675,21 +8688,44 @@ window.testActualHomeLoanPaymentEMIEngine =
 
             tenureCard.innerHTML = `
 
-                <small>
-                    Balance Tenure
-                </small>
+    <small>
+        Balance Tenure
+    </small>
 
-                <strong
-                    id="repaymentBalanceTenure"
-                    style="
-                        display:block;
-                        margin-top:4px;
-                        font-size:16px;
-                    ">
-                    —
-                </strong>
+    <div style="
+        display:flex;
+        align-items:center;
+        gap:6px;
+        margin-top:4px;
+    ">
 
-            `;
+        <input
+            type="number"
+            id="repaymentBalanceTenure"
+            min="0"
+            step="1"
+            value=""
+            style="
+                width:90px;
+                padding:6px 8px;
+                font-size:16px;
+                font-weight:600;
+                border:1px solid #cbd5e1;
+                border-radius:6px;
+                box-sizing:border-box;
+            "
+        >
+
+        <span style="
+            font-size:14px;
+            color:#64748b;
+        ">
+            Months
+        </span>
+
+    </div>
+
+`;
 
             calculatedGrid.appendChild(
                 tenureCard
@@ -8912,62 +8948,96 @@ if (
         100 /
         12;
 
-    const numerator =
-        Math.log(
-            emi /
-            (
-                emi -
-                (
-                    monthlyRate *
-                    closingPrincipal
-                )
-            )
-        );
-
-    const denominator =
-        Math.log(
-            1 +
-            monthlyRate
-        );
-
-    const calculatedTenure =
-        numerator /
-        denominator;
-
     /*
-     * Existing loan tenure is the actual
-     * remaining tenure stored in the loan.
-     *
-     * Prepayment should reduce this tenure,
-     * not replace it with an independently
-     * calculated tenure.
+     * Start from the ACTUAL remaining tenure
+     * stored for this loan.
      */
-
     const existingTenure =
         Number(
             homeLoan.remainingTenure || 0
         );
 
-    const originalCalculatedTenure =
-        Math.ceil(
-            Math.log(
-                emi /
-                (
-                    emi -
-                    (
-                        monthlyRate *
-                        openingPrincipal
-                    )
-                )
-            ) /
-            denominator
-        );
+    /*
+     * Simulate the loan month-by-month
+     * after prepayment.
+     *
+     * Each month:
+     * Interest = Opening Balance × Monthly Rate
+     * Principal = EMI - Interest
+     * Closing Balance = Opening Balance - Principal
+     *
+     * The number of months required to clear
+     * the post-prepayment balance is the new tenure.
+     */
+    let simulatedBalance =
+        closingPrincipal;
+
+    let simulatedTenure = 0;
+
+    while (
+        simulatedBalance > 0 &&
+        simulatedTenure < 1000
+    ) {
+        const monthlyInterest =
+            simulatedBalance *
+            monthlyRate;
+
+        const monthlyPrincipal =
+            emi -
+            monthlyInterest;
+
+        if (monthlyPrincipal <= 0) {
+            break;
+        }
+
+        simulatedBalance =
+            simulatedBalance -
+            monthlyPrincipal;
+
+        simulatedTenure++;
+    }
+
+    /*
+     * The formula above gives the mathematical
+     * repayment tenure from the new balance.
+     *
+     * But the loan's stored tenure is our
+     * actual baseline. Therefore only the
+     * reduction caused by prepayment is applied.
+     */
+    let originalSimulatedBalance =
+        openingPrincipal;
+
+    let originalSimulatedTenure = 0;
+
+    while (
+        originalSimulatedBalance > 0 &&
+        originalSimulatedTenure < 1000
+    ) {
+        const monthlyInterest =
+            originalSimulatedBalance *
+            monthlyRate;
+
+        const monthlyPrincipal =
+            emi -
+            monthlyInterest;
+
+        if (monthlyPrincipal <= 0) {
+            break;
+        }
+
+        originalSimulatedBalance =
+            originalSimulatedBalance -
+            monthlyPrincipal;
+
+        originalSimulatedTenure++;
+    }
 
     const tenureReduction =
         Math.max(
             0,
-            originalCalculatedTenure -
-            Math.ceil(calculatedTenure)
+            originalSimulatedTenure -
+            simulatedTenure
         );
 
     balanceTenure =
@@ -8983,15 +9053,14 @@ if (
             existingTenure,
             openingPrincipal,
             closingPrincipal,
-            calculatedTenure,
-            originalCalculatedTenure,
+            originalSimulatedTenure,
+            simulatedTenure,
             tenureReduction,
             finalBalanceTenure:
                 balanceTenure
         }
     );
 }
-
                 // =================================================
                 // UPDATE DISPLAY
                 // =================================================
@@ -9051,11 +9120,10 @@ if (
 
                 if (tenureElement) {
 
-                    tenureElement.textContent =
-                        balanceTenure +
-                        " Months";
+    tenureElement.value =
+        balanceTenure;
 
-                }
+}
 
 
                 // =================================================
