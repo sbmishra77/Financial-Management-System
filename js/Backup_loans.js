@@ -5411,6 +5411,18 @@ async function loadHomeLoanRepaymentDashboard() {
             "=========================================="
         );
 
+// =================================================
+// REFRESH LATEST REPAYMENT HISTORY
+// =================================================
+
+if (
+    typeof loadFinalRepaymentHistory ===
+    "function"
+) {
+
+    await loadFinalRepaymentHistory();
+
+}
 
     } catch (error) {
 
@@ -6625,6 +6637,18 @@ window.testActualHomeLoanPaymentEMIEngine =
 
                 await loadHomeLoanRepaymentDashboard();
 
+// =====================================================
+// REFRESH LATEST REPAYMENT HISTORY
+// =====================================================
+
+if (
+    typeof window.loadFinalRepaymentHistory ===
+    "function"
+) {
+
+    await window.loadFinalRepaymentHistory();
+
+}
 
                 // Scroll to repayment dashboard
 
@@ -6707,42 +6731,74 @@ window.testActualHomeLoanPaymentEMIEngine =
 
     function hideLoanRepayment() {
 
-        const repayment =
-            document.getElementById(
-                "loanRepaymentSection"
-            );
+    const repayment =
+        document.getElementById(
+            "loanRepaymentSection"
+        );
 
-        if (repayment) {
+    if (repayment) {
 
-            repayment.style.setProperty(
-                "display",
-                "none",
-                "important"
-            );
-
-        }
+        repayment.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
 
     }
 
+    // Hide repayment history also
+    const historySection =
+        document.getElementById(
+            "loanRepaymentLegacySection"
+        );
 
-    function showLoanRepayment() {
+    if (historySection) {
 
-        const repayment =
-            document.getElementById(
-                "loanRepaymentSection"
-            );
-
-        if (repayment) {
-
-            repayment.style.setProperty(
-                "display",
-                "block",
-                "important"
-            );
-
-        }
+        historySection.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
 
     }
+
+}
+
+
+function showLoanRepayment() {
+
+    const repayment =
+        document.getElementById(
+            "loanRepaymentSection"
+        );
+
+    if (repayment) {
+
+        repayment.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+    }
+
+    // Show repayment history with dashboard
+    const historySection =
+        document.getElementById(
+            "loanRepaymentLegacySection"
+        );
+
+    if (historySection) {
+
+        historySection.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+    }
+
+}
 
 
     // =====================================================
@@ -6893,6 +6949,17 @@ window.testActualHomeLoanPaymentEMIEngine =
                 await loadHomeLoanRepaymentDashboard();
 
             }
+
+// Refresh Latest Repayment History
+
+if (
+    typeof window.loadFinalRepaymentHistory
+    === "function"
+) {
+
+    await window.loadFinalRepaymentHistory();
+
+}
 
 
             // Scroll to dashboard
@@ -7322,44 +7389,17 @@ window.testActualHomeLoanPaymentEMIEngine =
                             }
                         </td>
 
-<td style="white-space:nowrap;">
+                        <td>
+                            <span
+                                style="
+                                    color:#087443;
+                                    font-weight:700;
+                                ">
+                                ✓ Saved
+                            </span>
+                        </td>
 
-    <button
-        type="button"
-        class="loan-repayment-edit-button"
-        data-repayment-id="${repayment.id}"
-        style="
-            background:#2563eb;
-            color:#ffffff;
-            border:none;
-            padding:5px 10px;
-            border-radius:6px;
-            cursor:pointer;
-            font-size:12px;
-            font-weight:600;
-            margin-right:5px;
-        ">
-        ✏️ Edit
-    </button>
-
-    <button
-        type="button"
-        class="loan-repayment-delete-button"
-        data-repayment-id="${repayment.id}"
-        style="
-            background:#dc2626;
-            color:#ffffff;
-            border:none;
-            padding:5px 10px;
-            border-radius:6px;
-            cursor:pointer;
-            font-size:12px;
-            font-weight:600;
-        ">
-        🗑 Delete
-    </button>
-
-</td>                    `;
+                    `;
 
 
                     tbody.appendChild(row);
@@ -7379,457 +7419,6 @@ window.testActualHomeLoanPaymentEMIEngine =
 
     }
 
-// =====================================================
-// DELETE REPAYMENT RECORD
-// =====================================================
-
-document.addEventListener(
-    "click",
-    async function (event) {
-
-        const deleteButton =
-            event.target.closest(
-                ".loan-repayment-delete-button"
-            );
-
-        if (!deleteButton) return;
-
-
-        const repaymentId =
-            deleteButton.dataset.repaymentId;
-
-        if (!repaymentId) return;
-
-
-        // =============================================
-        // CONFIRM DELETE
-        // =============================================
-
-        const confirmDelete =
-            confirm(
-                "⚠️ क्या आप इस repayment record को delete करना चाहते हैं?\n\n" +
-                "Loan balance भी previous value पर restore किया जाएगा."
-            );
-
-        if (!confirmDelete) {
-            return;
-        }
-
-
-        try {
-
-            // =============================================
-            // USER CHECK
-            // =============================================
-
-            const userId =
-                auth.currentUser?.uid;
-
-            if (!userId) {
-
-                alert(
-                    "❌ User login नहीं है."
-                );
-
-                return;
-            }
-
-
-            // =============================================
-            // REPAYMENT REFERENCE
-            // =============================================
-
-            const repaymentRef =
-                doc(
-                    db,
-                    "users",
-                    userId,
-                    "loanRepayments",
-                    repaymentId
-                );
-
-
-            // =============================================
-            // READ REPAYMENT
-            // =============================================
-
-            const repaymentSnap =
-                await getDoc(
-                    repaymentRef
-                );
-
-
-            if (!repaymentSnap.exists()) {
-
-                alert(
-                    "❌ Repayment record नहीं मिला."
-                );
-
-                return;
-            }
-
-
-            const repayment =
-                repaymentSnap.data();
-
-
-            const loanId =
-                repayment.loanId;
-
-
-            if (!loanId) {
-
-                alert(
-                    "❌ इस repayment में Loan ID नहीं मिला."
-                );
-
-                return;
-            }
-
-
-            // =============================================
-            // REPAYMENT COLLECTION
-            // =============================================
-
-            const repaymentsRef =
-                collection(
-                    db,
-                    "users",
-                    userId,
-                    "loanRepayments"
-                );
-
-
-            // =============================================
-            // GET ALL REPAYMENTS
-            // =============================================
-
-            const snapshot =
-                await getDocs(
-                    repaymentsRef
-                );
-
-
-            const loanRecords = [];
-
-
-            snapshot.forEach(
-                repaymentDoc => {
-
-                    const data =
-                        repaymentDoc.data();
-
-
-                    // Test records ignore
-                    if (data.test === true) {
-                        return;
-                    }
-
-
-                    // Same loan only
-                    if (
-                        data.loanId !==
-                        loanId
-                    ) {
-                        return;
-                    }
-
-
-                    loanRecords.push({
-
-                        id:
-                            repaymentDoc.id,
-
-                        ...data
-
-                    });
-
-                }
-            );
-
-
-            // =============================================
-            // SORT OLDEST → LATEST
-            // =============================================
-
-            loanRecords.sort(
-                (a, b) => {
-
-                    const dateA =
-                        String(
-                            a.paymentDate || ""
-                        );
-
-                    const dateB =
-                        String(
-                            b.paymentDate || ""
-                        );
-
-
-                    if (
-                        dateA !==
-                        dateB
-                    ) {
-
-                        return dateA.localeCompare(
-                            dateB
-                        );
-
-                    }
-
-
-                    const timeA =
-                        a.createdAt?.toMillis
-                            ? a.createdAt.toMillis()
-                            : 0;
-
-
-                    const timeB =
-                        b.createdAt?.toMillis
-                            ? b.createdAt.toMillis()
-                            : 0;
-
-
-                    return (
-                        timeA -
-                        timeB
-                    );
-
-                }
-            );
-
-
-            // =============================================
-            // ONLY LATEST REPAYMENT CAN BE DELETED
-            // =============================================
-
-            const latestRecord =
-                loanRecords[
-                    loanRecords.length - 1
-                ];
-
-
-            if (
-                !latestRecord ||
-                latestRecord.id !==
-                repaymentId
-            ) {
-
-                alert(
-                    "⚠️ अभी केवल सबसे नई repayment delete की जा सकती है.\n\n" +
-                    "पहले उसके बाद वाली repayment delete करें."
-                );
-
-                return;
-            }
-
-
-            // =============================================
-            // PREVIOUS REPAYMENT
-            // =============================================
-
-            const previousRecord =
-                loanRecords[
-                    loanRecords.length - 2
-                ];
-
-
-            // =============================================
-            // LOAN REFERENCE
-            // =============================================
-
-            const loanRef =
-                doc(
-                    db,
-                    "users",
-                    userId,
-                    "loans",
-                    loanId
-                );
-
-
-            // =============================================
-            // VALUES TO RESTORE
-            // =============================================
-
-            const restoredOutstanding =
-                Number(
-                    repayment.outstandingBefore ??
-                    previousRecord?.outstandingAfter ??
-                    0
-                );
-
-
-            let restoredTenure;
-
-
-            if (
-                previousRecord &&
-                previousRecord.balanceTenureAfter !==
-                    undefined &&
-                previousRecord.balanceTenureAfter !==
-                    null
-            ) {
-
-                restoredTenure =
-                    Number(
-                        previousRecord.balanceTenureAfter
-                    );
-
-            }
-
-
-            // =============================================
-            // SAFE FIRESTORE TRANSACTION
-            // =============================================
-
-            await runTransaction(
-                db,
-                async transaction => {
-
-                    // READS FIRST
-
-                    const currentRepaymentSnap =
-                        await transaction.get(
-                            repaymentRef
-                        );
-
-
-                    const currentLoanSnap =
-                        await transaction.get(
-                            loanRef
-                        );
-
-
-                    if (
-                        !currentRepaymentSnap.exists()
-                    ) {
-
-                        throw new Error(
-                            "Repayment record already deleted."
-                        );
-
-                    }
-
-
-                    if (
-                        !currentLoanSnap.exists()
-                    ) {
-
-                        throw new Error(
-                            "Loan record not found."
-                        );
-
-                    }
-
-
-                    // =================================
-                    // UPDATE LOAN MASTER
-                    // =================================
-
-                    const loanUpdate = {
-
-                        outstandingBalance:
-                            Number(
-                                restoredOutstanding.toFixed(2)
-                            ),
-
-                        updatedAt:
-                            serverTimestamp(),
-
-                        updatedBy:
-                            userId
-
-                    };
-
-
-                    if (
-                        restoredTenure !==
-                        undefined
-                    ) {
-
-                        loanUpdate.remainingTenure =
-                            restoredTenure;
-
-                    }
-
-
-                    transaction.update(
-                        loanRef,
-                        loanUpdate
-                    );
-
-
-                    // =================================
-                    // DELETE REPAYMENT
-                    // =================================
-
-                    transaction.delete(
-                        repaymentRef
-                    );
-
-                }
-            );
-
-
-            // =============================================
-            // CLEAR EDIT MODE
-            // =============================================
-
-            window.editingRepaymentId =
-                null;
-
-
-            // =============================================
-            // REFRESH DASHBOARD
-            // =============================================
-
-            if (
-                typeof loadHomeLoanRepaymentDashboard ===
-                "function"
-            ) {
-
-                await
-                    loadHomeLoanRepaymentDashboard();
-
-            }
-
-
-            // =============================================
-            // REFRESH HISTORY
-            // =============================================
-
-            await
-                loadFinalRepaymentHistory();
-
-
-            // =============================================
-            // SUCCESS
-            // =============================================
-
-            alert(
-                "✅ Repayment deleted successfully.\n\n" +
-                "Loan balance previous value पर restore हो गया."
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "❌ DELETE REPAYMENT ERROR:",
-                error
-            );
-
-
-            alert(
-                "❌ Repayment delete नहीं हो पाया.\n\n" +
-                "Console में error देखें."
-            );
-
-        }
-
-    }
-);
 
     // =====================================================
     // RESET FORM
@@ -8062,10 +7651,6 @@ document.addEventListener(
                     "repaymentNotes"
                 );
 
-                const balanceTenureField =
-    getField(
-        "repaymentBalanceTenure"
-    );
 
             // =============================================
             // VALIDATION
@@ -8240,47 +7825,6 @@ document.addEventListener(
 
             }
 
-            // =============================================
-// BALANCE TENURE
-// =============================================
-
-const balanceTenureBefore =
-    Number(
-        selectedLoan.remainingTenure || 0
-    );
-
-
-const balanceTenureAfter =
-    Number(
-        balanceTenureField?.value ||
-        balanceTenureBefore
-    );
-
-
-if (
-    !Number.isFinite(
-        balanceTenureAfter
-    ) ||
-    balanceTenureAfter < 0
-) {
-
-    alert(
-        "Please enter a valid Balance Tenure."
-    );
-
-    if (saveButton) {
-
-        saveButton.disabled =
-            false;
-
-        saveButton.textContent =
-            "💾 Save Repayment";
-
-    }
-
-    return;
-
-}
 
             // =============================================
             // CALCULATION
@@ -8433,61 +7977,109 @@ if (
                 );
 
 
-            const existingSnapshot =
-                await getDocs(
-                    repaymentsRef
-                );
+const existingSnapshot =
+    await getDocs(
+        repaymentsRef
+    );
 
 
-            let duplicateFound =
-                false;
+let duplicateFound =
+    false;
 
 
-            existingSnapshot.forEach(
-                repaymentDoc => {
+// =============================================
+// CURRENT BALANCE TENURE
+// =============================================
 
-                    const r =
-                        repaymentDoc.data();
+const currentBalanceTenure =
+    Number(
+        document.getElementById(
+            "repaymentBalanceTenure"
+        )?.value ||
+        selectedLoan.remainingTenure ||
+        0
+    );
 
-if (
-    repaymentDoc.id ===
-    window.editingRepaymentId
-) {
-    return;
-}
 
-                    if (
-                        r.loanId ===
-                        selectedLoanId &&
-                        r.paymentDate ===
-                        paymentDate.value &&
-                        Number(
-                            r.amount || 0
-                        ) ===
-                        paymentAmount &&
-                        r.status !==
-                        "deleted"
-                    ) {
+// =============================================
+// DUPLICATE CHECK
+// Loan + Date + Amount + Type + Tenure
+// =============================================
 
-                        duplicateFound =
-                            true;
+existingSnapshot.forEach(
+    repaymentDoc => {
 
-                    }
+        const r =
+            repaymentDoc.data();
 
-                }
+
+        const sameLoan =
+            r.loanId ===
+            selectedLoanId;
+
+
+        const sameDate =
+            r.paymentDate ===
+            paymentDate.value;
+
+
+        const sameAmount =
+            Number(
+                r.amount || 0
+            ) ===
+            paymentAmount;
+
+
+        const sameType =
+            (
+                r.repaymentType ||
+                "regular_emi"
+            ) ===
+            (
+                repaymentType?.value ||
+                "regular_emi"
             );
 
 
-            if (duplicateFound) {
+        const sameTenure =
+            Number(
+                r.balanceTenureAfter ||
+                0
+            ) ===
+            currentBalanceTenure;
 
-                alert(
-                    "यह repayment पहले से saved है.\n\nDuplicate entry नहीं बनाई गई."
-                );
 
-                return;
+        const activeRecord =
+            r.status !==
+            "deleted";
 
-            }
 
+        if (
+            sameLoan &&
+            sameDate &&
+            sameAmount &&
+            sameType &&
+            sameTenure &&
+            activeRecord
+        ) {
+
+            duplicateFound =
+                true;
+
+        }
+
+    }
+);
+
+
+if (duplicateFound) {
+
+    alert(
+        "यह repayment पहले से saved है.\n\nDuplicate entry नहीं बनाई गई."
+    );
+
+    return;
+}
 
             // =============================================
             // ACCOUNT NAME
@@ -8644,22 +8236,12 @@ if (
                 rateApplied:
                     annualRate,
 
-                balanceTenureAfter:
-    repaymentType?.value === "regular_emi"
-        ? Math.max(
-            0,
-            Number(selectedLoan.remainingTenure || 0) - 1
-          )
-        : Number(
-            getField("repaymentBalanceTenure")?.value ||
-            selectedLoan.remainingTenure ||
-            0
-          ),
-                balanceTenureAfter:
+
+balanceTenureAfter:
     Number(
         document.getElementById(
             "repaymentBalanceTenure"
-        )?.value || 
+        )?.value ||
         selectedLoan.remainingTenure ||
         0
     ),
@@ -8708,66 +8290,14 @@ if (
 
 
             // =============================================
-// SAVE / UPDATE REPAYMENT RECORD
-// =============================================
+            // SAVE REPAYMENT RECORD
+            // =============================================
 
-let repaymentDoc;
-
-if (window.editingRepaymentId) {
-
-    // =========================================
-    // UPDATE EXISTING REPAYMENT
-    // =========================================
-
-    const existingRepaymentRef =
-        doc(
-            db,
-            "users",
-            userId,
-            "loanRepayments",
-            window.editingRepaymentId
-        );
-
-    await updateDoc(
-        existingRepaymentRef,
-        {
-            ...repaymentRecord,
-
-            updatedAt:
-                serverTimestamp(),
-
-            updatedBy:
-                userId
-        }
-    );
-
-    repaymentDoc = {
-        id: window.editingRepaymentId
-    };
-
-    console.log(
-        "✏️ REPAYMENT UPDATED:",
-        window.editingRepaymentId
-    );
-
-} else {
-
-    // =========================================
-    // CREATE NEW REPAYMENT
-    // =========================================
-
-    repaymentDoc =
-        await addDoc(
-            repaymentsRef,
-            repaymentRecord
-        );
-
-    console.log(
-        "✅ NEW REPAYMENT CREATED:",
-        repaymentDoc.id
-    );
-
-}
+            const repaymentDoc =
+                await addDoc(
+                    repaymentsRef,
+                    repaymentRecord
+                );
 
 
             // =============================================
@@ -8932,12 +8462,6 @@ if (window.editingRepaymentId) {
                 "✅ Loan Repayment saved successfully."
             );
 
-            // =============================================
-// EXIT EDIT MODE
-// =============================================
-
-window.editingRepaymentId = null;
-
 
             // =============================================
             // REFRESH DASHBOARD
@@ -9004,244 +8528,6 @@ window.editingRepaymentId = null;
 
     }
 
-// =====================================================
-// EDIT REPAYMENT RECORD
-// =====================================================
-
-document.addEventListener(
-    "click",
-    async function (event) {
-
-        const editButton =
-            event.target.closest(
-                ".loan-repayment-edit-button"
-            );
-
-        if (!editButton) return;
-
-
-        const repaymentId =
-            editButton.dataset.repaymentId;
-
-        if (!repaymentId) return;
-
-        // =============================================
-// STORE EDITING REPAYMENT ID
-// =============================================
-
-window.editingRepaymentId =
-    repaymentId;
-
-        try {
-
-            const userId =
-                auth.currentUser.uid;
-
-
-            const repaymentRef =
-                doc(
-                    db,
-                    "users",
-                    userId,
-                    "loanRepayments",
-                    repaymentId
-                );
-
-
-            const repaymentSnap =
-                await getDoc(repaymentRef);
-
-
-            if (!repaymentSnap.exists()) {
-
-                alert(
-                    "❌ Repayment record नहीं मिला."
-                );
-
-                return;
-
-            }
-
-
-            const repayment =
-                repaymentSnap.data();
-
-
-            // =============================================
-            // OPEN REPAYMENT FORM
-            // =============================================
-
-// =============================================
-// OPEN REPAYMENT FORM
-// =============================================
-
-const repaymentSection =
-    document.getElementById(
-        "loanRepaymentSection"
-    );
-
-if (repaymentSection) {
-
-    repaymentSection.style.setProperty(
-        "display",
-        "block",
-        "important"
-    );
-
-}
-
-
-            // =============================================
-            // FILL FORM
-            // =============================================
-
-            const loan =
-                getField("repaymentLoan");
-
-            const paymentDate =
-                getField("repaymentPaymentDate");
-
-            const dueDate =
-                getField("repaymentDueDate");
-
-            const type =
-                getField("repaymentType");
-
-            const amount =
-                getField("repaymentAmount");
-
-            const account =
-                getField("repaymentAccount");
-
-            const paidBy =
-                getField("repaymentPaidBy");
-
-            const reference =
-                getField("repaymentReference");
-
-            const notes =
-                getField("repaymentNotes");
-
-            const balanceTenure =
-                getField(
-                    "repaymentBalanceTenure"
-                );
-
-
-            if (loan) {
-
-                loan.value =
-                    repayment.loanId || "";
-
-            }
-
-
-            if (paymentDate) {
-
-                paymentDate.value =
-                    repayment.paymentDate || "";
-
-            }
-
-
-            if (dueDate) {
-
-                dueDate.value =
-                    repayment.dueDate || "";
-
-            }
-
-
-            if (type) {
-
-                type.value =
-                    repayment.repaymentType || "";
-
-            }
-
-
-            if (amount) {
-
-                amount.value =
-                    repayment.amount || "";
-
-            }
-
-
-            if (account) {
-
-                account.value =
-                    repayment.paymentAccount || "";
-
-            }
-
-
-            if (paidBy) {
-
-                paidBy.value =
-                    repayment.paidBy || "";
-
-            }
-
-
-            if (reference) {
-
-                reference.value =
-                    repayment.reference || "";
-
-            }
-
-
-            if (notes) {
-
-                notes.value =
-                    repayment.notes || "";
-
-            }
-
-
-            if (balanceTenure) {
-
-                balanceTenure.value =
-                    repayment.balanceTenureAfter ??
-                    "";
-
-            }
-
-
-            // Recalculate preview
-
-            if (
-                typeof calculateRepaymentPreview ===
-                "function"
-            ) {
-
-                calculateRepaymentPreview();
-
-            }
-
-
-            console.log(
-                "✏️ REPAYMENT EDIT MODE:",
-                repaymentId
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "❌ EDIT REPAYMENT ERROR:",
-                error
-            );
-
-            alert(
-                "❌ Repayment edit खोलने में समस्या हुई."
-            );
-
-        }
-
-    }
-);
 
     // =====================================================
     // CLICK HANDLER
@@ -9438,49 +8724,6 @@ if (repaymentSection) {
 
         }
 
-// Refresh repayment history
-
-if (
-    typeof window.loadFinalRepaymentHistory ===
-    "function"
-) {
-
-    await
-        window.loadFinalRepaymentHistory();
-
-}   
-
-        // Calculate repayment values after loan data is loaded
-setTimeout(() => {
-
-    const repaymentType =
-        document.getElementById(
-            "repaymentType"
-        );
-
-    if (repaymentType) {
-
-        repaymentType.dispatchEvent(
-            new Event("change")
-        );
-
-    }
-
-}, 100);
-
-       // Refresh repayment calculation
-const repaymentTypeSelect =
-    document.getElementById(
-        "repaymentType"
-    );
-
-if (repaymentTypeSelect) {
-
-    repaymentTypeSelect.dispatchEvent(
-        new Event("change")
-    );
-
-}
 
         form.scrollIntoView({
             behavior: "smooth",
@@ -9605,36 +8848,69 @@ if (repaymentTypeSelect) {
         // =================================================
         // CALCULATION FUNCTION
         // =================================================
-async function calculateRepaymentPreview() {
 
-    const tenureElement =
-        section.querySelector(
-            "#repaymentBalanceTenure"
-        );
+        async function calculateRepaymentPreview() {
 
-    const openingElement =
-        section.querySelector(
-            "#repaymentOpeningPrincipal"
-        );
-
-    const interestElement =
-        section.querySelector(
-            "#repaymentInterestAmount"
-        );
-
-    const principalElement =
-        section.querySelector(
-            "#repaymentPrincipalAmount"
-        );
-
-    const closingElement =
-        section.querySelector(
-            "#repaymentClosingPrincipal"
-        );
+            const tenureElement =
+                section.querySelector(
+                    "#repaymentBalanceTenure"
+                );
 
 
-    if (!tenureElement) return;
+            const openingElement =
+                section.querySelector(
+                    "#repaymentOpeningPrincipal"
+                );
 
+
+            const interestElement =
+                section.querySelector(
+                    "#repaymentInterestAmount"
+                );
+
+
+            const principalElement =
+                section.querySelector(
+                    "#repaymentPrincipalAmount"
+                );
+
+
+            const closingElement =
+                section.querySelector(
+                    "#repaymentClosingPrincipal"
+                );
+
+
+            if (!tenureElement) return;
+
+
+            const paymentAmount =
+                Number(
+                    amount.value || 0
+                );
+
+
+            if (
+                !paymentAmount ||
+                paymentAmount <= 0
+            ) {
+
+                tenureElement.textContent = "—";
+
+                return;
+
+            }
+
+
+            // =================================================
+            // ONLY PRINCIPAL PREPAYMENT
+            // =================================================
+if (
+    repaymentType.value !==
+    "principal_prepayment" &&
+    repaymentType.value !==
+    "part_prepayment"
+) {
 
     try {
 
@@ -9642,21 +8918,9 @@ async function calculateRepaymentPreview() {
             !auth ||
             !auth.currentUser
         ) {
+            tenureElement.value = "";
             return;
         }
-
-
-        // =================================================
-        // GET SELECTED LOAN
-        // =================================================
-
-        const loanSelect =
-            section.querySelector(
-                "#repaymentLoan"
-            );
-
-        if (!loanSelect) return;
-
 
         const loansRef =
             getLoansCollectionRef();
@@ -9666,476 +8930,449 @@ async function calculateRepaymentPreview() {
                 loansRef
             );
 
-
-        let selectedLoan = null;
-
+        let homeLoan =
+            null;
 
         loansSnapshot.forEach(
-            loanDoc => {
+            (loanDoc) => {
 
                 const loan =
                     loanDoc.data();
 
-
                 if (
-                    loanDoc.id ===
-                    loanSelect.value
+                    loan.loanType ===
+                        "Home Loan" &&
+                    loan.status ===
+                        "active"
                 ) {
 
-                    selectedLoan = {
-                        id: loanDoc.id,
-                        ...loan
-                    };
+                    homeLoan = loan;
 
                 }
 
             }
         );
 
+        if (homeLoan) {
 
-        // =================================================
-        // FALLBACK
-        // =================================================
-
-        if (!selectedLoan) {
-
-            loansSnapshot.forEach(
-                loanDoc => {
-
-                    const loan =
-                        loanDoc.data();
-
-
-                    if (
-                        !selectedLoan &&
-                        (
-                            loan.loanType ===
-                            loanSelect.value
-                            ||
-                            loan.loanName ===
-                            loanSelect.value
-                        )
-                    ) {
-
-                        selectedLoan = {
-                            id: loanDoc.id,
-                            ...loan
-                        };
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        if (!selectedLoan) {
-            return;
-        }
-
-
-        // =================================================
-        // CURRENT LOAN VALUES
-        // =================================================
-
-        const openingPrincipal =
-            Number(
-                selectedLoan.outstandingBalance || 0
-            );
-
-
-        const annualRate =
-            Number(
-                selectedLoan.interestRate || 0
-            );
-
-
-        const emi =
-            Number(
-                selectedLoan.emi || 0
-            );
-
-
-        const existingTenure =
-            Number(
-                selectedLoan.remainingTenure || 0
-            );
-
-
-        const paymentAmount =
-            Number(
-                amount.value || 0
-            );
-
-
-        let interestAmount = 0;
-
-        let principalAmount = 0;
-
-        let closingPrincipal =
-            openingPrincipal;
-
-
-        let balanceTenure =
-            existingTenure;
-
-
-        // =================================================
-        // REGULAR EMI
-        // =================================================
-
-        if (
-            repaymentType.value ===
-            "regular_emi"
-        ) {
-
-            // ---------------------------------------------
-            // BALANCE TENURE
-            // One regular EMI reduces tenure by 1 month
-            // ---------------------------------------------
-
-            balanceTenure =
+            tenureElement.value =
                 Math.max(
                     0,
-                    existingTenure - 1
-                );
-
-
-            // ---------------------------------------------
-            // FINANCIAL CALCULATION
-            // ---------------------------------------------
-
-            if (
-                paymentAmount > 0
-            ) {
-
-const paymentDateValue =
-    section.querySelector(
-        "#repaymentPaymentDate"
-    )?.value || "";
-
-
-let payment;
-
-if (
-    /^\d{4}-\d{2}-\d{2}$/.test(
-        paymentDateValue
-    )
-) {
-
-    payment = new Date(
-        paymentDateValue +
-        "T00:00:00"
-    );
-
-} else if (
-    /^\d{2}-\d{2}-\d{4}$/.test(
-        paymentDateValue
-    )
-) {
-
-    const [
-        dd,
-        mm,
-        yyyy
-    ] =
-        paymentDateValue.split("-");
-
-    payment = new Date(
-        `${yyyy}-${mm}-${dd}T00:00:00`
-    );
-
-} else {
-
-    payment =
-        new Date(
-            paymentDateValue
-        );
-
-}
-
-
-                const emiDay =
                     Number(
-                        selectedLoan.emiDay || 10
-                    );
-
-
-                const previousDate =
-                    new Date(
-                        payment.getFullYear(),
-                        payment.getMonth() - 1,
-                        emiDay
-                    );
-
-
-                const millisecondsPerDay =
-                    1000 *
-                    60 *
-                    60 *
-                    24;
-
-
-                const actualDays =
-                    Math.max(
-                        1,
-                        Math.round(
-                            (
-                                payment -
-                                previousDate
-                            ) /
-                            millisecondsPerDay
-                        )
-                    );
-
-
-                interestAmount =
-                    openingPrincipal *
-                    (
-                        annualRate / 100
-                    ) *
-                    actualDays /
-                    365;
-
-
-                principalAmount =
-                    Math.max(
-                        0,
-                        paymentAmount -
-                        interestAmount
-                    );
-
-
-                principalAmount =
-                    Math.min(
-                        principalAmount,
-                        openingPrincipal
-                    );
-
-
-                closingPrincipal =
-                    Math.max(
-                        0,
-                        openingPrincipal -
-                        principalAmount
-                    );
-
-            }
-
-        }
-
-
-        // =================================================
-        // PRINCIPAL / PART PREPAYMENT
-        // =================================================
-
-        else {
-
-            interestAmount = 0;
-
-
-            principalAmount =
-                Math.min(
-                    paymentAmount,
-                    openingPrincipal
+                        homeLoan.remainingTenure ||
+                        0
+                    ) - 1
                 );
 
+        } else {
 
-            closingPrincipal =
-                Math.max(
-                    0,
-                    openingPrincipal -
-                    principalAmount
-                );
-
-
-            // ---------------------------------------------
-            // PREPAYMENT TENURE CALCULATION
-            // ---------------------------------------------
-
-            if (
-                paymentAmount > 0 &&
-                closingPrincipal > 0 &&
-                annualRate > 0 &&
-                emi > 0
-            ) {
-
-                const monthlyRate =
-                    annualRate /
-                    100 /
-                    12;
-
-
-                const denominator =
-                    Math.log(
-                        1 +
-                        monthlyRate
-                    );
-
-
-                const newTenureBase =
-                    emi -
-                    (
-                        monthlyRate *
-                        closingPrincipal
-                    );
-
-
-                const originalTenureBase =
-                    emi -
-                    (
-                        monthlyRate *
-                        openingPrincipal
-                    );
-
-
-                if (
-                    newTenureBase > 0 &&
-                    originalTenureBase > 0
-                ) {
-
-                    const calculatedTenure =
-                        Math.ceil(
-                            Math.log(
-                                emi /
-                                newTenureBase
-                            ) /
-                            denominator
-                        );
-
-
-                    const originalCalculatedTenure =
-                        Math.ceil(
-                            Math.log(
-                                emi /
-                                originalTenureBase
-                            ) /
-                            denominator
-                        );
-
-
-                    const tenureReduction =
-                        Math.max(
-                            0,
-                            originalCalculatedTenure -
-                            calculatedTenure
-                        );
-
-
-                    balanceTenure =
-                        Math.max(
-                            0,
-                            existingTenure -
-                            tenureReduction
-                        );
-
-                }
-
-            }
+            tenureElement.value = "";
 
         }
-
-
-        // =================================================
-        // UPDATE FINANCIAL DISPLAY
-        // =================================================
-
-        const rateElement =
-            section.querySelector(
-                "#repaymentApplicableRate"
-            );
-
-
-        if (rateElement) {
-
-            rateElement.textContent =
-                annualRate.toFixed(2) +
-                "%";
-
-        }
-
-
-        if (openingElement) {
-
-            openingElement.textContent =
-                "₹" +
-                openingPrincipal.toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        }
-
-
-        if (interestElement) {
-
-            interestElement.textContent =
-                "₹" +
-                interestAmount.toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        }
-
-
-        if (principalElement) {
-
-            principalElement.textContent =
-                "₹" +
-                principalAmount.toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        }
-
-
-        if (closingElement) {
-
-            closingElement.textContent =
-                "₹" +
-                closingPrincipal.toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        }
-
-
-        // =================================================
-        // BALANCE TENURE INPUT
-        // =================================================
-
-        tenureElement.value =
-            String(
-                balanceTenure
-            );
-
 
     } catch (error) {
 
-        // UI calculation failure should not
-        // break the repayment form.
+        console.error(
+            "❌ Regular EMI tenure calculation error:",
+            error
+        );
 
-        return;
+        tenureElement.value = "";
 
     }
 
+    return;
+
 }
+
+
+            try {
+
+                if (
+                    !auth ||
+                    !auth.currentUser
+                ) {
+
+                    console.log(
+                        "❌ User not logged in"
+                    );
+
+                    return;
+
+                }
+
+
+                // =================================================
+                // FIND ACTIVE HOME LOAN
+                // =================================================
+
+                const loansRef =
+                    getLoansCollectionRef();
+
+                const loansSnapshot =
+                    await getDocs(
+                        loansRef
+                    );
+
+
+                let homeLoan = null;
+
+
+                loansSnapshot.forEach(
+                    (loanDoc) => {
+
+                        const loan =
+                            loanDoc.data();
+
+
+                        if (
+                            loan.loanType ===
+                                "Home Loan" &&
+                            loan.status ===
+                                "active"
+                        ) {
+
+                            homeLoan = {
+                                id: loanDoc.id,
+                                ...loan
+                            };
+
+                        }
+
+                    }
+                );
+
+
+                if (!homeLoan) {
+
+                    console.log(
+                        "❌ Active Home Loan नहीं मिला"
+                    );
+
+                    return;
+
+                }
+
+
+                // =================================================
+                // CURRENT VALUES
+                // =================================================
+
+                const openingPrincipal =
+                    Number(
+                        homeLoan.outstandingBalance || 0
+                    );
+
+
+                const annualRate =
+                    Number(
+                        homeLoan.interestRate || 0
+                    );
+
+
+                const emi =
+                    Number(
+                        homeLoan.emi || 0
+                    );
+
+                    console.log("🔍 EXISTING TENURE DEBUG:", {
+    remainingTenure: homeLoan.remainingTenure,
+    outstandingBalance: homeLoan.outstandingBalance,
+    emi: homeLoan.emi,
+    interestRate: homeLoan.interestRate
+});
+
+                // =================================================
+                // PREPAYMENT REDUCES PRINCIPAL
+                // =================================================
+
+                const closingPrincipal =
+                    Math.max(
+                        0,
+                        openingPrincipal -
+                        paymentAmount
+                    );
+
+
+                // =================================================
+                // CALCULATE BALANCE TENURE
+                //
+                // n = -ln(1-rP/EMI) / ln(1+r)
+                // =================================================
+
+const existingTenure =
+    Number(homeLoan.remainingTenure || 0);
+
+console.log("🔍 PREPAYMENT BASE TENURE:", {
+    existingTenure,
+    paymentAmount,
+    openingPrincipal,
+    closingPrincipal,
+    annualRate,
+    emi
+});
+
+let balanceTenure = 0;
+
+if (
+    closingPrincipal > 0 &&
+    annualRate > 0 &&
+    emi > 0
+) {
+    const monthlyRate =
+        annualRate /
+        100 /
+        12;
+
+    /*
+     * Start from the ACTUAL remaining tenure
+     * stored for this loan.
+     */
+    const existingTenure =
+        Number(
+            homeLoan.remainingTenure || 0
+        );
+
+    /*
+     * Simulate the loan month-by-month
+     * after prepayment.
+     *
+     * Each month:
+     * Interest = Opening Balance × Monthly Rate
+     * Principal = EMI - Interest
+     * Closing Balance = Opening Balance - Principal
+     *
+     * The number of months required to clear
+     * the post-prepayment balance is the new tenure.
+     */
+    let simulatedBalance =
+        closingPrincipal;
+
+    let simulatedTenure = 0;
+
+    while (
+        simulatedBalance > 0 &&
+        simulatedTenure < 1000
+    ) {
+        const monthlyInterest =
+            simulatedBalance *
+            monthlyRate;
+
+        const monthlyPrincipal =
+            emi -
+            monthlyInterest;
+
+        if (monthlyPrincipal <= 0) {
+            break;
+        }
+
+        simulatedBalance =
+            simulatedBalance -
+            monthlyPrincipal;
+
+        simulatedTenure++;
+    }
+
+    /*
+     * The formula above gives the mathematical
+     * repayment tenure from the new balance.
+     *
+     * But the loan's stored tenure is our
+     * actual baseline. Therefore only the
+     * reduction caused by prepayment is applied.
+     */
+    let originalSimulatedBalance =
+        openingPrincipal;
+
+    let originalSimulatedTenure = 0;
+
+    while (
+        originalSimulatedBalance > 0 &&
+        originalSimulatedTenure < 1000
+    ) {
+        const monthlyInterest =
+            originalSimulatedBalance *
+            monthlyRate;
+
+        const monthlyPrincipal =
+            emi -
+            monthlyInterest;
+
+        if (monthlyPrincipal <= 0) {
+            break;
+        }
+
+        originalSimulatedBalance =
+            originalSimulatedBalance -
+            monthlyPrincipal;
+
+        originalSimulatedTenure++;
+    }
+
+    const tenureReduction =
+        Math.max(
+            0,
+            originalSimulatedTenure -
+            simulatedTenure
+        );
+
+    balanceTenure =
+        Math.max(
+            0,
+            existingTenure -
+            tenureReduction
+        );
+
+    console.log(
+        "🔍 TENURE CALCULATION:",
+        {
+            existingTenure,
+            openingPrincipal,
+            closingPrincipal,
+            originalSimulatedTenure,
+            simulatedTenure,
+            tenureReduction,
+            finalBalanceTenure:
+                balanceTenure
+        }
+    );
+}
+                // =================================================
+                // UPDATE DISPLAY
+                // =================================================
+
+                if (openingElement) {
+
+                    openingElement.textContent =
+                        "₹" +
+                        openingPrincipal.toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+                }
+
+
+                if (interestElement) {
+
+                    interestElement.textContent =
+                        "₹0";
+
+                }
+
+
+                if (principalElement) {
+
+                    principalElement.textContent =
+                        "₹" +
+                        paymentAmount.toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+                }
+
+
+                if (closingElement) {
+
+                    closingElement.textContent =
+                        "₹" +
+                        closingPrincipal.toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+                }
+
+
+                if (tenureElement) {
+
+    tenureElement.value =
+        balanceTenure;
+
+}
+
+
+                // =================================================
+                // CONSOLE TEST OUTPUT
+                // =================================================
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "🏦 HOME LOAN LIVE PREPAYMENT CALCULATION"
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "Opening Principal:",
+                    openingPrincipal
+                );
+
+                console.log(
+                    "Prepayment:",
+                    paymentAmount
+                );
+
+                console.log(
+                    "ROI:",
+                    annualRate + "%"
+                );
+
+                console.log(
+                    "EMI:",
+                    emi
+                );
+
+                console.log(
+                    "Closing Outstanding:",
+                    closingPrincipal
+                );
+
+                console.log(
+                    "Calculated Balance Tenure:",
+                    balanceTenure,
+                    "Months"
+                );
+
+                console.log(
+                    "------------------------------------------"
+                );
+
+                console.log(
+                    "🔥 FIRESTORE WRITE: ❌ NOT PERFORMED"
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "❌ LIVE PREPAYMENT CALCULATION ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
 
         // =================================================
         // INPUT CHANGE
@@ -10152,22 +9389,116 @@ if (
             calculateRepaymentPreview
         );
 
-const loanSelect =
-    section.querySelector(
-        "#repaymentLoan"
-    );
+// =================================================
+// RE-CALCULATE TENURE WHEN PAYMENT TYPE CHANGES
+// =================================================
 
-if (loanSelect) {
+repaymentType.addEventListener(
+    "change",
+    function () {
 
-    loanSelect.addEventListener(
-        "change",
-        calculateRepaymentPreview
-    );
+        if (
+            repaymentType.value !== "principal_prepayment" &&
+            repaymentType.value !== "part_prepayment"
+        ) {
+            return;
+        }
 
-}
+        // Give the existing calculation a moment
+        // and then recalculate Principal Prepayment tenure
+        setTimeout(
+            function () {
 
-// INITIAL CALCULATION
-calculateRepaymentPreview();
+                calculateRepaymentPreview();
+
+            },
+            100
+        );
+
+    }
+);
+
+// =================================================
+// REGULAR EMI BALANCE TENURE
+// =================================================
+
+repaymentType.addEventListener(
+    "change",
+    async function () {
+
+        if (
+            repaymentType.value !==
+            "regular_emi"
+        ) {
+            return;
+        }
+
+        const tenureElement =
+            section.querySelector(
+                "#repaymentBalanceTenure"
+            );
+
+        if (!tenureElement) return;
+
+        try {
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(
+                    loansRef
+                );
+
+            let homeLoan = null;
+
+            loansSnapshot.forEach(
+                (loanDoc) => {
+
+                    const loan =
+                        loanDoc.data();
+
+                    if (
+                        loan.loanType ===
+                            "Home Loan" &&
+                        loan.status ===
+                            "active"
+                    ) {
+
+                        homeLoan = loan;
+
+                    }
+
+                }
+            );
+
+            if (!homeLoan) {
+                return;
+            }
+
+            const currentTenure =
+                Number(
+                    homeLoan.remainingTenure ||
+                    0
+                );
+
+            tenureElement.value =
+                Math.max(
+                    0,
+                    currentTenure - 1
+                );
+
+        } catch (error) {
+
+            console.error(
+                "❌ REGULAR EMI TENURE ERROR:",
+                error
+            );
+
+        }
+
+    }
+);
 
         console.log(
             "✅ LIVE LOAN PREPAYMENT CALCULATION READY"
