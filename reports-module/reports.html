@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Financial Reports</title>
+
+    <link
+        rel="stylesheet"
+        href="reports.css">
+
+</head>
+
+
+<body>
+
+    <div class="reports-page">
+
+        <!-- =========================================
+             REPORTS HEADER
+        ========================================== -->
+
+        <header class="reports-header">
+
+            <div>
+
+                <h1>
+                    📊 Financial Reports
+                </h1>
+
+                <p>
+                    Personal Financial Management System
+                </p>
+
+            </div>
+
+
+            <div class="reports-status">
+
+                <span>
+                    REPORTS MODULE
+                </span>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =========================================
+             REPORT SEARCH
+        ========================================== -->
+
+        <section class="reports-search-section">
+
+            <input
+                type="text"
+                id="reportSearch"
+                placeholder="🔍 Search reports...">
+
+        </section>
+
+
+
+        <!-- =========================================
+             REPORT CATEGORIES
+        ========================================== -->
+
+        <section class="reports-categories-section">
+
+            <h2>
+                Report Categories
+            </h2>
+
+
+            <div
+                id="reportCategories"
+                class="report-categories-grid">
+
+
+                <!-- TRANSACTIONS -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        💳
+                    </div>
+
+                    <div class="report-category-title">
+                        Transactions
+                    </div>
+
+                    <div class="report-category-description">
+                        Income, expenses, transfers and transactions
+                    </div>
+
+                </button>
+
+
+
+                <!-- INCOME & EXPENSE -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        💰
+                    </div>
+
+                    <div class="report-category-title">
+                        Income & Expenses
+                    </div>
+
+                    <div class="report-category-description">
+                        Income, expenses and financial analysis
+                    </div>
+
+                </button>
+
+
+
+                <!-- ACCOUNTS -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        🏦
+                    </div>
+
+                    <div class="report-category-title">
+                        Accounts
+                    </div>
+
+                    <div class="report-category-description">
+                        Bank accounts, cash and balances
+                    </div>
+
+                </button>
+
+
+
+                <!-- INVESTMENTS -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        📈
+                    </div>
+
+                    <div class="report-category-title">
+                        Investments
+                    </div>
+
+                    <div class="report-category-description">
+                        Stocks, mutual funds and investment analysis
+                    </div>
+
+                </button>
+
+
+
+                <!-- LOANS -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        💵
+                    </div>
+
+                    <div class="report-category-title">
+                        Loans & Borrowings
+                    </div>
+
+                    <div class="report-category-description">
+                        Loans, EMIs, repayments and interest
+                    </div>
+
+                </button>
+
+
+
+                <!-- ASSETS -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        🏠
+                    </div>
+
+                    <div class="report-category-title">
+                        Assets
+                    </div>
+
+                    <div class="report-category-description">
+                        Properties, vehicles and other assets
+                    </div>
+
+                </button>
+
+
+
+                <!-- LIABILITIES -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        ⚠️
+                    </div>
+
+                    <div class="report-category-title">
+                        Liabilities
+                    </div>
+
+                    <div class="report-category-description">
+                        Outstanding liabilities and obligations
+                    </div>
+
+                </button>
+
+
+
+                <!-- NET WORTH -->
+
+                <button
+                    type="button"
+                    class="report-category-card">
+
+                    <div class="report-category-icon">
+                        💎
+                    </div>
+
+                    <div class="report-category-title">
+                        Net Worth
+                    </div>
+
+                    <div class="report-category-description">
+                        Assets, liabilities and net worth analysis
+                    </div>
+
+                </button>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             REPORT WORK AREA
+        ========================================== -->
+
+        <section
+            id="reportWorkArea"
+            class="report-work-area">
+
+            <div class="report-work-placeholder">
+
+                <div class="placeholder-icon">
+                    📊
+                </div>
+
+                <h2>
+                    Select a Report
+                </h2>
+
+                <p>
+                    Choose a report category above to begin.
+                </p>
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+
+
+    <!-- =========================================
+         REPORTS JAVASCRIPT
+    ========================================== -->
+
+    <script
+        type="module"
+        src="reports.js">
+    </script>
+
+
+</body>
+
+</html>
