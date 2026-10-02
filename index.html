@@ -5448,6 +5448,198 @@
                 placeholder="7.40">
         </div>
 
+<!-- ROI EFFECTIVE FROM -->
+
+<div class="loan-form-field">
+    <label>Current ROI Effective From (WEF)</label>
+
+    <input
+        type="date"
+        id="loanROIEffectiveFrom"
+        style="width:100%;min-height:42px;font-size:15px;">
+
+    <div
+        style="
+            margin-top:5px;
+            color:#64748b;
+            font-size:12px;
+        "
+    >
+        📌 यह तारीख बताती है कि वर्तमान ROI कब से लागू है।
+    </div>
+</div>
+
+
+<!-- ROI HISTORY -->
+
+<div
+    class="loan-form-field"
+    style="grid-column: 1 / -1;">
+
+    <label>
+        ROI History / Rate Changes
+    </label>
+
+    <div
+        id="loanROIHistory"
+        style="
+            border:1px solid #d8e0ea;
+            border-radius:8px;
+            padding:12px;
+            background:#f8fafc;
+            min-height:45px;
+        "
+    >
+        <div
+            style="
+                color:#64748b;
+                font-size:13px;
+                text-align:center;
+            "
+        >
+            No ROI changes added yet.
+        </div>
+    </div>
+
+    <button
+        type="button"
+        id="addROIChangeBtn"
+        style="
+            margin-top:8px;
+            padding:8px 14px;
+            border:1px solid #2563eb;
+            border-radius:6px;
+            background:#eff6ff;
+            color:#2563eb;
+            font-weight:600;
+            cursor:pointer;
+        "
+    >
+        + Add ROI Change
+    </button>
+
+    <!-- ADD ROI CHANGE FORM -->
+
+<div
+    id="roiChangeForm"
+    style="
+        display:none;
+        margin-top:10px;
+        padding:12px;
+        border:1px solid #cbd5e1;
+        border-radius:8px;
+        background:#ffffff;
+    "
+>
+
+    <div
+        style="
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:12px;
+        "
+    >
+
+        <!-- EFFECTIVE DATE -->
+
+        <div>
+            <label
+                style="
+                    display:block;
+                    margin-bottom:5px;
+                    font-size:13px;
+                    font-weight:600;
+                "
+            >
+                Effective From (WEF)
+            </label>
+
+            <input
+                type="date"
+                id="newROIEffectiveFrom"
+                style="
+                    width:100%;
+                    min-height:40px;
+                    font-size:14px;
+                "
+            >
+        </div>
+
+
+        <!-- NEW ROI -->
+
+        <div>
+            <label
+                style="
+                    display:block;
+                    margin-bottom:5px;
+                    font-size:13px;
+                    font-weight:600;
+                "
+            >
+                New ROI (%)
+            </label>
+
+            <input
+                type="number"
+                id="newROIRate"
+                min="0"
+                step="0.01"
+                placeholder="7.40"
+                style="
+                    width:100%;
+                    min-height:40px;
+                    font-size:14px;
+                "
+            >
+        </div>
+
+    </div>
+
+
+    <!-- BUTTONS -->
+
+    <div style="margin-top:10px;">
+
+        <button
+            type="button"
+            id="saveROIChangeBtn"
+            style="
+                padding:8px 14px;
+                border:none;
+                border-radius:6px;
+                background:#2563eb;
+                color:white;
+                font-weight:600;
+                cursor:pointer;
+            "
+        >
+            💾 Add ROI
+        </button>
+
+        <button
+            type="button"
+            id="cancelROIChangeBtn"
+            style="
+                margin-left:6px;
+                padding:8px 14px;
+                border:1px solid #cbd5e1;
+                border-radius:6px;
+                background:#f8fafc;
+                color:#334155;
+                font-weight:600;
+                cursor:pointer;
+            "
+        >
+            ✖ Cancel
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
 
         <!-- EMI -->
 
@@ -5970,6 +6162,68 @@
     grid-column: 13 / 16 !important;
     grid-row: 2 !important;
 }
+
+/* =========================================
+   REPAYMENT FORM - ROI ROW LAYOUT
+   ========================================= */
+
+/* ROW 1
+   Loan | Payment Date | EMI Due Date
+*/
+
+#repaymentFormGrid > .loan-form-field:nth-child(1) {
+    grid-column: 1 / 6 !important;
+    grid-row: 1 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(2) {
+    grid-column: 6 / 11 !important;
+    grid-row: 1 !important;
+}
+
+/* ROI HISTORY - FULL WIDTH ROW 2 */
+
+#repaymentFormGrid > .loan-form-field:nth-child(3) {
+    grid-column: 1 / 16 !important;
+    grid-row: 2 !important;
+}
+
+/* EMI DUE DATE */
+
+#repaymentFormGrid > .loan-form-field:nth-child(4) {
+    grid-column: 11 / 16 !important;
+    grid-row: 1 !important;
+}
+
+
+/* ROW 3
+   Payment Type | Amount | Account | Paid By | Reference
+*/
+
+#repaymentFormGrid > .loan-form-field:nth-child(5) {
+    grid-column: 1 / 4 !important;
+    grid-row: 3 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(6) {
+    grid-column: 4 / 7 !important;
+    grid-row: 3 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(7) {
+    grid-column: 7 / 10 !important;
+    grid-row: 3 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(8) {
+    grid-column: 10 / 13 !important;
+    grid-row: 3 !important;
+}
+
+#repaymentFormGrid > .loan-form-field:nth-child(9) {
+    grid-column: 13 / 16 !important;
+    grid-row: 3 !important;
+}
 </style>
 
 <div
@@ -6004,6 +6258,8 @@
 
             </div>
 
+
+            
 
             <!-- DUE DATE -->
 
@@ -6064,6 +6320,16 @@
                     step="0.01"
                     placeholder="₹51,240">
 
+                    <div
+    style="
+        margin-top: 5px;
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 600;
+    "
+>
+    Regular EMI: ₹51,240
+</div>
             </div>
 
 
@@ -7248,13 +7514,56 @@
                     <div>
 
                         <h3
-                            style="
-                                margin:0;
-                                color:#173f78;
-                                font-size:16px;
-                            ">
-                            🧾 Add Loan Repayment
-                        </h3>
+    style="
+        margin:0;
+        color:#173f78;
+        font-size:16px;
+        display:flex;
+        align-items:center;
+        gap:18px;
+        flex-wrap:wrap;
+    "
+>
+    <span>
+        🧾 Add Loan Repayment
+    </span>
+
+    <span
+        style="
+            font-size:14px;
+            color:#475569;
+            font-weight:600;
+        "
+    >
+        Current ROI
+        <strong
+            id="repaymentCurrentROIInline"
+            style="
+                color:#b45309;
+                margin-left:5px;
+            "
+        >
+            7.40%
+        </strong>
+    </span>
+
+    <button
+        type="button"
+        id="changeRepaymentROIBtn"
+        style="
+            padding:5px 11px;
+            border:1px solid #2563eb;
+            border-radius:6px;
+            background:#eff6ff;
+            color:#2563eb;
+            font-size:12px;
+            font-weight:700;
+            cursor:pointer;
+        "
+    >
+        🔄 Change ROI
+    </button>
+</h3>
 
                         <small style="color:#718096;">
                             Linked with Transaction Entry
@@ -7275,6 +7584,232 @@
                     </span>
 
                 </div>
+
+<!-- =========================================
+     REPAYMENT ROI CHANGE PANEL
+========================================= -->
+<div
+    id="repaymentROIChangePanel"
+    style="
+        display:none;
+        margin:12px 0 16px 0;
+        padding:14px 16px;
+        border:1px solid #bfdbfe;
+        border-radius:8px;
+        background:#f8fbff;
+        box-sizing:border-box;
+    "
+>
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:15px;
+            margin-bottom:12px;
+        "
+    >
+        <strong style="color:#173f78;font-size:14px;">
+            🔄 Change ROI
+        </strong>
+
+        <button
+            type="button"
+            id="repaymentROIHistoryBtn"
+            style="
+                padding:5px 10px;
+                border:1px solid #64748b;
+                border-radius:5px;
+                background:#ffffff;
+                color:#475569;
+                font-size:12px;
+                font-weight:700;
+                cursor:pointer;
+            "
+        >
+            📜 ROI Change History
+        </button>
+    </div>
+
+
+    <div
+        style="
+            display:grid;
+            grid-template-columns:1fr 1fr auto auto;
+            gap:12px;
+            align-items:end;
+        "
+    >
+
+        <div>
+            <label
+                style="
+                    display:block;
+                    margin-bottom:5px;
+                    font-size:12px;
+                    font-weight:700;
+                    color:#475569;
+                "
+            >
+                New ROI (%)
+            </label>
+
+            <input
+                type="number"
+                id="repaymentNewROIRate"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 7.15"
+                style="
+                    width:100%;
+                    min-height:38px;
+                    padding:6px 9px;
+                    box-sizing:border-box;
+                "
+            >
+        </div>
+
+
+        <div>
+            <label
+                style="
+                    display:block;
+                    margin-bottom:5px;
+                    font-size:12px;
+                    font-weight:700;
+                    color:#475569;
+                "
+            >
+                W.E.F. Date
+            </label>
+
+            <input
+                type="date"
+                id="repaymentNewROIEffectiveFrom"
+                style="
+                    width:100%;
+                    min-height:38px;
+                    padding:6px 9px;
+                    box-sizing:border-box;
+                "
+            >
+        </div>
+
+
+        <button
+            type="button"
+            id="saveRepaymentROIBtn"
+            style="
+                min-height:38px;
+                padding:7px 14px;
+                border:1px solid #16a34a;
+                border-radius:6px;
+                background:#16a34a;
+                color:#ffffff;
+                font-size:12px;
+                font-weight:700;
+                cursor:pointer;
+            "
+        >
+            💾 Save ROI
+        </button>
+
+
+        <button
+            type="button"
+            id="cancelRepaymentROIBtn"
+            style="
+                min-height:38px;
+                padding:7px 14px;
+                border:1px solid #94a3b8;
+                border-radius:6px;
+                background:#ffffff;
+                color:#475569;
+                font-size:12px;
+                font-weight:700;
+                cursor:pointer;
+            "
+        >
+            ✖ Cancel
+        </button>
+
+    </div>
+
+</div>
+
+<!-- =========================================
+     REPAYMENT ROI HISTORY PANEL
+========================================= -->
+<div
+    id="repaymentROIHistoryPanel"
+    style="
+        display:none;
+        margin:12px 0 16px 0;
+        padding:14px 16px;
+        border:1px solid #cbd5e1;
+        border-radius:8px;
+        background:#ffffff;
+        box-sizing:border-box;
+    "
+>
+
+    <div
+        style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:15px;
+            margin-bottom:12px;
+        "
+    >
+
+        <strong
+            style="
+                color:#173f78;
+                font-size:14px;
+            "
+        >
+            📜 ROI Change History
+        </strong>
+
+        <button
+            type="button"
+            id="closeRepaymentROIHistoryBtn"
+            style="
+                padding:5px 11px;
+                border:1px solid #64748b;
+                border-radius:6px;
+                background:#f8fafc;
+                color:#334155;
+                font-size:12px;
+                font-weight:700;
+                cursor:pointer;
+            "
+        >
+            ✖ Close
+        </button>
+
+    </div>
+
+    <div
+        id="repaymentROIHistoryContent"
+        style="
+            overflow-x:auto;
+        "
+    >
+        <div
+            style="
+                color:#64748b;
+                font-size:13px;
+                padding:8px 0;
+            "
+        >
+            No ROI history available.
+        </div>
+    </div>
+
+</div>
 
 
                 <div
@@ -7315,7 +7850,6 @@
 
     </div>
 
-
     <div
         class="loan-form-field"
         style="grid-column:11 / span 5;">
@@ -7328,6 +7862,7 @@
             style="width:100%;min-height:42px;font-size:15px;">
 
     </div>
+
 
 
     <!-- ROW 2 : 5 COLUMNS -->
@@ -7380,6 +7915,18 @@
             step="0.01"
             placeholder="₹51,240"
             style="width:100%;min-height:42px;font-size:15px;">
+
+            <div
+    id="repaymentAmountValidation"
+    style="
+        margin-top:5px;
+        color:#dc2626;
+        font-size:12px;
+        font-weight:700;
+    "
+>
+    🔴 Enter Amount
+</div>
 
     </div>
 

@@ -12348,6 +12348,11 @@ function resetAllModuleUI() {
 
         "#loanFormContainer",
 
+"#loanRepaymentSection",
+"#newLoanRepaymentEntry",
+"#repaymentROIChangePanel",
+"#repaymentROIHistoryPanel",
+
         "#financialGoalsSection",
 
         "#financialGoalFormContainer",
@@ -12736,6 +12741,27 @@ fundsAvailable:
         }
     );
 
+// =====================================================
+// LOAN REPAYMENT MUST BE HIDDEN OUTSIDE LOANS MODULE
+// =====================================================
+
+const loanRepaymentSection =
+    document.getElementById(
+        "loanRepaymentSection"
+    );
+
+if (
+    loanRepaymentSection &&
+    view !== "loans"
+) {
+
+    loanRepaymentSection.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
 
     // ----------------------------------------------
     // SHOW DASHBOARD

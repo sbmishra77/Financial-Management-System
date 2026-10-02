@@ -1,4 +1,4 @@
-import {
+﻿import {
     auth,
     db
 } from "./firebase.js";
@@ -2492,6 +2492,26 @@ async function saveHomeLoanExtraPrincipalRepaymentSafe() {
         // =========================================
         // REPAYMENT RECORD
         // =========================================
+
+        // =============================================
+// SAFE ROI SAVE VERIFICATION
+// =============================================
+
+const roiSaveCheck =
+    confirm(
+        "🔍 REPAYMENT ROI VERIFICATION\n\n" +
+        "Payment Date: " +
+        (paymentDate?.value || "") +
+        "\n" +
+        "ROI Applied: " +
+        Number(annualRate).toFixed(2) +
+        "%\n\n" +
+        "क्या यही ROI rateApplied में save करना है?"
+    );
+
+if (!roiSaveCheck) {
+    return;
+}
 
         const repaymentRecord = {
 
@@ -5573,12 +5593,15 @@ if (latestRepayment) {
                 );
 
 
-            if (amountField) {
+           if (amountField) {
 
-                amountField.value =
-                    homeLoan.emi;
+    amountField.value = "";
 
-            }
+    amountField.placeholder =
+        "₹" +
+        Number(homeLoan.emi).toLocaleString("en-IN");
+
+}
 
 
             // =============================================
@@ -6957,7 +6980,40 @@ window.testActualHomeLoanPaymentEMIEngine =
                     );
 
                 }
+// =====================================================
+// ALWAYS CLOSE ADD REPAYMENT FORM
+// WHEN OPENING LOAN DASHBOARD
+// =====================================================
 
+const repaymentForm =
+    document.getElementById(
+        "newLoanRepaymentEntry"
+    );
+
+const addRepaymentButton =
+    document.getElementById(
+        "openLoanRepaymentButton"
+    );
+
+if (repaymentForm) {
+
+    repaymentForm.style.setProperty(
+        "display",
+        "none",
+        "important"
+    );
+
+}
+
+if (addRepaymentButton) {
+
+    addRepaymentButton.textContent =
+        "➕ Add Repayment";
+
+    addRepaymentButton.dataset.open =
+        "false";
+
+}
 
                 // Show repayment dashboard
 
@@ -8339,11 +8395,90 @@ document.addEventListener(
     }
 
 
-    // =====================================================
-    // SAVE REPAYMENT
-    // =====================================================
+// =========================================================
+// ROI HELPER - AVAILABLE FOR REPAYMENT SAVE
+// =========================================================
 
-    async function saveFinalRepayment() {
+function getApplicableROIByPaymentDate(
+    selectedLoan,
+    paymentDateValue
+) {
+
+    const fallbackRate =
+        Number(
+            selectedLoan?.interestRate || 0
+        );
+
+    if (!paymentDateValue) {
+        return fallbackRate;
+    }
+
+    let roiHistory =
+        Array.isArray(
+            selectedLoan?.roiHistory
+        )
+            ? [...selectedLoan.roiHistory]
+            : [];
+
+    if (
+        roiHistory.length === 0
+    ) {
+        return fallbackRate;
+    }
+
+    roiHistory =
+        roiHistory
+            .filter(
+                item =>
+                    item &&
+                    item.effectiveFrom &&
+                    Number(item.rate) > 0
+            )
+            .sort(
+                (a, b) =>
+                    String(
+                        a.effectiveFrom
+                    ).localeCompare(
+                        String(
+                            b.effectiveFrom
+                        )
+                    )
+            );
+
+    let applicableRate =
+        fallbackRate;
+
+    for (
+        const item of roiHistory
+    ) {
+
+        if (
+            String(
+                item.effectiveFrom
+            ) <=
+            String(
+                paymentDateValue
+            )
+        ) {
+
+            applicableRate =
+                Number(
+                    item.rate
+                );
+
+        }
+
+    }
+
+    return applicableRate;
+}
+
+
+// =====================================================
+// SAVE REPAYMENT
+// =====================================================
+
+async function saveFinalRepayment() {
 
         if (!auth.currentUser) {
 
@@ -8446,7 +8581,60 @@ document.addEventListener(
 
             }
 
+// =============================================
+// REGULAR EMI DUE DATE VALIDATION
+// =============================================
 
+if (
+    repaymentType.value === "regular_emi"
+) {
+
+    const paymentDateValue =
+        paymentDate.value || "";
+
+    const dueDateValue =
+        dueDate?.value || "";
+
+    if (
+        paymentDateValue &&
+        dueDateValue
+    ) {
+
+        const paymentDateObj =
+            new Date(
+                paymentDateValue +
+                "T00:00:00"
+            );
+
+        const dueDateObj =
+            new Date(
+                dueDateValue +
+                "T00:00:00"
+            );
+
+        if (
+            paymentDateObj.getTime() <
+            dueDateObj.getTime()
+        ) {
+
+            const parts =
+                dueDateValue.split("-");
+
+            const formattedDueDate =
+                `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+            alert(
+                "Regular EMI Entry Cannot be done before " +
+                formattedDueDate
+            );
+
+            return;
+
+        }
+
+    }
+
+}       
             const paymentAmount =
                 Number(
                     amount?.value || 0
@@ -8591,7 +8779,7 @@ document.addEventListener(
 
             }
 
-            // =============================================
+// =============================================
 // BALANCE TENURE
 // =============================================
 
@@ -8633,33 +8821,33 @@ if (
 
 }
 
-            // =============================================
-            // CALCULATION
-            // =============================================
+// =============================================
+// CALCULATION
+// =============================================
 
-            const openingOutstanding =
-                Number(
-                    selectedLoan.outstandingBalance || 0
-                );
-
-
-            const annualRate =
-                Number(
-                    selectedLoan.interestRate || 0
-                );
+const openingOutstanding =
+    Number(
+        selectedLoan.outstandingBalance || 0
+    );
 
 
-            const emiAmount =
-                Number(
-                    selectedLoan.emi || 0
-                );
+const annualRate =
+    getApplicableROIByPaymentDate(
+        selectedLoan,
+        paymentDate?.value || ""
+    );
 
 
-            let interestAmount = 0;
+const emiAmount =
+    Number(
+        selectedLoan.emi || 0
+    );
 
-            let principalAmount =
-                paymentAmount;
 
+let interestAmount = 0;
+
+let principalAmount =
+    paymentAmount;
 
             // =============================================
             // REGULAR EMI
@@ -9767,9 +9955,11 @@ if (repaymentSection) {
             "important"
         );
 
+
         button.textContent =
             "✖ Close Repayment";
 
+            
         button.style.background =
             "linear-gradient(135deg,#64748b,#475569)";
 
@@ -9832,6 +10022,31 @@ if (repaymentTypeSelect) {
     );
 
 }
+
+// =============================================
+// SHOW AMOUNT VALIDATION WHEN FORM OPENS
+// =============================================
+
+const repaymentAmount =
+    document.getElementById(
+        "repaymentAmount"
+    );
+
+if (repaymentAmount) {
+
+    const amountValidation =
+        document.getElementById(
+            "repaymentAmountValidation"
+        );
+
+    if (amountValidation) {
+
+        amountValidation.style.display =
+            "block";
+
+    }
+
+}   
 
         form.scrollIntoView({
             behavior: "smooth",
@@ -9952,6 +10167,83 @@ if (repaymentTypeSelect) {
 
         }
 
+// =========================================================
+// ROI HELPER - FIND APPLICABLE ROI BY PAYMENT DATE
+// =========================================================
+
+function getApplicableROIByPaymentDate(
+    selectedLoan,
+    paymentDateValue
+) {
+
+    const fallbackRate =
+        Number(
+            selectedLoan?.interestRate || 0
+        );
+
+    if (!paymentDateValue) {
+        return fallbackRate;
+    }
+
+    let roiHistory =
+        Array.isArray(
+            selectedLoan?.roiHistory
+        )
+            ? [...selectedLoan.roiHistory]
+            : [];
+
+    if (
+        roiHistory.length === 0
+    ) {
+        return fallbackRate;
+    }
+
+    roiHistory =
+        roiHistory
+            .filter(
+                item =>
+                    item &&
+                    item.effectiveFrom &&
+                    Number(item.rate) > 0
+            )
+            .sort(
+                (a, b) =>
+                    String(
+                        a.effectiveFrom
+                    ).localeCompare(
+                        String(
+                            b.effectiveFrom
+                        )
+                    )
+            );
+
+    let applicableRate =
+        fallbackRate;
+
+    for (
+        const item of roiHistory
+    ) {
+
+        if (
+            String(
+                item.effectiveFrom
+            ) <=
+            String(
+                paymentDateValue
+            )
+        ) {
+
+            applicableRate =
+                Number(
+                    item.rate
+                );
+
+        }
+
+    }
+
+    return applicableRate;
+}
 
         // =================================================
         // CALCULATION FUNCTION
@@ -10096,10 +10388,16 @@ async function calculateRepaymentPreview() {
             );
 
 
-        const annualRate =
-            Number(
-                selectedLoan.interestRate || 0
-            );
+        const paymentDateValue =
+    section.querySelector(
+        "#repaymentPaymentDate"
+    )?.value || "";
+
+const annualRate =
+    getApplicableROIByPaymentDate(
+        selectedLoan,
+        paymentDateValue
+    );
 
 
         const emi =
@@ -10119,6 +10417,78 @@ async function calculateRepaymentPreview() {
                 amount.value || 0
             );
 
+            // =================================================
+// AMOUNT VALIDATION
+// =================================================
+
+let amountValidation =
+    section.querySelector(
+        "#repaymentAmountValidation"
+    );
+
+if (!amountValidation) {
+
+    amountValidation =
+        document.createElement("div");
+
+    amountValidation.id =
+        "repaymentAmountValidation";
+
+    amountValidation.style.cssText = `
+        color: #dc2626;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 5px;
+        display: none;
+    `;
+
+    amountValidation.textContent =
+        "Enter Amount";
+
+    amount.parentElement.appendChild(
+        amountValidation
+    );
+
+}
+
+
+// =================================================
+// AMOUNT EMPTY → STOP CALCULATION
+// =================================================
+
+if (
+    !amount.value ||
+    amount.value.trim() === ""
+) {
+
+    amountValidation.style.display =
+        "block";
+
+    if (openingElement) {
+        openingElement.textContent = "₹0";
+    }
+
+    if (interestElement) {
+        interestElement.textContent = "₹0";
+    }
+
+    if (principalElement) {
+        principalElement.textContent = "₹0";
+    }
+
+    if (closingElement) {
+        closingElement.textContent = "₹0";
+    }
+
+    tenureElement.value = "";
+
+    return;
+
+}
+
+
+amountValidation.style.display =
+    "none";
 
         let interestAmount = 0;
 
@@ -10206,40 +10576,45 @@ if (
 
 }
 
-
-                const emiDay =
-                    Number(
-                        selectedLoan.emiDay || 10
-                    );
-
-
-                const previousDate =
-                    new Date(
-                        payment.getFullYear(),
-                        payment.getMonth() - 1,
-                        emiDay
-                    );
+const dueDateValue =
+    section.querySelector(
+        "#repaymentDueDate"
+    )?.value || "";
 
 
-                const millisecondsPerDay =
-                    1000 *
-                    60 *
-                    60 *
-                    24;
+const dueDate =
+    new Date(
+        dueDateValue +
+        "T00:00:00"
+    );
 
 
-                const actualDays =
-                    Math.max(
-                        1,
-                        Math.round(
-                            (
-                                payment -
-                                previousDate
-                            ) /
-                            millisecondsPerDay
-                        )
-                    );
+const previousDueDate =
+    new Date(
+        dueDate.getFullYear(),
+        dueDate.getMonth() - 1,
+        dueDate.getDate()
+    );
 
+
+const millisecondsPerDay =
+    1000 *
+    60 *
+    60 *
+    24;
+
+
+const actualDays =
+    Math.max(
+        1,
+        Math.round(
+            (
+                dueDate -
+                previousDueDate
+            ) /
+            millisecondsPerDay
+        )
+    );
 
                 interestAmount =
                     openingPrincipal *
@@ -10546,5 +10921,1019 @@ calculateRepaymentPreview();
         setupLiveRepaymentCalculation();
 
     }
+
+})();
+
+// =========================================================
+// ROI CHANGE FORM → OPEN / CLOSE
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", function (event) {
+
+        // ADD ROI CHANGE
+        const addButton =
+            event.target.closest("#addROIChangeBtn");
+
+        if (addButton) {
+
+            const form =
+                document.getElementById("roiChangeForm");
+
+            if (form) {
+
+                form.style.display = "block";
+
+            }
+
+            return;
+        }
+
+
+        // CANCEL ROI CHANGE
+        const cancelButton =
+            event.target.closest("#cancelROIChangeBtn");
+
+        if (cancelButton) {
+
+            const form =
+                document.getElementById("roiChangeForm");
+
+            if (form) {
+
+                form.style.display = "none";
+
+            }
+
+        }
+
+    });
+
+})();
+
+// =========================================================
+// REPAYMENT ROI CHANGE FORM → OPEN / CLOSE
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", function (event) {
+
+        // OPEN REPAYMENT ROI FORM
+        const addButton =
+            event.target.closest("#addRepaymentROIChangeBtn");
+
+        if (addButton) {
+
+            const form =
+                document.getElementById(
+                    "repaymentROIChangeForm"
+                );
+
+            if (form) {
+
+                form.style.display = "block";
+
+            }
+
+            return;
+        }
+
+
+        // CLOSE REPAYMENT ROI FORM
+        const cancelButton =
+            event.target.closest(
+                "#cancelRepaymentROIChangeBtn"
+            );
+
+        if (cancelButton) {
+
+            const form =
+                document.getElementById(
+                    "repaymentROIChangeForm"
+                );
+
+            if (form) {
+
+                form.style.display = "none";
+
+            }
+
+        }
+
+    });
+
+})();
+
+// =========================================================
+// REPAYMENT ROI PANEL - OPEN / CLOSE
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", function (event) {
+
+        // =========================================
+        // CHANGE ROI → OPEN
+        // =========================================
+
+        const changeROIButton =
+            event.target.closest("#changeRepaymentROIBtn");
+
+        if (changeROIButton) {
+
+            const panel =
+                document.getElementById(
+                    "repaymentROIChangePanel"
+                );
+
+            if (panel) {
+                panel.style.display = "block";
+            }
+
+            return;
+        }
+
+
+        // =========================================
+        // CANCEL → CLOSE + CLEAR
+        // =========================================
+
+        const cancelROIButton =
+            event.target.closest("#cancelRepaymentROIBtn");
+
+        if (cancelROIButton) {
+
+            const panel =
+                document.getElementById(
+                    "repaymentROIChangePanel"
+                );
+
+            const rateInput =
+                document.getElementById(
+                    "repaymentNewROIRate"
+                );
+
+            const dateInput =
+                document.getElementById(
+                    "repaymentNewROIEffectiveFrom"
+                );
+
+
+            if (rateInput) {
+                rateInput.value = "";
+            }
+
+
+            if (dateInput) {
+                dateInput.value = "";
+            }
+
+
+            if (panel) {
+                panel.style.display = "none";
+            }
+
+            return;
+        }
+
+    });
+
+})();
+
+
+// =========================================================
+// REPAYMENT ROI HISTORY - OPEN / CLOSE
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", function (event) {
+
+        // =========================================
+        // ROI HISTORY → OPEN
+        // =========================================
+
+        const historyButton =
+            event.target.closest("#repaymentROIHistoryBtn");
+
+        if (historyButton) {
+
+            const changePanel =
+                document.getElementById(
+                    "repaymentROIChangePanel"
+                );
+
+            const historyPanel =
+                document.getElementById(
+                    "repaymentROIHistoryPanel"
+                );
+
+            if (changePanel) {
+                changePanel.style.display = "none";
+            }
+
+            if (historyPanel) {
+                historyPanel.style.display = "block";
+            }
+
+            return;
+        }
+
+
+        // =========================================
+        // HISTORY CLOSE → BACK TO CHANGE ROI
+        // =========================================
+
+        const closeHistoryButton =
+            event.target.closest(
+                "#closeRepaymentROIHistoryBtn"
+            );
+
+        if (closeHistoryButton) {
+
+            const changePanel =
+                document.getElementById(
+                    "repaymentROIChangePanel"
+                );
+
+            const historyPanel =
+                document.getElementById(
+                    "repaymentROIHistoryPanel"
+                );
+
+            if (historyPanel) {
+                historyPanel.style.display = "none";
+            }
+
+            if (changePanel) {
+                changePanel.style.display = "block";
+            }
+
+            return;
+        }
+
+    });
+
+})();
+
+
+// =========================================================
+// REPAYMENT ROI HISTORY - LOAD FROM FIREBASE
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", async function (event) {
+
+        const historyButton =
+            event.target.closest("#repaymentROIHistoryBtn");
+
+        if (!historyButton) {
+            return;
+        }
+
+        const historyContent =
+            document.getElementById(
+                "repaymentROIHistoryContent"
+            );
+
+        const repaymentSection =
+            document.getElementById(
+                "loanRepaymentSection"
+            );
+
+        const loanSelect =
+            repaymentSection
+                ? repaymentSection.querySelector(
+                    "#repaymentLoan"
+                )
+                : null;
+
+        if (!historyContent) {
+            return;
+        }
+
+        if (!loanSelect || !loanSelect.value) {
+
+            historyContent.innerHTML = `
+                <div
+                    style="
+                        color:#dc2626;
+                        font-size:13px;
+                        padding:8px 0;
+                        text-align:center;
+                    "
+                >
+                    ⚠️ Please select a Loan first.
+                </div>
+            `;
+
+            return;
+        }
+
+        try {
+
+            historyContent.innerHTML = `
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:13px;
+                        padding:8px 0;
+                        text-align:center;
+                    "
+                >
+                    ⏳ Loading ROI history...
+                </div>
+            `;
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(loansRef);
+
+            let selectedLoan = null;
+
+            loansSnapshot.forEach(
+                (loanDoc) => {
+
+                    if (
+                        loanDoc.id ===
+                        loanSelect.value
+                    ) {
+                        selectedLoan =
+                            loanDoc.data();
+                    }
+
+                }
+            );
+
+            if (!selectedLoan) {
+
+                historyContent.innerHTML = `
+                    <div
+                        style="
+                            color:#dc2626;
+                            font-size:13px;
+                            padding:8px 0;
+                            text-align:center;
+                        "
+                    >
+                        ⚠️ Selected Loan could not be found.
+                    </div>
+                `;
+
+                return;
+            }
+
+            let roiHistory =
+                Array.isArray(
+                    selectedLoan.roiHistory
+                )
+                    ? [...selectedLoan.roiHistory]
+                    : [];
+
+            // -----------------------------------------
+            // BACKWARD COMPATIBILITY
+            // -----------------------------------------
+
+            if (
+                roiHistory.length === 0 &&
+                Number(
+                    selectedLoan.interestRate || 0
+                ) > 0
+            ) {
+
+                roiHistory.push({
+                    rate:
+                        Number(
+                            selectedLoan.interestRate
+                        ),
+
+                    effectiveFrom:
+                        selectedLoan.roiEffectiveFrom ||
+                        selectedLoan.startDate ||
+                        null
+                });
+
+            }
+
+            // -----------------------------------------
+            // SORT BY EFFECTIVE DATE
+            // -----------------------------------------
+
+            roiHistory.sort(
+                (a, b) => {
+
+                    return String(
+                        a.effectiveFrom || ""
+                    ).localeCompare(
+                        String(
+                            b.effectiveFrom || ""
+                        )
+                    );
+
+                }
+            );
+
+            if (roiHistory.length === 0) {
+
+                historyContent.innerHTML = `
+                    <div
+                        style="
+                            color:#64748b;
+                            font-size:13px;
+                            padding:8px 0;
+                            text-align:center;
+                        "
+                    >
+                        No ROI history available.
+                    </div>
+                `;
+
+                return;
+            }
+
+            // -----------------------------------------
+            // BUILD HISTORY TABLE
+            // -----------------------------------------
+
+            let rows = "";
+
+            roiHistory.forEach(
+                (item) => {
+
+                    let displayDate =
+                        item.effectiveFrom || "—";
+
+                    if (
+                        displayDate.includes("-")
+                    ) {
+
+                        const parts =
+                            displayDate.split("-");
+
+                        if (
+                            parts.length === 3 &&
+                            parts[0].length === 4
+                        ) {
+
+                            displayDate =
+                                `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+                        }
+
+                    }
+
+                    rows += `
+                        <tr>
+                            <td
+                                style="
+                                    padding:8px 10px;
+                                    border-bottom:1px solid #e2e8f0;
+                                    text-align:center;
+                                "
+                            >
+                                ${displayDate}
+                            </td>
+
+                            <td
+                                style="
+                                    padding:8px 10px;
+                                    border-bottom:1px solid #e2e8f0;
+                                    text-align:center;
+                                    font-weight:700;
+                                    color:#b45309;
+                                "
+                            >
+                                ${Number(
+                                    item.rate || 0
+                                ).toFixed(2)}%
+                            </td>
+                        </tr>
+                    `;
+
+                }
+            );
+
+            historyContent.innerHTML = `
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        font-size:13px;
+                    "
+                >
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#f1f5f9;
+                                color:#334155;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:8px 10px;
+                                    border-bottom:1px solid #cbd5e1;
+                                    text-align:center;
+                                "
+                            >
+                                W.E.F. Date
+                            </th>
+
+                            <th
+                                style="
+                                    padding:8px 10px;
+                                    border-bottom:1px solid #cbd5e1;
+                                    text-align:center;
+                                "
+                            >
+                                ROI
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                </table>
+            `;
+
+            console.log(
+                "✅ ROI HISTORY LOADED:",
+                roiHistory
+            );
+
+        } catch (error) {
+
+            console.error(
+                "❌ ERROR LOADING ROI HISTORY:",
+                error
+            );
+
+            historyContent.innerHTML = `
+                <div
+                    style="
+                        color:#dc2626;
+                        font-size:13px;
+                        padding:8px 0;
+                        text-align:center;
+                    "
+                >
+                    ❌ Unable to load ROI history.
+                </div>
+            `;
+
+        }
+
+    });
+
+})();
+
+
+// =========================================================
+// REPAYMENT ROI - SAVE TO LOAN MASTER
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", async function (event) {
+
+        const saveROIButton =
+            event.target.closest("#saveRepaymentROIBtn");
+
+        if (!saveROIButton) {
+            return;
+        }
+
+
+        // =========================================
+        // GET INPUTS
+        // =========================================
+
+        const rateInput =
+            document.getElementById(
+                "repaymentNewROIRate"
+            );
+
+        const dateInput =
+            document.getElementById(
+                "repaymentNewROIEffectiveFrom"
+            );
+
+        const repaymentSection =
+    document.getElementById(
+        "loanRepaymentSection"
+    );
+
+const loanSelect =
+    repaymentSection
+        ? repaymentSection.querySelector(
+            "#repaymentLoan"
+        )
+        : null;
+
+
+        const newRate =
+            Number(rateInput?.value || 0);
+
+        const effectiveFrom =
+            dateInput?.value || "";
+
+        const loanValue =
+            loanSelect?.value || "";
+
+
+        // =========================================
+        // VALIDATION
+        // =========================================
+
+        if (!loanValue) {
+
+            alert(
+                "Please select a Loan first."
+            );
+
+            return;
+        }
+
+
+        if (!newRate || newRate <= 0) {
+
+            alert(
+                "Please enter a valid New ROI."
+            );
+
+            return;
+        }
+
+
+        if (!effectiveFrom) {
+
+            alert(
+                "Please select W.E.F. Date."
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // GET CURRENT USER
+        // =========================================
+
+        if (
+            !auth ||
+            !auth.currentUser
+        ) {
+
+            alert(
+                "User session not available."
+            );
+
+            return;
+        }
+
+
+        const userId =
+            auth.currentUser.uid;
+
+
+        try {
+
+            saveROIButton.disabled = true;
+
+            saveROIButton.textContent =
+                "⏳ Saving...";
+
+
+            // =========================================
+            // GET LOANS
+            // =========================================
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(
+                    loansRef
+                );
+
+
+            let selectedLoan = null;
+
+            let selectedLoanId = null;
+
+
+            // =========================================
+            // FIND SELECTED LOAN
+            // =========================================
+
+            loansSnapshot.forEach(
+                loanDoc => {
+
+                    const loan =
+                        loanDoc.data();
+
+
+                    if (
+                        loanDoc.id ===
+                        loanValue
+                    ) {
+
+                        selectedLoan =
+                            loan;
+
+                        selectedLoanId =
+                            loanDoc.id;
+
+                    }
+
+                }
+            );
+
+
+            // =========================================
+            // FALLBACK
+            // =========================================
+
+            if (!selectedLoan) {
+
+                loansSnapshot.forEach(
+                    loanDoc => {
+
+                        const loan =
+                            loanDoc.data();
+
+
+                        if (
+                            !selectedLoan &&
+                            (
+                                loan.loanType ===
+                                loanValue
+                                ||
+                                loan.loanName ===
+                                loanValue
+                            )
+                        ) {
+
+                            selectedLoan =
+                                loan;
+
+                            selectedLoanId =
+                                loanDoc.id;
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            if (
+                !selectedLoan ||
+                !selectedLoanId
+            ) {
+
+                alert(
+                    "Selected Loan could not be found."
+                );
+
+                return;
+            }
+
+
+            // =========================================
+            // EXISTING ROI HISTORY
+            // =========================================
+
+            let roiHistory = Array.isArray(
+                selectedLoan.roiHistory
+            )
+                ? [
+                    ...selectedLoan.roiHistory
+                ]
+                : [];
+
+
+            // =========================================
+            // ADD CURRENT ROI AS BASELINE
+            // =========================================
+
+            if (
+                roiHistory.length === 0 &&
+                Number(
+                    selectedLoan.interestRate || 0
+                ) > 0
+            ) {
+
+                roiHistory.push({
+
+                    rate:
+                        Number(
+                            selectedLoan.interestRate
+                        ),
+
+                    effectiveFrom:
+                        selectedLoan.roiEffectiveFrom
+                        ||
+                        selectedLoan.startDate
+                        ||
+                        null
+
+                });
+
+            }
+
+
+            // =========================================
+            // ADD NEW ROI
+            // =========================================
+
+            roiHistory.push({
+
+                rate:
+                    Number(
+                        newRate.toFixed(2)
+                    ),
+
+                effectiveFrom:
+                    effectiveFrom
+
+            });
+
+
+            // =========================================
+            // SORT ROI HISTORY
+            // =========================================
+
+            roiHistory.sort(
+                (a, b) => {
+
+                    return String(
+                        a.effectiveFrom || ""
+                    ).localeCompare(
+                        String(
+                            b.effectiveFrom || ""
+                        )
+                    );
+
+                }
+            );
+
+
+            // =========================================
+            // CHECK WHETHER NEW ROI IS CURRENT
+            // =========================================
+
+            const today =
+                new Date()
+                    .toISOString()
+                    .split("T")[0];
+
+
+            const updateData = {
+
+                roiHistory:
+                    roiHistory,
+
+                updatedAt:
+                    serverTimestamp(),
+
+                updatedBy:
+                    userId
+
+            };
+
+
+            // =========================================
+            // UPDATE CURRENT ROI ONLY IF
+            // EFFECTIVE DATE HAS ARRIVED
+            // =========================================
+
+            if (
+                effectiveFrom <= today
+            ) {
+
+                updateData.interestRate =
+                    Number(
+                        newRate.toFixed(2)
+                    );
+
+                updateData.roiEffectiveFrom =
+                    effectiveFrom;
+
+            }
+
+
+            // =========================================
+            // SAVE TO LOAN MASTER
+            // =========================================
+
+            await updateDoc(
+
+                doc(
+                    db,
+                    "users",
+                    userId,
+                    "loans",
+                    selectedLoanId
+                ),
+
+                updateData
+
+            );
+
+
+            // =========================================
+            // UPDATE HEADER IF CURRENT ROI CHANGED
+            // =========================================
+
+            const inlineROI =
+                document.getElementById(
+                    "repaymentCurrentROIInline"
+                );
+
+
+            if (
+                inlineROI &&
+                effectiveFrom <= today
+            ) {
+
+                inlineROI.textContent =
+                    Number(newRate)
+                        .toFixed(2) + "%";
+
+            }
+
+
+            // =========================================
+            // CLEAR FORM
+            // =========================================
+
+            if (rateInput) {
+                rateInput.value = "";
+            }
+
+            if (dateInput) {
+                dateInput.value = "";
+            }
+
+
+            // =========================================
+            // CLOSE PANEL
+            // =========================================
+
+            const panel =
+                document.getElementById(
+                    "repaymentROIChangePanel"
+                );
+
+            if (panel) {
+                panel.style.display = "none";
+            }
+
+
+            alert(
+                "ROI change saved successfully."
+            );
+
+
+            console.log(
+                "✅ ROI HISTORY UPDATED:",
+                roiHistory
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ ERROR SAVING ROI:",
+                error
+            );
+
+            alert(
+                "Unable to save ROI. Please check Console."
+            );
+
+        } finally {
+
+            saveROIButton.disabled =
+                false;
+
+            saveROIButton.textContent =
+                "💾 Save ROI";
+
+        }
+
+    });
 
 })();
