@@ -38,6 +38,360 @@ function getLoansCollectionRef() {
 
 console.log("Loans module loaded successfully");
 
+// =====================================================
+// LOAN MASTER → EDIT EXISTING LOAN
+// STEP 1: LOAD EXISTING LOAN INTO FORM
+// =====================================================
+
+window.editingLoanId = null;
+
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const editButton =
+            event.target.closest(
+                '[data-loan-action="edit"]'
+            );
+
+        if (!editButton) return;
+
+
+        const loanType =
+            editButton.dataset.loanType;
+
+        if (!loanType) {
+
+            alert("Loan Type not found.");
+
+            return;
+
+        }
+
+
+        try {
+
+            if (!auth.currentUser) {
+
+                alert("Please login first.");
+
+                return;
+
+            }
+
+
+            // =================================================
+            // GET LOANS
+            // =================================================
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(
+                    loansRef
+                );
+
+
+            let selectedLoan = null;
+
+
+            loansSnapshot.forEach(
+                (loanDoc) => {
+
+                    const loan =
+                        loanDoc.data();
+
+                    if (
+                        !selectedLoan &&
+                        loan.loanType === loanType &&
+                        loan.status === "active"
+                    ) {
+
+                        selectedLoan = {
+
+                            id: loanDoc.id,
+
+                            ...loan
+
+                        };
+
+                    }
+
+                }
+            );
+
+
+            if (!selectedLoan) {
+
+                alert(
+                    "No active loan found for " +
+                    loanType +
+                    "."
+                );
+
+                return;
+
+            }
+
+
+            // =================================================
+            // SAVE EDITING LOAN ID
+            // =================================================
+
+            window.editingLoanId =
+                selectedLoan.id;
+
+
+            // =================================================
+            // HIDE OTHER VIEWS
+            // =================================================
+
+            const loanForm =
+                document.getElementById(
+                    "loanFormContainer"
+                );
+
+            const loanCards =
+                document.querySelector(
+                    ".loan-type-grid"
+                );
+
+            const loanSummary =
+                document.getElementById(
+                    "loanSummary"
+                );
+
+            const loansList =
+                document.getElementById(
+                    "loansListContainer"
+                );
+
+            const repaymentSection =
+                document.getElementById(
+                    "loanRepaymentSection"
+                );
+
+
+            if (loanCards) {
+
+                loanCards.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (loanSummary) {
+
+                loanSummary.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (loansList) {
+
+                loansList.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            if (repaymentSection) {
+
+                repaymentSection.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+
+            // =================================================
+            // LOAD PAYMENT ACCOUNTS FIRST
+            // =================================================
+
+            await loadLoanPaymentAccounts();
+
+
+            // =================================================
+            // FILL EXISTING LOAN DATA
+            // =================================================
+
+            document.getElementById(
+                "loanType"
+            ).value =
+                selectedLoan.loanType || "";
+
+
+            document.getElementById(
+                "loanName"
+            ).value =
+                selectedLoan.loanName || "";
+
+
+            document.getElementById(
+                "loanLender"
+            ).value =
+                selectedLoan.lender || "";
+
+
+            document.getElementById(
+                "loanAccountNumber"
+            ).value =
+                selectedLoan.accountNumber || "";
+
+
+            document.getElementById(
+                "loanOriginalAmount"
+            ).value =
+                selectedLoan.originalAmount || "";
+
+
+            document.getElementById(
+                "loanOutstandingBalance"
+            ).value =
+                selectedLoan.outstandingBalance || "";
+
+
+            document.getElementById(
+                "loanInterestRate"
+            ).value =
+                selectedLoan.interestRate || "";
+
+
+            document.getElementById(
+                "loanEMI"
+            ).value =
+                selectedLoan.emi || "";
+
+
+            document.getElementById(
+                "loanStartDate"
+            ).value =
+                selectedLoan.startDate || "";
+
+
+            document.getElementById(
+                "loanOriginalTenure"
+            ).value =
+                selectedLoan.originalTenure || "";
+
+
+            document.getElementById(
+                "loanRemainingTenure"
+            ).value =
+                selectedLoan.remainingTenure || "";
+
+
+            document.getElementById(
+                "loanEMIDay"
+            ).value =
+                selectedLoan.emiDay || "";
+
+
+            document.getElementById(
+                "loanExtraPrincipal"
+            ).value =
+                selectedLoan.extraPrincipal || "";
+
+
+            document.getElementById(
+                "loanPaymentType"
+            ).value =
+                selectedLoan.paymentType ||
+                "regular_emi";
+
+
+            document.getElementById(
+                "loanPaymentAccount"
+            ).value =
+                selectedLoan.paymentAccount || "";
+
+
+            document.getElementById(
+                "loanStatus"
+            ).value =
+                selectedLoan.status ||
+                "active";
+
+
+            document.getElementById(
+                "loanNotes"
+            ).value =
+                selectedLoan.notes || "";
+
+
+            // =================================================
+            // CHANGE FORM HEADING
+            // =================================================
+
+            const formHeading =
+                loanForm?.querySelector(
+                    ".loan-form-header h3"
+                );
+
+            if (formHeading) {
+
+                formHeading.textContent =
+                    "✏️ Edit Loan / Borrowing";
+
+            }
+
+
+            // =================================================
+            // SHOW FORM
+            // =================================================
+
+            if (loanForm) {
+
+                loanForm.style.setProperty(
+                    "display",
+                    "block",
+                    "important"
+                );
+
+
+                loanForm.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+
+
+            console.log(
+                "✏️ Editing Loan:",
+                selectedLoan
+            );
+
+        } catch (error) {
+
+            console.error(
+                "❌ Edit Loan Load Error:",
+                error
+            );
+
+            alert(
+                "Unable to load loan for editing. Please check Console."
+            );
+
+        }
+
+    }
+);
+
 const addLoanButton = document.getElementById("addLoanButton");
 
 if (addLoanButton) {
@@ -91,6 +445,36 @@ if (addLoanButton) {
 
             loadLoanPaymentAccounts();
             loadSavedLoans();
+
+            // =====================================================
+// NEW ADD LOAN → CLEAR OLD EDIT DATA
+// =====================================================
+
+window.editingLoanId = null;
+
+document.getElementById("loanType").value = "";
+document.getElementById("loanName").value = "";
+document.getElementById("loanLender").value = "";
+document.getElementById("loanAccountNumber").value = "";
+document.getElementById("loanOriginalAmount").value = "";
+document.getElementById("loanOutstandingBalance").value = "";
+document.getElementById("loanInterestRate").value = "";
+document.getElementById("loanEMI").value = "";
+document.getElementById("loanStartDate").value = "";
+document.getElementById("loanOriginalTenure").value = "";
+document.getElementById("loanRemainingTenure").value = "";
+document.getElementById("loanEMIDay").value = "";
+document.getElementById("loanExtraPrincipal").value = "";
+
+document.getElementById("loanPaymentType").value =
+    "regular_emi";
+
+document.getElementById("loanPaymentAccount").value = "";
+
+document.getElementById("loanStatus").value =
+    "active";
+
+document.getElementById("loanNotes").value = "";
 
             loanForm.scrollIntoView({
                 behavior: "smooth",
@@ -353,16 +737,87 @@ document.addEventListener("click", async function (event) {
         saveButton.textContent = "⏳ Saving...";
 
         const loansRef =
-            getLoansCollectionRef();
+    getLoansCollectionRef();
 
-        await addDoc(
-            loansRef,
-            loanData
+
+// =====================================================
+// EDIT MODE → UPDATE EXISTING LOAN
+// ADD MODE  → CREATE NEW LOAN
+// =====================================================
+
+if (window.editingLoanId) {
+
+    const loanDocRef =
+        doc(
+            db,
+            "users",
+            auth.currentUser.uid,
+            LOANS_COLLECTION,
+            window.editingLoanId
         );
 
 
+    const updateLoanData = {
+        ...loanData
+    };
+
+
+    // Existing createdAt must not be overwritten
+    delete updateLoanData.createdAt;
+
+
+    await updateDoc(
+        loanDocRef,
+        updateLoanData
+    );
+
+
+    console.log(
+        "✅ Existing Loan Master updated:",
+        window.editingLoanId
+    );
+
+
+} else {
+
+    await addDoc(
+        loansRef,
+        loanData
+    );
+
+
+    console.log(
+        "✅ New Loan Master created"
+    );
+
+}   
+
         alert("Loan saved successfully.");
 
+        // =====================================================
+// EXIT LOAN EDIT MODE
+// =====================================================
+
+window.editingLoanId = null;
+
+
+// Reset form heading to Add mode
+const loanFormAfterSave =
+    document.getElementById(
+        "loanFormContainer"
+    );
+
+const formHeadingAfterSave =
+    loanFormAfterSave?.querySelector(
+        ".loan-form-header h3"
+    );
+
+if (formHeadingAfterSave) {
+
+    formHeadingAfterSave.textContent =
+        "➕ Add Loan / Borrowing";
+
+}
         saveButton.disabled = false;
         saveButton.textContent = "💾 Save Loan";
 
@@ -491,6 +946,77 @@ let totalExtraPrincipal = 0;
 let totalMonthlyOutflow = 0;
 let largestLoanName = "—";
 let largestLoanAmount = 0;
+
+// =====================================================
+// DYNAMIC LOAN CARD VISIBILITY
+// SHOW ONLY ACTIVE LOANS HAVING LOAN ACCOUNT
+// =====================================================
+
+const activeLoanTypes =
+    new Set();
+
+
+loansSnapshot.forEach(
+    (loanDoc) => {
+
+        const loan =
+            loanDoc.data();
+
+        if (
+            loan.status === "active" &&
+            String(
+                loan.accountNumber || ""
+            ).trim() !== ""
+        ) {
+
+            activeLoanTypes.add(
+                loan.loanType
+            );
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// SHOW / HIDE LOAN CARDS
+// =====================================================
+
+document
+    .querySelectorAll(
+        ".loan-repayment-select-card"
+    )
+    .forEach(
+        (card) => {
+
+            const loanType =
+                card.dataset.loanType;
+
+            if (
+                activeLoanTypes.has(
+                    loanType
+                )
+            ) {
+
+                card.style.setProperty(
+                    "display",
+                    "",
+                    "important"
+                );
+
+            } else {
+
+                card.style.setProperty(
+                    "display",
+                    "none",
+                    "important"
+                );
+
+            }
+
+        }
+    );
 
         loansSnapshot.forEach((loanDoc) => {
 
@@ -926,6 +1452,207 @@ if (activeLoansElement) {
     }
 }
 
+// =====================================================
+// GLOBAL LOAN CARD ACTIONS
+// ✏️ EDIT | 💳 REPAYMENT | 🔒 CLOSE LOAN
+// =====================================================
+
+(function setupGlobalLoanCardActions() {
+
+    function addActionsToLoanCards() {
+
+        document
+            .querySelectorAll(
+                ".loan-repayment-select-card"
+            )
+            .forEach(
+                (card) => {
+
+// =====================================================
+// DO NOT ADD GLOBAL ACTIONS IF CARD ALREADY HAS ACTIONS
+// =====================================================
+
+if (
+    card.querySelector(
+        '[data-loan-action="edit"]'
+    )
+) {
+    return;
+}
+
+
+                    const loanType =
+                        card.dataset.loanType || "";
+
+                    if (!loanType) {
+                        return;
+                    }
+
+
+                    const actionRow =
+                        document.createElement(
+                            "div"
+                        );
+
+                    actionRow.className =
+                        "global-loan-card-actions";
+
+
+                    actionRow.style.cssText = `
+                        display:flex;
+                        justify-content:flex-end;
+                        align-items:center;
+                        gap:7px;
+                        margin-top:10px;
+                        padding-top:9px;
+                        border-top:1px solid #dbe3ef;
+                        flex-wrap:wrap;
+                    `;
+
+
+                    actionRow.innerHTML = `
+
+                        <!-- EDIT -->
+
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="edit"
+                            data-loan-type="${loanType}"
+                            style="
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:6px 11px;
+                                border-radius:7px;
+                                background:#f59e0b;
+                                color:#ffffff;
+                                font-size:10px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:
+                                    0 3px 7px
+                                    rgba(245,158,11,0.20);
+                            "
+                        >
+                            ✏️ Edit
+                        </span>
+
+
+                        <!-- REPAYMENT -->
+
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="repayment"
+                            data-loan-type="${loanType}"
+                            style="
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:6px 11px;
+                                border-radius:7px;
+                                background:#16a34a;
+                                color:#ffffff;
+                                font-size:10px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:
+                                    0 3px 7px
+                                    rgba(22,163,74,0.20);
+                            "
+                        >
+                            💳 Repayment
+                        </span>
+
+
+                        <!-- CLOSE LOAN -->
+
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="close"
+                            data-loan-type="${loanType}"
+                            style="
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:6px 11px;
+                                border-radius:7px;
+                                background:#64748b;
+                                color:#ffffff;
+                                font-size:10px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:
+                                    0 3px 7px
+                                    rgba(100,116,139,0.20);
+                            "
+                        >
+                            🔒 Close Loan
+                        </span>
+
+                    `;
+
+
+                    card.appendChild(
+                        actionRow
+                    );
+
+                    // =====================================================
+// EXPAND ACTIVE LOAN CARD FOR ACTION BUTTONS
+// =====================================================
+
+card.style.setProperty(
+    "height",
+    "120px",
+    "important"
+);
+
+card.style.setProperty(
+    "min-height",
+    "120px",
+    "important"
+);
+
+card.style.setProperty(
+    "max-height",
+    "120px",
+    "important"
+);
+
+card.style.setProperty(
+    "overflow",
+    "visible",
+    "important"
+);
+
+                }
+            );
+
+    }
+
+
+    // Run after DOM is ready
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            addActionsToLoanCards
+        );
+
+    } else {
+
+        addActionsToLoanCards();
+
+    }
+
+})();
+
 const loansSection =
     document.getElementById("loansSection");
 
@@ -1089,14 +1816,23 @@ document.addEventListener("click", async function (event) {
     if (!loanCard) return;
 
     const selectedLoanType =
-        loanCard.dataset.loanType;
+    loanCard.dataset.loanType;
 
-    if (!selectedLoanType) return;
+if (!selectedLoanType) return;
 
     console.log(
         "Selected Repayment Loan:",
         selectedLoanType
     );
+
+// =====================================================
+// GLOBAL SELECTED LOAN TYPE
+// =====================================================
+
+window.selectedLoanType =
+    selectedLoanType;
+
+
 
 
 // =====================================================
@@ -1518,6 +2254,14 @@ loanCard.style.setProperty(
             interestRate: interestRate
         }
     );
+
+    // =====================================================
+// LOAD FULL REPAYMENT DASHBOARD FOR SELECTED LOAN
+// =====================================================
+
+await loadHomeLoanRepaymentDashboard(
+    selectedLoanType
+);
 
 });
 
@@ -4801,7 +5545,9 @@ window.testSelectedHomeLoanData =
 // FINAL CLEAN VERSION
 // =========================================================
 
-async function loadHomeLoanRepaymentDashboard() {
+async function loadHomeLoanRepaymentDashboard(
+    selectedLoanType = "Home Loan"
+) {
 
     if (!auth.currentUser) {
 
@@ -4841,12 +5587,12 @@ async function loadHomeLoanRepaymentDashboard() {
 
 
                 if (
-                    loan.loanType ===
-                        "Home Loan"
-                    &&
-                    loan.status ===
-                        "active"
-                ) {
+    loan.loanType ===
+        selectedLoanType
+    &&
+    loan.status ===
+        "active"
+) {
 
                     homeLoan = {
 
@@ -4863,15 +5609,95 @@ async function loadHomeLoanRepaymentDashboard() {
         );
 
 
-        if (!homeLoan) {
+       if (!homeLoan) {
 
-            console.log(
-                "❌ Active Home Loan नहीं मिला"
-            );
+    console.log(
+        "ℹ️ Active loan नहीं मिला:",
+        selectedLoanType
+    );
 
-            return;
+
+    // =================================================
+    // CLEAR DASHBOARD FOR LOAN WITH NO ACTIVE RECORD
+    // =================================================
+
+    const clearValues = [
+
+        "repaymentCurrentBalance",
+        "repaymentCurrentEMI",
+        "repaymentOpeningPrincipal",
+        "repaymentLatestAmount",
+        "repaymentLatestPrincipal",
+        "repaymentLatestInterest",
+        "repaymentLatestOutstanding",
+        "loanDashboardPrincipalPaid",
+        "loanDashboardInterestPaid",
+        "loanDashboardPrepayment"
+
+    ];
+
+
+    clearValues.forEach(
+        (id) => {
+
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+
+                element.textContent =
+                    "₹0";
+
+            }
 
         }
+    );
+
+
+    // Interest Rate
+    const rateElement =
+        document.getElementById(
+            "repaymentCurrentRate"
+        );
+
+    if (rateElement) {
+
+        rateElement.textContent =
+            "—";
+
+    }
+
+
+    // Next EMI
+    const nextEMIElement =
+        document.getElementById(
+            "repaymentNextEMIDate"
+        );
+
+    if (nextEMIElement) {
+
+        nextEMIElement.textContent =
+            "—";
+
+    }
+
+
+    // Latest Payment Date
+    const latestDateElement =
+        document.getElementById(
+            "repaymentLatestPaymentDate"
+        );
+
+    if (latestDateElement) {
+
+        latestDateElement.textContent =
+            "—";
+
+    }
+
+
+    return;
+}
 
 
         // =================================================
@@ -4952,6 +5778,30 @@ async function loadHomeLoanRepaymentDashboard() {
 
         }
 
+        // =============================================
+// UPDATE INLINE CURRENT ROI
+// =============================================
+
+const inlineROI =
+    document.getElementById(
+        "repaymentCurrentROIInline"
+    );
+
+
+if (inlineROI) {
+
+    const currentROI =
+        Number(
+            homeLoan.interestRate || 0
+        );
+
+
+    inlineROI.textContent =
+        currentROI > 0
+            ? currentROI.toFixed(2) + "%"
+            : "—";
+
+}
 
         // =================================================
         // LEFT HOME LOAN CARD
@@ -4988,6 +5838,93 @@ async function loadHomeLoanRepaymentDashboard() {
 
         }
 
+        // =================================================
+// HOME LOAN → SHORT LOAN NAME
+// FROM DATABASE NOTES
+// =================================================
+
+const homeLoanSubName =
+    document.getElementById(
+        "repaymentHomeLoanSubName"
+    );
+
+if (homeLoanSubName) {
+
+    const rawNote =
+        String(
+            homeLoan.notes || ""
+        ).trim();
+
+    if (rawNote) {
+
+        const cleanedNote =
+            rawNote
+                .replace(
+                    /\s+HOME\s+LOAN\s*$/i,
+                    ""
+                )
+                .trim();
+
+        const words =
+            cleanedNote
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean);
+
+        let shortName = "";
+
+        if (
+            words.length >= 3 &&
+            /^\d+$/.test(words[0])
+        ) {
+
+            const houseNumber =
+                words[0];
+
+            const city =
+                words[words.length - 1];
+
+            const area =
+                words
+                    .slice(1, -1)
+                    .map(
+                        word =>
+                            word.charAt(0).toUpperCase()
+                            +
+                            word.slice(1)
+                    )
+                    .join(" ");
+
+            shortName =
+                `${houseNumber}, ${area}, ${city.charAt(0).toUpperCase()}${city.slice(1)}`;
+
+        } else {
+
+            shortName =
+                cleanedNote
+                    .toLowerCase()
+                    .split(/\s+/)
+                    .map(
+                        word =>
+                            word.charAt(0).toUpperCase()
+                            +
+                            word.slice(1)
+                    )
+                    .join(" ");
+
+        }
+
+        homeLoanSubName.textContent =
+            shortName;
+
+    } else {
+
+        homeLoanSubName.textContent =
+            "";
+
+    }
+
+}
 
         // =================================================
         // CALCULATE NEXT EMI DATE
@@ -5406,6 +6343,50 @@ if (latestRepayment) {
 
 }
 
+else {
+
+    // =================================================
+    // NO REPAYMENT FOR SELECTED LOAN
+    // CLEAR OLD LOAN DATA
+    // =================================================
+
+    if (latestDateElement) {
+
+        latestDateElement.textContent =
+            "—";
+
+    }
+
+    if (latestAmountElement) {
+
+        latestAmountElement.textContent =
+            "₹0";
+
+    }
+
+    if (latestPrincipalElement) {
+
+        latestPrincipalElement.textContent =
+            "₹0";
+
+    }
+
+    if (latestInterestElement) {
+
+        latestInterestElement.textContent =
+            "₹0";
+
+    }
+
+    if (latestOutstandingElement) {
+
+        latestOutstandingElement.textContent =
+            "₹0";
+
+    }
+
+}
+
         // =================================================
         // VISIBLE REPAYMENT FORM
         // =================================================
@@ -5428,62 +6409,53 @@ if (latestRepayment) {
                     "#repaymentLoan"
                 );
 
+// =============================================
+// REPAYMENT LOAN DROPDOWN
+// SHOW ONLY CURRENTLY SELECTED LOAN
+// =============================================
 
-            if (loanField) {
+if (loanField) {
 
-                loanField.innerHTML = `
-                    <option value="">
-                        -- Select Loan --
-                    </option>
-                `;
-
-
-                loansSnapshot.forEach(
-                    (loanDoc) => {
-
-                        const loan =
-                            loanDoc.data();
+    loanField.innerHTML = `
+        <option value="">
+            -- Select Loan --
+        </option>
+    `;
 
 
-                        if (
-                            loan.status !==
-                            "active"
-                        ) {
+    // ---------------------------------------------
+    // ADD ONLY SELECTED LOAN
+    // ---------------------------------------------
 
-                            return;
-
-                        }
-
-
-                        const option =
-                            document.createElement(
-                                "option"
-                            );
+    const option =
+        document.createElement(
+            "option"
+        );
 
 
-                        option.value =
-                            loanDoc.id;
+    option.value =
+        homeLoan.id;
 
 
-                        option.textContent =
-                            loan.loanName ||
-                            loan.loanType ||
-                            "Loan";
+    option.textContent =
+        homeLoan.loanName ||
+        homeLoan.loanType ||
+        "Loan";
 
 
-                        loanField.appendChild(
-                            option
-                        );
-
-                    }
-                );
+    loanField.appendChild(
+        option
+    );
 
 
-                loanField.value =
-                    homeLoan.id;
+    // ---------------------------------------------
+    // SELECT IT
+    // ---------------------------------------------
 
-            }
+    loanField.value =
+        homeLoan.id;
 
+}
 
             // =============================================
             // PAYMENT DATE
@@ -5805,7 +6777,7 @@ if (latestRepayment) {
 window.loadHomeLoanRepaymentDashboard =
     loadHomeLoanRepaymentDashboard;
 
-    // =========================================================
+// =========================================================
 // AUTO SYNC HOME LOAN REPAYMENT DASHBOARD
 // =========================================================
 
@@ -7575,16 +8547,54 @@ if (addRepaymentButton) {
 
             const records = [];
 
+            // =====================================================
+// GET GLOBAL SELECTED LOAN
+// =====================================================
+
+const selectedLoanId =
+    window.selectedLoanId || null;
+
+const selectedLoanType =
+    window.selectedLoanType || null;
+
             snapshot.forEach(
                 repaymentDoc => {
 
                     const repayment =
-                        repaymentDoc.data();
+    repaymentDoc.data();
 
-                        if (repayment.test === true) {
+if (repayment.test === true) {
     return;
 }
-                    records.push({
+
+
+// =====================================================
+// SHOW ONLY SELECTED LOAN HISTORY
+// =====================================================
+
+if (
+    selectedLoanId &&
+    repayment.loanId !== selectedLoanId
+) {
+    return;
+}
+
+
+// =====================================================
+// IF SELECTED LOAN HAS NO ACTIVE MASTER
+// FILTER BY LOAN TYPE
+// =====================================================
+
+if (
+    !selectedLoanId &&
+    selectedLoanType &&
+    repayment.loanType !== selectedLoanType
+) {
+    return;
+}
+
+
+records.push({
 
                         id:
                             repaymentDoc.id,
@@ -7660,8 +8670,13 @@ if (addRepaymentButton) {
                         </td>
 
                         <td>
-                            Home Loan
-                        </td>
+    ${
+        repayment.loanName ||
+        repayment.loanType ||
+        "Loan"
+    }
+</td>
+
 
                         <td>
                             ${
@@ -8582,7 +9597,7 @@ async function saveFinalRepayment() {
             }
 
 // =============================================
-// REGULAR EMI DUE DATE VALIDATION
+// REGULAR EMI FUTURE / DUE DATE VALIDATION
 // =============================================
 
 if (
@@ -8600,11 +9615,24 @@ if (
         dueDateValue
     ) {
 
-        const paymentDateObj =
-            new Date(
-                paymentDateValue +
-                "T00:00:00"
-            );
+        // -----------------------------------------
+        // TODAY
+        // -----------------------------------------
+
+        const today =
+            new Date();
+
+        today.setHours(
+            0,
+            0,
+            0,
+            0
+        );
+
+
+        // -----------------------------------------
+        // NEXT EMI DUE DATE
+        // -----------------------------------------
 
         const dueDateObj =
             new Date(
@@ -8612,29 +9640,52 @@ if (
                 "T00:00:00"
             );
 
-        if (
-            paymentDateObj.getTime() <
-            dueDateObj.getTime()
-        ) {
 
-            const parts =
-                dueDateValue.split("-");
+        // -----------------------------------------
+        // SELECTED PAYMENT DATE
+        // -----------------------------------------
 
-            const formattedDueDate =
-                `${parts[2]}-${parts[1]}-${parts[0]}`;
-
-            alert(
-                "Regular EMI Entry Cannot be done before " +
-                formattedDueDate
+        const paymentDateObj =
+            new Date(
+                paymentDateValue +
+                "T00:00:00"
             );
 
-            return;
 
-        }
+        // -----------------------------------------
+        // FORMAT DUE DATE
+        // -----------------------------------------
+
+        const parts =
+            dueDateValue.split("-");
+
+        const formattedDueDate =
+            `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+
+// =========================================
+// PAYMENT DATE BEFORE DUE DATE NOT ALLOWED
+// =========================================
+
+if (
+    paymentDateObj.getTime() <
+    dueDateObj.getTime()
+) {
+
+    alert(
+        "Your next EMI is due on " +
+        formattedDueDate +
+        ".\n\n" +
+        "Payment Date cannot be before the EMI Due Date."
+    );
+
+    return;
+
+}
 
     }
 
-}       
+}
             const paymentAmount =
                 Number(
                     amount?.value || 0
@@ -9471,7 +10522,7 @@ if (window.editingRepaymentId) {
                 "✅ Loan Repayment saved successfully."
             );
 
-            // =============================================
+// =============================================
 // EXIT EDIT MODE
 // =============================================
 
@@ -9967,19 +11018,278 @@ if (repaymentSection) {
             "true";
 
 
-        // Load Home Loan data
+// =====================================================
+// GET CURRENTLY SELECTED LOAN CARD
+// =====================================================
 
-        if (
-            typeof loadHomeLoanRepaymentDashboard ===
-            "function"
-        ) {
+const selectedCard =
+    Array.from(
+        document.querySelectorAll(
+            ".loan-repayment-select-card"
+        )
+    ).find(
+        card => {
 
-            await
-                loadHomeLoanRepaymentDashboard();
+            const height =
+                getComputedStyle(
+                    card
+                ).height;
+
+            return (
+                height === "120px"
+                &&
+                getComputedStyle(card).display !==
+                    "none"
+            );
+
+        }
+    );
+
+
+const selectedLoanType =
+    selectedCard?.dataset.loanType || "";
+
+// =====================================================
+// CLEAN OLD REPAYMENT FORM
+// =====================================================
+
+if (
+    typeof resetFinalRepaymentForm ===
+    "function"
+) {
+
+    resetFinalRepaymentForm();
+
+}
+
+
+// Clear old loan-specific fields
+
+const repaymentLoanField =
+    document.getElementById(
+        "repaymentLoan"
+    );
+
+const repaymentAmountField =
+    document.getElementById(
+        "repaymentAmount"
+    );
+
+const repaymentAccountField =
+    document.getElementById(
+        "repaymentAccount"
+    );
+
+const repaymentDueDateField =
+    document.getElementById(
+        "repaymentDueDate"
+    );
+
+const repaymentBalanceTenureField =
+    document.getElementById(
+        "repaymentBalanceTenure"
+    );
+
+
+if (repaymentLoanField) {
+
+    repaymentLoanField.value = "";
+
+}
+
+if (repaymentAmountField) {
+
+    repaymentAmountField.value = "";
+
+}
+
+if (repaymentAccountField) {
+
+    repaymentAccountField.value = "";
+
+}
+
+if (repaymentDueDateField) {
+
+    repaymentDueDateField.value = "";
+
+}
+
+if (repaymentBalanceTenureField) {
+
+    repaymentBalanceTenureField.value = "";
+
+}
+
+
+// =====================================================
+// LOAD SELECTED LOAN ONLY
+// =====================================================
+
+if (
+    selectedLoanType &&
+    typeof loadHomeLoanRepaymentDashboard ===
+    "function"
+) {
+
+    await
+        loadHomeLoanRepaymentDashboard(
+            selectedLoanType
+        );
+
+}
+
+// =====================================================
+// NON-HOME LOAN → CLEAN REPAYMENT FORM
+// =====================================================
+
+if (
+    selectedLoanType &&
+    selectedLoanType !== "Home Loan"
+) {
+
+    // -------------------------------------------------
+    // LOAN DROPDOWN → KEEP ONLY SELECTED LOAN
+    // -------------------------------------------------
+
+    const loanField =
+        document.getElementById(
+            "repaymentLoan"
+        );
+
+    if (loanField) {
+
+        const selectedOption =
+            Array.from(
+                loanField.options
+            ).find(
+                option =>
+                    option.value ===
+                        selectedLoanType ||
+                    option.textContent.trim() ===
+                        selectedLoanType
+            );
+
+
+        loanField.innerHTML = "";
+
+
+        if (selectedOption) {
+
+            const newOption =
+                document.createElement(
+                    "option"
+                );
+
+            newOption.value =
+                selectedOption.value;
+
+            newOption.textContent =
+                selectedOption.textContent;
+
+            loanField.appendChild(
+                newOption
+            );
+
+            loanField.value =
+                newOption.value;
 
         }
 
-// Refresh repayment history
+    }
+
+
+    // -------------------------------------------------
+    // CLEAR OLD HOME LOAN DATA
+    // -------------------------------------------------
+
+    const dueDate =
+        document.getElementById(
+            "repaymentDueDate"
+        );
+
+    const amount =
+        document.getElementById(
+            "repaymentAmount"
+        );
+
+    const account =
+        document.getElementById(
+            "repaymentAccount"
+        );
+
+    const balanceTenure =
+        document.getElementById(
+            "repaymentBalanceTenure"
+        );
+
+
+    if (dueDate) {
+        dueDate.value = "";
+    }
+
+    if (amount) {
+        amount.value = "";
+        amount.placeholder =
+            "Enter Amount";
+    }
+
+    if (account) {
+        account.value = "";
+    }
+
+    if (balanceTenure) {
+        balanceTenure.value = "";
+    }
+
+
+    // -------------------------------------------------
+    // CLEAR CALCULATED VALUES
+    // -------------------------------------------------
+
+    const calculatedFields = [
+
+        "repaymentApplicableRate",
+        "repaymentOpeningPrincipal",
+        "repaymentInterestAmount",
+        "repaymentPrincipalAmount",
+        "repaymentClosingPrincipal"
+
+    ];
+
+
+    calculatedFields.forEach(
+        id => {
+
+            const element =
+                document.getElementById(id);
+
+            if (!element) return;
+
+
+            if (
+                id ===
+                "repaymentApplicableRate"
+            ) {
+
+                element.textContent =
+                    "—";
+
+            } else {
+
+                element.textContent =
+                    "₹0";
+
+            }
+
+        }
+    );
+
+}
+
+// =====================================================
+// REFRESH REPAYMENT HISTORY
+// =====================================================
 
 if (
     typeof window.loadFinalRepaymentHistory ===
@@ -9989,8 +11299,7 @@ if (
     await
         window.loadFinalRepaymentHistory();
 
-}   
-
+}
         // Calculate repayment values after loan data is loaded
 setTimeout(() => {
 
@@ -11357,13 +12666,92 @@ calculateRepaymentPreview();
             }
 
             // -----------------------------------------
+// CHECK ROI HISTORY LOCK STATUS
+// -----------------------------------------
+
+const repaymentsRef =
+    collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "loanRepayments"
+    );
+
+const repaymentsSnapshot =
+    await getDocs(
+        repaymentsRef
+    );
+
+const loanRepayments = [];
+
+repaymentsSnapshot.forEach(
+    (repaymentDoc) => {
+
+        const repayment =
+            repaymentDoc.data();
+
+        if (
+            repayment.loanId ===
+            loanSelect.value
+        ) {
+
+            loanRepayments.push(
+                repayment
+            );
+
+        }
+
+    }
+);
+
+const lockedROIIndexes =
+    roiHistory.map(
+        (item) => {
+
+            const roiRate =
+                Number(
+                    item.rate || 0
+                );
+
+            if (!roiRate) {
+                return false;
+            }
+
+            return loanRepayments.some(
+                (repayment) => {
+
+                    const appliedRate =
+                        Number(
+                            repayment.rateApplied || 0
+                        );
+
+                    return (
+                        repayment.status ===
+                            "completed"
+                        &&
+                        appliedRate > 0
+                        &&
+                        Math.abs(
+                            appliedRate - roiRate
+                        ) < 0.001
+                    );
+
+                }
+            );
+
+        }
+    );    
+            // -----------------------------------------
             // BUILD HISTORY TABLE
             // -----------------------------------------
 
             let rows = "";
 
             roiHistory.forEach(
-                (item) => {
+    (item, index) => {
+
+        const isROILocked =
+    lockedROIIndexes[index] === true;
 
                     let displayDate =
                         item.effectiveFrom || "—";
@@ -11412,7 +12800,74 @@ calculateRepaymentPreview();
                                     item.rate || 0
                                 ).toFixed(2)}%
                             </td>
-                        </tr>
+
+<td
+    style="
+        padding:8px 10px;
+        border-bottom:1px solid #e2e8f0;
+        text-align:center;
+    "
+>
+    ${
+        isROILocked
+            ? `
+                <span
+                    style="
+                        display:inline-block;
+                        padding:5px 10px;
+                        border:1px solid #cbd5e1;
+                        border-radius:5px;
+                        background:#f1f5f9;
+                        color:#64748b;
+                        font-size:12px;
+                        font-weight:700;
+                    "
+                >
+                    🔒 Locked
+                </span>
+            `
+            : `
+                <button
+                    type="button"
+                    class="repaymentROIEditBtn"
+                    data-roi-index="${index}"
+                    style="
+                        padding:5px 10px;
+                        border:1px solid #2563eb;
+                        border-radius:5px;
+                        background:#eff6ff;
+                        color:#1d4ed8;
+                        font-size:12px;
+                        font-weight:700;
+                        cursor:pointer;
+                    "
+                >
+                    ✏️ Edit
+                </button>
+
+                <button
+                    type="button"
+                    class="repaymentROIDeleteBtn"
+                    data-roi-index="${index}"
+                    style="
+                        margin-left:6px;
+                        padding:5px 10px;
+                        border:1px solid #dc2626;
+                        border-radius:5px;
+                        background:#fef2f2;
+                        color:#b91c1c;
+                        font-size:12px;
+                        font-weight:700;
+                        cursor:pointer;
+                    "
+                >
+                    🗑️ Delete
+                </button>
+            `
+    }
+</td>
+
+</tr>
                     `;
 
                 }
@@ -11455,6 +12910,15 @@ calculateRepaymentPreview();
                                 ROI
                             </th>
 
+                            <th
+    style="
+        padding:8px 10px;
+        border-bottom:1px solid #cbd5e1;
+        text-align:center;
+    "
+>
+    Action
+</th>
                         </tr>
 
                     </thead>
@@ -11497,6 +12961,554 @@ calculateRepaymentPreview();
 
 })();
 
+// =========================================================
+// REPAYMENT ROI HISTORY - EDIT BUTTON
+// =========================================================
+
+(function () {
+
+    document.addEventListener("click", function (event) {
+
+        const editButton =
+            event.target.closest(".repaymentROIEditBtn");
+
+        if (!editButton) {
+            return;
+        }
+
+        const roiIndex =
+            Number(
+                editButton.dataset.roiIndex
+            );
+
+        console.log(
+            "✏️ ROI EDIT CLICKED - INDEX:",
+            roiIndex
+        );
+
+        const editForm =
+    document.getElementById("repaymentROIEditForm");
+
+if (editForm) {
+    editForm.remove();
+}
+
+const currentRow =
+    editButton.closest("tr");
+
+const dateCell =
+    currentRow?.querySelector("td:nth-child(1)");
+
+const roiCell =
+    currentRow?.querySelector("td:nth-child(2)");
+
+const currentDate =
+    dateCell
+        ? dateCell.textContent.trim()
+        : "";
+
+const currentROI =
+    roiCell
+        ? roiCell.textContent
+            .replace("%", "")
+            .trim()
+        : "";
+
+const formHTML = `
+    <div
+    id="repaymentROIEditForm"
+    data-roi-index="${roiIndex}"
+    style="
+            margin-top:12px;
+            padding:12px;
+            border:1px solid #93c5fd;
+            border-radius:8px;
+            background:#eff6ff;
+        "
+    >
+
+        <strong
+            style="
+                color:#1e3a8a;
+                font-size:13px;
+            "
+        >
+            ✏️ Edit ROI
+        </strong>
+
+        <div
+            style="
+                display:grid;
+                grid-template-columns:1fr 1fr auto auto;
+                gap:10px;
+                align-items:end;
+                margin-top:10px;
+            "
+        >
+
+            <div>
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:4px;
+                        font-size:12px;
+                        font-weight:700;
+                    "
+                >
+                    W.E.F. Date
+                </label>
+
+                <input
+                    type="date"
+                    id="editRepaymentROIFrom"
+                    value="${currentDate.split("-").reverse().join("-")}"
+                    style="
+                        width:100%;
+                        min-height:36px;
+                        box-sizing:border-box;
+                    "
+                >
+            </div>
+
+            <div>
+                <label
+                    style="
+                        display:block;
+                        margin-bottom:4px;
+                        font-size:12px;
+                        font-weight:700;
+                    "
+                >
+                    ROI (%)
+                </label>
+
+                <input
+                    type="number"
+                    id="editRepaymentROIRate"
+                    value="${currentROI}"
+                    min="0"
+                    step="0.01"
+                    style="
+                        width:100%;
+                        min-height:36px;
+                        box-sizing:border-box;
+                    "
+                >
+            </div>
+
+            <button
+                type="button"
+                id="saveEditedRepaymentROIBtn"
+                style="
+                    min-height:36px;
+                    padding:6px 12px;
+                    border:1px solid #16a34a;
+                    border-radius:6px;
+                    background:#16a34a;
+                    color:white;
+                    font-weight:700;
+                    cursor:pointer;
+                "
+            >
+                💾 Save Changes
+            </button>
+
+            <button
+                type="button"
+                id="cancelEditedRepaymentROIBtn"
+                style="
+                    min-height:36px;
+                    padding:6px 12px;
+                    border:1px solid #94a3b8;
+                    border-radius:6px;
+                    background:white;
+                    color:#475569;
+                    font-weight:700;
+                    cursor:pointer;
+                "
+            >
+                ✖ Cancel
+            </button>
+
+        </div>
+
+    </div>
+`;
+
+const historyContent =
+    document.getElementById(
+        "repaymentROIHistoryContent"
+    );
+
+if (historyContent) {
+
+    historyContent.insertAdjacentHTML(
+        "beforeend",
+        formHTML
+    );
+
+}
+
+    });
+
+    // =========================================================
+// REPAYMENT ROI HISTORY - SAVE EDITED ROI
+// =========================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const saveButton =
+            event.target.closest(
+                "#saveEditedRepaymentROIBtn"
+            );
+
+        if (!saveButton) {
+            return;
+        }
+
+        const editForm =
+            document.getElementById(
+                "repaymentROIEditForm"
+            );
+
+        const rateInput =
+            document.getElementById(
+                "editRepaymentROIRate"
+            );
+
+        const dateInput =
+            document.getElementById(
+                "editRepaymentROIFrom"
+            );
+
+        const historyContent =
+            document.getElementById(
+                "repaymentROIHistoryContent"
+            );
+
+        const repaymentSection =
+            document.getElementById(
+                "loanRepaymentSection"
+            );
+
+        const loanSelect =
+            repaymentSection
+                ? repaymentSection.querySelector(
+                    "#repaymentLoan"
+                )
+                : null;
+
+        const roiIndex =
+    Number(
+        editForm?.dataset.roiIndex
+    );
+
+        const newRate =
+            Number(
+                rateInput?.value || 0
+            );
+
+        const newDate =
+            dateInput?.value || "";
+
+        // =========================================
+        // VALIDATION
+        // =========================================
+
+        if (
+            !loanSelect ||
+            !loanSelect.value
+        ) {
+
+            alert(
+                "Please select a Loan first."
+            );
+
+            return;
+        }
+
+        if (
+            !Number.isFinite(roiIndex) ||
+            roiIndex < 0
+        ) {
+
+            alert(
+                "ROI History entry could not be identified."
+            );
+
+            return;
+        }
+
+        if (
+            !newRate ||
+            newRate <= 0
+        ) {
+
+            alert(
+                "Please enter a valid ROI."
+            );
+
+            return;
+        }
+
+        if (!newDate) {
+
+            alert(
+                "Please select W.E.F. Date."
+            );
+
+            return;
+        }
+
+        if (
+            !auth ||
+            !auth.currentUser
+        ) {
+
+            alert(
+                "User session not available."
+            );
+
+            return;
+        }
+
+        try {
+
+            saveButton.disabled = true;
+
+            saveButton.textContent =
+                "⏳ Saving...";
+
+            // =====================================
+            // GET LOAN
+            // =====================================
+
+            const loansRef =
+                getLoansCollectionRef();
+
+            const loansSnapshot =
+                await getDocs(
+                    loansRef
+                );
+
+            let selectedLoan = null;
+
+            let selectedLoanId = null;
+
+            loansSnapshot.forEach(
+                (loanDoc) => {
+
+                    if (
+                        loanDoc.id ===
+                        loanSelect.value
+                    ) {
+
+                        selectedLoan =
+                            loanDoc.data();
+
+                        selectedLoanId =
+                            loanDoc.id;
+
+                    }
+
+                }
+            );
+
+            if (
+                !selectedLoan ||
+                !selectedLoanId
+            ) {
+
+                alert(
+                    "Selected Loan could not be found."
+                );
+
+                return;
+            }
+
+            // =====================================
+            // GET ROI HISTORY
+            // =====================================
+
+            let roiHistory =
+                Array.isArray(
+                    selectedLoan.roiHistory
+                )
+                    ? [
+                        ...selectedLoan.roiHistory
+                    ]
+                    : [];
+
+            if (
+                !roiHistory[roiIndex]
+            ) {
+
+                alert(
+                    "ROI History entry could not be found."
+                );
+
+                return;
+            }
+
+            // =====================================
+            // UPDATE SELECTED ROI
+            // =====================================
+
+            roiHistory[roiIndex] = {
+
+                ...roiHistory[roiIndex],
+
+                rate:
+                    Number(
+                        newRate.toFixed(2)
+                    ),
+
+                effectiveFrom:
+                    newDate
+
+            };
+
+            // =====================================
+            // SORT BY W.E.F. DATE
+            // =====================================
+
+            roiHistory.sort(
+                (a, b) => {
+
+                    return String(
+                        a.effectiveFrom || ""
+                    ).localeCompare(
+                        String(
+                            b.effectiveFrom || ""
+                        )
+                    );
+
+                }
+            );
+
+            // =====================================
+            // SAVE TO FIRESTORE
+            // =====================================
+
+            await updateDoc(
+
+                doc(
+                    db,
+                    "users",
+                    auth.currentUser.uid,
+                    "loans",
+                    selectedLoanId
+                ),
+
+                {
+                    roiHistory:
+                        roiHistory,
+
+                    updatedAt:
+                        serverTimestamp(),
+
+                    updatedBy:
+                        auth.currentUser.uid
+                }
+
+            );
+
+            alert(
+                "✅ ROI updated successfully."
+            );
+
+            // =====================================
+            // CLOSE EDIT FORM
+            // =====================================
+
+            if (editForm) {
+
+                editForm.remove();
+
+            }
+
+            // =====================================
+            // REFRESH ROI HISTORY
+            // =====================================
+
+            if (historyContent) {
+
+    const historyButton =
+        document.getElementById(
+            "repaymentROIHistoryBtn"
+        );
+
+    if (historyButton) {
+
+        historyButton.click();
+
+    }
+
+}
+
+        } catch (error) {
+
+            console.error(
+                "❌ ERROR UPDATING ROI:",
+                error
+            );
+
+            alert(
+                "❌ Unable to update ROI.\n\n" +
+                error.message
+            );
+
+        } finally {
+
+            if (saveButton) {
+
+                saveButton.disabled =
+                    false;
+
+                saveButton.textContent =
+                    "💾 Save Changes";
+
+            }
+
+        }
+
+    }
+);
+
+// =========================================================
+// REPAYMENT ROI HISTORY - CANCEL EDIT
+// =========================================================
+
+document.addEventListener(
+    "click",
+    function (event) {
+
+        const cancelButton =
+            event.target.closest(
+                "#cancelEditedRepaymentROIBtn"
+            );
+
+        if (!cancelButton) {
+            return;
+        }
+
+        const editForm =
+            document.getElementById(
+                "repaymentROIEditForm"
+            );
+
+        if (editForm) {
+
+            editForm.remove();
+
+        }
+
+    }
+);
+
+})();
 
 // =========================================================
 // REPAYMENT ROI - SAVE TO LOAN MASTER
@@ -11937,3 +13949,324 @@ const loanSelect =
     });
 
 })();
+
+// =========================================
+// REPAYMENT ROI HISTORY - DELETE
+// =========================================
+document.addEventListener("click", async function (event) {
+
+    const deleteButton =
+        event.target.closest(".repaymentROIDeleteBtn");
+
+    if (!deleteButton) return;
+
+    const roiIndex =
+        Number(deleteButton.dataset.roiIndex);
+
+    if (Number.isNaN(roiIndex)) {
+        alert("Invalid ROI selected.");
+        return;
+    }
+
+    const confirmed = confirm(
+        "क्या आप इस ROI History entry को Delete करना चाहते हैं?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+
+        // -----------------------------------------
+        // CURRENT LOAN
+        // -----------------------------------------
+ const repaymentSection =
+    document.getElementById(
+        "loanRepaymentSection"
+    );
+
+const loanSelect =
+    repaymentSection
+        ? repaymentSection.querySelector(
+            "#repaymentLoan"
+        )
+        : document.getElementById(
+            "repaymentLoan"
+        );
+
+const selectedLoanId =
+    loanSelect?.value || "";
+
+        // -----------------------------------------
+        // GET LOAN MASTER
+        // -----------------------------------------
+        const loansRef =
+            getLoansCollectionRef();
+
+        const loansSnapshot =
+            await getDocs(loansRef);
+
+        let selectedLoan = null;
+
+        loansSnapshot.forEach((loanDoc) => {
+
+            if (loanDoc.id === selectedLoanId) {
+                selectedLoan = {
+                    id: loanDoc.id,
+                    ...loanDoc.data()
+                };
+            }
+
+        });
+
+        if (!selectedLoan) {
+            alert("Selected Loan नहीं मिला.");
+            return;
+        }
+
+        // -----------------------------------------
+        // ROI HISTORY
+        // -----------------------------------------
+        let roiHistory =
+            Array.isArray(selectedLoan.roiHistory)
+                ? [...selectedLoan.roiHistory]
+                : [];
+
+        if (!roiHistory[roiIndex]) {
+            alert("ROI History entry नहीं मिली.");
+            return;
+        }
+
+        // -----------------------------------------
+// SAFETY CHECK:
+// LOCK ROI IF A COMPLETED REPAYMENT
+// HAS ALREADY USED THIS ROI
+// -----------------------------------------
+
+const repaymentsRef =
+    collection(
+        db,
+        "users",
+        auth.currentUser.uid,
+        "loanRepayments"
+    );
+
+const repaymentsSnapshot =
+    await getDocs(repaymentsRef);
+
+const roiToDelete =
+    roiHistory[roiIndex];
+
+const roiRate =
+    Number(roiToDelete?.rate || 0);
+
+const roiIsUsed =
+    repaymentsSnapshot.docs.some(
+        (repaymentDoc) => {
+
+            const repayment =
+                repaymentDoc.data();
+
+            if (
+                repayment.loanId !==
+                selectedLoanId
+            ) {
+                return false;
+            }
+
+            if (
+                repayment.status !==
+                "completed"
+            ) {
+                return false;
+            }
+
+            const appliedRate =
+                Number(
+                    repayment.rateApplied || 0
+                );
+
+            return (
+                appliedRate > 0 &&
+                Math.abs(
+                    appliedRate - roiRate
+                ) < 0.001
+            );
+
+        }
+    );
+
+if (roiIsUsed) {
+
+    alert(
+        "🔒 This ROI is locked.\n\n" +
+        "इस ROI पर repayment/EMI already process हो चुकी है, " +
+        "इसलिए इसे Delete नहीं किया जा सकता।"
+    );
+
+    return;
+}
+
+        // -----------------------------------------
+        // DELETE SELECTED ROI
+        // -----------------------------------------
+        roiHistory.splice(roiIndex, 1);
+
+        // -----------------------------------------
+        // UPDATE LOAN MASTER
+        // -----------------------------------------
+        await updateDoc(
+            doc(
+                db,
+                "users",
+                auth.currentUser.uid,
+                "loans",
+                selectedLoanId
+            ),
+            {
+                roiHistory: roiHistory,
+                updatedAt: serverTimestamp(),
+                updatedBy: auth.currentUser.uid
+            }
+        );
+
+        alert("ROI History successfully deleted.");
+
+        // -----------------------------------------
+        // REFRESH ROI HISTORY
+        // -----------------------------------------
+        const historyButton =
+            document.getElementById(
+                "repaymentROIHistoryBtn"
+            );
+
+        if (historyButton) {
+            historyButton.click();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Error deleting ROI History:",
+            error
+        );
+
+        alert(
+            "ROI History delete करते समय error आया.\n\n" +
+            error.message
+        );
+    }
+
+    // =====================================================
+// LOAN MASTER → EDIT BUTTON TEST / HANDLER
+// =====================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const editButton =
+            event.target.closest(
+                '[data-loan-action="edit"]'
+            );
+
+        if (!editButton) return;
+
+        console.log(
+            "✏️ EDIT BUTTON CLICKED"
+        );
+
+
+        const loanType =
+            editButton.dataset.loanType;
+
+        console.log(
+            "Selected Loan Type:",
+            loanType
+        );
+
+
+        const loanForm =
+            document.getElementById(
+                "loanFormContainer"
+            );
+
+        if (!loanForm) {
+
+            console.error(
+                "❌ loanFormContainer not found"
+            );
+
+            return;
+        }
+
+
+        // Show existing Add Loan form
+        loanForm.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+
+        // Hide repayment dashboard
+        const repaymentSection =
+            document.getElementById(
+                "loanRepaymentSection"
+            );
+
+        if (repaymentSection) {
+
+            repaymentSection.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        // Hide Loan cards
+        const loanCards =
+            document.querySelector(
+                ".loan-type-grid"
+            );
+
+        if (loanCards) {
+
+            loanCards.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        // Change heading
+        const heading =
+            loanForm.querySelector(
+                ".loan-form-header h3"
+            );
+
+        if (heading) {
+
+            heading.textContent =
+                "✏️ Edit Loan / Borrowing";
+
+        }
+
+
+        loanForm.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+
+        console.log(
+            "✅ EDIT FORM OPENED"
+        );
+
+    }
+);
+});
+
