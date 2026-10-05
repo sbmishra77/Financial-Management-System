@@ -1599,7 +1599,7 @@ if (
                         actionRow
                     );
 
-                    // =====================================================
+// =====================================================
 // EXPAND ACTIVE LOAN CARD FOR ACTION BUTTONS
 // =====================================================
 
@@ -1652,6 +1652,506 @@ card.style.setProperty(
     }
 
 })();
+
+// =========================================================
+// 💳 REPAYMENT CARD BUTTON → OPEN ADD REPAYMENT FORM
+// =========================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const repaymentButton =
+            event.target.closest(
+                '[data-loan-action="repayment"]'
+            );
+
+        if (!repaymentButton) return;
+
+
+        const selectedLoanType =
+            repaymentButton.dataset.loanType || "";
+
+        if (!selectedLoanType) {
+
+            console.error(
+                "❌ Loan Type not found for Repayment button."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "💳 REPAYMENT BUTTON CLICKED:",
+            selectedLoanType
+        );
+
+
+        // =====================================================
+        // SAVE SELECTED LOAN TYPE
+        // =====================================================
+
+        window.selectedLoanType =
+            selectedLoanType;
+
+
+        // =====================================================
+        // FIND REPAYMENT DASHBOARD
+        // =====================================================
+
+        const repaymentSection =
+            document.getElementById(
+                "loanRepaymentSection"
+            );
+
+
+        if (!repaymentSection) {
+
+            console.error(
+                "❌ loanRepaymentSection not found."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // HIDE OTHER LOAN VIEWS
+        // =====================================================
+
+        const loanForm =
+            document.getElementById(
+                "loanFormContainer"
+            );
+
+        const loanSummary =
+            document.getElementById(
+                "loanSummary"
+            );
+
+        const loansList =
+            document.getElementById(
+                "loansListContainer"
+            );
+
+        const loanCards =
+            document.querySelector(
+                ".loan-type-grid"
+            );
+
+
+        if (loanForm) {
+
+            loanForm.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        if (loanSummary) {
+
+            loanSummary.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        if (loansList) {
+
+            loansList.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        if (loanCards) {
+
+            loanCards.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        // =====================================================
+        // SHOW REPAYMENT DASHBOARD
+        // =====================================================
+
+        repaymentSection.style.setProperty(
+            "display",
+            "block",
+            "important"
+        );
+
+
+        // =====================================================
+        // LOAD SELECTED LOAN DATA
+        // =====================================================
+
+        if (
+            typeof loadHomeLoanRepaymentDashboard ===
+            "function"
+        ) {
+
+            await loadHomeLoanRepaymentDashboard(
+                selectedLoanType
+            );
+
+        }
+
+
+        // =====================================================
+        // FIND ADD REPAYMENT BUTTON
+        // =====================================================
+
+        const addRepaymentButton =
+            document.getElementById(
+                "openLoanRepaymentButton"
+            );
+
+
+        if (!addRepaymentButton) {
+
+            console.error(
+                "❌ openLoanRepaymentButton not found."
+            );
+
+            // At least scroll to repayment dashboard
+            repaymentSection.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+            return;
+        }
+
+
+        // =====================================================
+        // MAKE SURE ADD REPAYMENT FORM IS CLOSED FIRST
+        // =====================================================
+
+        const repaymentForm =
+            document.getElementById(
+                "newLoanRepaymentEntry"
+            );
+
+
+        if (repaymentForm) {
+
+            repaymentForm.style.setProperty(
+                "display",
+                "none",
+                "important"
+            );
+
+        }
+
+
+        addRepaymentButton.dataset.open =
+            "false";
+
+        addRepaymentButton.textContent =
+            "➕ Add Repayment";
+
+
+        addRepaymentButton.style.background =
+            "linear-gradient(135deg,#2563b8,#1d4ed8)";
+
+
+        // =====================================================
+        // CLICK EXISTING ADD REPAYMENT BUTTON
+        // =====================================================
+
+        addRepaymentButton.click();
+
+
+        console.log(
+            "➕ Add Repayment button triggered automatically."
+        );
+
+    }
+);
+
+// =========================================================
+// 🔒 CLOSE LOAN
+// IMPORTANT:
+// 1. LOAN DELETE नहीं होगा
+// 2. केवल status = "closed" होगा
+// 3. Outstanding > 0 होने पर CLOSE नहीं होगा
+// =========================================================
+
+document.addEventListener(
+    "click",
+    async function (event) {
+
+        const closeButton =
+            event.target.closest(
+                '[data-loan-action="close"]'
+            );
+
+        if (!closeButton) return;
+
+
+        const selectedLoanType =
+            closeButton.dataset.loanType || "";
+
+
+        if (!selectedLoanType) {
+
+            console.error(
+                "❌ Loan Type not found for Close Loan."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "🔒 CLOSE LOAN CLICKED:",
+            selectedLoanType
+        );
+
+
+        // =====================================================
+        // USER LOGIN CHECK
+        // =====================================================
+
+        if (!auth.currentUser) {
+
+            alert(
+                "❌ Please login first."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            // =====================================================
+            // GET LOANS COLLECTION
+            // =====================================================
+
+            const loansRef =
+                getLoansCollectionRef();
+
+
+            const loansSnapshot =
+                await getDocs(loansRef);
+
+
+            // =====================================================
+            // FIND ACTIVE LOAN
+            // =====================================================
+
+            let selectedLoan = null;
+
+
+            loansSnapshot.forEach(
+                (loanDoc) => {
+
+                    const loan =
+                        loanDoc.data();
+
+
+                    if (
+                        !selectedLoan &&
+                        loan.loanType ===
+                            selectedLoanType &&
+                        loan.status ===
+                            "active"
+                    ) {
+
+                        selectedLoan = {
+
+                            id:
+                                loanDoc.id,
+
+                            ...loan
+
+                        };
+
+                    }
+
+                }
+            );
+
+
+            // =====================================================
+            // ACTIVE LOAN NOT FOUND
+            // =====================================================
+
+            if (!selectedLoan) {
+
+                alert(
+                    "❌ Active loan not found for " +
+                    selectedLoanType +
+                    "."
+                );
+
+                return;
+            }
+
+
+            // =====================================================
+            // GET CURRENT OUTSTANDING
+            // =====================================================
+
+            const outstanding =
+                Number(
+                    selectedLoan
+                        .outstandingBalance || 0
+                );
+
+
+            console.log(
+                "💰 Current Outstanding:",
+                outstanding
+            );
+
+
+            // =====================================================
+            // IMPORTANT VALIDATION
+            // EVEN ₹1 OUTSTANDING = CANNOT CLOSE
+            // =====================================================
+
+            if (outstanding > 0) {
+
+                alert(
+                    "❌ Loan cannot be closed.\n\n" +
+                    "Outstanding Amount: ₹" +
+                    outstanding.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    ) +
+                    "\n\n" +
+                    "Please clear the complete outstanding amount first."
+                );
+
+                return;
+            }
+
+
+            // =====================================================
+            // CONFIRM CLOSE
+            // =====================================================
+
+            const confirmClose =
+                confirm(
+                    "🔒 Close Loan?\n\n" +
+                    "Loan: " +
+                    (
+                        selectedLoan.loanName ||
+                        selectedLoanType
+                    ) +
+                    "\n\n" +
+                    "Outstanding Amount: ₹0\n\n" +
+                    "The loan will NOT be deleted.\n" +
+                    "It will be marked as CLOSED and its complete history will remain available.\n\n" +
+                    "Do you want to continue?"
+                );
+
+
+            if (!confirmClose) {
+
+                console.log(
+                    "ℹ️ Close Loan cancelled by user."
+                );
+
+                return;
+            }
+
+
+            // =====================================================
+            // UPDATE LOAN MASTER
+            // NO deleteDoc()
+            // =====================================================
+
+            await updateDoc(
+
+                doc(
+                    loansRef,
+                    selectedLoan.id
+                ),
+
+                {
+
+                    status:
+                        "closed",
+
+                    closedAt:
+                        new Date(),
+
+                    closedBy:
+                        auth.currentUser.uid,
+
+                    updatedAt:
+                        new Date(),
+
+                    updatedBy:
+                        auth.currentUser.uid
+
+                }
+
+            );
+
+
+            // =====================================================
+            // SUCCESS
+            // =====================================================
+
+            alert(
+                "✅ Loan closed successfully.\n\n" +
+                "The loan has NOT been deleted.\n" +
+                "Its complete history is preserved."
+            );
+
+
+            console.log(
+                "✅ LOAN CLOSED:",
+                selectedLoan.id
+            );
+
+
+            // =====================================================
+            // REFRESH LOAN DATA
+            // =====================================================
+
+            await loadSavedLoans();
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ Error closing loan:",
+                error
+            );
+
+
+            alert(
+                "❌ Unable to close loan.\n\n" +
+                "Please check the browser console for details."
+            );
+
+        }
+
+    }
+);
 
 const loansSection =
     document.getElementById("loansSection");
@@ -2255,7 +2755,7 @@ loanCard.style.setProperty(
         }
     );
 
-    // =====================================================
+// =====================================================
 // LOAD FULL REPAYMENT DASHBOARD FOR SELECTED LOAN
 // =====================================================
 
@@ -2264,6 +2764,8 @@ await loadHomeLoanRepaymentDashboard(
 );
 
 });
+
+
 
 // =========================================================
 // TEST - HOME LOAN EXTRA PRINCIPAL CALCULATION
