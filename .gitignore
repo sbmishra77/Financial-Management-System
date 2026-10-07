@@ -1,3 +1,14 @@
 backup/
 .env
 .env.*
+
+# Local recovery and backup files
+Financial-Management-System/
+js/loans.js.before-dashboard-recovery
+js/loans.js.before-recovery
+js/loans_before_restore_20261004.js
+js/script_backup.js
+loan_dashboard_recovery.txt
+loan_recovery_diff.txt
+old_loans.js
+old_loans_raw.js
