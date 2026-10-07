@@ -5892,24 +5892,16 @@ if (
 
 
 // APPLY NEW TRANSFER
-if (
-    type === "transfer" &&
-    fromAccountId &&
-    toAccountId
-) {
+if (type === "transfer") {
 
-    // New FROM → पैसा कम
-    await updateBankBalance(
-        fromAccountId,
-        -amount
-    );
+    if (fromAccountId) {
+        await updateBankBalance(fromAccountId, -amount);
+    }
 
-    // New TO → पैसा बढ़े
-    await updateBankBalance(
-        toAccountId,
-        amount
-    );
-}   
+    if (toAccountId) {
+        await updateBankBalance(toAccountId, amount);
+    }
+}
 
         // =================================
         // 4. APPLY NEW INCOME
@@ -6296,25 +6288,22 @@ catch (bankBalanceError) {
 
 }
 
-
 // =================================
-// TRANSFER → COMMON ACCOUNT BALANCE
-// ANY ACCOUNT → ANY ACCOUNT
+// INVESTMENT → FROM ACCOUNT = MONEY OUT
+// INVESTMENT → TO ACCOUNT = MONEY IN
 // =================================
 
 if (
-    type === "transfer" &&
-    fromAccountId &&
-    toAccountId
+    type === "investment"
 ) {
 
-    try {
+    // ---------------------------------
+    // FROM ACCOUNT → MONEY OUT
+    // ---------------------------------
 
-        // =================================
-        // FROM ACCOUNT → MONEY OUT
-        // =================================
+    if (fromAccountId) {
 
-        const transferFromRef =
+        const investmentFromAccountRef =
             doc(
                 db,
                 "users",
@@ -6323,66 +6312,89 @@ if (
                 fromAccountId
             );
 
-        const transferFromSnapshot =
+
+        const investmentFromSnapshot =
             await getDoc(
-                transferFromRef
+                investmentFromAccountRef
             );
+
 
         if (
-            transferFromSnapshot.exists()
+            investmentFromSnapshot.exists()
         ) {
 
-            const fromAccount =
-                transferFromSnapshot.data();
+            const investmentFromAccount =
+                investmentFromSnapshot.data();
 
-const currentFromBalance =
-    Number(
-        fromAccount.balance || 0
-    );
 
-const newFromBalance =
-    fromAccount.type === "credit_card"
-        ? currentFromBalance + amount
-        : currentFromBalance - amount;
+            const accountType =
+                String(
+                    investmentFromAccount.type ||
+                    ""
+                ).toLowerCase();
 
-await updateDoc(
-    transferFromRef,
-    {
-        balance:
-            newFromBalance,
 
-        updatedAt:
-            serverTimestamp()
-    }
-);
-            console.log(
-                "TRANSFER FROM ACCOUNT UPDATED:",
-                {
-                    account:
-                        fromAccount.name,
+            if (
+                accountType === "bank" ||
+                accountType === "cash" ||
+                accountType === "cashback"
+            ) {
 
-                    accountType:
-                        fromAccount.type,
+                const currentBalance =
+                    Number(
+                        investmentFromAccount.balance ||
+                        0
+                    );
 
-                    oldBalance:
-                        currentFromBalance,
 
-                    amount:
-                        amount,
+                const newBalance =
+                    currentBalance -
+                    amount;
 
-                    newBalance:
-                        currentFromBalance - amount
-                }
-            );
+
+                await updateDoc(
+                    investmentFromAccountRef,
+                    {
+                        balance:
+                            newBalance,
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+
+                console.log(
+                    "✅ INVESTMENT → FROM ACCOUNT BALANCE DECREASED:",
+                    {
+                        account:
+                            investmentFromAccount.name,
+
+                        oldBalance:
+                            currentBalance,
+
+                        investmentAmount:
+                            amount,
+
+                        newBalance:
+                            newBalance
+                    }
+                );
+
+            }
 
         }
 
+    }
 
-        // =================================
-        // TO ACCOUNT → MONEY IN
-        // =================================
 
-        const transferToRef =
+    // ---------------------------------
+    // TO ACCOUNT → MONEY IN
+    // ---------------------------------
+
+    if (toAccountId) {
+
+        const investmentToAccountRef =
             doc(
                 db,
                 "users",
@@ -6391,60 +6403,235 @@ await updateDoc(
                 toAccountId
             );
 
-        const transferToSnapshot =
+
+        const investmentToSnapshot =
             await getDoc(
-                transferToRef
+                investmentToAccountRef
             );
+
 
         if (
-            transferToSnapshot.exists()
+            investmentToSnapshot.exists()
         ) {
 
-            const toAccount =
-                transferToSnapshot.data();
+            const investmentToAccount =
+                investmentToSnapshot.data();
 
-            const currentToBalance =
-                Number(
-                    toAccount.balance || 0
+
+            const accountType =
+                String(
+                    investmentToAccount.type ||
+                    ""
+                ).toLowerCase();
+
+
+            if (
+                accountType === "bank" ||
+                accountType === "cash" ||
+                accountType === "cashback"
+            ) {
+
+                const currentBalance =
+                    Number(
+                        investmentToAccount.balance ||
+                        0
+                    );
+
+
+                const newBalance =
+                    currentBalance +
+                    amount;
+
+
+                await updateDoc(
+                    investmentToAccountRef,
+                    {
+                        balance:
+                            newBalance,
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
                 );
 
-            await updateDoc(
-                transferToRef,
-                {
-                    balance:
-    toAccount.type === "credit_card"
-        ? currentToBalance - amount
-        : currentToBalance + amount,
 
-updatedAt:
-    serverTimestamp()
-                }
-            );
+                console.log(
+                    "✅ INVESTMENT → TO ACCOUNT BALANCE INCREASED:",
+                    {
+                        account:
+                            investmentToAccount.name,
 
-const newToBalance =
-    toAccount.type === "credit_card"
-        ? currentToBalance - amount
-        : currentToBalance + amount;
+                        oldBalance:
+                            currentBalance,
 
-console.log(
-    "TRANSFER TO ACCOUNT UPDATED:",
-    {
-        account:
-            toAccount.name,
+                        investmentAmount:
+                            amount,
 
-        accountType:
-            toAccount.type,
+                        newBalance:
+                            newBalance
+                    }
+                );
 
-        oldBalance:
-            currentToBalance,
+            }
 
-        amount:
-            amount,
+        }
 
-        newBalance:
-            newToBalance
     }
-);
+
+}
+
+// ANY ACCOUNT → ANY ACCOUNT
+// =================================
+
+if (
+    type === "transfer"
+) {
+
+    try {
+
+        // =================================
+        // FROM ACCOUNT → MONEY OUT
+        // =================================
+
+        if (fromAccountId) {
+
+            const transferFromRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    fromAccountId
+                );
+
+            const transferFromSnapshot =
+                await getDoc(
+                    transferFromRef
+                );
+
+            if (
+                transferFromSnapshot.exists()
+            ) {
+
+                const fromAccount =
+                    transferFromSnapshot.data();
+
+                const currentFromBalance =
+                    Number(
+                        fromAccount.balance || 0
+                    );
+
+                const newFromBalance =
+                    fromAccount.type === "credit_card"
+                        ? currentFromBalance + amount
+                        : currentFromBalance - amount;
+
+                await updateDoc(
+                    transferFromRef,
+                    {
+                        balance:
+                            newFromBalance,
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "TRANSFER FROM ACCOUNT UPDATED:",
+                    {
+                        account:
+                            fromAccount.name,
+
+                        accountType:
+                            fromAccount.type,
+
+                        oldBalance:
+                            currentFromBalance,
+
+                        amount:
+                            amount,
+
+                        newBalance:
+                            newFromBalance
+                    }
+                );
+
+            }
+
+        }
+
+
+        // =================================
+        // TO ACCOUNT → MONEY IN
+        // =================================
+
+        if (toAccountId) {
+
+            const transferToRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    toAccountId
+                );
+
+            const transferToSnapshot =
+                await getDoc(
+                    transferToRef
+                );
+
+            if (
+                transferToSnapshot.exists()
+            ) {
+
+                const toAccount =
+                    transferToSnapshot.data();
+
+                const currentToBalance =
+                    Number(
+                        toAccount.balance || 0
+                    );
+
+                const newToBalance =
+                    toAccount.type === "credit_card"
+                        ? currentToBalance - amount
+                        : currentToBalance + amount;
+
+                await updateDoc(
+                    transferToRef,
+                    {
+                        balance:
+                            newToBalance,
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "TRANSFER TO ACCOUNT UPDATED:",
+                    {
+                        account:
+                            toAccount.name,
+
+                        accountType:
+                            toAccount.type,
+
+                        oldBalance:
+                            currentToBalance,
+
+                        amount:
+                            amount,
+
+                        newBalance:
+                            newToBalance
+                    }
+                );
+
+            }
+
         }
 
 
@@ -7755,17 +7942,360 @@ document.addEventListener(
             );
 
 
-            // =================================
-            // REBUILD ALL SEPTEMBER BALANCES
-            // =================================
+            // =============================================
+// DELETE BALANCE HANDLING
+// =============================================
+//
+// September 2026 transaction
+// → September rebuild करें
+//
+// Other month transaction
+// → केवल उसी transaction का
+//   balance effect reverse करें
+// =============================================
 
-            await rebuildSeptemberBankBalances();
+const deletedDate =
+    transaction.date || "";
+
+
+// =============================================
+// SEPTEMBER TRANSACTION
+// =============================================
+
+if (
+    deletedDate >= "2026-09-01" &&
+    deletedDate <= "2026-09-30"
+) {
+
+    await rebuildSeptemberBankBalances();
+
+    console.log(
+        "✅ SEPTEMBER BALANCES REBUILT AFTER DELETE"
+    );
+
+}
+
+
+// =============================================
+// NON-SEPTEMBER TRANSACTION
+// REVERSE CURRENT BALANCE IMPACT
+// =============================================
+
+else {
+
+    const reverseBalance =
+        async (
+            accountId,
+            changeAmount
+        ) => {
+
+            if (!accountId) return;
+
+
+            const accountRef =
+                doc(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts",
+                    accountId
+                );
+
+
+            const accountSnapshot =
+                await getDoc(
+                    accountRef
+                );
+
+
+            if (
+                !accountSnapshot.exists()
+            ) {
+                return;
+            }
+
+
+            const account =
+                accountSnapshot.data();
+
+
+            const accountType =
+                String(
+                    account.type || ""
+                ).toLowerCase();
+
+
+            if (
+                accountType !== "bank" &&
+                accountType !== "cash" &&
+                accountType !== "cashback"
+            ) {
+                return;
+            }
+
+
+            const currentBalance =
+                Number(
+                    account.balance || 0
+                );
+
+
+            const newBalance =
+                currentBalance +
+                changeAmount;
+
+
+            await updateDoc(
+                accountRef,
+                {
+                    balance:
+                        newBalance,
+
+                    updatedAt:
+                        serverTimestamp()
+                }
+            );
 
 
             console.log(
-                "BALANCES REBUILT AFTER TRANSACTION DELETE"
+                "✅ DELETE → BALANCE REVERSED:",
+                {
+                    account:
+                        account.name,
+
+                    oldBalance:
+                        currentBalance,
+
+                    change:
+                        changeAmount,
+
+                    newBalance:
+                        newBalance
+                }
             );
 
+        };
+
+
+// =============================================
+// INCOME
+// Original: To Account +
+// Delete:    To Account -
+// =============================================
+
+    if (
+        transaction.type ===
+            "income" &&
+        transaction.toAccountId
+    ) {
+
+        await reverseBalance(
+            transaction.toAccountId,
+            -Number(
+                transaction.amount || 0
+            )
+        );
+
+    }
+
+
+// =============================================
+// EXPENSE
+// Original: From Account -
+// Delete:    From Account +
+// =============================================
+
+    if (
+        transaction.type ===
+            "expense" &&
+        transaction.fromAccountId
+    ) {
+
+        await reverseBalance(
+            transaction.fromAccountId,
+            Number(
+                transaction.amount || 0
+            )
+        );
+
+    }
+
+
+// =============================================
+// INVESTMENT
+// Original: From - / To +
+// Delete:    From + / To -
+// =============================================
+
+    // =============================================
+// INVESTMENT
+// Original: From - / To +
+// Delete:    From + / To -
+// =============================================
+
+if (
+    transaction.type ===
+        "investment"
+) {
+
+    const investmentAmount =
+        Number(
+            transaction.amount || 0
+        );
+
+    console.log(
+        "DELETE INVESTMENT DEBUG:",
+        {
+            transactionId,
+            amount: investmentAmount,
+            fromAccountId:
+                transaction.fromAccountId,
+            toAccountId:
+                transaction.toAccountId,
+            date:
+                transaction.date
+        }
+    );
+
+
+    // -----------------------------------------
+    // FROM ACCOUNT → ADD BACK
+    // -----------------------------------------
+
+    if (
+        transaction.fromAccountId
+    ) {
+
+        await reverseBalance(
+            transaction.fromAccountId,
+            investmentAmount
+        );
+
+    }
+
+
+    // -----------------------------------------
+    // TO ACCOUNT → SUBTRACT
+    // -----------------------------------------
+
+    if (
+        transaction.toAccountId
+    ) {
+
+        await reverseBalance(
+            transaction.toAccountId,
+            -investmentAmount
+        );
+
+    }
+
+}
+
+
+// =============================================
+// TRANSFER
+// Original: From - / To +
+// Delete:    From + / To -
+// =============================================
+
+    if (
+        transaction.type ===
+            "transfer"
+    ) {
+
+        if (
+            transaction.fromAccountId
+        ) {
+
+            await reverseBalance(
+                transaction.fromAccountId,
+                Number(
+                    transaction.amount || 0
+                )
+            );
+
+        }
+
+
+        if (
+            transaction.toAccountId
+        ) {
+
+            await reverseBalance(
+                transaction.toAccountId,
+                -Number(
+                    transaction.amount || 0
+                )
+            );
+
+        }
+
+    }
+
+
+// =============================================
+// CASHBACK
+// Original: To +
+// Delete:    To -
+// =============================================
+
+    if (
+        transaction.type ===
+            "cashback" &&
+        transaction.toAccountId
+    ) {
+
+        await reverseBalance(
+            transaction.toAccountId,
+            -Number(
+                transaction.amount || 0
+            )
+        );
+
+    }
+
+
+// =============================================
+// WALLET PAYMENT
+// Original: From - / To +
+// Delete:    From + / To -
+// =============================================
+
+    if (
+        transaction.type ===
+            "wallet_payment"
+    ) {
+
+        if (
+            transaction.fromAccountId
+        ) {
+
+            await reverseBalance(
+                transaction.fromAccountId,
+                Number(
+                    transaction.amount || 0
+                )
+            );
+
+        }
+
+
+        if (
+            transaction.toAccountId
+        ) {
+
+            await reverseBalance(
+                transaction.toAccountId,
+                -Number(
+                    transaction.amount || 0
+                )
+            );
+
+        }
+
+    }
+
+}
 
             // =================================
             // RELOAD TRANSACTION HISTORY
@@ -12385,3 +12915,85 @@ window.inspectNaviTransactionDetails = async function () {
     });
 
 };
+
+window.debugDeletedTransfers = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("❌ User not logged in");
+        return;
+    }
+
+    const snap = await getDocs(
+        collection(db, "users", user.uid, "transactions")
+    );
+
+    console.log("🔎 DELETED TRANSFER TRANSACTIONS:");
+
+    snap.docs.forEach(d => {
+
+        const t = d.data();
+
+        if (t.deleted === true && t.type === "transfer") {
+
+            console.log("🏦 DELETED TRANSFER:", {
+                id: d.id,
+                type: t.type,
+                amount: t.amount,
+                fromAccountId: t.fromAccountId,
+                toAccountId: t.toAccountId,
+                date: t.date,
+                category: t.category,
+                party: t.party,
+                merchant: t.merchant,
+                paymentMethod: t.paymentMethod
+            });
+
+        }
+
+    });
+};
+
+window.debugPNBFDR = async function () {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        console.log("❌ User not logged in");
+        return;
+    }
+
+    const snap = await getDocs(
+        collection(db, "users", user.uid, "transactions")
+    );
+
+    console.log("🔎 PNB FDR-1 TRANSACTIONS:");
+
+    snap.docs.forEach(d => {
+
+        const t = d.data();
+
+        const text = JSON.stringify(t).toLowerCase();
+
+        if (
+            text.includes("pnb fdr-1") ||
+            text.includes("pnb fdr") ||
+            text.includes("58968")
+        ) {
+            console.log(
+    "🏦 PNB FDR FULL RECORD:",
+    JSON.stringify(
+        {
+            id: d.id,
+            ...t
+        },
+        null,
+        2
+    )
+);
+        }
+    });
+};
+
+

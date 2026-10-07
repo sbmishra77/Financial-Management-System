@@ -12711,6 +12711,8 @@ repairs:
 fundsAvailable:
     document.getElementById("fundsAvailableSection"),
 
+calendar:
+    document.getElementById("calendarSection"),
 
 };
     // ----------------------------------------------
@@ -13137,6 +13139,24 @@ if (section === "fundsAvailable") {
     );
 
     return;
+}
+
+// ==================================================
+// FINANCIAL CALENDAR
+// ==================================================
+
+if (section === "calendar") {
+
+    console.log(
+        "📅 FINANCIAL CALENDAR SIDEBAR CLICKED"
+    );
+
+    showMasterView(
+        "calendar"
+    );
+
+    return;
+
 }
 
 // ==================================================
@@ -13653,6 +13673,727 @@ if (typeof refreshModuleData === "function") {
     return;
 }
 });
+
+// =========================================================
+// 📅 FINANCIAL CALENDAR ENGINE
+// =========================================================
+
+(function () {
+
+    // Prevent duplicate Calendar Engine initialization
+
+    if (
+        window.__financialCalendarInitialized
+    ) {
+        return;
+    }
+
+    window.__financialCalendarInitialized =
+        true;
+
+
+    let calendarCurrentDate =
+        new Date();
+
+// =====================================================
+// 💰 CALENDAR FINANCIAL EVENTS
+// =====================================================
+
+let calendarFinancialEvents = [];
+
+// =====================================================
+// 💰 LOAD LOAN REPAYMENT EVENTS FROM FIRESTORE
+// =====================================================
+
+async function loadCalendarFinancialEvents() {
+
+    const user =
+        auth.currentUser;
+
+    if (!user) {
+
+        console.log(
+            "📅 Calendar: User not logged in"
+        );
+
+        calendarFinancialEvents = [];
+
+        return;
+
+    }
+
+    try {
+
+        const repaymentsRef =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "loanRepayments"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                repaymentsRef
+            );
+
+
+        calendarFinancialEvents = [];
+
+
+        snapshot.forEach(
+            function (repaymentDoc) {
+
+                const data =
+                    repaymentDoc.data();
+
+
+                // Ignore test records
+                if (
+                    data.test === true
+                ) {
+                    return;
+                }
+
+
+                // Payment date required
+                if (
+                    !data.paymentDate
+                ) {
+                    return;
+                }
+
+
+                calendarFinancialEvents.push({
+
+                    id:
+                        repaymentDoc.id,
+
+                    type:
+                        "loanRepayment",
+
+                    date:
+                        String(
+                            data.paymentDate
+                        ),
+
+                    loanName:
+                        data.loanName ||
+                        data.loanType ||
+                        "Loan",
+
+                    amount:
+                        Number(
+                            data.amount || 0
+                        ),
+
+                    repaymentType:
+                        data.repaymentType ||
+                        "Repayment"
+
+                });
+
+            }
+        );
+
+
+        console.log(
+            "📅 Calendar Loan Repayment Events:",
+            calendarFinancialEvents
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ Calendar Financial Events Load Error:",
+            error
+        );
+
+        calendarFinancialEvents = [];
+
+    }
+
+}
+
+    // =====================================================
+    // RENDER CALENDAR
+    // =====================================================
+
+    function renderFinancialCalendar() {
+
+        const monthYear =
+            document.getElementById(
+                "calendarMonthYear"
+            );
+
+        const daysGrid =
+            document.getElementById(
+                "calendarDaysGrid"
+            );
+
+
+        if (!monthYear || !daysGrid) {
+            return;
+        }
+
+
+        const year =
+            calendarCurrentDate.getFullYear();
+
+
+        const month =
+            calendarCurrentDate.getMonth();
+
+
+        const monthName =
+            calendarCurrentDate.toLocaleString(
+                "en-IN",
+                {
+                    month: "long"
+                }
+            );
+
+
+        // =================================================
+        // MONTH / YEAR TITLE
+        // =================================================
+
+        monthYear.textContent =
+            `${monthName} ${year}`;
+
+
+        // =================================================
+        // CLEAR OLD DAYS
+        // =================================================
+
+        daysGrid.innerHTML = "";
+
+// =================================================
+// 🎨 WEEKDAY HEADER STYLE
+// =================================================
+
+const weekDayContainer =
+    document.getElementById(
+        "calendarWeekDays"
+    );
+
+if (weekDayContainer) {
+
+    const weekDays =
+        weekDayContainer.children;
+
+    Array.from(
+        weekDays
+    ).forEach(
+        function (header, index) {
+
+            header.style.cssText = `
+                padding:10px;
+                text-align:center;
+                font-weight:800;
+                border-radius:8px;
+                font-size:15px;
+                color:#1e3a8a;
+                background:${
+                    index === 0
+                        ? "#ffe4e6"
+                        : index === 6
+                            ? "#dbeafe"
+                            : "#eef2ff"
+                };
+            `;
+
+        }
+    );
+
+}
+        // =================================================
+        // FIRST DAY OF MONTH
+        // =================================================
+
+        const firstDay =
+            new Date(
+                year,
+                month,
+                1
+            ).getDay();
+
+
+        // =================================================
+        // TOTAL DAYS
+        // =================================================
+
+        const totalDays =
+            new Date(
+                year,
+                month + 1,
+                0
+            ).getDate();
+
+
+        // =================================================
+        // TODAY
+        // =================================================
+
+        const today =
+            new Date();
+
+
+        const todayDate =
+            today.getDate();
+
+
+        const todayMonth =
+            today.getMonth();
+
+
+        const todayYear =
+            today.getFullYear();
+
+
+        // =================================================
+        // EMPTY CELLS BEFORE DAY 1
+        // =================================================
+
+        for (
+            let i = 0;
+            i < firstDay;
+            i++
+        ) {
+
+            const emptyCell =
+                document.createElement(
+                    "div"
+                );
+
+
+            emptyCell.style.minHeight =
+                "95px";
+
+
+            daysGrid.appendChild(
+                emptyCell
+            );
+
+        }
+
+
+        // =================================================
+        // CREATE DAYS
+        // =================================================
+
+        for (
+            let day = 1;
+            day <= totalDays;
+            day++
+        ) {
+
+            const dayCell =
+                document.createElement(
+                    "div"
+                );
+
+
+            const isToday =
+                day === todayDate &&
+                month === todayMonth &&
+                year === todayYear;
+
+
+// =================================================
+// 🎨 COLOURFUL CALENDAR DAY STYLE
+// =================================================
+
+const dayOfWeek =
+    new Date(
+        year,
+        month,
+        day
+    ).getDay();
+
+let dayBackground =
+    "#ffffff";
+
+let dayBorder =
+    "#dbeafe";
+
+
+// Sunday
+if (dayOfWeek === 0) {
+
+    dayBackground =
+        "#fff1f2";
+
+    dayBorder =
+        "#fecdd3";
+
+}
+
+
+// Saturday
+else if (dayOfWeek === 6) {
+
+    dayBackground =
+        "#eff6ff";
+
+    dayBorder =
+        "#bfdbfe";
+
+}
+
+
+// Monday
+else if (dayOfWeek === 1) {
+
+    dayBackground =
+        "#f0fdf4";
+
+    dayBorder =
+        "#bbf7d0";
+
+}
+
+
+// Tuesday
+else if (dayOfWeek === 2) {
+
+    dayBackground =
+        "#fffbeb";
+
+    dayBorder =
+        "#fde68a";
+
+}
+
+
+// Wednesday
+else if (dayOfWeek === 3) {
+
+    dayBackground =
+        "#f5f3ff";
+
+    dayBorder =
+        "#ddd6fe";
+
+}
+
+
+// Thursday
+else if (dayOfWeek === 4) {
+
+    dayBackground =
+        "#ecfeff";
+
+    dayBorder =
+        "#a5f3fc";
+
+}
+
+
+// Friday
+else if (dayOfWeek === 5) {
+
+    dayBackground =
+        "#fff7ed";
+
+    dayBorder =
+        "#fed7aa";
+
+}
+
+
+dayCell.style.cssText = `
+    min-height:105px;
+    border:1px solid ${dayBorder};
+    border-radius:10px;
+    background:${dayBackground};
+    padding:10px;
+    box-sizing:border-box;
+    position:relative;
+    cursor:pointer;
+    transition:0.2s;
+    box-shadow:0 2px 5px rgba(0,0,0,0.05);
+`;
+
+
+            // =================================================
+            // TODAY HIGHLIGHT
+            // =================================================
+
+           if (isToday) {
+
+    dayCell.style.background =
+        "#dbeafe";
+
+    dayCell.style.border =
+        "2px solid #2563eb";
+
+    dayCell.style.boxShadow =
+        "0 4px 12px rgba(37,99,235,0.25)";
+
+}
+
+
+            // =================================================
+            // DAY NUMBER
+            // =================================================
+
+            const dayNumber =
+                document.createElement(
+                    "div"
+                );
+
+
+            dayNumber.textContent =
+                day;
+
+
+dayNumber.style.cssText = `
+    font-weight:800;
+    font-size:18px;
+    color:${isToday ? "#1d4ed8" : "#1e3a8a"};
+    margin-bottom:6px;
+    line-height:1;
+`;
+
+
+            dayCell.appendChild(
+                dayNumber
+            );
+
+            // =====================================================
+// 💳 LOAN REPAYMENT EVENTS
+// =====================================================
+
+const eventsForThisDay =
+    calendarFinancialEvents.filter(
+        function (event) {
+
+            return (
+                event.date ===
+                `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+            );
+
+        }
+    );
+
+
+eventsForThisDay.forEach(
+    function (financialEvent) {
+
+        const eventElement =
+            document.createElement("div");
+
+
+        eventElement.style.cssText = `
+            margin-top:4px;
+            padding:5px 7px;
+            border-radius:6px;
+            background:#dcfce7;
+            border-left:4px solid #16a34a;
+            color:#166534;
+            font-size:12px;
+            font-weight:700;
+            line-height:1.3;
+        `;
+
+
+        eventElement.textContent =
+            `💳 ${financialEvent.repaymentType} ₹${financialEvent.amount.toLocaleString("en-IN")}`;
+
+
+        eventsContainer.appendChild(
+            eventElement
+        );
+
+    }
+);
+
+// =====================================================
+// 💰 FINANCIAL EVENTS CONTAINER
+// =====================================================
+
+const eventsContainer =
+    document.createElement("div");
+
+eventsContainer.style.cssText = `
+    margin-top:6px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+`;
+
+dayCell.appendChild(
+    eventsContainer
+);
+
+
+            // =================================================
+            // HOVER EFFECT
+            // =================================================
+
+            dayCell.addEventListener(
+                "mouseenter",
+                function () {
+
+                    if (!isToday) {
+
+                        dayCell.style.background =
+                            "#f8fafc";
+
+                    }
+
+                }
+            );
+
+
+            dayCell.addEventListener(
+                "mouseleave",
+                function () {
+
+                    if (!isToday) {
+
+                        dayCell.style.background =
+                            "#ffffff";
+
+                    }
+
+                }
+            );
+
+
+            daysGrid.appendChild(
+                dayCell
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // TODAY BUTTON
+    // =====================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    "#calendarTodayButton"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            calendarCurrentDate =
+                new Date();
+
+
+            renderFinancialCalendar();
+
+        }
+    );
+
+
+    // =====================================================
+    // PREVIOUS MONTH
+    // =====================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    "#calendarPreviousButton"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            calendarCurrentDate =
+                new Date(
+                    calendarCurrentDate.getFullYear(),
+                    calendarCurrentDate.getMonth() - 1,
+                    1
+                );
+
+
+            renderFinancialCalendar();
+
+        }
+    );
+
+
+    // =====================================================
+    // NEXT MONTH
+    // =====================================================
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const button =
+                event.target.closest(
+                    "#calendarNextButton"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            calendarCurrentDate =
+                new Date(
+                    calendarCurrentDate.getFullYear(),
+                    calendarCurrentDate.getMonth() + 1,
+                    1
+                );
+
+
+            renderFinancialCalendar();
+
+        }
+    );
+
+
+// =====================================================
+// INITIAL RENDER
+// =====================================================
+
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            renderFinancialCalendar();
+
+        }
+    );
+
+} else {
+
+    renderFinancialCalendar();
+
+}
+
+})();
+
+
 
 // ==================================================
 // MY FINANCIAL GOALS — ADD / CANCEL FORM

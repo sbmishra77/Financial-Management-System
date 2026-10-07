@@ -4342,6 +4342,177 @@
 </div>
 </section>
 
+<!-- ================================================== -->
+<!-- CALENDAR MODULE -->
+<!-- ================================================== -->
+
+<section
+    id="calendarSection"
+    class="finance-section calendar-section"
+    style="display: none;">
+
+    <!-- BACK TO DASHBOARD -->
+
+    <div class="back-to-dashboard-wrapper">
+
+        <button
+            type="button"
+            class="back-to-dashboard-button">
+
+            ← Back to Dashboard
+
+        </button>
+
+    </div>
+
+
+    <!-- CALENDAR HEADER -->
+
+   <!-- =============================== -->
+<!-- CALENDAR HEADER -->
+<!-- =============================== -->
+
+<div class="section-header loans-section-header">
+
+    <div class="section-title-area">
+
+        <h2>
+            📅 Financial Calendar
+        </h2>
+
+        <p>
+            Payments • Rent • Premiums • Maturity
+        </p>
+
+    </div>
+
+
+    <div class="section-header-buttons">
+
+        <!-- TODAY -->
+
+        <button
+            type="button"
+            id="calendarTodayButton"
+            class="section-summary-button">
+
+            📅 Today
+
+        </button>
+
+
+        <!-- PREVIOUS MONTH -->
+
+        <button
+            type="button"
+            id="calendarPreviousButton"
+            class="add-module-button">
+
+            ← Previous
+
+        </button>
+
+
+        <!-- NEXT MONTH -->
+
+        <button
+            type="button"
+            id="calendarNextButton"
+            class="view-module-button">
+
+            Next →
+
+        </button>
+
+    </div>
+
+</div>
+
+    <!-- CALENDAR WORK AREA -->
+
+    <!-- ================================================== -->
+<!-- FINANCIAL CALENDAR GRID -->
+<!-- ================================================== -->
+
+<div
+    id="financialCalendarContainer"
+    style="
+        background:#ffffff;
+        border-radius:14px;
+        padding:20px;
+        margin-top:20px;
+        box-shadow:0 4px 16px rgba(0,0,0,0.08);
+    "
+>
+
+    <!-- MONTH / YEAR HEADER -->
+
+    <div
+        style="
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin-bottom:20px;
+        "
+    >
+
+        <h2
+            id="calendarMonthYear"
+            style="
+                margin:0;
+                color:#1e3a8a;
+                font-size:24px;
+                font-weight:700;
+            "
+        >
+            October 2026
+        </h2>
+
+    </div>
+
+
+    <!-- WEEK DAYS -->
+
+    <div
+        id="calendarWeekDays"
+        style="
+            display:grid;
+            grid-template-columns:
+                repeat(7, minmax(0, 1fr));
+            gap:6px;
+            margin-bottom:6px;
+        "
+    >
+
+        <div>Sun</div>
+        <div>Mon</div>
+        <div>Tue</div>
+        <div>Wed</div>
+        <div>Thu</div>
+        <div>Fri</div>
+        <div>Sat</div>
+
+    </div>
+
+
+    <!-- CALENDAR DAYS -->
+
+    <div
+        id="calendarDaysGrid"
+        style="
+            display:grid;
+            grid-template-columns:
+                repeat(7, minmax(0, 1fr));
+            gap:6px;
+        "
+    >
+
+    </div>
+
+</div>
+
+</section>
+
 <section
     id="accountsSection"
     class="accounts-section">
@@ -6824,14 +6995,36 @@
 
                     <div style="flex:1;">
 
-                        <div
-                            style="
-                                font-size:15px;
-                                font-weight:800;
-                                color:#173f78;
-                            ">
-                            Home Loan
-                        </div>
+                       <div
+    style="
+        display:flex;
+        align-items:baseline;
+        gap:8px;
+        flex-wrap:wrap;
+    "
+>
+
+    <span
+        style="
+            font-size:15px;
+            font-weight:800;
+            color:#173f78;
+        "
+    >
+        Home Loan
+    </span>
+
+    <span
+        id="repaymentHomeLoanSubName"
+        style="
+            font-size:11px;
+            font-weight:500;
+            color:#e56b6b;
+        "
+    >
+    </span>
+
+</div>
 
                         <div
                             style="
@@ -6860,60 +7053,166 @@
                 </div>
 
 
+                <!-- =========================================
+                     HOME LOAN ACTION ROW
+                ========================================= -->
+
                 <div
                     style="
-                        display:grid;
-                        grid-template-columns:1fr 1fr;
-                        gap:8px;
                         margin-top:14px;
-                    ">
+                        padding-top:12px;
+                        border-top:1px solid #dbe3ef;
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                        gap:8px;
+                        flex-wrap:wrap;
+                    "
+                >
 
-                    <div>
+                   <!-- =========================================
+     LOAN ACCOUNT
+========================================= -->
 
-                        <small
+<div
+    style="
+        display:flex;
+        align-items:center;
+        gap:8px;
+    "
+>
+
+    <!-- AXIS BANK LOGO -->
+
+    <img
+        src="https://commons.wikimedia.org/wiki/Special:FilePath/AXISBank%20Logo.svg"
+        alt="Axis Bank"
+        style="
+            width:48px;
+            height:32px;
+            object-fit:contain;
+            flex-shrink:0;
+        "
+    >
+
+
+    <!-- ACCOUNT DETAILS -->
+
+    <div>
+
+        <div
+            style="
+                font-size:11px;
+                font-weight:700;
+                color:#334155;
+                line-height:14px;
+            "
+        >
+            Loan Account
+        </div>
+
+        <div
+            style="
+                font-size:9px;
+                color:#64748b;
+                line-height:12px;
+            "
+        >
+            PHR004310628669
+        </div>
+
+    </div>
+
+</div>
+
+
+                    <!-- ACTION BUTTONS -->
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:7px;
+                            flex-wrap:wrap;
+                            margin-left:auto;
+                        "
+                    >
+
+                        <!-- EDIT -->
+
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="edit"
+                            data-loan-type="Home Loan"
                             style="
-                                display:block;
-                                color:#718096;
-                                font-size:10px;
-                            ">
-                            Outstanding
-                        </small>
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:7px 12px;
+                                border-radius:7px;
+                                background:#f59e0b;
+                                color:#ffffff;
+                                font-size:11px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:0 3px 8px
+                                    rgba(245,158,11,0.20);
+                            "
+                        >
+                            ✏️ Edit
+                        </span>
 
-                        <strong
-                            id="repaymentHomeLoanBalance"
+
+                        <!-- REPAYMENT -->
+
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="repayment"
+                            data-loan-type="Home Loan"
                             style="
-                                display:block;
-                                margin-top:3px;
-                                color:#123f82;
-                                font-size:15px;
-                            ">
-                            ₹43,36,743
-                        </strong>
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:7px 12px;
+                                border-radius:7px;
+                                background:#16a34a;
+                                color:#ffffff;
+                                font-size:11px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:0 3px 8px
+                                    rgba(22,163,74,0.20);
+                            "
+                        >
+                            💳 Repayment
+                        </span>
 
-                    </div>
 
+                        <!-- CLOSE LOAN -->
 
-                    <div>
-
-                        <small
+                        <span
+                            role="button"
+                            tabindex="0"
+                            data-loan-action="close"
+                            data-loan-type="Home Loan"
                             style="
-                                display:block;
-                                color:#718096;
-                                font-size:10px;
-                            ">
-                            EMI
-                        </small>
-
-                        <strong
-                            id="repaymentHomeLoanEMI"
-                            style="
-                                display:block;
-                                margin-top:3px;
-                                color:#123f82;
-                                font-size:15px;
-                            ">
-                            ₹51,240
-                        </strong>
+                                display:inline-flex;
+                                align-items:center;
+                                justify-content:center;
+                                padding:7px 12px;
+                                border-radius:7px;
+                                background:#64748b;
+                                color:#ffffff;
+                                font-size:11px;
+                                font-weight:700;
+                                cursor:pointer;
+                                box-shadow:0 3px 8px
+                                    rgba(100,116,139,0.20);
+                            "
+                        >
+                            🔒 Close Loan
+                        </span>
 
                     </div>
 
