@@ -3984,7 +3984,24 @@ accountsSnapshot.forEach(
                 )
             );
 
+// ==================================================
+// REBUILD UP TO CURRENT DATE
+// SEPTEMBER OPENING → CURRENT BALANCE
+// ==================================================
 
+const today = new Date();
+
+const rebuildUntilDate =
+    today.getFullYear() +
+    "-" +
+    String(today.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(today.getDate()).padStart(2, "0");
+
+console.log(
+    "REBUILD TRANSACTIONS UP TO:",
+    rebuildUntilDate
+);
         // ==================================================
         // PROCESS SEPTEMBER TRANSACTIONS
         // ==================================================
@@ -4008,16 +4025,20 @@ accountsSnapshot.forEach(
 
 
                 // ------------------------------------------
-                // ONLY SEPTEMBER 2026
-                // ------------------------------------------
+// SEPTEMBER 2026 → CURRENT DATE
+// ------------------------------------------
+// Opening balance is September 1 opening.
+// Therefore rebuild must include
+// all valid transactions from September
+// through the current date.
+// ------------------------------------------
 
-                if (
-                    date < "2026-09-01" ||
-                    date > "2026-09-30"
-                ) {
-                    return;
-                }
-
+if (
+    date < "2026-09-01" ||
+    date > rebuildUntilDate
+) {
+    return;
+}
 
                 const amount =
                     Number(
