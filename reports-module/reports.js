@@ -189,6 +189,96 @@ document.addEventListener("DOMContentLoaded", () => {
     const reportSearch =
         document.getElementById("reportSearch");
 
+        // =====================================================
+// REPORT MODULE SCREEN NAVIGATION
+// =====================================================
+
+// -----------------------------------------------------
+// HIDE REPORT MODULE STARTING PAGE
+// -----------------------------------------------------
+
+function hideReportModuleStartPage() {
+
+    const startPageElements = [
+
+        document.querySelector(".reports-header"),
+
+        document.querySelector(".reports-search-section"),
+
+        document.querySelector(".reports-categories-section")
+
+    ];
+
+
+    startPageElements.forEach(
+        function (element) {
+
+            if (element) {
+
+                element.style.display = "none";
+
+            }
+
+        }
+    );
+
+}
+
+
+// -----------------------------------------------------
+// SHOW REPORT MODULE STARTING PAGE
+// -----------------------------------------------------
+
+function showReportModuleStartPage() {
+
+    const startPageElements = [
+
+        document.querySelector(".reports-header"),
+
+        document.querySelector(".reports-search-section"),
+
+        document.querySelector(".reports-categories-section")
+
+    ];
+
+
+    startPageElements.forEach(
+        function (element) {
+
+            if (element) {
+
+                element.style.display = "";
+
+            }
+
+        }
+    );
+
+
+    // Clear currently opened report/list
+
+    reportWorkArea.innerHTML = `
+
+        <div class="report-work-placeholder">
+
+            <div class="placeholder-icon">
+                📊
+            </div>
+
+            <h2>
+                Select a Report
+            </h2>
+
+            <p>
+                Choose a report category above to begin.
+            </p>
+
+        </div>
+
+    `;
+
+}
+
 // =====================================================
 // GLOBAL REPORT TOOLBAR OBSERVER
 // =====================================================
@@ -350,13 +440,20 @@ if (reportWorkArea) {
                     );
 
 
-                if (selectedReport) {
+               if (selectedReport) {
 
-                    renderSelectedReport(
-                        selectedReport
-                    );
+    // =========================================
+    // OPEN REPORT AS A SEPARATE SCREEN
+    // =========================================
 
-                }
+    hideReportModuleStartPage();
+
+
+    renderSelectedReport(
+        selectedReport
+    );
+
+}
 
             });
 
@@ -456,9 +553,9 @@ if (reportWorkArea) {
     if (backButton) {
 
         backButton.addEventListener(
-            "click",
-            renderTransactionReports
-        );
+    "click",
+    showReportModuleStartPage
+);
 
     }
 
@@ -546,20 +643,20 @@ if (reportWorkArea) {
     }
 );
 
-        // =================================================
-        // SORT — NEWEST FIRST
-        // =================================================
+ // =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-        transactions.sort(
-            (a, b) =>
-                String(
-                    b.date || ""
-                ).localeCompare(
-                    String(
-                        a.date || ""
-                    )
-                )
-        );
+transactions.sort(
+    (a, b) =>
+        String(
+            a.date || ""
+        ).localeCompare(
+            String(
+                b.date || ""
+            )
+        )
+);
 
 
         const content =
@@ -1093,9 +1190,9 @@ async function renderDateWiseTransactionsReport() {
     if (backButton) {
 
         backButton.addEventListener(
-            "click",
-            renderTransactionReports
-        );
+    "click",
+    showReportModuleStartPage
+);
 
     }
 
@@ -1894,10 +1991,9 @@ async function renderMonthWiseTransactionsReport() {
     if (backButton) {
 
         backButton.addEventListener(
-            "click",
-            renderTransactionReports
-        );
-
+    "click",
+    showReportModuleStartPage
+);
     }
 
     
@@ -2594,9 +2690,9 @@ async function renderYearWiseTransactionsReport() {
     if (backButton) {
 
         backButton.addEventListener(
-            "click",
-            renderTransactionReports
-        );
+    "click",
+    showReportModuleStartPage
+);
 
     }
 
@@ -3307,6 +3403,36 @@ else if (report.number === 19) {
         "All Available Financial Years";
 
 }
+
+else if (report.number === 20) {
+
+    reportPeriod =
+        "All Income Transactions";
+
+}
+
+else if (report.number === 21) {
+
+    reportPeriod =
+        "All Expense Transactions";
+
+}
+
+else if (report.number === 22) {
+
+    reportPeriod =
+        "All Investment Transactions";
+
+}
+
+else if (report.number === 23) {
+
+    reportPeriod =
+        "All Transfer Transactions";
+
+}
+
+
 
     // =================================================
     // CREATE HEADER
@@ -4051,6 +4177,83 @@ function injectReportToolbar() {
 
 }
 
+// =====================================================
+// GLOBAL REPORT TOTALS
+// READ TOTALS FROM CURRENT REPORT
+// =====================================================
+
+function getReportTotalsForExport(
+    reportContainer
+) {
+
+    const totals = [];
+
+
+    // -----------------------------------------------
+    // Find strong elements used inside Total blocks
+    // -----------------------------------------------
+
+    const strongElements =
+        Array.from(
+            reportContainer.querySelectorAll(
+                "strong"
+            )
+        );
+
+
+    strongElements.forEach(
+        function (strong) {
+
+            const parent =
+                strong.parentElement;
+
+
+            if (!parent) {
+                return;
+            }
+
+
+            const parentText =
+                parent.innerText
+                    ?.trim()
+                    || "";
+
+
+            // ---------------------------------------
+            // Only capture elements containing Total
+            // ---------------------------------------
+
+            if (
+                !/^Total\b/i.test(
+                    parentText
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            if (
+                !totals.some(
+                    item =>
+                        item === parentText
+                )
+            ) {
+
+                totals.push(
+                    parentText
+                );
+
+            }
+
+        }
+    );
+
+
+    return totals;
+
+}
 
 // =====================================================
 // GLOBAL REPORT EXPORT — PDF
@@ -4186,55 +4389,187 @@ function exportCurrentReportPDF() {
     );
 
 
-    doc.setFontSize(10);
+// =================================================
+// PDF HEADER
+// =================================================
 
-    doc.text(
-        "SBM Wealth Manager",
-        148,
-        10,
-        {
-            align: "center"
-        }
-    );
+// -------------------------------------------------
+// SBM WEALTH MANAGER BRANDING
+// -------------------------------------------------
 
+// Coin 1
+doc.setFillColor(
+    244,
+    189,
+    45
+);
 
-    doc.setTextColor(
-        51,
-        65,
-        85
-    );
-
-
-    doc.setFontSize(9);
-
-    doc.text(
-        userName,
-        148,
-        16,
-        {
-            align: "center"
-        }
-    );
+doc.circle(
+    137,
+    10,
+    4,
+    "F"
+);
 
 
-    doc.setTextColor(
-        23,
-        59,
-        112
-    );
+// Coin 2
+doc.setFillColor(
+    255,
+    204,
+    55
+);
+
+doc.circle(
+    144,
+    10,
+    4,
+    "F"
+);
 
 
-    doc.setFontSize(13);
+// Coin 3
+doc.setFillColor(
+    235,
+    174,
+    35
+);
 
-    doc.text(
-        reportTitle,
-        148,
-        23,
-        {
-            align: "center"
-        }
-    );
+doc.circle(
+    151,
+    10,
+    4,
+    "F"
+);
 
+
+// -------------------------------------------------
+// SBM LETTERS INSIDE COINS
+// -------------------------------------------------
+
+doc.setTextColor(
+    255,
+    255,
+    255
+);
+
+doc.setFont(
+    "helvetica",
+    "bold"
+);
+
+doc.setFontSize(
+    10
+);
+
+
+// $
+doc.text(
+    "$",
+    137,
+    13,
+    {
+        align: "center"
+    }
+);
+
+
+// ₿
+doc.text(
+    "B",
+    144,
+    13,
+    {
+        align: "center"
+    }
+);
+
+
+// M
+doc.text(
+    "M",
+    151,
+    13,
+    {
+        align: "center"
+    }
+);
+
+
+// -------------------------------------------------
+// WEALTH MANAGER
+// -------------------------------------------------
+
+doc.setTextColor(
+    23,
+    59,
+    112
+);
+
+doc.setFont(
+    "helvetica",
+    "normal"
+);
+
+doc.setFontSize(
+    10
+);
+
+doc.text(
+    "Wealth Manager",
+    158,
+    12.5,
+    {
+        align: "left"
+    }
+);
+
+
+// -------------------------------------------------
+// USER NAME
+// -------------------------------------------------
+
+doc.setTextColor(
+    51,
+    65,
+    85
+);
+
+doc.setFontSize(
+    9
+);
+
+doc.text(
+    userName,
+    148,
+    18,
+    {
+        align: "center"
+    }
+);
+
+
+// -------------------------------------------------
+// REPORT TITLE
+// -------------------------------------------------
+
+doc.setTextColor(
+    23,
+    59,
+    112
+);
+
+doc.setFontSize(
+    13
+);
+
+doc.text(
+    reportTitle,
+    148,
+    25,
+    {
+        align: "center"
+    }
+);
 
     // =================================================
     // REPORT TABLES
@@ -4380,6 +4715,125 @@ function exportCurrentReportPDF() {
         }
     );
 
+
+    // =================================================
+// ADD REPORT TOTALS TO PDF
+// =================================================
+
+const reportTotals =
+    getReportTotalsForExport(
+        reportContainer
+    );
+
+
+if (
+    reportTotals.length > 0
+) {
+
+    let totalY =
+        (
+            doc.lastAutoTable &&
+            doc.lastAutoTable.finalY
+        )
+        || 30;
+
+
+    totalY += 10;
+
+
+    doc.setTextColor(
+        23,
+        59,
+        112
+    );
+
+
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+
+    doc.setFontSize(
+        10
+    );
+
+
+    reportTotals.forEach(
+    function (totalText) {
+
+        // =========================================
+        // CLEAN PDF TOTAL TEXT
+        // =========================================
+
+        let cleanTotal =
+            String(
+                totalText || ""
+            );
+
+
+        // Remove excessive spaces
+        cleanTotal =
+            cleanTotal.replace(
+                /\s+/g,
+                " "
+            ).trim();
+
+
+        // Remove spacing before colon
+        cleanTotal =
+            cleanTotal.replace(
+                /\s+:/g,
+                ":"
+            );
+
+
+        // Replace ₹ because standard PDF font
+        // does not reliably support this symbol
+        cleanTotal =
+            cleanTotal.replace(
+                /₹\s*/g,
+                "Rs. "
+            );
+
+
+        // =========================================
+        // PDF FONT
+        // =========================================
+
+        doc.setFont(
+            "helvetica",
+            "bold"
+        );
+
+        doc.setFontSize(
+            10
+        );
+
+        doc.setTextColor(
+            23,
+            59,
+            112
+        );
+
+
+        // =========================================
+        // WRITE TOTAL
+        // =========================================
+
+        doc.text(
+            cleanTotal,
+            20,
+            totalY
+        );
+
+
+        totalY += 6;
+
+    }
+);
+
+}
 
     // =================================================
     // FILE NAME
@@ -4557,31 +5011,55 @@ function exportCurrentReportExcel() {
                 );
 
 
-            // -----------------------------------------
-            // HEADER ROWS
-            // -----------------------------------------
+ // -----------------------------------------
+// HEADER ROWS
+// -----------------------------------------
 
-            const excelData = [
+// -----------------------------------------
+// REPORT TOTALS
+// -----------------------------------------
 
-                [
-                    "SBM Wealth Manager"
-                ],
+const reportTotals =
+    getReportTotalsForExport(
+        reportContainer
+    );
 
-                [
-                    userName
-                ],
 
-                [
-                    reportTitle
-                ],
+// -----------------------------------------
+// HEADER + DATA + TOTALS
+// -----------------------------------------
 
-                [],
+const excelData = [
 
-                ...rows
+    [
+        "●$   ●₿   ●M   Wealth Manager"
+    ],
 
+    [
+        userName
+    ],
+
+    [
+        reportTitle
+    ],
+
+    [],
+
+    ...rows,
+
+    [],
+
+    ...reportTotals.map(
+        function (totalText) {
+
+            return [
+                totalText
             ];
 
+        }
+    )
 
+];
             // -----------------------------------------
             // CREATE WORKSHEET
             // -----------------------------------------
@@ -4865,6 +5343,7009 @@ function printCurrentReport() {
 
 }
 
+// =========================================================
+// #20 INCOME TRANSACTIONS
+// =========================================================
+
+async function renderIncomeTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <!-- =====================================
+                     REPORT TITLE
+                ====================================== -->
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #20 Income Transactions
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================
+                     REPORT CONTENT
+                ====================================== -->
+
+                <div
+                    style="
+                        padding:20px 30px;
+                    "
+                >
+
+                    <div
+                        id="incomeTransactionsReportContent"
+                        style="
+                            text-align:center;
+                            padding:40px;
+                            color:#7b8ba1;
+                        "
+                    >
+                        ⏳ Loading income transactions...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =================================================
+    // BACK BUTTON
+    // =================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            renderTransactionReports
+        );
+
+    }
+
+
+    // =================================================
+    // CHECK USER
+    // =================================================
+
+    if (!currentUser) {
+
+        const content =
+            document.getElementById(
+                "incomeTransactionsReportContent"
+            );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b45309;
+                    "
+                >
+                    ⚠️ User is not logged in.
+                </div>
+
+            `;
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // FIRESTORE TRANSACTIONS
+        // =================================================
+
+        const transactionsRef =
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "transactions"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                transactionsRef
+            );
+
+
+        const transactions = [];
+
+
+        snapshot.forEach(
+            (transactionDoc) => {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                // =========================================
+                // IGNORE SOFT-DELETED TRANSACTIONS
+                // =========================================
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                // =========================================
+                // ONLY INCOME TRANSACTIONS
+                // =========================================
+
+                if (
+                    String(
+                        transaction.type || ""
+                    ).toLowerCase() !== "income"
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
+
+transactions.sort(
+    (a, b) =>
+        String(
+            a.date || ""
+        ).localeCompare(
+            String(
+                b.date || ""
+            )
+        )
+);
+
+
+        const content =
+            document.getElementById(
+                "incomeTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // NO DATA
+        // =================================================
+
+        if (!transactions.length) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px;
+                        text-align:center;
+                        color:#7b8ba1;
+                    "
+                >
+                    📭 No income transactions found.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CREATE TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions
+                .map(
+                    (transaction) => `
+
+                        <tr
+                            style="
+                                border-bottom:1px solid #e5ebf3;
+                            "
+                        >
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    formatReportDate(
+                                        transaction.date
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.type
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.category
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.partyName
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${
+                                    Number(
+                                        transaction.amount
+                                        || 0
+                                    ).toLocaleString(
+                                        "en-IN",
+                                        {
+                                            minimumFractionDigits:2,
+                                            maximumFractionDigits:2
+                                        }
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.paymentMethod
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.linkedModule
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.notes
+                                    || "—"
+                                }
+                            </td>
+
+                        </tr>
+
+                    `
+                )
+                .join("");
+
+
+        // =================================================
+        // TOTAL
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                (
+                    total,
+                    transaction
+                ) =>
+                    total +
+                    Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+        // =================================================
+        // REPORT HTML
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:12px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        background:#ffffff;
+                        font-size:13px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173b70;
+                                color:#ffffff;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Date
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Type
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Category
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Party
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:right;
+                                "
+                            >
+                                Amount
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Payment Method
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Linked Module
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Notes
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =====================================
+                 REPORT TOTAL
+            ====================================== -->
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    display:flex;
+                    justify-content:flex-end;
+                    align-items:center;
+                    gap:25px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:12px;
+                    "
+                >
+
+                    Total Income Transactions:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            margin-left:5px;
+                        "
+                    >
+                        ${transactions.length}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        color:#173b70;
+                        font-size:14px;
+                        font-weight:700;
+                    "
+                >
+
+                    Total Income:
+
+                    <strong
+                        style="
+                            color:#087443;
+                            font-size:17px;
+                            margin-left:6px;
+                        "
+                    >
+                        ₹${
+                            totalAmount.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits:2,
+                                    maximumFractionDigits:2
+                                }
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Income Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "incomeTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                    "
+                >
+
+                    ❌ Unable to load income transactions.
+
+                    <br><br>
+
+                    Please check Console.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #21 EXPENSE TRANSACTIONS
+// =========================================================
+
+async function renderExpenseTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #21 Expense Transactions
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        padding:20px 30px;
+                    "
+                >
+
+                    <div
+                        id="expenseTransactionsReportContent"
+                        style="
+                            text-align:center;
+                            padding:40px;
+                            color:#7b8ba1;
+                        "
+                    >
+                        ⏳ Loading expense transactions...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =================================================
+    // BACK BUTTON
+    // =================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            renderTransactionReports
+        );
+
+    }
+
+
+    // =================================================
+    // CHECK USER
+    // =================================================
+
+    if (!currentUser) {
+
+        const content =
+            document.getElementById(
+                "expenseTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b45309;
+                    "
+                >
+                    ⚠️ User is not logged in.
+                </div>
+
+            `;
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // FIRESTORE TRANSACTIONS
+        // =================================================
+
+        const transactionsRef =
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "transactions"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                transactionsRef
+            );
+
+
+        const transactions = [];
+
+
+        snapshot.forEach(
+            (transactionDoc) => {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                // =========================================
+                // IGNORE SOFT-DELETED TRANSACTIONS
+                // =========================================
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                // =========================================
+                // ONLY EXPENSE TRANSACTIONS
+                // =========================================
+
+                if (
+                    String(
+                        transaction.type || ""
+                    ).toLowerCase() !== "expense"
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — OLDEST FIRST / ASCENDING
+        // =================================================
+
+        transactions.sort(
+            (a, b) =>
+                String(
+                    a.date || ""
+                ).localeCompare(
+                    String(
+                        b.date || ""
+                    )
+                )
+        );
+
+
+        const content =
+            document.getElementById(
+                "expenseTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // NO DATA
+        // =================================================
+
+        if (!transactions.length) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px;
+                        text-align:center;
+                        color:#7b8ba1;
+                    "
+                >
+                    📭 No expense transactions found.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CREATE TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions
+                .map(
+                    (transaction) => `
+
+                        <tr
+                            style="
+                                border-bottom:1px solid #e5ebf3;
+                            "
+                        >
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    formatReportDate(
+                                        transaction.date
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.type
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.category
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.partyName
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${
+                                    Number(
+                                        transaction.amount
+                                        || 0
+                                    ).toLocaleString(
+                                        "en-IN",
+                                        {
+                                            minimumFractionDigits:2,
+                                            maximumFractionDigits:2
+                                        }
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.paymentMethod
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.linkedModule
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.notes
+                                    || "—"
+                                }
+                            </td>
+
+                        </tr>
+
+                    `
+                )
+                .join("");
+
+
+        // =================================================
+        // TOTAL EXPENSE
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                (
+                    total,
+                    transaction
+                ) =>
+                    total +
+                    Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+        // =================================================
+        // REPORT HTML
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:12px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        background:#ffffff;
+                        font-size:13px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173b70;
+                                color:#ffffff;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Date
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Type
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Category
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Party
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:right;
+                                "
+                            >
+                                Amount
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Payment Method
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Linked Module
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Notes
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =====================================
+                 REPORT TOTAL
+            ====================================== -->
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    display:flex;
+                    justify-content:flex-end;
+                    align-items:center;
+                    gap:25px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:12px;
+                    "
+                >
+
+                    Total Expense Transactions:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            margin-left:5px;
+                        "
+                    >
+                        ${transactions.length}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        color:#173b70;
+                        font-size:14px;
+                        font-weight:700;
+                    "
+                >
+
+                    Total Expense:
+
+                    <strong
+                        style="
+                            color:#b91c1c;
+                            font-size:17px;
+                            margin-left:6px;
+                        "
+                    >
+                        ₹${
+                            totalAmount.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits:2,
+                                    maximumFractionDigits:2
+                                }
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Expense Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "expenseTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                    "
+                >
+
+                    ❌ Unable to load expense transactions.
+
+                    <br><br>
+
+                    Please check Console.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #22 INVESTMENT TRANSACTIONS
+// =========================================================
+
+async function renderInvestmentTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #22 Investment Transactions
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        padding:20px 30px;
+                    "
+                >
+
+                    <div
+                        id="investmentTransactionsReportContent"
+                        style="
+                            text-align:center;
+                            padding:40px;
+                            color:#7b8ba1;
+                        "
+                    >
+                        ⏳ Loading investment transactions...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =================================================
+    // BACK BUTTON
+    // =================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            renderTransactionReports
+        );
+
+    }
+
+
+    // =================================================
+    // CHECK USER
+    // =================================================
+
+    if (!currentUser) {
+
+        const content =
+            document.getElementById(
+                "investmentTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b45309;
+                    "
+                >
+                    ⚠️ User is not logged in.
+                </div>
+
+            `;
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // FIRESTORE TRANSACTIONS
+        // =================================================
+
+        const transactionsRef =
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "transactions"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                transactionsRef
+            );
+
+
+        const transactions = [];
+
+
+        snapshot.forEach(
+            (transactionDoc) => {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                // =========================================
+                // IGNORE SOFT-DELETED TRANSACTIONS
+                // =========================================
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                // =========================================
+                // ONLY INVESTMENT TRANSACTIONS
+                // =========================================
+
+                if (
+                    String(
+                        transaction.type || ""
+                    ).toLowerCase() !== "investment"
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — OLDEST FIRST / ASCENDING
+        // =================================================
+
+        transactions.sort(
+            (a, b) =>
+                String(
+                    a.date || ""
+                ).localeCompare(
+                    String(
+                        b.date || ""
+                    )
+                )
+        );
+
+
+        const content =
+            document.getElementById(
+                "investmentTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // NO DATA
+        // =================================================
+
+        if (!transactions.length) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px;
+                        text-align:center;
+                        color:#7b8ba1;
+                    "
+                >
+                    📭 No investment transactions found.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CREATE TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions
+                .map(
+                    (transaction) => `
+
+                        <tr
+                            style="
+                                border-bottom:1px solid #e5ebf3;
+                            "
+                        >
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    formatReportDate(
+                                        transaction.date
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.type
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.category
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.partyName
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${
+                                    Number(
+                                        transaction.amount
+                                        || 0
+                                    ).toLocaleString(
+                                        "en-IN",
+                                        {
+                                            minimumFractionDigits:2,
+                                            maximumFractionDigits:2
+                                        }
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.paymentMethod
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.linkedModule
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.notes
+                                    || "—"
+                                }
+                            </td>
+
+                        </tr>
+
+                    `
+                )
+                .join("");
+
+
+        // =================================================
+        // TOTAL INVESTMENT
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                (
+                    total,
+                    transaction
+                ) =>
+                    total +
+                    Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+        // =================================================
+        // REPORT HTML
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:12px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        background:#ffffff;
+                        font-size:13px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173b70;
+                                color:#ffffff;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Date
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Type
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Category
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Party
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:right;
+                                "
+                            >
+                                Amount
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Payment Method
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Linked Module
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Notes
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =====================================
+                 REPORT TOTAL
+            ====================================== -->
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    display:flex;
+                    justify-content:flex-end;
+                    align-items:center;
+                    gap:25px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:12px;
+                    "
+                >
+
+                    Total Investment Transactions:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            margin-left:5px;
+                        "
+                    >
+                        ${transactions.length}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        color:#173b70;
+                        font-size:14px;
+                        font-weight:700;
+                    "
+                >
+
+                    Total Investment:
+
+                    <strong
+                        style="
+                            color:#087443;
+                            font-size:17px;
+                            margin-left:6px;
+                        "
+                    >
+                        ₹${
+                            totalAmount.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits:2,
+                                    maximumFractionDigits:2
+                                }
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Investment Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "investmentTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                    "
+                >
+
+                    ❌ Unable to load investment transactions.
+
+                    <br><br>
+
+                    Please check Console.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #23 TRANSFER TRANSACTIONS
+// =========================================================
+
+async function renderTransferTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #23 Transfer Transactions
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        padding:20px 30px;
+                    "
+                >
+
+                    <div
+                        id="transferTransactionsReportContent"
+                        style="
+                            text-align:center;
+                            padding:40px;
+                            color:#7b8ba1;
+                        "
+                    >
+                        ⏳ Loading transfer transactions...
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =================================================
+    // BACK BUTTON
+    // =================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            renderTransactionReports
+        );
+
+    }
+
+
+    // =================================================
+    // CHECK USER
+    // =================================================
+
+    if (!currentUser) {
+
+        const content =
+            document.getElementById(
+                "transferTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b45309;
+                    "
+                >
+                    ⚠️ User is not logged in.
+                </div>
+
+            `;
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // FIRESTORE TRANSACTIONS
+        // =================================================
+
+        const transactionsRef =
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "transactions"
+            );
+
+
+        const snapshot =
+            await getDocs(
+                transactionsRef
+            );
+
+
+        const transactions = [];
+
+
+        snapshot.forEach(
+            (transactionDoc) => {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                // =========================================
+                // IGNORE SOFT-DELETED TRANSACTIONS
+                // =========================================
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                // =========================================
+                // ONLY TRANSFER TRANSACTIONS
+                // =========================================
+
+                if (
+                    String(
+                        transaction.type || ""
+                    ).toLowerCase() !== "transfer"
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — OLDEST FIRST / ASCENDING
+        // =================================================
+
+        transactions.sort(
+            (a, b) =>
+                String(
+                    a.date || ""
+                ).localeCompare(
+                    String(
+                        b.date || ""
+                    )
+                )
+        );
+
+
+        const content =
+            document.getElementById(
+                "transferTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // NO DATA
+        // =================================================
+
+        if (!transactions.length) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px;
+                        text-align:center;
+                        color:#7b8ba1;
+                    "
+                >
+                    📭 No transfer transactions found.
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // CREATE TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions
+                .map(
+                    (transaction) => `
+
+                        <tr
+                            style="
+                                border-bottom:1px solid #e5ebf3;
+                            "
+                        >
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    formatReportDate(
+                                        transaction.date
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.type
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.category
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.partyName
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${
+                                    Number(
+                                        transaction.amount
+                                        || 0
+                                    ).toLocaleString(
+                                        "en-IN",
+                                        {
+                                            minimumFractionDigits:2,
+                                            maximumFractionDigits:2
+                                        }
+                                    )
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.paymentMethod
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.linkedModule
+                                    || "—"
+                                }
+                            </td>
+
+
+                            <td
+                                style="
+                                    padding:10px;
+                                "
+                            >
+                                ${
+                                    transaction.notes
+                                    || "—"
+                                }
+                            </td>
+
+                        </tr>
+
+                    `
+                )
+                .join("");
+
+
+        // =================================================
+        // TOTAL TRANSFER
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                (
+                    total,
+                    transaction
+                ) =>
+                    total +
+                    Number(
+                        transaction.amount || 0
+                    ),
+                0
+            );
+
+
+        // =================================================
+        // REPORT HTML
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:12px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        background:#ffffff;
+                        font-size:13px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173b70;
+                                color:#ffffff;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Date
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Type
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Category
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Party
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:right;
+                                "
+                            >
+                                Amount
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Payment Method
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Linked Module
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                "
+                            >
+                                Notes
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =====================================
+                 REPORT TOTAL
+            ====================================== -->
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    display:flex;
+                    justify-content:flex-end;
+                    align-items:center;
+                    gap:25px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:12px;
+                    "
+                >
+
+                    Total Transfer Transactions:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            margin-left:5px;
+                        "
+                    >
+                        ${transactions.length}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        color:#173b70;
+                        font-size:14px;
+                        font-weight:700;
+                    "
+                >
+
+                    Total Transfer:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            font-size:17px;
+                            margin-left:6px;
+                        "
+                    >
+                        ₹${
+                            totalAmount.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits:2,
+                                    maximumFractionDigits:2
+                                }
+                            )
+                        }
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Transfer Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "transferTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                    "
+                >
+
+                    ❌ Unable to load transfer transactions.
+
+                    <br><br>
+
+                    Please check Console.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #24 WALLET TRANSACTIONS
+// =========================================================
+
+async function renderWalletTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #24 Wallet Transactions
+                        </strong>
+
+
+                        <span>
+                            <strong>Reporting Period:</strong>
+                            All Wallet Transactions
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    style="
+                        padding:20px 30px;
+                    "
+                >
+
+                    <div
+                        class="wallet-transactions-summary"
+                        style="
+                            display:flex;
+                            gap:18px;
+                            flex-wrap:wrap;
+                        "
+                    >
+
+                        <div
+                            style="
+                                flex:1;
+                                min-width:190px;
+                                padding:16px 18px;
+                                border:1px solid #dce5f0;
+                                border-radius:10px;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-bottom:5px;
+                                "
+                            >
+                                Wallet Transactions
+                            </div>
+
+                            <strong
+                                id="walletTransactionCount"
+                                style="
+                                    color:#173b70;
+                                    font-size:21px;
+                                "
+                            >
+                                0
+                            </strong>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                flex:1;
+                                min-width:190px;
+                                padding:16px 18px;
+                                border:1px solid #dce5f0;
+                                border-radius:10px;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-bottom:5px;
+                                "
+                            >
+                                Total Wallet Amount
+                            </div>
+
+                            <strong
+                                id="walletTransactionTotal"
+                                style="
+                                    color:#087443;
+                                    font-size:21px;
+                                "
+                            >
+                                ₹0.00
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="walletTransactionsReportContent"
+                style="
+                    padding:0 30px 30px;
+                "
+            >
+
+                <div
+                    style="
+                        padding:30px;
+                        text-align:center;
+                        color:#64748b;
+                    "
+                >
+                    Loading wallet transactions...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =====================================================
+    // BACK BUTTON
+    // =====================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            function () {
+
+                renderTransactionReports();
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // FIREBASE USER
+    // =====================================================
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        const content =
+            document.getElementById(
+                "walletTransactionsReportContent"
+            );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                        text-align:center;
+                    "
+                >
+                    ❌ Please login first to view
+                    Wallet Transactions.
+                </div>
+
+            `;
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // LOAD TRANSACTIONS
+        // =================================================
+
+        const transactionsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                )
+            );
+
+
+        const transactions = [];
+
+// =================================================
+// LOAD ACCOUNT NAMES
+// =================================================
+
+const accountNameMap = new Map();
+
+const accountsSnapshot =
+    await getDocs(
+        collection(
+            db,
+            "users",
+            user.uid,
+            "accounts"
+        )
+    );
+
+accountsSnapshot.forEach(
+    function (accountDoc) {
+
+        const account =
+            accountDoc.data();
+
+        accountNameMap.set(
+            accountDoc.id,
+            account.name ||
+                "Unnamed Account"
+        );
+
+    }
+);
+
+        transactionsSnapshot.forEach(
+            function (transactionDoc) {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+ // =========================================
+// WALLET TRANSACTIONS
+// =========================================
+// 1. Wallet Payment
+// 2. Cashback linked to Wallet
+// =========================================
+
+const isWalletTransaction =
+    transaction.type === "wallet_payment" ||
+    (
+        transaction.type === "cashback" &&
+        transaction.category === "Wallet Cashback"
+    );
+
+if (!isWalletTransaction) {
+
+    return;
+
+}
+
+
+                // =========================================
+                // EXCLUDE DELETED TRANSACTIONS
+                // =========================================
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — NEWEST FIRST
+        // =================================================
+
+        transactions.sort(
+            function (a, b) {
+
+                return String(
+                    b.date || ""
+                ).localeCompare(
+                    String(
+                        a.date || ""
+                    )
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // TOTAL
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                function (sum, transaction) {
+
+                    return (
+                        sum +
+                        Number(
+                            transaction.amount || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        // =================================================
+        // UPDATE SUMMARY
+        // =================================================
+
+        const countElement =
+            document.getElementById(
+                "walletTransactionCount"
+            );
+
+
+        const totalElement =
+            document.getElementById(
+                "walletTransactionTotal"
+            );
+
+
+        if (countElement) {
+
+            countElement.textContent =
+                transactions.length;
+
+        }
+
+
+        if (totalElement) {
+
+            totalElement.textContent =
+                "₹" +
+                totalAmount.toLocaleString(
+                    "en-IN",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
+
+        }
+
+
+        // =================================================
+        // REPORT CONTENT
+        // =================================================
+
+        const content =
+            document.getElementById(
+                "walletTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // EMPTY REPORT
+        // =================================================
+
+        if (transactions.length === 0) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px 20px;
+                        text-align:center;
+                        color:#64748b;
+                        border:1px solid #dce5f0;
+                        border-radius:10px;
+                        background:#f8fbff;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:28px;
+                            margin-bottom:10px;
+                        "
+                    >
+                        👛
+                    </div>
+
+                    No Wallet Transactions found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // BUILD TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions.map(
+                function (transaction) {
+
+                    // -------------------------------------
+                    // DATE
+                    // -------------------------------------
+
+                    let formattedDate = "-";
+
+
+                    if (transaction.date) {
+
+                        const parts =
+                            String(
+                                transaction.date
+                            ).split("-");
+
+
+                        if (
+                            parts.length === 3
+                        ) {
+
+                            formattedDate =
+                                parts[2] +
+                                "-" +
+                                parts[1] +
+                                "-" +
+                                parts[0];
+
+                        }
+                        else {
+
+                            formattedDate =
+                                transaction.date;
+
+                        }
+
+                    }
+
+
+                    // -------------------------------------
+                    // AMOUNT
+                    // -------------------------------------
+
+                    const formattedAmount =
+                        Number(
+                            transaction.amount || 0
+                        ).toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+
+                    // -------------------------------------
+// FROM ACCOUNT
+// -------------------------------------
+
+const fromAccount =
+    transaction.fromAccountId
+        ? (
+            accountNameMap.get(
+                transaction.fromAccountId
+            ) ||
+            transaction.fromAccountId
+        )
+        : "-";
+
+
+// -------------------------------------
+// TO ACCOUNT
+// -------------------------------------
+
+const toAccount =
+    transaction.toAccountId
+        ? (
+            accountNameMap.get(
+                transaction.toAccountId
+            ) ||
+            transaction.toAccountId
+        )
+        : "-";
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${formattedDate}
+                            </td>
+
+
+                            <td>
+                                👛 Wallet Payment
+                            </td>
+
+
+                            <td>
+                                ${transaction.category || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.partyName || "-"}
+                            </td>
+
+
+                            <td
+                                style="
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${formattedAmount}
+                            </td>
+
+
+                            <td>
+                                ${fromAccount}
+                            </td>
+
+
+                            <td>
+                                ${toAccount}
+                            </td>
+
+
+                            <td>
+                                ${transaction.paymentMethod || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.linkedModule || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.notes || "-"}
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            ).join("");
+
+
+        // =================================================
+        // RENDER TABLE
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    width:100%;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        min-width:1100px;
+                        background:#ffffff;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173b70;
+                                color:#ffffff;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Date
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Type
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Category
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Party
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:right;
+                                "
+                            >
+                                Amount
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                From Account
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                To Account
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Payment Method
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Linked Module
+                            </th>
+
+
+                            <th
+                                style="
+                                    padding:11px;
+                                    text-align:left;
+                                "
+                            >
+                                Notes
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =========================================
+                 REPORT TOTAL
+            ========================================== -->
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    display:flex;
+                    justify-content:flex-end;
+                    align-items:center;
+                    gap:25px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <div
+                    style="
+                        color:#64748b;
+                        font-size:12px;
+                    "
+                >
+
+                    Total Wallet Transactions:
+
+                    <strong
+                        style="
+                            color:#173b70;
+                            margin-left:5px;
+                        "
+                    >
+                        ${transactions.length}
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        color:#173b70;
+                        font-size:14px;
+                        font-weight:700;
+                    "
+                >
+
+                    Total Wallet Amount:
+
+                    <strong
+                        style="
+                            color:#087443;
+                            font-size:17px;
+                            margin-left:6px;
+                        "
+                    >
+
+                        ₹${totalAmount.toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        )}
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Wallet Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "walletTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#b00020;
+                    "
+                >
+
+                    ❌ Unable to load Wallet Transactions.
+
+                    <br><br>
+
+                    Please check Console.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #25 CASHBACK TRANSACTIONS
+// =========================================================
+
+async function renderCashbackTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #25 Cashback Transactions
+                        </strong>
+
+                        <span>
+                            <strong>Reporting Period:</strong>
+                            All Cashback Transactions
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div style="padding:20px 30px;">
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:18px;
+                            flex-wrap:wrap;
+                        "
+                    >
+
+                        <div
+                            style="
+                                flex:1;
+                                min-width:190px;
+                                padding:16px 18px;
+                                border:1px solid #dce5f0;
+                                border-radius:10px;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-bottom:5px;
+                                "
+                            >
+                                Cashback Transactions
+                            </div>
+
+                            <strong
+                                id="cashbackTransactionCount"
+                                style="
+                                    color:#173b70;
+                                    font-size:21px;
+                                "
+                            >
+                                0
+                            </strong>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                flex:1;
+                                min-width:190px;
+                                padding:16px 18px;
+                                border:1px solid #dce5f0;
+                                border-radius:10px;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-bottom:5px;
+                                "
+                            >
+                                Total Cashback Amount
+                            </div>
+
+                            <strong
+                                id="cashbackTransactionTotal"
+                                style="
+                                    color:#087443;
+                                    font-size:21px;
+                                "
+                            >
+                                ₹0.00
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="cashbackTransactionsReportContent"
+                style="padding:0 30px 30px;"
+            >
+
+                <div
+                    style="
+                        padding:30px;
+                        text-align:center;
+                        color:#64748b;
+                    "
+                >
+                    Loading cashback transactions...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =====================================================
+    // BACK BUTTON
+    // =====================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            function () {
+
+                renderTransactionReports();
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // FIREBASE USER
+    // =====================================================
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // LOAD TRANSACTIONS
+        // =================================================
+
+        const transactionsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                )
+            );
+
+
+        const transactions = [];
+
+
+        // =================================================
+        // LOAD ACCOUNT NAMES
+        // =================================================
+
+        const accountNameMap = new Map();
+
+
+        const accountsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
+            );
+
+
+        accountsSnapshot.forEach(
+            function (accountDoc) {
+
+                const account =
+                    accountDoc.data();
+
+                accountNameMap.set(
+                    accountDoc.id,
+                    account.name ||
+                        "Unnamed Account"
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // ONLY CASHBACK TRANSACTIONS
+        // =================================================
+
+        transactionsSnapshot.forEach(
+            function (transactionDoc) {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                if (
+                    transaction.deleted === true
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    transaction.type !==
+                    "cashback"
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — NEWEST FIRST
+        // =================================================
+
+        transactions.sort(
+            function (a, b) {
+
+                return String(
+                    b.date || ""
+                ).localeCompare(
+                    String(
+                        a.date || ""
+                    )
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // TOTAL
+        // =================================================
+
+        const totalAmount =
+            transactions.reduce(
+                function (sum, transaction) {
+
+                    return (
+                        sum +
+                        Number(
+                            transaction.amount || 0
+                        )
+                    );
+
+                },
+                0
+            );
+
+
+        // =================================================
+        // UPDATE SUMMARY
+        // =================================================
+
+        const countElement =
+            document.getElementById(
+                "cashbackTransactionCount"
+            );
+
+
+        const totalElement =
+            document.getElementById(
+                "cashbackTransactionTotal"
+            );
+
+
+        if (countElement) {
+
+            countElement.textContent =
+                transactions.length;
+
+        }
+
+
+        if (totalElement) {
+
+            totalElement.textContent =
+                "₹" +
+                totalAmount.toLocaleString(
+                    "en-IN",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
+
+        }
+
+
+        // =================================================
+        // CONTENT
+        // =================================================
+
+        const content =
+            document.getElementById(
+                "cashbackTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // EMPTY REPORT
+        // =================================================
+
+        if (transactions.length === 0) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px 20px;
+                        text-align:center;
+                        color:#64748b;
+                        border:1px solid #dce5f0;
+                        border-radius:10px;
+                        background:#f8fbff;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:28px;
+                            margin-bottom:10px;
+                        "
+                    >
+                        🎁
+                    </div>
+
+                    No Cashback Transactions found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // BUILD TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions.map(
+                function (transaction) {
+
+                    let formattedDate = "-";
+
+
+                    if (transaction.date) {
+
+                        const parts =
+                            String(
+                                transaction.date
+                            ).split("-");
+
+
+                        if (
+                            parts.length === 3
+                        ) {
+
+                            formattedDate =
+                                parts[2] +
+                                "-" +
+                                parts[1] +
+                                "-" +
+                                parts[0];
+
+                        }
+                        else {
+
+                            formattedDate =
+                                transaction.date;
+
+                        }
+
+                    }
+
+
+                    const formattedAmount =
+                        Number(
+                            transaction.amount || 0
+                        ).toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+
+                    const fromAccount =
+                        transaction.fromAccountId
+                            ? (
+                                accountNameMap.get(
+                                    transaction.fromAccountId
+                                ) ||
+                                transaction.fromAccountId
+                            )
+                            : "-";
+
+
+                    const toAccount =
+                        transaction.toAccountId
+                            ? (
+                                accountNameMap.get(
+                                    transaction.toAccountId
+                                ) ||
+                                transaction.toAccountId
+                            )
+                            : "-";
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${formattedDate}
+                            </td>
+
+
+                            <td>
+                                🎁 Cashback
+                            </td>
+
+
+                            <td>
+                                ${transaction.category || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.partyName || "-"}
+                            </td>
+
+
+                            <td
+                                style="
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${formattedAmount}
+                            </td>
+
+
+                            <td>
+                                ${fromAccount}
+                            </td>
+
+
+                            <td>
+                                ${toAccount}
+                            </td>
+
+
+                            <td>
+                                ${transaction.paymentMethod || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.linkedModule || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.notes || "-"}
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            ).join("");
+
+
+        // =================================================
+        // FINAL TABLE
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        min-width:1100px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173f78;
+                                color:white;
+                            "
+                        >
+
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Party</th>
+                            <th>Amount</th>
+                            <th>From Account</th>
+                            <th>To Account</th>
+                            <th>Payment Method</th>
+                            <th>Linked Module</th>
+                            <th>Notes</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+
+                    <tfoot>
+
+                        <tr
+                            style="
+                                font-weight:700;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <td
+                                colspan="4"
+                                style="text-align:right;"
+                            >
+                                Total Cashback:
+                            </td>
+
+                            <td
+                                style="
+                                    text-align:right;
+                                    color:#087443;
+                                "
+                            >
+                                ₹${totalAmount.toLocaleString(
+                                    "en-IN",
+                                    {
+                                        minimumFractionDigits:2,
+                                        maximumFractionDigits:2
+                                    }
+                                )}
+                            </td>
+
+                            <td colspan="5"></td>
+
+                        </tr>
+
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        `;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Cashback Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "cashbackTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        text-align:center;
+                        color:#b00020;
+                    "
+                >
+                    ❌ Unable to load Cashback Transactions.
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =========================================================
+// #26 DELETED TRANSACTIONS
+// =========================================================
+
+async function renderDeletedTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+
+            <div class="report-document-header">
+
+                <div
+                    style="
+                        padding:24px 30px 18px;
+                        border-bottom:1px solid #d9e1ec;
+                    "
+                >
+
+                    <div
+                        style="
+                            display:flex;
+                            align-items:center;
+                            gap:28px;
+                            flex-wrap:wrap;
+                            color:#173b70;
+                        "
+                    >
+
+                        <strong
+                            style="
+                                font-size:22px;
+                                color:#173b70;
+                            "
+                        >
+                            #26 Deleted Transactions
+                        </strong>
+
+                        <span>
+                            <strong>Reporting Period:</strong>
+                            All Deleted Transactions
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div style="padding:20px 30px;">
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:18px;
+                            flex-wrap:wrap;
+                        "
+                    >
+
+                        <div
+                            style="
+                                flex:1;
+                                min-width:190px;
+                                padding:16px 18px;
+                                border:1px solid #dce5f0;
+                                border-radius:10px;
+                                background:#f8fbff;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-bottom:5px;
+                                "
+                            >
+                                Deleted Transactions
+                            </div>
+
+                            <strong
+                                id="deletedTransactionCount"
+                                style="
+                                    color:#173b70;
+                                    font-size:21px;
+                                "
+                            >
+                                0
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="deletedTransactionsReportContent"
+                style="padding:0 30px 30px;"
+            >
+
+                <div
+                    style="
+                        padding:30px;
+                        text-align:center;
+                        color:#64748b;
+                    "
+                >
+                    Loading deleted transactions...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    // =====================================================
+    // BACK BUTTON
+    // =====================================================
+
+    const backButton =
+        document.getElementById(
+            "backToTransactionReports"
+        );
+
+
+    if (backButton) {
+
+        backButton.addEventListener(
+            "click",
+            function () {
+
+                renderTransactionReports();
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // FIREBASE USER
+    // =====================================================
+
+    const user =
+        auth.currentUser;
+
+
+    if (!user) {
+
+        return;
+
+    }
+
+
+    try {
+
+        // =================================================
+        // LOAD TRANSACTIONS
+        // =================================================
+
+        const transactionsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                )
+            );
+
+
+        const transactions = [];
+
+
+        // =================================================
+        // LOAD ACCOUNT NAMES
+        // =================================================
+
+        const accountNameMap = new Map();
+
+
+        const accountsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
+            );
+
+
+        accountsSnapshot.forEach(
+            function (accountDoc) {
+
+                const account =
+                    accountDoc.data();
+
+                accountNameMap.set(
+                    accountDoc.id,
+                    account.name ||
+                        "Unnamed Account"
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // ONLY DELETED TRANSACTIONS
+        // =================================================
+
+        transactionsSnapshot.forEach(
+            function (transactionDoc) {
+
+                const transaction =
+                    transactionDoc.data();
+
+
+                if (
+                    transaction.deleted !== true
+                ) {
+
+                    return;
+
+                }
+
+
+                transactions.push({
+
+                    id:
+                        transactionDoc.id,
+
+                    ...transaction
+
+                });
+
+            }
+        );
+
+
+        // =================================================
+        // SORT — NEWEST FIRST
+        // =================================================
+
+        transactions.sort(
+            function (a, b) {
+
+                return String(
+                    b.date || ""
+                ).localeCompare(
+                    String(
+                        a.date || ""
+                    )
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // UPDATE COUNT
+        // =================================================
+
+        const countElement =
+            document.getElementById(
+                "deletedTransactionCount"
+            );
+
+
+        if (countElement) {
+
+            countElement.textContent =
+                transactions.length;
+
+        }
+
+
+        // =================================================
+        // CONTENT
+        // =================================================
+
+        const content =
+            document.getElementById(
+                "deletedTransactionsReportContent"
+            );
+
+
+        if (!content) {
+
+            return;
+
+        }
+
+
+        // =================================================
+        // NO DATA
+        // =================================================
+
+        if (transactions.length === 0) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:40px 20px;
+                        text-align:center;
+                        color:#64748b;
+                        border:1px solid #dce5f0;
+                        border-radius:10px;
+                        background:#f8fbff;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:28px;
+                            margin-bottom:10px;
+                        "
+                    >
+                        🗑️
+                    </div>
+
+                    No Deleted Transactions found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // =================================================
+        // BUILD TABLE ROWS
+        // =================================================
+
+        const rows =
+            transactions.map(
+                function (transaction) {
+
+                    let formattedDate = "-";
+
+
+                    if (transaction.date) {
+
+                        const parts =
+                            String(
+                                transaction.date
+                            ).split("-");
+
+
+                        if (
+                            parts.length === 3
+                        ) {
+
+                            formattedDate =
+                                parts[2] +
+                                "-" +
+                                parts[1] +
+                                "-" +
+                                parts[0];
+
+                        }
+                        else {
+
+                            formattedDate =
+                                transaction.date;
+
+                        }
+
+                    }
+
+
+                    const formattedAmount =
+                        Number(
+                            transaction.amount || 0
+                        ).toLocaleString(
+                            "en-IN",
+                            {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }
+                        );
+
+
+                    const fromAccount =
+                        transaction.fromAccountId
+                            ? (
+                                accountNameMap.get(
+                                    transaction.fromAccountId
+                                ) ||
+                                transaction.fromAccountId
+                            )
+                            : "-";
+
+
+                    const toAccount =
+                        transaction.toAccountId
+                            ? (
+                                accountNameMap.get(
+                                    transaction.toAccountId
+                                ) ||
+                                transaction.toAccountId
+                            )
+                            : "-";
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${formattedDate}
+                            </td>
+
+
+                            <td>
+                                ${transaction.type || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.category || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.partyName || "-"}
+                            </td>
+
+
+                            <td
+                                style="
+                                    text-align:right;
+                                    font-weight:700;
+                                "
+                            >
+                                ₹${formattedAmount}
+                            </td>
+
+
+                            <td>
+                                ${fromAccount}
+                            </td>
+
+
+                            <td>
+                                ${toAccount}
+                            </td>
+
+
+                            <td>
+                                ${transaction.paymentMethod || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.linkedModule || "-"}
+                            </td>
+
+
+                            <td>
+                                ${transaction.notes || "-"}
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            ).join("");
+
+
+        // =================================================
+        // FINAL TABLE
+        // =================================================
+
+        content.innerHTML = `
+
+            <div
+                style="
+                    overflow-x:auto;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        min-width:1100px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#173f78;
+                                color:white;
+                            "
+                        >
+
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Party</th>
+                            <th>Amount</th>
+                            <th>From Account</th>
+                            <th>To Account</th>
+                            <th>Payment Method</th>
+                            <th>Linked Module</th>
+                            <th>Notes</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        ${rows}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <div
+                style="
+                    margin-top:16px;
+                    padding:14px 18px;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                    text-align:right;
+                "
+            >
+
+                <strong
+                    style="
+                        color:#173b70;
+                    "
+                >
+                    Total Deleted Transactions:
+                </strong>
+
+                <strong
+                    style="
+                        color:#b00020;
+                        margin-left:6px;
+                    "
+                >
+                    ${transactions.length}
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Deleted Transactions Report Error:",
+            error
+        );
+
+
+        const content =
+            document.getElementById(
+                "deletedTransactionsReportContent"
+            );
+
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        text-align:center;
+                        color:#b00020;
+                    "
+                >
+                    ❌ Unable to load Deleted Transactions.
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+
+ // =========================================================
+ // #27 EDITED TRANSACTIONS
+ // =========================================================
+
+async function renderEditedTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+
+                <div style="
+                    padding:24px 30px 18px;
+                    border-bottom:1px solid #d9e1ec;
+                ">
+
+                    <strong style="
+                        font-size:22px;
+                        color:#173b70;
+                    ">
+                        #27 Edited Transactions
+                    </strong>
+
+                    <p>
+                        Reporting Period: All Edited Transactions
+                    </p>
+
+                </div>
+
+                <div style="padding:20px 30px;">
+
+                    <div style="
+                        padding:16px 18px;
+                        border:1px solid #dce5f0;
+                        border-radius:10px;
+                        background:#f8fbff;
+                    ">
+
+                        <div style="color:#64748b;font-size:12px;">
+                            Edited Transactions
+                        </div>
+
+                        <strong
+                            id="editedTransactionCount"
+                            style="color:#173b70;font-size:21px;"
+                        >
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div
+                id="editedTransactionsReportContent"
+                style="padding:0 30px 30px;"
+            >
+                <div style="padding:30px;text-align:center;">
+                    Loading edited transactions...
+                </div>
+            </div>
+
+        </div>
+
+    `;
+
+    const backButton =
+        document.getElementById("backToTransactionReports");
+
+    if (backButton) {
+        backButton.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+    }
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+    try {
+
+        const transactionsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            )
+        );
+
+        const accountNameMap = new Map();
+
+        const accountsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            )
+        );
+
+        accountsSnapshot.forEach(function (accountDoc) {
+
+            const account = accountDoc.data();
+
+            accountNameMap.set(
+                accountDoc.id,
+                account.name || "Unnamed Account"
+            );
+
+        });
+
+        const transactions = [];
+
+        transactionsSnapshot.forEach(function (transactionDoc) {
+
+            const transaction = transactionDoc.data();
+
+            // Exclude deleted transactions
+            if (transaction.deleted === true) {
+                return;
+            }
+
+            // Existing edit logic saves updatedAt
+            if (!transaction.updatedAt) {
+                return;
+            }
+
+            transactions.push({
+                id: transactionDoc.id,
+                ...transaction
+            });
+
+        });
+
+        // Latest edit first
+        transactions.sort(function (a, b) {
+
+            const timeA =
+                a.updatedAt?.toMillis
+                    ? a.updatedAt.toMillis()
+                    : 0;
+
+            const timeB =
+                b.updatedAt?.toMillis
+                    ? b.updatedAt.toMillis()
+                    : 0;
+
+            return timeB - timeA;
+
+        });
+
+        const countElement =
+            document.getElementById("editedTransactionCount");
+
+        if (countElement) {
+            countElement.textContent = transactions.length;
+        }
+
+        const content =
+            document.getElementById(
+                "editedTransactionsReportContent"
+            );
+
+        if (!content) {
+            return;
+        }
+
+        if (transactions.length === 0) {
+
+            content.innerHTML = `
+                <div style="
+                    padding:40px 20px;
+                    text-align:center;
+                    color:#64748b;
+                    border:1px solid #dce5f0;
+                    border-radius:10px;
+                    background:#f8fbff;
+                ">
+                    <div style="font-size:28px;margin-bottom:10px;">
+                        ✏️
+                    </div>
+
+                    No Edited Transactions found.
+                </div>
+            `;
+
+            return;
+        }
+
+        const rows = transactions.map(function (transaction) {
+
+            let formattedDate = "-";
+
+            if (transaction.date) {
+
+                const parts =
+                    String(transaction.date).split("-");
+
+                formattedDate =
+                    parts.length === 3
+                        ? `${parts[2]}-${parts[1]}-${parts[0]}`
+                        : transaction.date;
+
+            }
+
+            let editedOn = "-";
+
+            if (transaction.updatedAt?.toDate) {
+
+                editedOn =
+                    transaction.updatedAt
+                        .toDate()
+                        .toLocaleString("en-IN");
+
+            }
+
+            const formattedAmount =
+                Number(transaction.amount || 0).toLocaleString(
+                    "en-IN",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
+                );
+
+            const fromAccount =
+                transaction.fromAccountId
+                    ? (
+                        accountNameMap.get(
+                            transaction.fromAccountId
+                        ) || transaction.fromAccountId
+                    )
+                    : "-";
+
+            const toAccount =
+                transaction.toAccountId
+                    ? (
+                        accountNameMap.get(
+                            transaction.toAccountId
+                        ) || transaction.toAccountId
+                    )
+                    : "-";
+
+            return `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td>${editedOn}</td>
+                    <td>${transaction.type || "-"}</td>
+                    <td>${transaction.category || "-"}</td>
+                    <td>${transaction.partyName || "-"}</td>
+
+                    <td style="text-align:right;font-weight:700;">
+                        ₹${formattedAmount}
+                    </td>
+
+                    <td>${fromAccount}</td>
+                    <td>${toAccount}</td>
+                    <td>${transaction.paymentMethod || "-"}</td>
+                    <td>${transaction.linkedModule || "-"}</td>
+                    <td>${transaction.notes || "-"}</td>
+                </tr>
+            `;
+
+        }).join("");
+
+        content.innerHTML = `
+
+            <div style="
+                overflow-x:auto;
+                border:1px solid #dce5f0;
+                border-radius:10px;
+            ">
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:1250px;
+                ">
+
+                    <thead>
+                        <tr style="background:#173f78;color:white;">
+                            <th>Date</th>
+                            <th>Edited On</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Party</th>
+                            <th>Amount</th>
+                            <th>From Account</th>
+                            <th>To Account</th>
+                            <th>Payment Method</th>
+                            <th>Linked Module</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div style="
+                margin-top:16px;
+                padding:14px 18px;
+                border:1px solid #dce5f0;
+                border-radius:10px;
+                background:#f8fbff;
+                text-align:right;
+            ">
+                <strong style="color:#173b70;">
+                    Total Edited Transactions:
+                </strong>
+
+                <strong style="margin-left:6px;">
+                    ${transactions.length}
+                </strong>
+            </div>
+
+        `;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Edited Transactions Report Error:",
+            error
+        );
+
+        const content =
+            document.getElementById(
+                "editedTransactionsReportContent"
+            );
+
+        if (content) {
+
+            content.innerHTML = `
+                <div style="
+                    padding:30px;
+                    text-align:center;
+                    color:#b00020;
+                ">
+                    Unable to load Edited Transactions.
+                    Please check the console.
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// REPORT #28 — RECENTLY ADDED TRANSACTIONS
+// =====================================================
+
+async function renderRecentlyAddedTransactionsReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+
+                    <div style="display:flex; align-items:center; gap:28px; flex-wrap:wrap; color:#173b70;">
+
+                        <strong style="font-size:22px; color:#173b70;">
+                            #28 Recently Added Transactions
+                        </strong>
+
+                        <span>
+                            <strong>Reporting Period:</strong>
+                            All Transactions, Newest First
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div style="padding:20px 30px;">
+
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Recently Added Transactions
+                        </div>
+
+                        <strong
+                            id="recentTransactionCount"
+                            style="color:#173b70; font-size:21px;"
+                        >
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div id="recentTransactionsReportContent" style="padding:0 30px 30px;">
+
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading recently added transactions...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    const backButton = document.getElementById(
+        "backToTransactionReports"
+    );
+
+    if (backButton) {
+
+        backButton.addEventListener("click", function () {
+
+            renderTransactionReports();
+
+        });
+
+    }
+
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+
+    try {
+
+        const transactionsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            )
+        );
+
+
+        const accountNameMap = new Map();
+
+        const accountsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            )
+        );
+
+        accountsSnapshot.forEach(function (accountDoc) {
+
+            const account = accountDoc.data();
+
+            accountNameMap.set(
+                accountDoc.id,
+                account.name || "Unnamed Account"
+            );
+
+        });
+
+
+        const transactions = [];
+
+        transactionsSnapshot.forEach(function (transactionDoc) {
+
+            const transaction = transactionDoc.data();
+
+            if (
+                transaction.deleted === true ||
+                !transaction.createdAt
+            ) {
+                return;
+            }
+
+            transactions.push({
+                id: transactionDoc.id,
+                ...transaction
+            });
+
+        });
+
+
+        // Newest transaction first
+        transactions.sort(function (a, b) {
+
+            const timeA = a.createdAt?.toMillis
+                ? a.createdAt.toMillis()
+                : new Date(a.createdAt).getTime();
+
+            const timeB = b.createdAt?.toMillis
+                ? b.createdAt.toMillis()
+                : new Date(b.createdAt).getTime();
+
+            return timeB - timeA;
+
+        });
+
+
+        const countElement = document.getElementById(
+            "recentTransactionCount"
+        );
+
+        if (countElement) {
+            countElement.textContent = transactions.length;
+        }
+
+
+        const content = document.getElementById(
+            "recentTransactionsReportContent"
+        );
+
+        if (!content) {
+            return;
+        }
+
+
+        if (transactions.length === 0) {
+
+            content.innerHTML = `
+
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+
+                    No Recently Added Transactions found.
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        const rows = transactions.map(function (transaction) {
+
+            let transactionDate = "-";
+
+            if (transaction.date) {
+
+                const parts = String(transaction.date).split("-");
+
+                transactionDate = parts.length === 3
+                    ? `${parts[2]}-${parts[1]}-${parts[0]}`
+                    : transaction.date;
+
+            }
+
+
+            let addedOn = "-";
+
+            if (transaction.createdAt?.toDate) {
+
+                addedOn = transaction.createdAt
+                    .toDate()
+                    .toLocaleString("en-IN");
+
+            } else if (transaction.createdAt) {
+
+                const parsedDate = new Date(transaction.createdAt);
+
+                if (!isNaN(parsedDate.getTime())) {
+                    addedOn = parsedDate.toLocaleString("en-IN");
+                }
+
+            }
+
+
+            const amount = Number(
+                transaction.amount || 0
+            ).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+
+            const fromAccount = transaction.fromAccountId
+                ? (
+                    accountNameMap.get(transaction.fromAccountId) ||
+                    transaction.fromAccountId
+                )
+                : "-";
+
+
+            const toAccount = transaction.toAccountId
+                ? (
+                    accountNameMap.get(transaction.toAccountId) ||
+                    transaction.toAccountId
+                )
+                : "-";
+
+
+            return `
+
+                <tr>
+
+                    <td>${addedOn}</td>
+
+                    <td>${transactionDate}</td>
+
+                    <td>${transaction.type || "-"}</td>
+
+                    <td>${transaction.category || "-"}</td>
+
+                    <td>${transaction.partyName || "-"}</td>
+
+                    <td style="text-align:right; font-weight:700;">
+                        ₹${amount}
+                    </td>
+
+                    <td>${fromAccount}</td>
+
+                    <td>${toAccount}</td>
+
+                    <td>${transaction.paymentMethod || "-"}</td>
+
+                    <td>${transaction.linkedModule || "-"}</td>
+
+                    <td>${transaction.notes || "-"}</td>
+
+                </tr>
+
+            `;
+
+        }).join("");
+
+
+        content.innerHTML = `
+
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+
+                <table style="width:100%; border-collapse:collapse; min-width:1200px;">
+
+                    <thead>
+
+                        <tr style="background:#173f78; color:white;">
+
+                            <th>Added On</th>
+                            <th>Transaction Date</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Party</th>
+                            <th>Amount</th>
+                            <th>From Account</th>
+                            <th>To Account</th>
+                            <th>Payment Method</th>
+                            <th>Linked Module</th>
+                            <th>Notes</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div style="margin-top:16px; padding:14px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff; text-align:right;">
+
+                <strong style="color:#173b70;">
+                    Total Recently Added Transactions:
+                </strong>
+
+                <strong style="color:#173b70; margin-left:6px;">
+                    ${transactions.length}
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Recently Added Transactions Report Error:",
+            error
+        );
+
+        const content = document.getElementById(
+            "recentTransactionsReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div style="padding:30px; text-align:center; color:#b00020;">
+
+                    ❌ Unable to load Recently Added Transactions.
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// REPORT #29 — TRANSACTIONS BY CATEGORY
+// =====================================================
+
+async function renderTransactionsByCategoryReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+
+                    <strong style="font-size:22px; color:#173b70;">
+                        #29 Transactions by Category
+                    </strong>
+
+                    <p style="color:#64748b;">
+                        Transaction count and amount grouped by category
+                    </p>
+
+                </div>
+
+                <div style="padding:20px 30px;">
+
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Total Categories
+                        </div>
+
+                        <strong
+                            id="categoryReportCount"
+                            style="color:#173b70; font-size:21px;"
+                        >
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div id="categoryTransactionsReportContent" style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading category report...
+                </div>
+            </div>
+
+        </div>
+
+    `;
+
+
+    const backButton = document.getElementById(
+        "backToTransactionReports"
+    );
+
+    if (backButton) {
+        backButton.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+    }
+
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            )
+        );
+
+
+        const categoryMap = new Map();
+
+
+        snapshot.forEach(function (transactionDoc) {
+
+            const transaction = transactionDoc.data();
+
+            if (transaction.deleted === true) {
+                return;
+            }
+
+            const category = transaction.category || "Uncategorized";
+            const amount = Number(transaction.amount || 0);
+
+            if (!categoryMap.has(category)) {
+                categoryMap.set(category, {
+                    count: 0,
+                    total: 0
+                });
+            }
+
+            const item = categoryMap.get(category);
+
+            item.count += 1;
+            item.total += amount;
+
+        });
+
+
+        const categories = Array.from(
+            categoryMap.entries()
+        ).sort(function (a, b) {
+            return b[1].total - a[1].total;
+        });
+
+
+        const countElement = document.getElementById(
+            "categoryReportCount"
+        );
+
+        if (countElement) {
+            countElement.textContent = categories.length;
+        }
+
+
+        const content = document.getElementById(
+            "categoryTransactionsReportContent"
+        );
+
+        if (!content) {
+            return;
+        }
+
+
+        if (categories.length === 0) {
+
+            content.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    No Transactions found.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        const rows = categories.map(function (entry) {
+
+            const category = entry[0];
+            const data = entry[1];
+
+            const total = data.total.toLocaleString(
+                "en-IN",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            );
+
+            return `
+                <tr>
+                    <td>${category}</td>
+                    <td style="text-align:right;">${data.count}</td>
+                    <td style="text-align:right; font-weight:700;">
+                        ₹${total}
+                    </td>
+                </tr>
+            `;
+
+        }).join("");
+
+
+        const grandTotal = categories.reduce(
+            function (sum, entry) {
+                return sum + entry[1].total;
+            },
+            0
+        ).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+
+        const transactionCount = categories.reduce(
+            function (sum, entry) {
+                return sum + entry[1].count;
+            },
+            0
+        );
+
+
+        content.innerHTML = `
+
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+
+                <table style="width:100%; border-collapse:collapse; min-width:600px;">
+
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th>Category</th>
+                            <th style="text-align:right;">Transactions</th>
+                            <th style="text-align:right;">Total Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td>Grand Total</td>
+                            <td style="text-align:right;">${transactionCount}</td>
+                            <td style="text-align:right;">₹${grandTotal}</td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        `;
+
+    }
+    catch (error) {
+
+        console.error(
+            "Transactions by Category Report Error:",
+            error
+        );
+
+        const content = document.getElementById(
+            "categoryTransactionsReportContent"
+        );
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    ❌ Unable to load Transactions by Category.
+                </div>
+            `;
+        }
+
+    }
+
+}
+
+
+ // =====================================================
+// REPORT #30 — TRANSACTIONS BY PARTY
+// =====================================================
+
+async function renderTransactionsByPartyReport() {
+
+    reportWorkArea.innerHTML = `
+
+        <div class="selected-report-container">
+
+            <button
+                type="button"
+                class="back-to-reports-button"
+                id="backToTransactionReports"
+            >
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+
+                    <strong style="font-size:22px; color:#173b70;">
+                        #30 Transactions by Party
+                    </strong>
+
+                    <p style="color:#64748b;">
+                        Transaction count and amount grouped by party
+                    </p>
+
+                </div>
+
+                <div style="padding:20px 30px;">
+
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Total Parties
+                        </div>
+
+                        <strong
+                            id="partyReportCount"
+                            style="color:#173b70; font-size:21px;"
+                        >
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div id="partyTransactionsReportContent" style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading party report...
+                </div>
+            </div>
+
+        </div>
+
+    `;
+
+    const backButton = document.getElementById("backToTransactionReports");
+
+    if (backButton) {
+        backButton.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+    }
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        return;
+    }
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const partyMap = new Map();
+
+        snapshot.forEach(function (transactionDoc) {
+
+            const transaction = transactionDoc.data();
+
+            if (transaction.deleted === true) {
+                return;
+            }
+
+            const party = String(
+                transaction.party || transaction.partyName || "Unspecified"
+            ).trim() || "Unspecified";
+
+            const amount = Number(transaction.amount || 0);
+
+            if (!partyMap.has(party)) {
+                partyMap.set(party, {
+                    count: 0,
+                    total: 0
+                });
+            }
+
+            const item = partyMap.get(party);
+
+            item.count += 1;
+            item.total += amount;
+
+        });
+
+        const parties = Array.from(partyMap.entries()).sort(
+            function (a, b) {
+                return b[1].total - a[1].total;
+            }
+        );
+
+        const countElement = document.getElementById("partyReportCount");
+
+        if (countElement) {
+            countElement.textContent = parties.length;
+        }
+
+        const content = document.getElementById(
+            "partyTransactionsReportContent"
+        );
+
+        if (!content) {
+            return;
+        }
+
+        if (parties.length === 0) {
+
+            content.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    No Transactions found.
+                </div>
+            `;
+
+            return;
+        }
+
+        const rows = parties.map(function (entry) {
+
+            const party = entry[0];
+            const data = entry[1];
+
+            const safeParty = party.replace(/[&<>"']/g, function (char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char];
+            });
+
+            const total = data.total.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            return `
+                <tr>
+                    <td>${safeParty}</td>
+                    <td style="text-align:right;">${data.count}</td>
+                    <td style="text-align:right; font-weight:700;">₹${total}</td>
+                </tr>
+            `;
+
+        }).join("");
+
+        const grandTotal = parties.reduce(
+            function (sum, entry) {
+                return sum + entry[1].total;
+            },
+            0
+        ).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const transactionCount = parties.reduce(
+            function (sum, entry) {
+                return sum + entry[1].count;
+            },
+            0
+        );
+
+        content.innerHTML = `
+
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+
+                <table style="width:100%; border-collapse:collapse; min-width:600px;">
+
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th style="text-align:left;">Party</th>
+                            <th style="text-align:right;">Transactions</th>
+                            <th style="text-align:right;">Total Amount</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td>Grand Total</td>
+                            <td style="text-align:right;">${transactionCount}</td>
+                            <td style="text-align:right;">₹${grandTotal}</td>
+                        </tr>
+                    </tfoot>
+
+                </table>
+
+            </div>
+
+        `;
+
+    } catch (error) {
+
+        console.error("Transactions by Party Report Error:", error);
+
+        const content = document.getElementById(
+            "partyTransactionsReportContent"
+        );
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    Unable to load Transactions by Party.
+                </div>
+            `;
+        }
+
+    }
+
+}
+
+
+ // =====================================================
+// REPORT #31 — TRANSACTIONS BY ACCOUNT
+// =====================================================
+
+async function renderTransactionsByAccountReport() {
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <button type="button" class="back-to-reports-button"
+                id="backToTransactionReports">
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px; color:#173b70;">
+                        #31 Transactions by Account
+                    </strong>
+                    <p style="color:#64748b;">
+                        Transactions grouped by account, including transfer accounts
+                    </p>
+                </div>
+
+                <div style="padding:20px 30px;">
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Total Accounts
+                        </div>
+                        <strong id="accountReportCount" style="color:#173b70; font-size:21px;">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="accountTransactionsReportContent" style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading account report...
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("backToTransactionReports")
+        ?.addEventListener("click", showReportModuleStartPage);
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const [transactionSnapshot, accountSnapshot] = await Promise.all([
+            getDocs(collection(db, "users", user.uid, "transactions")),
+            getDocs(collection(db, "users", user.uid, "accounts"))
+        ]);
+
+        const accountMap = new Map();
+
+        accountSnapshot.forEach(function (docSnap) {
+            const account = docSnap.data();
+
+            accountMap.set(docSnap.id, {
+                name: account.name || account.accountName || docSnap.id,
+                count: 0,
+                total: 0
+            });
+        });
+
+        function resolveAccountId(value) {
+            if (!value) return "";
+
+            if (typeof value === "object") {
+                return String(value.id || value.accountId || value.uid || "");
+            }
+
+            return String(value);
+        }
+
+        function addTransactionToAccount(accountId, amount) {
+            if (!accountId) return;
+
+            if (!accountMap.has(accountId)) {
+                accountMap.set(accountId, {
+                    name: accountId,
+                    count: 0,
+                    total: 0
+                });
+            }
+
+            const account = accountMap.get(accountId);
+            account.count += 1;
+            account.total += amount;
+        }
+
+        transactionSnapshot.forEach(function (docSnap) {
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const amount = Number(transaction.amount) || 0;
+
+            const fromId = resolveAccountId(transaction.fromAccountId);
+            const toId = resolveAccountId(transaction.toAccountId);
+
+            if (fromId || toId) {
+                if (fromId) addTransactionToAccount(fromId, amount);
+                if (toId && toId !== fromId) addTransactionToAccount(toId, amount);
+                return;
+            }
+
+            const singleAccountId = resolveAccountId(
+                transaction.accountId ||
+                transaction.account ||
+                transaction.accountName
+            );
+
+            if (singleAccountId) {
+                addTransactionToAccount(singleAccountId, amount);
+            }
+        });
+
+        const accounts = Array.from(accountMap.values())
+            .sort((a, b) => b.total - a.total);
+
+        document.getElementById("accountReportCount").textContent = accounts.length;
+
+        const content = document.getElementById("accountTransactionsReportContent");
+        if (!content) return;
+
+        const escapeText = value => String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+
+        const formatAmount = amount => Number(amount).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const totalTransactions = accounts.reduce((sum, account) => sum + account.count, 0);
+        const totalAmount = accounts.reduce((sum, account) => sum + account.total, 0);
+
+        content.innerHTML = `
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+                <table style="width:100%; border-collapse:collapse; min-width:600px;">
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th style="text-align:left; padding:11px;">Account</th>
+                            <th style="text-align:right; padding:11px;">Transactions</th>
+                            <th style="text-align:right; padding:11px;">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${accounts.map(account => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${escapeText(account.name)}</td>
+                                <td style="text-align:right; padding:10px;">${account.count}</td>
+                                <td style="text-align:right; padding:10px; font-weight:700;">
+                                    ₹${formatAmount(account.total)}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td style="padding:10px;">Grand Total</td>
+                            <td style="text-align:right; padding:10px;">${totalTransactions}</td>
+                            <td style="text-align:right; padding:10px;">₹${formatAmount(totalAmount)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <p style="margin-top:12px; color:#64748b; font-size:12px;">
+                Transfer transactions are counted under both From Account and To Account.
+                Therefore, the account-wise totals may include the transfer amount twice.
+            </p>
+        `;
+
+    } catch (error) {
+        console.error("Transactions by Account Report Error:", error);
+
+        const content = document.getElementById("accountTransactionsReportContent");
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    Unable to load Transactions by Account. Check the browser console.
+                </div>
+            `;
+        }
+    }
+}
+
+// =====================================================
+// REPORT #32 — TRANSACTIONS BY PAYMENT METHOD
+// =====================================================
+
+async function renderTransactionsByPaymentMethodReport() {
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <button type="button" class="back-to-reports-button"
+                id="backToTransactionReports">
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px; color:#173b70;">
+                        #32 Transactions by Payment Method
+                    </strong>
+                    <p style="color:#64748b;">
+                        Transaction count and amount grouped by payment method
+                    </p>
+                </div>
+
+                <div style="padding:20px 30px;">
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Total Payment Methods
+                        </div>
+                        <strong id="paymentMethodReportCount"
+                            style="color:#173b70; font-size:21px;">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="paymentMethodReportContent" style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading payment method report...
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("backToTransactionReports")
+        ?.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const methodMap = new Map();
+
+        
+        snapshot.forEach(function (docSnap) {
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const method = String(
+                transaction.paymentMethod ||
+                transaction.paymentMode ||
+                transaction.method ||
+                "Unspecified"
+            ).trim() || "Unspecified";
+
+            const amount = Number(transaction.amount) || 0;
+
+            if (!methodMap.has(method)) {
+                methodMap.set(method, { count: 0, total: 0 });
+            }
+
+            const item = methodMap.get(method);
+            item.count += 1;
+            item.total += amount;
+        });
+
+        const methods = Array.from(methodMap.entries()).sort(
+            (a, b) => b[1].total - a[1].total
+        );
+
+        document.getElementById("paymentMethodReportCount").textContent =
+            methods.length;
+
+        const content = document.getElementById("paymentMethodReportContent");
+        if (!content) return;
+
+        const formatAmount = amount => Number(amount).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        const escapeText = value => String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+
+        const transactionCount = methods.reduce(
+            (sum, entry) => sum + entry[1].count, 0
+        );
+
+        const grandTotal = methods.reduce(
+            (sum, entry) => sum + entry[1].total, 0
+        );
+
+        if (methods.length === 0) {
+            content.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    No Transactions found.
+                </div>
+            `;
+            return;
+        }
+
+        content.innerHTML = `
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+                <table style="width:100%; border-collapse:collapse; min-width:600px;">
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th style="text-align:left; padding:11px;">Payment Method</th>
+                            <th style="text-align:right; padding:11px;">Transactions</th>
+                            <th style="text-align:right; padding:11px;">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${methods.map(([method, data]) => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${escapeText(method)}</td>
+                                <td style="text-align:right; padding:10px;">${data.count}</td>
+                                <td style="text-align:right; padding:10px; font-weight:700;">
+                                    ₹${formatAmount(data.total)}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td style="padding:10px;">Grand Total</td>
+                            <td style="text-align:right; padding:10px;">${transactionCount}</td>
+                            <td style="text-align:right; padding:10px;">₹${formatAmount(grandTotal)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("Transactions by Payment Method Report Error:", error);
+
+        const content = document.getElementById("paymentMethodReportContent");
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    Unable to load Transactions by Payment Method. Check the browser console.
+                </div>
+            `;
+        }
+    }
+}
+
+
+
+ // =====================================================
+ // REPORT #33 — TRANSACTIONS BY LINKED MODULE
+ // =====================================================
+
+async function renderTransactionsByLinkedModuleReport() {
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+
+            <button type="button"
+                class="back-to-reports-button"
+                id="backToLinkedModuleReport">
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px; color:#173b70;">
+                        #33 Transactions by Linked Module
+                    </strong>
+
+                    <p style="color:#64748b;">
+                        Transaction count and amount grouped by linked module
+                    </p>
+                </div>
+
+                <div style="padding:20px 30px;">
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Total Linked Modules
+                        </div>
+                        <strong id="linkedModuleReportCount"
+                            style="color:#173b70; font-size:21px;">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="linkedModuleReportContent"
+                style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading linked module report...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToLinkedModuleReport")
+        ?.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        document.getElementById("linkedModuleReportContent").innerHTML = `
+            <div style="padding:25px; color:#b00020;">
+                Please log in to view this report.
+            </div>
+        `;
+        return;
+    }
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const moduleMap = new Map();
+
+        const moduleLabels = {
+            home_loan: "Home Loan",
+            fixed_deposit: "Fixed Deposit",
+            shares: "Shares",
+            sip: "SIP / Mutual Fund",
+            rental: "Rental",
+            credit_card: "Credit Card"
+        };
+
+        snapshot.forEach(function (docSnap) {
+
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const linkedModule = String(
+                transaction.linkedModule || ""
+            ).trim();
+
+            if (!linkedModule) return;
+
+            const label = moduleLabels[linkedModule] || linkedModule;
+            const amount = Number(transaction.amount) || 0;
+
+            if (!moduleMap.has(label)) {
+                moduleMap.set(label, {
+                    count: 0,
+                    total: 0
+                });
+            }
+
+            const item = moduleMap.get(label);
+            item.count += 1;
+            item.total += amount;
+
+        });
+
+        const modules = Array.from(moduleMap.entries()).sort(
+            (a, b) => b[1].total - a[1].total
+        );
+
+        document.getElementById("linkedModuleReportCount").textContent =
+            modules.length;
+
+        const content = document.getElementById("linkedModuleReportContent");
+
+        if (!content) return;
+
+        const formatAmount = amount =>
+            Number(amount).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const escapeText = value => String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+
+        const transactionCount = modules.reduce(
+            (sum, entry) => sum + entry[1].count, 0
+        );
+
+        const grandTotal = modules.reduce(
+            (sum, entry) => sum + entry[1].total, 0
+        );
+
+        if (modules.length === 0) {
+            content.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    No linked-module transactions found.
+                </div>
+            `;
+            return;
+        }
+
+        content.innerHTML = `
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+                <table style="width:100%; border-collapse:collapse; min-width:600px;">
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th style="text-align:left; padding:11px;">Linked Module</th>
+                            <th style="text-align:right; padding:11px;">Transactions</th>
+                            <th style="text-align:right; padding:11px;">Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${modules.map(([module, data]) => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${escapeText(module)}</td>
+                                <td style="text-align:right; padding:10px;">${data.count}</td>
+                                <td style="text-align:right; padding:10px; font-weight:700;">
+                                    ₹${formatAmount(data.total)}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td style="padding:10px;">Grand Total</td>
+                            <td style="text-align:right; padding:10px;">${transactionCount}</td>
+                            <td style="text-align:right; padding:10px;">₹${formatAmount(grandTotal)}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+
+        console.error("Transactions by Linked Module Report Error:", error);
+
+        const content = document.getElementById("linkedModuleReportContent");
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    Unable to load Transactions by Linked Module.
+                    Check the browser console.
+                </div>
+            `;
+        }
+    }
+}
+
+
+ // =====================================================
+ // REPORT #34 — TRANSACTIONS WITHOUT CATEGORY
+ // =====================================================
+
+async function renderTransactionsWithoutCategoryReport() {
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+
+            <button type="button"
+                class="back-to-reports-button"
+                id="backToNoCategoryReport">
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px; color:#173b70;">
+                        #34 Transactions without Category
+                    </strong>
+                    <p style="color:#64748b;">
+                        Transactions with a missing category
+                    </p>
+                </div>
+
+                <div style="padding:20px 30px;">
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Transactions without Category
+                        </div>
+                        <strong id="noCategoryCount"
+                            style="color:#173b70; font-size:21px;">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="noCategoryContent" style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading transactions...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToNoCategoryReport")
+        ?.addEventListener("click", function () {
+            renderTransactionReports();
+        });
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        document.getElementById("noCategoryContent").innerHTML = `
+            <div style="padding:25px; color:#b00020;">
+                Please log in to view this report.
+            </div>
+        `;
+        return;
+    }
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const transactions = [];
+
+        snapshot.forEach(function (docSnap) {
+
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const category = String(
+                transaction.category ?? ""
+            ).trim();
+
+            if (!category) {
+                transactions.push({
+                    id: docSnap.id,
+                    date: transaction.date || "",
+                    type: transaction.type || "",
+                    amount: Number(transaction.amount) || 0,
+                    partyName: transaction.partyName || "",
+                    notes: transaction.notes || ""
+                });
+            }
+
+        });
+
+        transactions.sort((a, b) =>
+            String(b.date).localeCompare(String(a.date))
+        );
+
+        document.getElementById("noCategoryCount").textContent =
+            transactions.length;
+
+        const content = document.getElementById("noCategoryContent");
+
+        if (!content) return;
+
+        const formatAmount = amount =>
+            Number(amount).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const escapeText = value => String(value).replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[char]);
+
+        const totalAmount = transactions.reduce(
+            (sum, transaction) => sum + transaction.amount, 0
+        );
+
+        if (transactions.length === 0) {
+            content.innerHTML = `
+                <div style="padding:40px 20px; text-align:center; color:#64748b; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    Great! No transactions without a category were found.
+                </div>
+            `;
+            return;
+        }
+
+        content.innerHTML = `
+            <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+                <table style="width:100%; border-collapse:collapse; min-width:750px;">
+                    <thead>
+                        <tr style="background:#173f78; color:white;">
+                            <th style="text-align:left; padding:11px;">Date</th>
+                            <th style="text-align:left; padding:11px;">Type</th>
+                            <th style="text-align:left; padding:11px;">Party / Merchant</th>
+                            <th style="text-align:left; padding:11px;">Notes</th>
+                            <th style="text-align:right; padding:11px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactions.map(transaction => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${escapeText(transaction.date)}</td>
+                                <td style="padding:10px;">${escapeText(transaction.type)}</td>
+                                <td style="padding:10px;">${escapeText(transaction.partyName || "-")}</td>
+                                <td style="padding:10px;">${escapeText(transaction.notes || "-")}</td>
+                                <td style="text-align:right; padding:10px; font-weight:700;">
+                                    ₹${formatAmount(transaction.amount)}
+                                </td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fbff; font-weight:700;">
+                            <td colspan="4" style="padding:10px;">Grand Total</td>
+                            <td style="text-align:right; padding:10px;">
+                                ₹${formatAmount(totalAmount)}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+
+        console.error("Transactions without Category Report Error:", error);
+
+        const content = document.getElementById("noCategoryContent");
+
+        if (content) {
+            content.innerHTML = `
+                <div style="padding:30px; text-align:center; color:#b00020;">
+                    Unable to load Transactions without Category.
+                    Check the browser console.
+                </div>
+            `;
+        }
+    }
+}
+
+
+
+async function renderTransactionsWithoutPartyReport() {
+    reportWorkArea.innerHTML = `
+        <div class="report-section">
+            <h3>Transactions without Party</h3>
+            <p>Transactions where the party name is missing.</p>
+            <div id="transactionsWithoutPartyContent">Loading...</div>
+        </div>
+    `;
+
+    const content = document.getElementById("transactionsWithoutPartyContent");
+
+    try {
+        const snapshot = await getDocs(collection(db, "transactions"));
+
+        const transactions = [];
+
+        snapshot.forEach((docSnap) => {
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const partyName = String(
+                transaction.partyName ?? ""
+            ).trim();
+
+            if (!partyName) {
+                transactions.push({
+                    id: docSnap.id,
+                    ...transaction
+                });
+            }
+        });
+
+        if (transactions.length === 0) {
+            content.innerHTML = `
+                <p>No transactions found without a party name.</p>
+            `;
+            return;
+        }
+
+        const totalAmount = transactions.reduce(
+            (sum, transaction) =>
+                sum + (Number(transaction.amount) || 0),
+            0
+        );
+
+        content.innerHTML = `
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h4>Transactions without Party</h4>
+                    <p>${transactions.length}</p>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Amount</h4>
+                    <p>₹${totalAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Notes</th>
+                            <th>Transaction ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactions.map(transaction => `
+                            <tr>
+                                <td>${transaction.date || "-"}</td>
+                                <td>${transaction.type || "-"}</td>
+                                <td>₹${(
+                                    Number(transaction.amount) || 0
+                                ).toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}</td>
+                                <td>${transaction.category || "-"}</td>
+                                <td>${transaction.notes || "-"}</td>
+                                <td>${transaction.id}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(
+            "Error generating Transactions without Party report:",
+            error
+        );
+
+        content.innerHTML = `
+            <p>Unable to load report. Please check the console for errors.</p>
+        `;
+    }
+}
+
+
+async function renderTransactionsWithoutNotesReport() {
+    reportWorkArea.innerHTML = `
+        <div class="report-section">
+            <h3>Transactions without Notes</h3>
+            <p>Transactions where notes or descriptions are missing.</p>
+            <div id="transactionsWithoutNotesContent">Loading...</div>
+        </div>
+    `;
+
+    const content = document.getElementById(
+        "transactionsWithoutNotesContent"
+    );
+
+    try {
+        const snapshot = await getDocs(
+            collection(db, "transactions")
+        );
+
+        const transactions = [];
+
+        snapshot.forEach((docSnap) => {
+            const transaction = docSnap.data();
+
+            if (transaction.deleted === true) return;
+
+            const notes = String(
+                transaction.notes ?? ""
+            ).trim();
+
+            if (!notes) {
+                transactions.push({
+                    id: docSnap.id,
+                    ...transaction
+                });
+            }
+        });
+
+        if (transactions.length === 0) {
+            content.innerHTML = `
+                <p>No transactions found without notes.</p>
+            `;
+            return;
+        }
+
+        const totalAmount = transactions.reduce(
+            (sum, transaction) =>
+                sum + (Number(transaction.amount) || 0),
+            0
+        );
+
+        content.innerHTML = `
+            <div class="report-summary">
+                <div class="summary-card">
+                    <h4>Transactions without Notes</h4>
+                    <p>${transactions.length}</p>
+                </div>
+
+                <div class="summary-card">
+                    <h4>Total Amount</h4>
+                    <p>₹${totalAmount.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    })}</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Party</th>
+                            <th>Transaction ID</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${transactions.map(transaction => `
+                            <tr>
+                                <td>${transaction.date || "-"}</td>
+                                <td>${transaction.type || "-"}</td>
+                                <td>₹${(
+                                    Number(transaction.amount) || 0
+                                ).toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                })}</td>
+                                <td>${transaction.category || "-"}</td>
+                                <td>${transaction.partyName || "-"}</td>
+                                <td>${transaction.id}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (error) {
+        console.error(
+            "Error generating Transactions without Notes report:",
+            error
+        );
+
+        content.innerHTML = `
+            <p>Unable to load report. Please check the console for errors.</p>
+        `;
+    }
+}
+
+
 function renderSelectedReport(report) {
 
         window.activeTransactionReport = report;
@@ -4911,6 +12392,172 @@ if (report.number === 19) {
     return;
 
 }
+
+// =====================================================
+// REPORT #20 — INCOME TRANSACTIONS
+// =====================================================
+
+if (report.number === 20) {
+
+    renderIncomeTransactionsReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #21 — EXPENSE TRANSACTIONS
+// =====================================================
+
+if (report.number === 21) {
+
+    renderExpenseTransactionsReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #22 — INVESTMENT TRANSACTIONS
+// =====================================================
+
+if (report.number === 22) {
+
+    renderInvestmentTransactionsReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #23 — TRANSFER TRANSACTIONS
+// =====================================================
+
+if (report.number === 23) {
+
+    renderTransferTransactionsReport();
+
+    return;
+
+}
+
+
+// =====================================================
+// REPORT #24 — WALLET TRANSACTIONS
+// =====================================================
+
+if (report.number === 24) {
+
+    renderWalletTransactionsReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #25 — CASHBACK TRANSACTIONS
+// =====================================================
+
+if (report.number === 25) {
+
+    renderCashbackTransactionsReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #26 — DELETED TRANSACTIONS
+// =====================================================
+
+if (report.number === 26) {
+
+    renderDeletedTransactionsReport();
+
+    return;
+
+}
+
+
+
+ // =====================================================
+ // REPORT #27 — EDITED TRANSACTIONS
+ // =====================================================
+
+if (report.number === 27) {
+
+    renderEditedTransactionsReport();
+
+    return;
+
+}
+
+
+// =====================================================
+// REPORT #28 — RECENTLY ADDED TRANSACTIONS
+// =====================================================
+
+if (report.number === 28) {
+
+    renderRecentlyAddedTransactionsReport();
+
+    return;
+
+}
+
+
+// =====================================================
+// REPORT #29 — TRANSACTIONS BY CATEGORY
+// =====================================================
+
+if (report.number === 29) {
+
+    renderTransactionsByCategoryReport();
+
+    return;
+
+}
+
+// =====================================================
+// REPORT #30 — TRANSACTIONS BY PARTY
+// =====================================================
+
+if (report.number === 30) {
+    renderTransactionsByPartyReport();
+    return;
+}
+
+if (report.number === 31) {
+    renderTransactionsByAccountReport();
+    return;
+}
+
+
+if (report.number === 32) {
+    renderTransactionsByPaymentMethodReport();
+    return;
+}
+
+
+if (report.number === 33) {
+    renderTransactionsByLinkedModuleReport();
+    return;
+}
+
+
+if (report.number === 34) {
+    renderTransactionsWithoutCategoryReport();
+    return;
+}
+
+
+if (report.number === 35) {
+    renderTransactionsWithoutPartyReport();
+    return;
+}
+
+
+
 
     reportWorkArea.innerHTML = `
 
@@ -5303,9 +12950,9 @@ if (report.number === 19) {
     if (backButton) {
 
         backButton.addEventListener(
-            "click",
-            renderTransactionReports
-        );
+    "click",
+    showReportModuleStartPage
+);
 
     }
 
