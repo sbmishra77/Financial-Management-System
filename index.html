@@ -444,7 +444,9 @@
             <h2>💳 Transactions</h2>
             <p>Income • Expenses • Transfers • Investments</p>
         </div>
-
+        <button type="button" class="view-module-button" data-open-reports data-report-category="transactions">
+            📊 Reports
+        </button>
     </div>
 
 <!-- ===============================
@@ -1411,6 +1413,16 @@
 </section>
 
 <!-- =========================================================
+     FINANCIAL REPORTS MODULE (ISOLATED)
+     ========================================================= -->
+<section id="reportsSection" class="reports-erp-section" style="display:none; width:100%;">
+    <iframe id="financialReportsFrame" title="Financial Reports" src="reports-module/reports.html"
+        loading="lazy"
+        style="display:block; width:100%; height:calc(100vh - 110px); min-height:800px; border:0; border-radius:12px; background:#f3f6fb;">
+    </iframe>
+</section>
+
+<!-- =========================================================
      MASTER DASHBOARD — INFOGRAPHIC MODULE CARDS
      ========================================================= -->
 
@@ -1891,6 +1903,10 @@
                 View All Vehicles →
             </button>
 
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="assets">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -3183,6 +3199,10 @@
 
             </button>
 
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="assets">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -3790,6 +3810,10 @@
 
             </button>
 
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="net-worth">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -4099,6 +4123,11 @@
                 💰 Current Balance / Funds Available
             </h2>
 
+        </div>
+        <div class="section-header-buttons">
+            <button type="button" class="view-module-button" data-open-reports data-report-category="accounts">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -4581,6 +4610,9 @@
             View All Accounts →
 
         </button>
+        <button type="button" class="view-module-button" data-open-reports data-report-category="accounts">
+            📊 Reports
+        </button>
 
 
     </div>
@@ -4953,6 +4985,10 @@
 
             </button>
 
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="loans">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -8816,6 +8852,10 @@ style="
             View All Investments →
 
         </button>
+        <button type="button" class="view-module-button" data-open-reports data-report-category="investments">
+            📊 Reports
+        </button>
+
 
         <button
             type="button"
@@ -10692,6 +10732,10 @@ document.addEventListener(
 
             </button>
 
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="assets">
+                📊 Reports
+            </button>
         </div>
 
     </div>
@@ -12800,6 +12844,14 @@ document.addEventListener(
 
                 View All Insurance →
 
+            </button>
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="liabilities">
+                📊 Reports
+            </button>
+
+            <button type="button" class="view-module-button" data-open-reports data-report-category="liabilities">
+                📊 Reports
             </button>
 
 

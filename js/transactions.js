@@ -7715,6 +7715,14 @@ sortedTransactionDocs.forEach(
         const transaction =
             transactionDoc.data();
 
+        // ==========================================
+        // IGNORE SOFT-DELETED RENTAL TRANSACTIONS
+        // ==========================================
+
+        if (transaction.deleted === true) {
+            return;
+        }
+
         if (
             transaction.date &&
             transaction.date.startsWith(currentMonth) &&
@@ -7831,6 +7839,7 @@ if (dashboardTransactionsValue) {
 // =========================================
 
 window.loadSavedTransactions = loadSavedTransactions;
+
 
 // =========================================
 // DELETE TRANSACTION FROM HISTORY
