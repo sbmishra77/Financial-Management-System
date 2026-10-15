@@ -17,7 +17,8 @@ import {
     setDoc,
     updateDoc,
     deleteDoc,
-    serverTimestamp
+    serverTimestamp,
+    runTransaction
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // ===============================
@@ -7365,8 +7366,78 @@ else {
 const showFDFormButton =
     document.querySelector("#showFDFormButton");
 
+// =========================================
+// LOAD BANK ACCOUNTS INTO FD DROPDOWN
+// =========================================
+
+async function loadFDBankAccounts() {
+    const user = auth.currentUser;
+    const dropdown = document.querySelector("#fdBankAccount");
+
+    if (!user || !dropdown) return;
+
+    dropdown.innerHTML =
+        '<option value="">Select Bank Account</option>';
+
+    const accountsSnapshot = await getDocs(
+        collection(db, "users", user.uid, "accounts")
+    );
+
+    accountsSnapshot.forEach((accountDoc) => {
+        const account = accountDoc.data();
+
+        if (account.type !== "bank") return;
+
+        const option = document.createElement("option");
+        option.value = accountDoc.id;
+        option.textContent = account.name || "Unnamed Bank Account";
+
+        dropdown.appendChild(option);
+    });
+}
+
+
+ // Make FD bank loader available to Transaction Entry
+window.loadFDBankAccounts = loadFDBankAccounts;
+
+
+// Load bank accounts when Add New FD is clicked
+if (showFDFormButton) {
+    showFDFormButton.addEventListener("click", () => {
+        loadFDBankAccounts().catch(error => {
+            console.error("FD bank dropdown error:", error);
+        });
+    });
+}
+
 const fdFormContainer =
     document.querySelector("#fdFormContainer");
+
+    
+/* FIXED DEPOSIT FORM — CENTERED POPUP */
+
+if (fdFormContainer) {
+    // Move the existing form out of hidden/scrolling sections
+    document.body.appendChild(fdFormContainer);
+
+    Object.assign(fdFormContainer.style, {
+        display: "none",
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        width: "min(560px, calc(100vw - 32px))",
+        maxHeight: "90vh",
+        overflowY: "auto",
+        boxSizing: "border-box",
+        padding: "24px",
+        background: "#ffffff",
+        borderRadius: "14px",
+        boxShadow: "0 0 0 100vmax rgba(15, 23, 42, 0.45), 0 18px 55px rgba(0, 0, 0, 0.25)",
+        zIndex: "100000"
+    });
+}
+
 
 const cancelFDButton =
     document.querySelector("#cancelFDButton");
@@ -7468,6 +7539,13 @@ if (fdForm) {
                         .value
                         .trim();
 
+                        
+const fdBankAccountId =
+    document
+        .querySelector("#fdBankAccount")
+        .value;
+
+
                 const fdAmount =
                     Number(
                         document
@@ -7514,6 +7592,7 @@ if (fdForm) {
                 if (
                     !fdName ||
                     !fdBank ||
+                    !fdBankAccountId ||
                     !fdAmount ||
                     !fdDepositDate ||
                     !fdMaturityDate ||
@@ -7555,6 +7634,9 @@ if (fdForm) {
 
                             bank:
                                 fdBank,
+
+                                bankAccountId:
+    fdBankAccountId,
 
                             amount:
                                 fdAmount,
@@ -7782,263 +7864,78 @@ if (linkedModuleSelect) {
 
 }
 
-                // =================================
-                // 2. CHECK PENDING TRANSACTION
-                // =================================
-
-                const pendingTransaction =
-                    window.pendingModuleTransaction;
-
-
-                // =================================
-                // 3. IF FD WAS OPENED FROM
-                //    TRANSACTION ENTRY
-                // =================================
-
-                if (
-                    pendingTransaction &&
-                    pendingTransaction.row
-                ) {
-
-                    const row =
-                        pendingTransaction.row;
-
-
-                    // =================================
-                    // READ TRANSACTION ROW
-                    // =================================
-
-                    const dateInput =
-                        row.querySelector(
-                            ".transaction-date"
-                        );
-
-                    const typeSelect =
-                        row.querySelector(
-                            ".transaction-type"
-                        );
-
-                    const categorySelect =
-                        row.querySelector(
-                            ".transaction-category"
-                        );
-
-                    const partyInput =
-                        row.querySelector(
-                            ".transaction-party"
-                        );
-
-                    const amountInput =
-                        row.querySelector(
-                            ".transaction-amount"
-                        );
-
-                    const fromAccountSelect =
-                        row.querySelector(
-                            ".transaction-from-account"
-                        );
-
-                    const toAccountSelect =
-                        row.querySelector(
-                            ".transaction-to-account"
-                        );
-
-                    const paymentMethodSelect =
-                        row.querySelector(
-                            ".transaction-payment-method"
-                        );
-
-                    const notesInput =
-                        row.querySelector(
-                            ".transaction-notes"
-                        );
-
-
-                    // =================================
-                    // TRANSACTION VALUES
-                    // =================================
-
-                    const transactionDate =
-                        dateInput
-                            ? dateInput.value
-                            : fdDepositDate;
-
-                    const transactionType =
-                        typeSelect
-                            ? typeSelect.value
-                            : "investment";
-
-                    const transactionCategory =
-                        categorySelect
-                            ? categorySelect.value
-                            : "Fixed Deposit";
-
-                    const partyName =
-                        partyInput
-                            ? partyInput.value.trim()
-                            : fdBank;
-
-                    const amount =
-                        amountInput &&
-                        amountInput.value
-                            ? Number(
-                                amountInput.value
-                            )
-                            : fdAmount;
-
-                    const fromAccountId =
-                        fromAccountSelect
-                            ? fromAccountSelect.value
-                            : "";
-
-                    const toAccountId =
-                        toAccountSelect
-                            ? toAccountSelect.value
-                            : "";
-
-                    const paymentMethod =
-                        paymentMethodSelect
-                            ? paymentMethodSelect.value
-                            : "";
-
-                    const notes =
-                        notesInput
-                            ? notesInput.value.trim()
-                            : "";
-
-
-                    // =================================
-                    // 4. CREATE TRANSACTION
-                    // =================================
-
-                    const transactionData = {
-
-                        date:
-                            transactionDate,
-
-                        type:
-                            transactionType,
-
-                        category:
-                            transactionCategory,
-
-                        partyId:
-                            null,
-
-                        partyName:
-                            partyName,
-
-                        investmentId:
-                            fdRef.id,
-
-                        investmentName:
-                            fdName,
-
-                        amount:
-                            amount,
-
-                        fromAccountId:
-                            fromAccountId,
-
-                        toAccountId:
-                            toAccountId,
-
-                        paymentMethod:
-                            paymentMethod,
-
-                        linkedModule:
-                            "fixedDeposit",
-
-                        linkedRecordId:
-                            fdRef.id,
-
-                        notes:
-                            notes,
-
-                        createdAt:
-                            serverTimestamp(),
-
-                        updatedAt:
-                            serverTimestamp()
-
-                    };
-
-
-                    // =================================
-                    // 5. SAVE TRANSACTION HISTORY
-                    // =================================
-
-                    const transactionRef =
-                        await addDoc(
-
-                            collection(
-                                db,
-                                "users",
-                                user.uid,
-                                "transactions"
-                            ),
-
-                            transactionData
-
-                        );
-
-
-                    console.log(
-                        "Linked Transaction saved:",
-                        transactionRef.id
-                    );
-
-
-                    // =================================
-                    // STORE TRANSACTION ID
-                    // INSIDE FD DOCUMENT
-                    // =================================
-
-                    await updateDoc(
-
-                        doc(
-                            db,
-                            "users",
-                            user.uid,
-                            "fixedDeposits",
-                            fdRef.id
-                        ),
-
-                        {
-
-                            transactionId:
-                                transactionRef.id,
-
-                            updatedAt:
-                                serverTimestamp()
-
-                        }
-
-                    );
-
-
-                    // =================================
-                    // CLEAR PENDING TRANSACTION
-                    // =================================
-
-                    window.pendingModuleTransaction =
-                        null;
-
-
-                    console.log(
-                        "FD ↔ Transaction linked successfully."
-                    );
-
-                }
-
-
+ // =================================
+// LINK FD TO TRANSACTION ENTRY ROW
+// DO NOT SAVE TRANSACTION HERE
+// =================================
+
+const pendingTransaction =
+    window.pendingModuleTransaction;
+
+if (
+    pendingTransaction &&
+    pendingTransaction.module === "fixedDeposit" &&
+    pendingTransaction.row
+) {
+    const row =
+        pendingTransaction.row;
+
+    const typeSelect =
+        row.querySelector(".transaction-type");
+
+    const categorySelect =
+        row.querySelector(".transaction-category");
+
+    const fromAccountSelect =
+        row.querySelector(".transaction-from-account");
+
+    // Keep the transaction row ready for Save All
+    if (typeSelect) {
+        typeSelect.value = "investment";
+    }
+
+    if (categorySelect) {
+        categorySelect.value = "Fixed Deposit";
+    }
+
+    if (fromAccountSelect) {
+        fromAccountSelect.value = fdBankAccountId;
+    }
+
+    
+console.log("FD ROW READY CHECK:", {
+    fdId: fdRef.id,
+    type: typeSelect?.value,
+    category: categorySelect?.value,
+    fromAccountId: fromAccountSelect?.value,
+    amount: row.querySelector(".transaction-amount")?.value,
+    date: row.querySelector(".transaction-date")?.value,
+    linkedModule: row.querySelector(".transaction-linked-module")?.value
+});
+
+
+    // Store FD ID on this row for linking later
+    row.dataset.fixedDepositId = fdRef.id;
+
+    console.log(
+        "FD READY FOR TRANSACTION SAVE:",
+        {
+            fdId: fdRef.id,
+            bankAccountId: fdBankAccountId,
+            amount: fdAmount
+        }
+    );
+
+    // Clear pending reference only after row is linked
+    window.pendingModuleTransaction = null;
+}
                 // =================================
                 // SUCCESS
                 // =================================
 
                 alert(
-                    "Fixed Deposit और Transaction History दोनों successfully save हो गए।"
-                );
+    "Fixed Deposit successfully save हो गई। अब Transaction Entry में Save All Transactions दबाकर transaction save करें।"
+);
 
 
                 // =================================
@@ -8246,6 +8143,18 @@ if (allFDView) {
 
    const fd = fdDoc.data();
 
+   // Exclude closed FDs from the active FD table
+const fdStatus = String(fd.status || "active")
+    .trim()
+    .toLowerCase();
+
+if (
+    fdStatus === "settled" ||
+    fdStatus === "matured" ||
+    fdStatus === "renewed"
+) {
+    return;
+}
 
 
 // ===============================
@@ -8469,27 +8378,27 @@ fdRow.innerHTML = `
         ${fdInterestRate}%
     </td>
 
-
     <td>
 
         <strong>
             ₹${fdMaturityAmount.toLocaleString("en-IN")}
         </strong>
-
     </td>
-
 
     <td>
 
-        <span class="fd-status-active">
+    <span class="fd-status-active">
 
-            ${
-                fd.status === "renewed"
-                    ? "🔄 Renewed"
-                    : "🟢 Active"
-            }
+    ${
+        fd.status === "renewed"
+            ? "🔄 Renewed"
+            : (fd.status === "settled" || fd.status === "matured")
+                ? "✅ Settled"
+                : "🟢 Active"
+    }
 
-        </span>
+</span>
+
 
     </td>
 
@@ -8512,6 +8421,21 @@ fdRow.innerHTML = `
                 data-id="${fdDoc.id}">
                 🔄 Renew
             </button>
+
+${
+    fd.status !== "renewed" &&
+    fd.status !== "settled" &&
+    fd.status !== "matured"
+        ? `
+            <button
+                type="button"
+                class="settle-fd-button"
+                data-id="${fdDoc.id}">
+                💰 Settle Maturity
+            </button>
+        `
+        : ""
+}
 
 
             <button
@@ -9098,6 +9022,398 @@ document.addEventListener("submit", async (event) => {
 
 });
 
+// =========================================
+// FD MATURITY SETTLEMENT
+// Atomic bank + interest + TDS + FD update
+// =========================================
+
+document.addEventListener("click", async (event) => {
+
+    const settleButton =
+        event.target.closest(".settle-fd-button");
+
+    if (!settleButton) {
+        return;
+    }
+
+    const fdId = settleButton.dataset.id;
+    const user = auth.currentUser;
+
+    if (!fdId) {
+        alert("FD ID नहीं मिली।");
+        return;
+    }
+
+    if (!user) {
+        alert("कृपया पहले Login करें।");
+        return;
+    }
+
+    settleButton.disabled = true;
+
+    try {
+
+        const fdRef = doc(
+            db,
+            "users",
+            user.uid,
+            "fixedDeposits",
+            fdId
+        );
+
+        const fdSnapshot = await getDoc(fdRef);
+
+        if (!fdSnapshot.exists()) {
+            throw new Error("Fixed Deposit नहीं मिली।");
+        }
+
+        const fd = fdSnapshot.data();
+
+        if (
+            fd.status === "settled" ||
+            fd.status === "matured" ||
+            fd.status === "renewed"
+        ) {
+            throw new Error(
+                "यह FD पहले ही settled, matured या renewed है।"
+            );
+        }
+
+        const principal = Number(fd.amount || 0);
+        const grossMaturity = Number(fd.maturityAmount || 0);
+        const grossInterest = Number(
+            (grossMaturity - principal).toFixed(2)
+        );
+
+        if (
+            principal <= 0 ||
+            grossMaturity <= principal ||
+            grossInterest <= 0
+        ) {
+            throw new Error(
+                "FD principal या maturity amount सही नहीं है।"
+            );
+        }
+
+        // Find the matching bank account.
+        const accountsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            )
+        );
+
+        const normalize = value =>
+            String(value || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, "");
+
+        const bankName = normalize(fd.bank);
+
+        const matchingAccounts =
+            accountsSnapshot.docs.filter(accountDoc => {
+
+                const account = accountDoc.data();
+                const accountName = normalize(account.name);
+
+                return (
+                    account.type === "bank" &&
+                    bankName &&
+                    (
+                        accountName.includes(bankName) ||
+                        bankName.includes(accountName)
+                    )
+                );
+            });
+
+        if (matchingAccounts.length !== 1) {
+            throw new Error(
+                matchingAccounts.length === 0
+                    ? `FD bank "${fd.bank}" से मेल खाता Bank account नहीं मिला।`
+                    : `FD bank "${fd.bank}" से एक से अधिक Bank accounts मिले। पहले सही account चुनने की सुविधा जोड़नी होगी।`
+            );
+        }
+
+        const bankAccountDoc = matchingAccounts[0];
+        const bankAccountRef = doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            bankAccountDoc.id
+        );
+
+        // Ask for actual figures from the bank statement.
+        const bankCreditInput = prompt(
+            `FD: ${fd.name || "Fixed Deposit"}\n` +
+            `Gross maturity: ₹${grossMaturity.toLocaleString("en-IN")}\n\n` +
+            "Bank में वास्तव में कितनी राशि credit हुई?"
+        );
+
+        if (bankCreditInput === null) {
+            return;
+        }
+
+        const bankCredit = Number(bankCreditInput);
+
+        const tdsInput = prompt(
+            "Bank ने कितना TDS काटा? (₹)"
+        );
+
+        if (tdsInput === null) {
+            return;
+        }
+
+        const tdsAmount = Number(tdsInput);
+
+        const settlementDate =
+            prompt(
+                "Actual settlement date (YYYY-MM-DD):",
+                fd.maturityDate || new Date().toISOString().slice(0, 10)
+            );
+
+        if (settlementDate === null) {
+            return;
+        }
+
+        if (
+            !/^\d{4}-\d{2}-\d{2}$/.test(settlementDate) ||
+            Number.isNaN(Date.parse(settlementDate + "T00:00:00"))
+        ) {
+            throw new Error("Settlement date सही format में नहीं है।");
+        }
+
+        if (
+            !Number.isFinite(bankCredit) ||
+            !Number.isFinite(tdsAmount) ||
+            bankCredit <= 0 ||
+            tdsAmount < 0
+        ) {
+            throw new Error("Bank credit या TDS amount सही नहीं है।");
+        }
+
+        if (
+            Math.abs(
+                bankCredit + tdsAmount - grossMaturity
+            ) > 0.01
+        ) {
+            throw new Error(
+                `Figures match नहीं हो रहे।\n` +
+                `Gross maturity: ₹${grossMaturity}\n` +
+                `Bank credit + TDS: ₹${(bankCredit + tdsAmount).toFixed(2)}`
+            );
+        }
+
+        const confirmSettlement = confirm(
+            `FD MATURITY SETTLEMENT\n\n` +
+            `FD: ${fd.name || "Fixed Deposit"}\n` +
+            `Bank: ${fd.bank || "—"}\n` +
+            `Principal: ₹${principal.toFixed(2)}\n` +
+            `Gross interest: ₹${grossInterest.toFixed(2)}\n` +
+            `TDS Receivable: ₹${tdsAmount.toFixed(2)}\n` +
+            `Actual bank credit: ₹${bankCredit.toFixed(2)}\n` +
+            `Settlement date: ${settlementDate}\n\n` +
+            `यह वास्तविक Firebase records और bank balance को update करेगा।\n\n` +
+            `क्या आप settlement save करना चाहते हैं?`
+        );
+
+        if (!confirmSettlement) {
+            return;
+        }
+
+        // Deterministic IDs prevent duplicate settlement records.
+        const bankTransactionRef = doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            `fdmaturity_bank_${fdId}`
+        );
+
+        const interestTransactionRef = doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            `fdmaturity_interest_${fdId}`
+        );
+
+        const tdsReceivableRef = doc(
+            db,
+            "users",
+            user.uid,
+            "tdsReceivables",
+            fdId
+        );
+
+        await runTransaction(db, async transaction => {
+
+            // Read every document before writing anything.
+            const currentFD = await transaction.get(fdRef);
+            const currentBank = await transaction.get(bankAccountRef);
+            const existingBankTransaction =
+                await transaction.get(bankTransactionRef);
+            const existingInterestTransaction =
+                await transaction.get(interestTransactionRef);
+            const existingTDS =
+                await transaction.get(tdsReceivableRef);
+
+            if (!currentFD.exists() || !currentBank.exists()) {
+                throw new Error(
+                    "FD या Bank account अब उपलब्ध नहीं है।"
+                );
+            }
+
+            if (
+                currentFD.data().status === "settled" ||
+                currentFD.data().status === "matured" ||
+                currentFD.data().status === "renewed"
+            ) {
+                throw new Error(
+                    "FD status बदल चुका है। Duplicate settlement रोका गया।"
+                );
+            }
+
+            if (
+                existingBankTransaction.exists() ||
+                existingInterestTransaction.exists() ||
+                existingTDS.exists()
+            ) {
+                throw new Error(
+                    "Settlement का कोई record पहले से मौजूद है। Duplicate save रोका गया।"
+                );
+            }
+
+            const currentBalance = Number(
+                currentBank.data().balance || 0
+            );
+
+            // 1. Update bank balance by actual bank credit only.
+            transaction.update(bankAccountRef, {
+                balance: Number(
+                    (currentBalance + bankCredit).toFixed(2)
+                ),
+                updatedAt: serverTimestamp()
+            });
+
+            // 2. Store actual bank movement as a transfer.
+            // This avoids incorrectly counting the full bank credit
+            // as income in bank-balance rebuilding.
+            transaction.set(bankTransactionRef, {
+                date: settlementDate,
+                type: "transfer",
+                category: "FD Maturity Settlement",
+                partyId: null,
+                partyName: fd.name || fd.bank || "Fixed Deposit",
+                investmentId: fdId,
+                investmentName: fd.name || "",
+                amount: bankCredit,
+                fromAccountId: null,
+                toAccountId: bankAccountDoc.id,
+                paymentMethod: "Bank",
+                linkedModule: "fixedDeposit",
+                linkedRecordId: fdId,
+                behavior: "money_in_non_income",
+                notes: `FD maturity bank credit. Gross interest ₹${grossInterest}; TDS ₹${tdsAmount}.`,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            // 3. Record gross interest separately.
+            // No bank account is attached to this income record,
+            // so it must not add the gross interest to bank balance.
+            transaction.set(interestTransactionRef, {
+                date: settlementDate,
+                type: "income",
+                category: "Interest",
+                partyId: null,
+                partyName: fd.name || fd.bank || "Fixed Deposit",
+                investmentId: fdId,
+                investmentName: fd.name || "",
+                amount: grossInterest,
+                fromAccountId: null,
+                toAccountId: null,
+                paymentMethod: "Bank",
+                linkedModule: "fixedDeposit",
+                linkedRecordId: fdId,
+                behavior: "gross_interest_before_tds",
+                notes: `Gross FD interest ₹${grossInterest}; TDS receivable ₹${tdsAmount}.`,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            // 4. Store TDS as a separate receivable ledger record.
+            transaction.set(tdsReceivableRef, {
+                fdId: fdId,
+                fdName: fd.name || "",
+                bankName: fd.bank || "",
+                principal: principal,
+                grossMaturity: grossMaturity,
+                grossInterest: grossInterest,
+                tdsAmount: tdsAmount,
+                bankCredit: bankCredit,
+                settlementDate: settlementDate,
+                status: "active",
+                claimedAmount: 0,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            // 5. Mark the FD settled and preserve its settlement figures.
+            transaction.update(fdRef, {
+                status: "settled",
+                settlementDate: settlementDate,
+                settlementBankAccountId: bankAccountDoc.id,
+                settlementBankCredit: bankCredit,
+                settlementTDS: tdsAmount,
+                settlementGrossInterest: grossInterest,
+                settlementBankTransactionId: bankTransactionRef.id,
+                settlementInterestTransactionId: interestTransactionRef.id,
+                updatedAt: serverTimestamp()
+            });
+        });
+
+        console.log("FD MATURITY SETTLEMENT SAVED", {
+            fdId,
+            principal,
+            grossInterest,
+            tdsAmount,
+            bankCredit,
+            settlementDate
+        });
+
+        await loadFixedDeposits();
+
+        if (typeof loadDashboardSummary === "function") {
+            await loadDashboardSummary();
+        }
+
+        alert(
+            "FD maturity settlement save हो गया।\n\n" +
+            "Bank credit: ₹" + bankCredit.toLocaleString("en-IN") + "\n" +
+            "Gross interest: ₹" + grossInterest.toLocaleString("en-IN") + "\n" +
+            "TDS Receivable: ₹" + tdsAmount.toLocaleString("en-IN")
+        );
+
+    } catch (error) {
+
+        console.error("FD MATURITY SETTLEMENT ERROR:", error);
+
+        alert(
+            "Settlement save नहीं हुआ।\n\n" +
+            (error?.message || "Console में error देखें।")
+        );
+
+    } finally {
+
+        settleButton.disabled = false;
+
+    }
+
+});
+
 // ===============================
 // DELETE FD
 // ===============================
@@ -9193,6 +9509,8 @@ document.addEventListener("click", async (event) => {
     }
 
 });
+
+
 // ===============================
 // CANCEL EDIT FD
 // ===============================
@@ -9366,6 +9684,7 @@ document.addEventListener("click", async (event) => {
     }
 
 });
+
 // ===============================
 // SAVE RENEWED FD
 // ===============================
@@ -9606,6 +9925,7 @@ document.addEventListener("submit", async (event) => {
     }
 
 });
+
 // ===============================
 // CANCEL RENEW FD
 // ===============================
