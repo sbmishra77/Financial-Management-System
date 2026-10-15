@@ -170,6 +170,7 @@ let savedTransactionParties = [];
 
 let savedTransactionInvestments = [];
 
+
 // =========================================
 // LOAD INVESTMENTS FOR TRANSACTIONS
 // =========================================
@@ -250,6 +251,40 @@ async function loadTransactionInvestments() {
             }
         );
 
+
+        // =========================================
+        // LOAD EXISTING ACTIVE FIXED DEPOSITS
+        // =========================================
+
+        const fixedDepositSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "fixedDeposits"
+            )
+        );
+
+        fixedDepositSnapshot.forEach((fdDoc) => {
+            const fd = fdDoc.data();
+
+            if (
+                String(fd.status || "").toLowerCase() !== "active"
+            ) {
+                return;
+            }
+
+            savedTransactionInvestments.push({
+                id: fdDoc.id,
+                name: fd.name || "",
+                category: "Fixed Deposit",
+                amount: Number(fd.amount || 0),
+                currentValue: Number(fd.amount || 0),
+                investmentDate: fd.depositDate || "",
+                notes: fd.notes || "",
+                isFixedDeposit: true
+            });
+        });
 
         console.log(
             "Transaction Investments Loaded:",
@@ -799,6 +834,14 @@ console.log(
 // =================================
 // OPEN FD POPUP
 // =================================
+
+
+if (typeof window.loadFDBankAccounts === "function") {
+    window.loadFDBankAccounts().catch(error => {
+        console.error("FD bank dropdown error:", error);
+    });
+}
+
 
 fdFormContainer.style.setProperty(
     "display",
@@ -3450,6 +3493,30 @@ console.log(
                         investmentInput.dataset.investmentId =
                             investment.id;
 
+                            
+                        // Link the selected FD's real Firestore ID
+                        if (
+                            investment.isFixedDeposit ||
+                            String(investment.category || "")
+                                .toLowerCase() === "fixed deposit"
+                        ) {
+                            row.dataset.fixedDepositId =
+                                investment.id;
+
+                            // New transaction ID will be generated
+                            // by the existing save handler if needed.
+                            delete row.dataset.fdTransactionId;
+
+                            console.log("FD ROW LINK READY:", {
+                                fdId: row.dataset.fixedDepositId,
+                                name: investment.name,
+                                amount: investment.amount,
+                                category: investment.category
+                            });
+                        } else {
+                            delete row.dataset.fixedDepositId;
+                        }
+
 console.log(
     "Investment ID stored:",
     investmentInput.dataset.investmentId
@@ -4898,15 +4965,17 @@ transactionSaveInProgress = true;
                 auth.currentUser;
 
 
-            if (!user) {
 
-                alert(
-                    "कृपया पहले login करें।"
-                );
+if (!user) {
+    transactionSaveInProgress = false;
 
-                return;
+    alert(
+        "कृपया पहले login करें।"
+    );
 
-            }
+    return;
+}
+
 
 
             // =========================================
@@ -4921,15 +4990,16 @@ transactionSaveInProgress = true;
                     : [];
 
 
-            if (!rows.length) {
 
-                alert(
-                    "कोई Transaction Row नहीं मिली।"
-                );
+if (!rows.length) {
+    transactionSaveInProgress = false;
 
-                return;
+    alert(
+        "कोई Transaction Row नहीं मिली।"
+    );
 
-            }
+    return;
+}
 
 
             // =========================================
@@ -5162,6 +5232,7 @@ const vehicleRegistrationNumber =
                             "कृपया Transaction Date चुनें।"
                         );
 
+                        transactionSaveInProgress = false;
                         return;
 
                     }
@@ -5172,6 +5243,7 @@ const vehicleRegistrationNumber =
                         alert(
                             "कृपया Transaction Type चुनें।"
                         );
+transactionSaveInProgress = false;
 
                         return;
 
@@ -5183,7 +5255,7 @@ const vehicleRegistrationNumber =
                         alert(
                             "कृपया Category चुनें।"
                         );
-
+transactionSaveInProgress = false;
                         return;
 
                     }
@@ -5193,7 +5265,7 @@ const vehicleRegistrationNumber =
                         !amount ||
                         amount <= 0
                     ) {
-
+transactionSaveInProgress = false;
                         alert(
                             "कृपया सही Transaction Amount डालें।"
                         );
@@ -5297,14 +5369,16 @@ vehicleRegistrationNumber:
     vehicleRegistrationNumber,
 
                         linkedModule:
-                            linkedModule,
-
-                        notes:
-                            notes,  
-
-                            behavior: transactionBehavior,
-                        createdAt:
-                            serverTimestamp()
+                        linkedModule,
+linkedRecordId:
+    type === "investment" &&
+    category === "Fixed Deposit" &&
+    row.dataset.fixedDepositId
+        ? row.dataset.fixedDepositId
+        : null,
+notes,
+behavior: transactionBehavior,
+createdAt: serverTimestamp()
 
                     };
 
@@ -5962,13 +6036,14 @@ if (type === "transfer") {
         // 6. APPLY NEW INVESTMENT
         // =================================
 
+
         if (
-            type === "investment"
+            type === "investment" &&
+            category !== "Fixed Deposit"
         ) {
 
             // New From → Bank से पैसा कम
             if (fromAccountId) {
-
                 await updateBankBalance(
                     fromAccountId,
                     -amount
@@ -5977,14 +6052,12 @@ if (type === "transfer") {
 
             // New To → Bank में पैसा बढ़े
             if (toAccountId) {
-
                 await updateBankBalance(
                     toAccountId,
                     amount
                 );
             }
         }
-
 
         console.log(
             "BANK BALANCE UPDATED AFTER TRANSACTION EDIT",
@@ -6052,27 +6125,296 @@ await updateDoc(
 }
 
 
-// =================================
-// NEW TRANSACTION
-// =================================
+ // =================================
+ // NEW TRANSACTION
+ // =================================
 
 else {
 
-    const transactionDoc =
-        await addDoc(
+    const isFixedDepositTransaction =
+        type === "investment" &&
+        category === "Fixed Deposit";
+
+    let transactionDoc;
+
+    if (isFixedDepositTransaction) {
+
+
+        // Recover the existing FD ID if row data was lost
+        let fixedDepositId = row.dataset.fixedDepositId || "";
+
+        if (!fixedDepositId) {
+            const fdSnapshot = await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "fixedDeposits"
+                )
+            );
+
+            const matchingFDs = [];
+
+            fdSnapshot.forEach((fdDocument) => {
+                const fd = fdDocument.data();
+
+                const sameName =
+                    String(fd.name || "").trim() === investmentName;
+
+                const sameAmount =
+                    Number(fd.amount || 0) === amount;
+
+                const sameDate =
+                    String(fd.depositDate || "") === date;
+
+                const sameBankAccount =
+                    String(fd.bankAccountId || "") ===
+                    String(fromAccountId || "");
+
+                const isActive =
+                    String(fd.status || "").toLowerCase() === "active";
+
+                if (
+                    sameName &&
+                    sameAmount &&
+                    sameDate &&
+                    sameBankAccount &&
+                    isActive
+                ) {
+                    matchingFDs.push({
+                        id: fdDocument.id,
+                        data: fd
+                    });
+                }
+            });
+
+            if (matchingFDs.length !== 1) {
+                throw new Error(
+                    matchingFDs.length === 0
+                        ? "मौजूदा FD का exact match नहीं मिला। कोई transaction या debit नहीं किया गया।"
+                        : "एक से अधिक FD match मिलीं। Duplicate debit से बचने के लिए save रोक दिया गया।"
+                );
+            }
+
+            fixedDepositId = matchingFDs[0].id;
+            row.dataset.fixedDepositId = fixedDepositId;
+
+            console.log("Existing FD recovered:", {
+                fixedDepositId,
+                name: matchingFDs[0].data.name,
+                amount: matchingFDs[0].data.amount,
+                depositDate: matchingFDs[0].data.depositDate
+            });
+        }
+
+        if (!fromAccountId || !(amount > 0)) {
+            throw new Error(
+                "FD के लिए Bank Account या Amount गलत है।"
+            );
+        }
+
+        const fdRef = doc(
+            db,
+            "users",
+            user.uid,
+            "fixedDeposits",
+            fixedDepositId
+        );
+
+        const accountRef = doc(
+            db,
+            "users",
+            user.uid,
+            "accounts",
+            fromAccountId
+        );
+
+        // Keep a stable ID if the same row is retried
+        if (!row.dataset.fdTransactionId) {
+            row.dataset.fdTransactionId =
+                doc(transactionCollection).id;
+        }
+
+        const fdTransactionRef = doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            row.dataset.fdTransactionId
+        );
+
+        
+        const result = await runTransaction(
+            db,
+            async (firestoreTransaction) => {
+
+                // Read all documents before writing
+                const fdSnapshot =
+                    await firestoreTransaction.get(fdRef);
+
+                const accountSnapshot =
+                    await firestoreTransaction.get(accountRef);
+
+                const transactionSnapshot =
+                    await firestoreTransaction.get(
+                        fdTransactionRef
+                    );
+
+                if (!fdSnapshot.exists()) {
+                    throw new Error(
+                        "Fixed Deposit record नहीं मिली।"
+                    );
+                }
+
+                
+                // SAFETY CHECK: FD principal and bank account must match
+                const fdData = fdSnapshot.data();
+
+                const fdPrincipal = Number(fdData.amount || 0);
+
+                if (Number(amount) !== fdPrincipal) {
+                    throw new Error(
+                        `FD amount mismatch. Existing FD principal: ₹${fdPrincipal}. Transaction save रोक दिया गया।`
+                    );
+                }
+
+                if (
+                    String(fdData.bankAccountId || "") !==
+                    String(fromAccountId || "")
+                ) {
+                    throw new Error(
+                        "FD का saved Bank Account और selected From Account match नहीं करते। Transaction save रोक दिया गया।"
+                    );
+                }
+
+
+                // If already linked, never deduct again
+                const existingTransactionId =
+                    fdSnapshot.data().transactionId;
+
+                if (existingTransactionId) {
+                    return {
+                        transactionId:
+                            existingTransactionId,
+                        alreadyProcessed: true
+                    };
+                }
+
+                if (transactionSnapshot.exists()) {
+                    throw new Error(
+                        "Transaction पहले से मौजूद है लेकिन FD link नहीं है। Duplicate रोकने के लिए save रोक दिया गया है।"
+                    );
+                }
+
+                if (!accountSnapshot.exists()) {
+                    throw new Error(
+                        "Selected Bank Account नहीं मिला।"
+                    );
+                }
+
+                const account =
+                    accountSnapshot.data();
+
+                if (
+                    account.type !== "bank" &&
+                    account.type !== "cash" &&
+                    account.type !== "cashback"
+                ) {
+                    throw new Error(
+                        "Selected account से FD amount debit नहीं किया जा सकता।"
+                    );
+                }
+
+                const currentBalance =
+                    Number(account.balance || 0);
+
+                // 1. Create the transaction
+                firestoreTransaction.set(
+                    fdTransactionRef,
+                    {
+                        ...transactionData,
+                        linkedModule: "fixedDeposit",
+                        linkedRecordId: fixedDepositId,
+                        fromAccountId: fromAccountId,
+                        amount: amount,
+                        createdAt: serverTimestamp(),
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                // 2. Link transaction to the FD
+                firestoreTransaction.update(
+                    fdRef,
+                    {
+                        transactionId:
+                            fdTransactionRef.id,
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                // 3. Deduct the bank balance atomically
+                firestoreTransaction.update(
+                    accountRef,
+                    {
+                        balance:
+                            currentBalance - amount,
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                return {
+                    transactionId:
+                        fdTransactionRef.id,
+                    alreadyProcessed: false
+                };
+            }
+        );
+
+        
+        transactionDoc = {
+            id: result.transactionId
+        };
+
+        row.dataset.savedFdTransactionId =
+            result.transactionId;
+
+        if (result.alreadyProcessed) {
+            console.warn(
+                "FD already linked; duplicate save skipped:",
+                result.transactionId
+            );
+
+            savedCount++;
+            continue;
+        }
+
+        console.log(
+            "FD, transaction and bank balance saved atomically:",
+            {
+                fdId: fixedDepositId,
+                transactionId: result.transactionId,
+                amount: amount,
+                fromAccountId: fromAccountId
+            }
+        );
+
+    } else {
+
+        // Existing save logic for non-FD transactions
+        transactionDoc = await addDoc(
             transactionCollection,
             transactionData
         );
 
-    console.log(
-        "Transaction saved successfully:",
-        {
-            id:
-                transactionDoc.id,
-            ...transactionData
-            
-        }
-    );
+        console.log(
+            "Transaction saved successfully:",
+            {
+                id: transactionDoc.id,
+                ...transactionData
+            }
+        );
+    }
+}
 
 
 // =================================
@@ -6315,8 +6657,10 @@ catch (bankBalanceError) {
 // =================================
 
 if (
-    type === "investment"
+    type === "investment" &&
+    category !== "Fixed Deposit"
 ) {
+
 
     // ---------------------------------
     // FROM ACCOUNT → MONEY OUT
@@ -6810,6 +7154,7 @@ if (fromAccountId) {
         );
     }
 }
+
         // ---------------------------------
         // CREDIT CARD LIABILITY REDUCED
         // ---------------------------------
@@ -6867,6 +7212,7 @@ if (fromAccountId) {
         );
 
     }
+
     catch (balanceError) {
 
         console.error(
@@ -6875,7 +7221,6 @@ if (fromAccountId) {
         );
 
     }
-}
 }
 
 savedCount++;
@@ -6943,6 +7288,12 @@ if (oldFirstRow) {
 
     firstRow =
         oldFirstRow.cloneNode(true);
+      
+    // Clear previous transaction / FD row identifiers
+    delete firstRow.dataset.fixedDepositId;
+    delete firstRow.dataset.fdTransactionId;
+    delete firstRow.dataset.savedFdTransactionId;
+    delete firstRow.dataset.editingTransactionId;
 
     // Clear all fields
     firstRow
