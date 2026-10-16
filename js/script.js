@@ -7080,27 +7080,64 @@ function setupInvestmentViewButtons() {
             "#viewFixedDepositsFromInvestmentsButton"
         );
 
-    if (viewFixedDepositsFromInvestmentsButton) {
+if (viewFixedDepositsFromInvestmentsButton) {
+    viewFixedDepositsFromInvestmentsButton.addEventListener(
+        "click",
+        () => {
 
-        viewFixedDepositsFromInvestmentsButton.addEventListener(
-            "click",
-            () => {
+            const fdContainer =
+                document.querySelector("#fdContainer");
 
-                const viewAllFDButton =
-                    document.querySelector(
-                        "#viewAllFDButton"
-                    );
+            const investmentTableWrapper =
+                document.querySelector("#investmentTableWrapper");
 
-                if (viewAllFDButton) {
+            const investmentsSectionTitle =
+                document.querySelector("#investmentsSectionTitle");
 
-                    viewAllFDButton.click();
+            const addInvestmentButton =
+                document.querySelector("#addInvestmentButton");
 
-                }
+            const viewAllInvestmentsButton =
+                document.querySelector("#viewAllInvestmentsButton");
 
+            const backToInvestmentsDashboardButton =
+                document.querySelector(
+                    "#backToInvestmentsDashboardButton"
+                );
+
+            // Hide Investment dashboard content
+            if (investmentTableWrapper) {
+                investmentTableWrapper.style.display = "none";
             }
-        );
 
-    }
+            if (investmentsSectionTitle) {
+                investmentsSectionTitle.style.display = "none";
+            }
+
+            if (addInvestmentButton) {
+                addInvestmentButton.style.display = "none";
+            }
+
+            if (viewAllInvestmentsButton) {
+                viewAllInvestmentsButton.style.display = "none";
+            }
+
+            if (backToInvestmentsDashboardButton) {
+                backToInvestmentsDashboardButton.style.display = "none";
+            }
+
+            // Show Fixed Deposits screen
+            if (fdContainer) {
+                fdContainer.style.display = "block";
+
+                fdContainer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
+        }
+    );
+}
 
 // ===============================
 // ADD NEW FD FROM ALL FD VIEW
@@ -8595,37 +8632,60 @@ if (viewAllFDButton) {
 // ===============================
 
 if (backToFDDashboardButton) {
-
     backToFDDashboardButton.addEventListener(
         "click",
         () => {
 
+            // Hide Fixed Deposits screen
             if (fdContainer) {
-
-                fdContainer.style.display =
-                    "none";
-
+                fdContainer.style.display = "none";
             }
-
 
             if (fdHistorySection) {
-
-                fdHistorySection.style.display =
-                    "none";
-
+                fdHistorySection.style.display = "none";
             }
 
+            // Restore Investment dashboard
+            const investmentsSectionTitle =
+                document.querySelector(
+                    "#investmentsSectionTitle"
+                );
+
+            const addInvestmentButton =
+                document.querySelector(
+                    "#addInvestmentButton"
+                );
+
+            const viewAllInvestmentsButton =
+                document.querySelector(
+                    "#viewAllInvestmentsButton"
+                );
+
+            if (investmentsSectionTitle) {
+                investmentsSectionTitle.style.display =
+                    "block";
+
+                investmentsSectionTitle.textContent =
+                    "📈 My Investments";
+            }
+
+            if (addInvestmentButton) {
+                addInvestmentButton.style.display =
+                    "inline-block";
+            }
+
+            if (viewAllInvestmentsButton) {
+                viewAllInvestmentsButton.style.display =
+                    "inline-block";
+            }
 
             window.scrollTo({
                 top: 0,
                 behavior: "smooth"
             });
-
         }
     );
-
 }
-
 
 // ===============================
 // VIEW ALL FD RENEWAL HISTORY
@@ -13995,12 +14055,10 @@ if (typeof refreshModuleData === "function") {
 });
 
 // =========================================================
-// 📅 FINANCIAL CALENDAR ENGINE
+// 📅 GLOBAL FINANCIAL CALENDAR ENGINE
 // =========================================================
 
 (function () {
-
-    // Prevent duplicate Calendar Engine initialization
 
     if (
         window.__financialCalendarInitialized
@@ -14012,38 +14070,201 @@ if (typeof refreshModuleData === "function") {
         true;
 
 
+    // =====================================================
+    // 📅 CALENDAR STATE
+    // =====================================================
+
     let calendarCurrentDate =
         new Date();
 
-// =====================================================
-// 💰 CALENDAR FINANCIAL EVENTS
-// =====================================================
 
-let calendarFinancialEvents = [];
+    let calendarFinancialEvents =
+        [];
 
-// =====================================================
-// 💰 LOAD LOAN REPAYMENT EVENTS FROM FIRESTORE
-// =====================================================
 
-async function loadCalendarFinancialEvents() {
+    // =====================================================
+    // 🧰 DATE NORMALIZER
+    // =====================================================
 
-    const user =
-        auth.currentUser;
+    function normalizeCalendarDate(
+        value
+    ) {
 
-    if (!user) {
+        if (!value) {
+            return "";
+        }
 
-        console.log(
-            "📅 Calendar: User not logged in"
+
+        // Firestore Timestamp
+        if (
+            typeof value.toDate ===
+            "function"
+        ) {
+
+            value =
+                value.toDate();
+
+        }
+
+
+        // JavaScript Date
+        if (
+            value instanceof Date
+        ) {
+
+            if (
+                isNaN(
+                    value.getTime()
+                )
+            ) {
+                return "";
+            }
+
+            const year =
+                value.getFullYear();
+
+            const month =
+                String(
+                    value.getMonth() + 1
+                ).padStart(2, "0");
+
+            const day =
+                String(
+                    value.getDate()
+                ).padStart(2, "0");
+
+            return (
+                `${year}-${month}-${day}`
+            );
+        }
+
+
+        const text =
+            String(value)
+                .trim();
+
+
+        // YYYY-MM-DD
+        const match =
+            text.match(
+                /^(\d{4})-(\d{2})-(\d{2})/
+            );
+
+        if (match) {
+
+            return (
+                `${match[1]}-${match[2]}-${match[3]}`
+            );
+
+        }
+
+
+        // Fallback date parsing
+        const parsed =
+            new Date(text);
+
+
+        if (
+            isNaN(
+                parsed.getTime()
+            )
+        ) {
+            return "";
+        }
+
+
+        const year =
+            parsed.getFullYear();
+
+        const month =
+            String(
+                parsed.getMonth() + 1
+            ).padStart(2, "0");
+
+        const day =
+            String(
+                parsed.getDate()
+            ).padStart(2, "0");
+
+
+        return (
+            `${year}-${month}-${day}`
         );
+    }
 
-        calendarFinancialEvents = [];
 
-        return;
+    // =====================================================
+    // 🧰 ADD EVENT SAFELY
+    // =====================================================
+
+    function addCalendarEvent(
+        event
+    ) {
+
+        if (
+            !event ||
+            !event.date
+        ) {
+            return;
+        }
+
+
+        const normalizedDate =
+            normalizeCalendarDate(
+                event.date
+            );
+
+
+        if (!normalizedDate) {
+            return;
+        }
+
+        // ==========================================
+// PREVENT DUPLICATE CALENDAR EVENTS
+// ==========================================
+const eventKey =
+    String(event.type || "") +
+    ":" +
+    String(event.id || "");
+
+const alreadyExists =
+    calendarFinancialEvents.some(
+        (existingEvent) =>
+            String(existingEvent.type || "") +
+                ":" +
+                String(existingEvent.id || "") ===
+            eventKey
+    );
+
+if (alreadyExists) {
+    return;
+}
+
+        calendarFinancialEvents.push({
+
+            ...event,
+
+            date:
+                normalizedDate,
+
+            amount:
+                Number(
+                    event.amount || 0
+                )
+
+        });
 
     }
 
-    try {
 
+    // =====================================================
+    // 💳 LOAN REPAYMENTS
+    // =====================================================
+
+async function loadLoanRepaymentEvents(
+    user
+) {
+    try {
         const repaymentsRef =
             collection(
                 db,
@@ -14052,41 +14273,37 @@ async function loadCalendarFinancialEvents() {
                 "loanRepayments"
             );
 
-
         const snapshot =
             await getDocs(
                 repaymentsRef
             );
 
-
-        calendarFinancialEvents = [];
-
+        // ==========================================
+        // EXISTING PAID / RECORDED EMI EVENTS
+        // ==========================================
+        const latestRepaymentByLoan =
+            new Map();
 
         snapshot.forEach(
             function (repaymentDoc) {
-
                 const data =
                     repaymentDoc.data();
 
-
                 // Ignore test records
-                if (
-                    data.test === true
-                ) {
+                if (data.test === true) {
                     return;
                 }
 
-
-                // Payment date required
-                if (
-                    !data.paymentDate
-                ) {
+                if (!data.paymentDate) {
                     return;
                 }
 
+                const loanName =
+                    data.loanName ||
+                    data.loanType ||
+                    "Loan";
 
-                calendarFinancialEvents.push({
-
+                addCalendarEvent({
                     id:
                         repaymentDoc.id,
 
@@ -14094,14 +14311,10 @@ async function loadCalendarFinancialEvents() {
                         "loanRepayment",
 
                     date:
-                        String(
-                            data.paymentDate
-                        ),
+                        data.paymentDate,
 
                     loanName:
-                        data.loanName ||
-                        data.loanType ||
-                        "Loan",
+                        loanName,
 
                     amount:
                         Number(
@@ -14111,34 +14324,1123 @@ async function loadCalendarFinancialEvents() {
                     repaymentType:
                         data.repaymentType ||
                         "Repayment"
-
                 });
 
+                // Keep the latest repayment for
+                // future EMI projection.
+                const existing =
+                    latestRepaymentByLoan.get(
+                        loanName
+                    );
+
+                if (
+                    !existing ||
+                    data.paymentDate >
+                        existing.paymentDate
+                ) {
+                    latestRepaymentByLoan.set(
+                        loanName,
+                        {
+                            paymentDate:
+                                data.paymentDate,
+
+                            amount:
+                                Number(
+                                    data.amount || 0
+                                ),
+
+                            loanName:
+                                loanName
+                        }
+                    );
+                }
             }
         );
 
+        // ==========================================
+        // PROJECT FUTURE MONTHLY EMI EVENTS
+        // ==========================================
+        latestRepaymentByLoan.forEach(
+            function (repayment) {
+                const baseDate =
+                    new Date(
+                        repayment.paymentDate +
+                        "T00:00:00"
+                    );
 
-        console.log(
-            "📅 Calendar Loan Repayment Events:",
-            calendarFinancialEvents
+                if (
+                    Number.isNaN(
+                        baseDate.getTime()
+                    )
+                ) {
+                    return;
+                }
+
+                // Show next 12 monthly EMIs
+                // in Calendar only.
+                for (
+                    let month = 1;
+                    month <= 12;
+                    month++
+                ) {
+                    const futureDate =
+                        new Date(baseDate);
+
+                    futureDate.setMonth(
+                        baseDate.getMonth() +
+                        month
+                    );
+
+                    const year =
+                        futureDate.getFullYear();
+
+                    const monthNumber =
+                        String(
+                            futureDate.getMonth() + 1
+                        ).padStart(2, "0");
+
+                    const day =
+                        String(
+                            futureDate.getDate()
+                        ).padStart(2, "0");
+
+                    const futureDateString =
+                        `${year}-${monthNumber}-${day}`;
+
+                    addCalendarEvent({
+                        id:
+                            "projected-" +
+                            repayment.loanName +
+                            "-" +
+                            futureDateString,
+
+                        type:
+                            "loanRepayment",
+
+                        date:
+                            futureDateString,
+
+                        loanName:
+                            repayment.loanName,
+
+                        amount:
+                            repayment.amount,
+
+                        repaymentType:
+                            "Upcoming EMI"
+                    });
+                }
+            }
         );
 
+    } catch (error) {
+        console.error(
+            "📅 Loan Calendar Events Error:",
+            error
+        );
+    }
+}
+
+    // =====================================================
+    // 🏦 FIXED DEPOSIT MATURITY
+    // =====================================================
+
+    async function loadFixedDepositEvents(
+        user
+    ) {
+
+        try {
+
+            const fixedDepositsRef =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "fixedDeposits"
+                );
+
+
+            const snapshot =
+                await getDocs(
+                    fixedDepositsRef
+                );
+
+
+            snapshot.forEach(
+                function (fdDoc) {
+
+                    const fd =
+                        fdDoc.data();
+
+
+                    // Skip only completed/non-active states.
+                    // Legacy active records without status are allowed.
+                    if (
+                        fd.status ===
+                            "renewed" ||
+                        fd.status ===
+                            "settled" ||
+                        fd.status ===
+                            "matured"
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        !fd.maturityDate
+                    ) {
+                        return;
+                    }
+
+
+                    addCalendarEvent({
+
+                        id:
+                            fdDoc.id,
+
+                        type:
+                            "fdMaturity",
+
+                        date:
+                            fd.maturityDate,
+
+                        name:
+                            fd.name ||
+                            fd.bank ||
+                            "Fixed Deposit",
+
+                        bank:
+                            fd.bank ||
+                            "",
+
+                        amount:
+                            Number(
+                                fd.maturityAmount ||
+                                0
+                            )
+
+                    });
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "📅 FD Calendar Events Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // 🛡️ INSURANCE PREMIUM + MATURITY
+    // =====================================================
+
+    async function loadInsuranceEvents(
+        user
+    ) {
+
+        try {
+
+            const insuranceRef =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "insurance"
+                );
+
+
+            const snapshot =
+                await getDocs(
+                    insuranceRef
+                );
+
+
+            const today =
+                new Date();
+
+
+            const calendarLimit =
+                new Date(
+                    today.getFullYear() + 3,
+                    today.getMonth(),
+                    today.getDate()
+                );
+
+
+            snapshot.forEach(
+                function (insuranceDoc) {
+
+                    const policy =
+                        insuranceDoc.data();
+
+
+                    if (
+                        policy.status &&
+                        policy.status !==
+                            "active"
+                    ) {
+                        return;
+                    }
+
+
+                    const policyName =
+                        policy.policyName ||
+                        policy.company ||
+                        "Insurance";
+
+
+                    const premium =
+                        Number(
+                            policy.premium || 0
+                        );
+
+
+                    // =================================================
+                    // PREMIUM DUE DATES
+                    // =================================================
+
+                    if (
+                        policy.renewalDate
+                    ) {
+
+                        let dueDate =
+                            new Date(
+                                String(
+                                    policy.renewalDate
+                                ) +
+                                "T00:00:00"
+                            );
+
+
+                        if (
+                            !isNaN(
+                                dueDate.getTime()
+                            )
+                        ) {
+
+                            const frequency =
+                                String(
+                                    policy.frequency ||
+                                    "single"
+                                )
+                                .toLowerCase();
+
+
+                            let monthsStep =
+                                0;
+
+
+                            if (
+                                frequency ===
+                                "monthly"
+                            ) {
+                                monthsStep = 1;
+                            }
+
+                            else if (
+                                frequency ===
+                                "quarterly"
+                            ) {
+                                monthsStep = 3;
+                            }
+
+                            else if (
+                                frequency ===
+                                "half_yearly"
+                            ) {
+                                monthsStep = 6;
+                            }
+
+                            else if (
+                                frequency ===
+                                "yearly"
+                            ) {
+                                monthsStep = 12;
+                            }
+
+
+                            // Single premium:
+                            // add only the stored due date.
+                            if (
+                                frequency ===
+                                "single" ||
+                                monthsStep === 0
+                            ) {
+
+                                addCalendarEvent({
+
+                                    id:
+                                        `${insuranceDoc.id}-premium`,
+
+                                    type:
+                                        "insurancePremium",
+
+                                    date:
+                                        dueDate,
+
+                                    name:
+                                        policyName,
+
+                                    company:
+                                        policy.company ||
+                                        "",
+
+                                    amount:
+                                        premium
+
+                                });
+
+                            }
+
+                            else {
+
+                                let occurrence =
+                                    new Date(
+                                        dueDate
+                                    );
+
+
+                                let occurrenceCount =
+                                    0;
+
+
+                                while (
+                                    occurrence <=
+                                    calendarLimit
+                                    &&
+                                    occurrenceCount <
+                                    40
+                                ) {
+
+                                    // Do not go beyond policy maturity.
+                                    if (
+                                        policy.maturityDate
+                                    ) {
+
+                                        const maturity =
+                                            new Date(
+                                                String(
+                                                    policy.maturityDate
+                                                ) +
+                                                "T00:00:00"
+                                            );
+
+
+                                        if (
+                                            !isNaN(
+                                                maturity.getTime()
+                                            ) &&
+                                            occurrence >
+                                            maturity
+                                        ) {
+                                            break;
+                                        }
+
+                                    }
+
+
+                                    addCalendarEvent({
+
+                                        id:
+                                            `${insuranceDoc.id}-premium-${occurrenceCount}`,
+
+                                        type:
+                                            "insurancePremium",
+
+                                        date:
+                                            new Date(
+                                                occurrence
+                                            ),
+
+                                        name:
+                                            policyName,
+
+                                        company:
+                                            policy.company ||
+                                            "",
+
+                                        amount:
+                                            premium
+
+                                    });
+
+
+                                    occurrence.setMonth(
+                                        occurrence.getMonth() +
+                                        monthsStep
+                                    );
+
+
+                                    occurrenceCount++;
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+
+                    // =================================================
+                    // INSURANCE MATURITY
+                    // =================================================
+
+                    if (
+                        policy.maturityDate
+                    ) {
+
+                        addCalendarEvent({
+
+                            id:
+                                `${insuranceDoc.id}-maturity`,
+
+                            type:
+                                "insuranceMaturity",
+
+                            date:
+                                policy.maturityDate,
+
+                            name:
+                                policyName,
+
+                            company:
+                                policy.company ||
+                                "",
+
+                            amount:
+                                Number(
+                                    policy.sumAssured ||
+                                    0
+                                )
+
+                        });
+
+                    }
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "📅 Insurance Calendar Events Error:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // 🏠 RENTAL INCOME TRANSACTIONS
+    // =====================================================
+
+    async function loadRentalIncomeEvents(
+        user
+    ) {
+
+        try {
+
+            const transactionsRef =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                );
+
+
+            const snapshot =
+                await getDocs(
+                    transactionsRef
+                );
+
+
+            snapshot.forEach(
+                function (transactionDoc) {
+
+                    const transaction =
+                        transactionDoc.data();
+
+
+                    const category =
+                        String(
+                            transaction.category ||
+                            ""
+                        )
+                        .trim()
+                        .toLowerCase();
+
+
+                    const type =
+                        String(
+                            transaction.type ||
+                            ""
+                        )
+                        .trim()
+                        .toLowerCase();
+
+
+                    if (
+                        type !== "income" ||
+                        category !==
+                            "rental income"
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        !transaction.date
+                    ) {
+                        return;
+                    }
+
+
+                    addCalendarEvent({
+
+                        id:
+                            transactionDoc.id,
+
+                        type:
+                            "rentalIncome",
+
+                        date:
+                            transaction.date,
+
+                        name:
+                            transaction.partyName ||
+                            transaction.investmentName ||
+                            "Rental Income",
+
+                        amount:
+                            Number(
+                                transaction.amount ||
+                                0
+                            )
+
+                    });
+
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "📅 Rental Calendar Events Error:",
+                error
+            );
+
+        }
+
+    }
+
+// =====================================================
+// 🚗 VEHICLE SCHEDULED EVENTS
+// =====================================================
+
+function loadVehicleCalendarEvents() {
+
+    try {
+
+        const vehicles =
+            JSON.parse(
+                localStorage.getItem(
+                    "financialERP_vehicles"
+                ) || "[]"
+            );
+
+        if (!Array.isArray(vehicles)) {
+            return;
+        }
+
+        vehicles.forEach(function (vehicle) {
+
+            const vehicleName =
+                [
+                    vehicle.manufacturer,
+                    vehicle.model
+                ]
+                .filter(Boolean)
+                .join(" ")
+                .trim() ||
+                "Vehicle";
+
+            const registrationNumber =
+                vehicle.registrationNumber ||
+                "";
+
+            // ==========================================
+            // DATE CONVERTER
+            // Supports:
+            // DD-MM-YYYY
+            // YYYY-MM-DD
+            // ==========================================
+
+            function normalizeVehicleDate(value) {
+
+                if (!value) {
+                    return "";
+                }
+
+                const text =
+                    String(value).trim();
+
+                // DD-MM-YYYY
+                const ddmmyyyy =
+                    text.match(
+                        /^(\d{2})-(\d{2})-(\d{4})$/
+                    );
+
+                if (ddmmyyyy) {
+
+                    return (
+                        ddmmyyyy[3] +
+                        "-" +
+                        ddmmyyyy[2] +
+                        "-" +
+                        ddmmyyyy[1]
+                    );
+                }
+
+                // YYYY-MM-DD
+                const yyyymmdd =
+                    text.match(
+                        /^(\d{4})-(\d{2})-(\d{2})$/
+                    );
+
+                if (yyyymmdd) {
+                    return text;
+                }
+
+                return "";
+            }
+
+
+            // ==========================================
+            // RC VALID TILL
+            // ==========================================
+
+            const rcDate =
+                normalizeVehicleDate(
+                    vehicle.rcValidTill
+                );
+
+            if (rcDate) {
+
+                addCalendarEvent({
+
+                    id:
+                        "vehicle-" +
+                        vehicle.id +
+                        "-rc",
+
+                    type:
+                        "vehicleRC",
+
+                    date:
+                        rcDate,
+
+                    vehicleName:
+                        vehicleName,
+
+                    registrationNumber:
+                        registrationNumber
+                });
+
+            }
+
+
+            // ==========================================
+            // INSURANCE POLICY EXPIRY
+            // ==========================================
+
+            const insuranceDate =
+                normalizeVehicleDate(
+                    vehicle.insuranceExpiryDate
+                );
+
+            if (insuranceDate) {
+
+                addCalendarEvent({
+
+                    id:
+                        "vehicle-" +
+                        vehicle.id +
+                        "-insurance",
+
+                    type:
+                        "vehicleInsurance",
+
+                    date:
+                        insuranceDate,
+
+                    vehicleName:
+                        vehicleName,
+
+                    registrationNumber:
+                        registrationNumber
+                });
+
+            }
+
+
+            // ==========================================
+            // THIRD PARTY INSURANCE EXPIRY
+            // ==========================================
+
+            const thirdPartyDate =
+                normalizeVehicleDate(
+                    vehicle.thirdPartyExpiry
+                );
+
+            if (thirdPartyDate) {
+
+                addCalendarEvent({
+
+                    id:
+                        "vehicle-" +
+                        vehicle.id +
+                        "-third-party",
+
+                    type:
+                        "vehicleThirdParty",
+
+                    date:
+                        thirdPartyDate,
+
+                    vehicleName:
+                        vehicleName,
+
+                    registrationNumber:
+                        registrationNumber
+                });
+
+            }
+
+
+            // ==========================================
+            // SERVICE DUE DATE
+            // ==========================================
+
+            const serviceDate =
+                normalizeVehicleDate(
+                    vehicle.serviceDueDate ||
+                    vehicle.nextServiceDate
+                );
+
+            if (serviceDate) {
+
+                addCalendarEvent({
+
+                    id:
+                        "vehicle-" +
+                        vehicle.id +
+                        "-service",
+
+                    type:
+                        "vehicleService",
+
+                    date:
+                        serviceDate,
+
+                    vehicleName:
+                        vehicleName,
+
+                    registrationNumber:
+                        registrationNumber
+                });
+
+            }
+
+        });
 
     } catch (error) {
 
         console.error(
-            "❌ Calendar Financial Events Load Error:",
+            "📅 Vehicle Calendar Events Error:",
             error
         );
-
-        calendarFinancialEvents = [];
 
     }
 
 }
 
     // =====================================================
-    // RENDER CALENDAR
+    // 🔄 LOAD ALL CALENDAR DATA
+    // =====================================================
+
+    async function loadCalendarFinancialEvents() {
+    const user = auth.currentUser;
+
+    if (!user) {
+        calendarFinancialEvents = [];
+        return;
+    }
+
+    calendarFinancialEvents = [];
+
+    await Promise.all([
+        loadLoanRepaymentEvents(user),
+        loadFixedDepositEvents(user),
+        loadInsuranceEvents(user),
+        loadRentalIncomeEvents(user),
+        loadVehicleCalendarEvents()
+    ]);
+
+    // ==========================================
+    // FINAL CALENDAR EVENT DEDUPLICATION
+    // ==========================================
+    // Keep only one event for the same event type
+    // and Firestore document ID.
+    const uniqueCalendarEvents = new Map();
+
+    calendarFinancialEvents.forEach((event) => {
+        const eventKey =
+            String(event.type || "") +
+            ":" +
+            String(event.id || "");
+
+        if (!uniqueCalendarEvents.has(eventKey)) {
+            uniqueCalendarEvents.set(
+                eventKey,
+                event
+            );
+        }
+    });
+
+    calendarFinancialEvents =
+        Array.from(
+            uniqueCalendarEvents.values()
+        );
+
+    calendarFinancialEvents.sort(function (a, b) {
+        return a.date.localeCompare(b.date);
+    });
+}
+
+
+    // =====================================================
+    // 🎨 EVENT STYLE
+    // =====================================================
+
+    function getCalendarEventStyle(
+        type
+    ) {
+
+        if (
+            type ===
+            "fdMaturity"
+        ) {
+
+            return `
+                background:#fff7ed;
+                border-left:4px solid #f97316;
+                color:#9a3412;
+            `;
+
+        }
+
+
+        if (
+            type ===
+            "insurancePremium"
+        ) {
+
+            return `
+                background:#fef9c3;
+                border-left:4px solid #eab308;
+                color:#854d0e;
+            `;
+
+        }
+
+
+        if (
+            type ===
+            "insuranceMaturity"
+        ) {
+
+            return `
+                background:#ede9fe;
+                border-left:4px solid #7c3aed;
+                color:#5b21b6;
+            `;
+
+        }
+
+
+        if (
+            type ===
+            "rentalIncome"
+        ) {
+
+            return `
+                background:#dbeafe;
+                border-left:4px solid #2563eb;
+                color:#1e40af;
+            `;
+
+        }
+
+
+                if (
+            type ===
+                "vehicleRC" ||
+            type ===
+                "vehicleInsurance" ||
+            type ===
+                "vehicleThirdParty" ||
+            type ===
+                "vehicleService"
+        ) {
+
+            return `
+                background:#e0f2fe;
+                border-left:4px solid #0284c7;
+                color:#075985;
+            `;
+        }
+        
+        // Default = loan repayment
+        return `
+            background:#dcfce7;
+            border-left:4px solid #16a34a;
+            color:#166534;
+        `;
+
+    }
+
+
+    // =====================================================
+    // 📝 EVENT LABEL
+    // =====================================================
+
+    function getCalendarEventLabel(
+        financialEvent
+    ) {
+
+        const amount =
+            Number(
+                financialEvent.amount || 0
+            )
+            .toLocaleString(
+                "en-IN"
+            );
+
+
+        if (
+            financialEvent.type ===
+            "fdMaturity"
+        ) {
+
+            return (
+                `🏦 ${financialEvent.bank || "FD"} Maturity ₹${amount}`
+            );
+
+        }
+
+
+        if (
+            financialEvent.type ===
+            "insurancePremium"
+        ) {
+
+            return (
+                `🛡️ Premium ${financialEvent.name} ₹${amount}`
+            );
+
+        }
+
+
+        if (
+            financialEvent.type ===
+            "insuranceMaturity"
+        ) {
+
+            return (
+                `🛡️ ${financialEvent.name} Maturity ₹${amount}`
+            );
+
+        }
+
+
+        if (
+            financialEvent.type ===
+            "rentalIncome"
+        ) {
+
+            return (
+                `🏠 Rent Received ₹${amount}`
+            );
+
+        }
+
+                if (
+            financialEvent.type ===
+            "vehicleRC"
+        ) {
+
+            return (
+                `📄 ${financialEvent.vehicleName || "Vehicle"} RC Renewal`
+            );
+        }
+
+
+        if (
+            financialEvent.type ===
+            "vehicleInsurance"
+        ) {
+
+            return (
+                `🛡️ ${financialEvent.vehicleName || "Vehicle"} Insurance Renewal`
+            );
+        }
+
+
+        if (
+            financialEvent.type ===
+            "vehicleThirdParty"
+        ) {
+
+            return (
+                `🛡️ ${financialEvent.vehicleName || "Vehicle"} Third Party Renewal`
+            );
+        }
+
+
+        if (
+            financialEvent.type ===
+            "vehicleService"
+        ) {
+
+            return (
+                `🔧 ${financialEvent.vehicleName || "Vehicle"} Service Due`
+            );
+        }
+
+
+        return (
+            `💳 ${financialEvent.repaymentType || "Repayment"} ₹${amount}`
+        );
+
+    }
+
+
+    // =====================================================
+    // 📅 RENDER CALENDAR
     // =====================================================
 
     function renderFinancialCalendar() {
@@ -14148,13 +15450,17 @@ async function loadCalendarFinancialEvents() {
                 "calendarMonthYear"
             );
 
+
         const daysGrid =
             document.getElementById(
                 "calendarDaysGrid"
             );
 
 
-        if (!monthYear || !daysGrid) {
+        if (
+            !monthYear ||
+            !daysGrid
+        ) {
             return;
         }
 
@@ -14171,116 +15477,101 @@ async function loadCalendarFinancialEvents() {
             calendarCurrentDate.toLocaleString(
                 "en-IN",
                 {
-                    month: "long"
+                    month:
+                        "long"
                 }
             );
 
-
-        // =================================================
-        // MONTH / YEAR TITLE
-        // =================================================
 
         monthYear.textContent =
             `${monthName} ${year}`;
 
 
+        daysGrid.innerHTML =
+            "";
+
+
         // =================================================
-        // CLEAR OLD DAYS
+        // WEEKDAY HEADER
         // =================================================
 
-        daysGrid.innerHTML = "";
+        const weekDayContainer =
+            document.getElementById(
+                "calendarWeekDays"
+            );
 
-// =================================================
-// 🎨 WEEKDAY HEADER STYLE
-// =================================================
 
-const weekDayContainer =
-    document.getElementById(
-        "calendarWeekDays"
-    );
+        if (
+            weekDayContainer
+        ) {
 
-if (weekDayContainer) {
+            Array.from(
+                weekDayContainer.children
+            )
+            .forEach(
+                function (
+                    header,
+                    index
+                ) {
 
-    const weekDays =
-        weekDayContainer.children;
+                    header.style.cssText = `
+                        padding:10px;
+                        text-align:center;
+                        font-weight:800;
+                        border-radius:8px;
+                        font-size:15px;
+                        color:#1e3a8a;
+                        background:${
+                            index === 0
+                                ? "#ffe4e6"
+                                : index === 6
+                                    ? "#dbeafe"
+                                    : "#eef2ff"
+                        };
+                    `;
 
-    Array.from(
-        weekDays
-    ).forEach(
-        function (header, index) {
-
-            header.style.cssText = `
-                padding:10px;
-                text-align:center;
-                font-weight:800;
-                border-radius:8px;
-                font-size:15px;
-                color:#1e3a8a;
-                background:${
-                    index === 0
-                        ? "#ffe4e6"
-                        : index === 6
-                            ? "#dbeafe"
-                            : "#eef2ff"
-                };
-            `;
+                }
+            );
 
         }
-    );
 
-}
-        // =================================================
-        // FIRST DAY OF MONTH
-        // =================================================
 
         const firstDay =
             new Date(
                 year,
                 month,
                 1
-            ).getDay();
+            )
+            .getDay();
 
-
-        // =================================================
-        // TOTAL DAYS
-        // =================================================
 
         const totalDays =
             new Date(
                 year,
                 month + 1,
                 0
-            ).getDate();
+            )
+            .getDate();
 
-
-        // =================================================
-        // TODAY
-        // =================================================
 
         const today =
             new Date();
 
 
-        const todayDate =
-            today.getDate();
-
-
-        const todayMonth =
-            today.getMonth();
-
-
-        const todayYear =
-            today.getFullYear();
+        const todayKey =
+            normalizeCalendarDate(
+                today
+            );
 
 
         // =================================================
-        // EMPTY CELLS BEFORE DAY 1
+        // EMPTY CELLS BEFORE MONTH START
         // =================================================
 
         for (
-            let i = 0;
-            i < firstDay;
-            i++
+            let index = 0;
+            index < firstDay;
+            index++
         ) {
 
             const emptyCell =
@@ -14289,8 +15580,11 @@ if (weekDayContainer) {
                 );
 
 
-            emptyCell.style.minHeight =
-                "95px";
+            emptyCell.style.cssText = `
+                min-height:78px;
+                border-radius:10px;
+                background:#ffffff;
+            `;
 
 
             daysGrid.appendChild(
@@ -14301,7 +15595,7 @@ if (weekDayContainer) {
 
 
         // =================================================
-        // CREATE DAYS
+        // DAYS
         // =================================================
 
         for (
@@ -14310,150 +15604,47 @@ if (weekDayContainer) {
             day++
         ) {
 
+            const dateKey =
+                `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+
+            const isToday =
+                dateKey ===
+                todayKey;
+
+
             const dayCell =
                 document.createElement(
                     "div"
                 );
 
 
-            const isToday =
-                day === todayDate &&
-                month === todayMonth &&
-                year === todayYear;
+            dayCell.style.cssText = `
+                min-height:78px;
+                padding:10px;
+                border:1px solid #dbeafe;
+                border-radius:10px;
+                background:#ffffff;
+                box-sizing:border-box;
+                transition:all .2s ease;
+                overflow:hidden;
+            `;
 
 
-// =================================================
-// 🎨 COLOURFUL CALENDAR DAY STYLE
-// =================================================
+            if (
+                isToday
+            ) {
 
-const dayOfWeek =
-    new Date(
-        year,
-        month,
-        day
-    ).getDay();
+                dayCell.style.background =
+                    "#dbeafe";
 
-let dayBackground =
-    "#ffffff";
+                dayCell.style.border =
+                    "2px solid #2563eb";
 
-let dayBorder =
-    "#dbeafe";
+                dayCell.style.boxShadow =
+                    "0 4px 12px rgba(37,99,235,0.25)";
 
-
-// Sunday
-if (dayOfWeek === 0) {
-
-    dayBackground =
-        "#fff1f2";
-
-    dayBorder =
-        "#fecdd3";
-
-}
-
-
-// Saturday
-else if (dayOfWeek === 6) {
-
-    dayBackground =
-        "#eff6ff";
-
-    dayBorder =
-        "#bfdbfe";
-
-}
-
-
-// Monday
-else if (dayOfWeek === 1) {
-
-    dayBackground =
-        "#f0fdf4";
-
-    dayBorder =
-        "#bbf7d0";
-
-}
-
-
-// Tuesday
-else if (dayOfWeek === 2) {
-
-    dayBackground =
-        "#fffbeb";
-
-    dayBorder =
-        "#fde68a";
-
-}
-
-
-// Wednesday
-else if (dayOfWeek === 3) {
-
-    dayBackground =
-        "#f5f3ff";
-
-    dayBorder =
-        "#ddd6fe";
-
-}
-
-
-// Thursday
-else if (dayOfWeek === 4) {
-
-    dayBackground =
-        "#ecfeff";
-
-    dayBorder =
-        "#a5f3fc";
-
-}
-
-
-// Friday
-else if (dayOfWeek === 5) {
-
-    dayBackground =
-        "#fff7ed";
-
-    dayBorder =
-        "#fed7aa";
-
-}
-
-
-dayCell.style.cssText = `
-    min-height:105px;
-    border:1px solid ${dayBorder};
-    border-radius:10px;
-    background:${dayBackground};
-    padding:10px;
-    box-sizing:border-box;
-    position:relative;
-    cursor:pointer;
-    transition:0.2s;
-    box-shadow:0 2px 5px rgba(0,0,0,0.05);
-`;
-
-
-            // =================================================
-            // TODAY HIGHLIGHT
-            // =================================================
-
-           if (isToday) {
-
-    dayCell.style.background =
-        "#dbeafe";
-
-    dayCell.style.border =
-        "2px solid #2563eb";
-
-    dayCell.style.boxShadow =
-        "0 4px 12px rgba(37,99,235,0.25)";
-
-}
+            }
 
 
             // =================================================
@@ -14470,95 +15661,115 @@ dayCell.style.cssText = `
                 day;
 
 
-dayNumber.style.cssText = `
-    font-weight:800;
-    font-size:18px;
-    color:${isToday ? "#1d4ed8" : "#1e3a8a"};
-    margin-bottom:6px;
-    line-height:1;
-`;
+            dayNumber.style.cssText = `
+                font-weight:800;
+                font-size:18px;
+                color:${
+                    isToday
+                        ? "#1d4ed8"
+                        : "#1e3a8a"
+                };
+                margin-bottom:6px;
+                line-height:1;
+            `;
 
 
             dayCell.appendChild(
                 dayNumber
             );
 
-            // =====================================================
-// 💳 LOAN REPAYMENT EVENTS
-// =====================================================
 
-const eventsForThisDay =
-    calendarFinancialEvents.filter(
-        function (event) {
+            // =================================================
+            // EVENTS CONTAINER
+            // =================================================
 
-            return (
-                event.date ===
-                `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+            const eventsContainer =
+                document.createElement(
+                    "div"
+                );
+
+
+            eventsContainer.style.cssText = `
+                margin-top:6px;
+                display:flex;
+                flex-direction:column;
+                gap:4px;
+            `;
+
+
+            dayCell.appendChild(
+                eventsContainer
             );
-
-        }
-    );
-
-
-eventsForThisDay.forEach(
-    function (financialEvent) {
-
-        const eventElement =
-            document.createElement("div");
-
-
-        eventElement.style.cssText = `
-            margin-top:4px;
-            padding:5px 7px;
-            border-radius:6px;
-            background:#dcfce7;
-            border-left:4px solid #16a34a;
-            color:#166534;
-            font-size:12px;
-            font-weight:700;
-            line-height:1.3;
-        `;
-
-
-        eventElement.textContent =
-            `💳 ${financialEvent.repaymentType} ₹${financialEvent.amount.toLocaleString("en-IN")}`;
-
-
-        eventsContainer.appendChild(
-            eventElement
-        );
-
-    }
-);
-
-// =====================================================
-// 💰 FINANCIAL EVENTS CONTAINER
-// =====================================================
-
-const eventsContainer =
-    document.createElement("div");
-
-eventsContainer.style.cssText = `
-    margin-top:6px;
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-`;
-
-dayCell.appendChild(
-    eventsContainer
-);
 
 
             // =================================================
-            // HOVER EFFECT
+            // EVENTS FOR THIS DAY
+            // =================================================
+
+            const eventsForThisDay =
+                calendarFinancialEvents.filter(
+                    function (event) {
+
+                        return (
+                            event.date ===
+                            dateKey
+                        );
+
+                    }
+                );
+
+
+            eventsForThisDay.forEach(
+                function (
+                    financialEvent
+                ) {
+
+                    const eventElement =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    eventElement.style.cssText = `
+                        margin-top:4px;
+                        padding:5px 7px;
+                        border-radius:6px;
+                        font-size:12px;
+                        font-weight:700;
+                        line-height:1.3;
+                        white-space:normal;
+                        word-break:break-word;
+                        ${getCalendarEventStyle(
+                            financialEvent.type
+                        )}
+                    `;
+
+
+                    eventElement.textContent =
+                        getCalendarEventLabel(
+                            financialEvent
+                        );
+
+
+                    eventsContainer.appendChild(
+                        eventElement
+                    );
+
+                }
+            );
+
+
+            // =================================================
+            // HOVER
             // =================================================
 
             dayCell.addEventListener(
                 "mouseenter",
                 function () {
 
-                    if (!isToday) {
+                    if (
+                        !isToday
+                    ) {
 
                         dayCell.style.background =
                             "#f8fafc";
@@ -14573,7 +15784,9 @@ dayCell.appendChild(
                 "mouseleave",
                 function () {
 
-                    if (!isToday) {
+                    if (
+                        !isToday
+                    ) {
 
                         dayCell.style.background =
                             "#ffffff";
@@ -14594,7 +15807,7 @@ dayCell.appendChild(
 
 
     // =====================================================
-    // TODAY BUTTON
+    // 📅 TODAY
     // =====================================================
 
     document.addEventListener(
@@ -14621,9 +15834,69 @@ dayCell.appendChild(
         }
     );
 
+    // =====================================================
+// 📅 GO TO ANY DATE
+// =====================================================
+
+document.addEventListener(
+    "change",
+    function (event) {
+
+        const dateSelector =
+            event.target.closest(
+                "#calendarDateSelector"
+            );
+
+        if (!dateSelector) {
+            return;
+        }
+
+        const selectedDate =
+            dateSelector.value;
+
+        if (!selectedDate) {
+            return;
+        }
+
+        // YYYY-MM-DD
+        const parts =
+            selectedDate.split("-");
+
+        if (parts.length !== 3) {
+            return;
+        }
+
+        const year =
+            Number(parts[0]);
+
+        const month =
+            Number(parts[1]) - 1;
+
+        const day =
+            Number(parts[2]);
+
+        if (
+            !Number.isInteger(year) ||
+            !Number.isInteger(month) ||
+            !Number.isInteger(day)
+        ) {
+            return;
+        }
+
+        calendarCurrentDate =
+            new Date(
+                year,
+                month,
+                day
+            );
+
+        renderFinancialCalendar();
+
+    }
+);
 
     // =====================================================
-    // PREVIOUS MONTH
+    // ◀ PREVIOUS MONTH
     // =====================================================
 
     document.addEventListener(
@@ -14656,7 +15929,7 @@ dayCell.appendChild(
 
 
     // =====================================================
-    // NEXT MONTH
+    // NEXT MONTH ▶
     // =====================================================
 
     document.addEventListener(
@@ -14688,32 +15961,41 @@ dayCell.appendChild(
     );
 
 
-// =====================================================
-// INITIAL RENDER
-// =====================================================
+    // =====================================================
+    // 🔐 FIREBASE AUTH READY
+    // =====================================================
 
-if (
-    document.readyState === "loading"
-) {
+    onAuthStateChanged(
+        auth,
+        async function (user) {
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        function () {
+            if (!user) {
+
+                calendarFinancialEvents =
+                    [];
+
+                renderFinancialCalendar();
+
+                return;
+
+            }
+
+
+            console.log(
+                "📅 Calendar: Auth ready."
+            );
+
+
+            await loadCalendarFinancialEvents();
+
 
             renderFinancialCalendar();
 
         }
     );
 
-} else {
-
-    renderFinancialCalendar();
-
-}
 
 })();
-
-
 
 // ==================================================
 // MY FINANCIAL GOALS — ADD / CANCEL FORM
