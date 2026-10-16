@@ -8058,28 +8058,35 @@ const monthlyExpense =
     );
 
 // Calculate Rental Income separately
+// Prevent the same transaction document from being counted twice.
 let monthlyRentalIncome = 0;
+
+const countedRentalTransactions = new Set();
 
 sortedTransactionDocs.forEach(
     (transactionDoc) => {
-
         const transaction =
             transactionDoc.data();
 
         if (
-            transaction.date &&
-            transaction.date.startsWith(currentMonth) &&
-            transaction.type === "income" &&
-            transaction.category === "Rental Income"
+            transaction.deleted === true ||
+            !transaction.date ||
+            !transaction.date.startsWith(currentMonth) ||
+            transaction.type !== "income" ||
+            transaction.category !== "Rental Income"
         ) {
-
-            monthlyRentalIncome +=
-                Number(
-                    transaction.amount || 0
-                );
-
+            return;
         }
 
+        // Firestore document ID is the unique transaction identity.
+        if (countedRentalTransactions.has(transactionDoc.id)) {
+            return;
+        }
+
+        countedRentalTransactions.add(transactionDoc.id);
+
+        monthlyRentalIncome +=
+            Number(transaction.amount || 0);
     }
 );
 
