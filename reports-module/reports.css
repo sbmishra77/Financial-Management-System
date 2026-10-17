@@ -1033,3 +1033,33 @@ body {
         width: 100%;
     }
 }
+
+/* Category selected when opened from an ERP module Reports button */
+.report-category-card-selected {
+    border-color: #2d6cdf !important;
+    box-shadow: 0 0 0 2px rgba(45, 108, 223, 0.14), 0 12px 28px rgba(20, 55, 100, 0.10) !important;
+}
+
+/* BACK TO DASHBOARD BUTTON */
+.reports-navigation {
+    margin-bottom: 16px;
+}
+
+.back-to-dashboard-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border: 1px solid #cbd8e8;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #173b70;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.back-to-dashboard-button:hover {
+    background: #eaf2fc;
+}

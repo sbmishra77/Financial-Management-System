@@ -1,3 +1,5 @@
+console.log("MY LATEST REPORTS.JS LOADED");
+
 // =========================================================
 // SBM WEALTH MANAGER
 // REPORTS MODULE
@@ -224,6 +226,61 @@ function hideReportModuleStartPage() {
 
 }
 
+// =====================================================
+// GLOBAL DATE SORT — OLDEST FIRST / ASCENDING
+// Supports YYYY-MM-DD and DD-MM-YYYY
+// =====================================================
+
+function sortTransactionsOldestFirst(transactions) {
+
+    function getSortableDate(value) {
+
+        if (!value) return "";
+
+        const dateString = String(value).trim();
+
+        // YYYY-MM-DD
+        let match = dateString.match(
+            /^(\d{4})-(\d{1,2})-(\d{1,2})/
+        );
+
+        if (match) {
+            return (
+                match[1] + "-" +
+                match[2].padStart(2, "0") + "-" +
+                match[3].padStart(2, "0")
+            );
+        }
+
+        // DD-MM-YYYY or DD/MM/YYYY
+        match = dateString.match(
+            /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+        );
+
+        if (match) {
+            return (
+                match[3] + "-" +
+                match[2].padStart(2, "0") + "-" +
+                match[1].padStart(2, "0")
+            );
+        }
+
+        // Unknown date format: keep it after valid dates
+        return "";
+    }
+
+    return transactions.sort(function (a, b) {
+
+        const dateA = getSortableDate(a.date);
+        const dateB = getSortableDate(b.date);
+
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+
+        return dateA.localeCompare(dateB);
+    });
+}
 
 // -----------------------------------------------------
 // SHOW REPORT MODULE STARTING PAGE
@@ -303,35 +360,110 @@ if (reportWorkArea) {
 
 }
 
+
     // =====================================================
-    // CATEGORY CARDS
+    // CATEGORY CARDS — NO PAGE RELOAD
     // =====================================================
 
-    const categoryCards =
-        document.querySelectorAll(
-            ".report-category-card"
+
+const categoryCards = document.querySelectorAll(
+    ".report-category-card"
+);
+
+categoryCards.forEach(card => {
+    card.addEventListener("click", () => {
+        const title = card
+            .querySelector(".report-category-title")
+            ?.textContent?.trim();
+
+        console.log("Clicked category:", title);
+
+        if (title === "Transactions") {
+            console.log("Opening Transaction Reports");
+
+            hideReportModuleStartPage();
+            renderTransactionReports();
+        }
+    });
+});
+
+
+    // =====================================================
+    // OPEN A CATEGORY DIRECTLY FROM AN ERP MODULE BUTTON
+    // Transactions has the existing detailed report catalogue.
+    // Other categories are selected and clearly indicate their
+    // reports can be added without pretending they already exist.
+    // =====================================================
+    const requestedCategory = new URLSearchParams(window.location.search)
+        .get("category");
+
+    if (requestedCategory) {
+        const categoryMap = {
+            transactions: "Transactions",
+            accounts: "Accounts",
+            investments: "Investments",
+            loans: "Loans & Borrowings",
+            assets: "Assets",
+            liabilities: "Liabilities",
+            "net-worth": "Net Worth",
+            "income-expenses": "Income & Expenses"
+        };
+
+        const requestedTitle = categoryMap[requestedCategory] || "Transactions";
+        const requestedCard = Array.from(categoryCards).find(card =>
+            card.querySelector(".report-category-title")?.textContent?.trim() === requestedTitle
         );
 
-
-    categoryCards.forEach(card => {
-
-        card.addEventListener("click", () => {
-
-            const title =
-                card.querySelector(
-                    ".report-category-title"
-                )?.textContent?.trim();
-
-
-            if (title === "Transactions") {
-
-                renderTransactionReports();
-
+        if (requestedCard) {
+            requestedCard.classList.add("report-category-card-selected");
+            
+if (requestedTitle === "Transactions") {
+    hideReportModuleStartPage();
+    renderTransactionReports();
+}
+ 
+            
+            else if (reportWorkArea) {
+                reportWorkArea.innerHTML = `
+                    <div class="transaction-reports-container">
+                        <div class="transaction-reports-header">
+                            <div>
+                                <h2>${requestedTitle} Reports</h2>
+                                <p>This category is selected. Detailed reports for this category can be added here next.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                reportWorkArea.scrollIntoView({ behavior: "smooth", block: "start" });
             }
+        }
+    }
 
-        });
 
-    });
+    
+const reportNumberFromUrl = Number(
+    new URLSearchParams(window.location.search).get("report")
+);
+
+if (reportNumberFromUrl) {
+    const reportToOpen = transactionReports.find(
+        report => report.number === reportNumberFromUrl
+    );
+
+    if (reportToOpen) {
+        const transactionsCategory = Array.from(categoryCards).find(
+            card =>
+                card.querySelector(".report-category-title")
+                    ?.textContent.trim() === "Transactions"
+        );
+
+        if (transactionsCategory) {
+            renderTransactionReports();
+            hideReportModuleStartPage();
+            renderSelectedReport(reportToOpen);
+        }
+    }
+}
 
 
     // =====================================================
@@ -340,7 +472,11 @@ if (reportWorkArea) {
 
     function renderTransactionReports() {
 
-        reportWorkArea.innerHTML = `
+    hideReportModuleStartPage();
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
 
             <div class="transaction-reports-container">
 
@@ -549,16 +685,15 @@ if (reportWorkArea) {
             "backToTransactionReports"
         );
 
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-    if (backButton) {
-
-        backButton.addEventListener(
-    "click",
-    showReportModuleStartPage
-);
-
-    }
-
+        hideReportModuleStartPage();
+        renderTransactionReports();
+    };
+}
 
     // =====================================================
     // CHECK USER
@@ -643,7 +778,7 @@ if (reportWorkArea) {
     }
 );
 
- // =================================================
+// =================================================
 // SORT — OLDEST FIRST / ASCENDING
 // =================================================
 
@@ -1187,15 +1322,15 @@ async function renderDateWiseTransactionsReport() {
         );
 
 
-    if (backButton) {
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-        backButton.addEventListener(
-    "click",
-    showReportModuleStartPage
-);
-
-    }
-
+        hideReportModuleStartPage();
+        renderTransactionReports();
+    };
+}
 
     // =====================================================
     // APPLY REPORT
@@ -1988,13 +2123,15 @@ async function renderMonthWiseTransactionsReport() {
         );
 
 
-    if (backButton) {
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-        backButton.addEventListener(
-    "click",
-    showReportModuleStartPage
-);
-    }
+        hideReportModuleStartPage();
+        renderTransactionReports();
+    };
+}
 
     
 
@@ -2687,15 +2824,16 @@ async function renderYearWiseTransactionsReport() {
         );
 
 
-    if (backButton) {
 
-        backButton.addEventListener(
-    "click",
-    showReportModuleStartPage
-);
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
 
-    }
-
+        hideReportModuleStartPage();
+        renderTransactionReports();
+    };
+}
 
     // =====================================================
     // REPORT CONTENT
@@ -8252,25 +8390,23 @@ if (!isWalletTransaction) {
         );
 
 
-        // =================================================
-        // SORT — NEWEST FIRST
-        // =================================================
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-        transactions.sort(
-            function (a, b) {
+transactions.sort(
+    function (a, b) {
 
-                return String(
-                    b.date || ""
-                ).localeCompare(
-                    String(
-                        a.date || ""
-                    )
-                );
-
-            }
+        return String(
+            a.date || ""
+        ).localeCompare(
+            String(
+                b.date || ""
+            )
         );
 
-
+    }
+);
         // =================================================
         // TOTAL
         // =================================================
@@ -9105,23 +9241,12 @@ async function renderCashbackTransactionsReport() {
         );
 
 
-        // =================================================
-        // SORT — NEWEST FIRST
-        // =================================================
 
-        transactions.sort(
-            function (a, b) {
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-                return String(
-                    b.date || ""
-                ).localeCompare(
-                    String(
-                        a.date || ""
-                    )
-                );
-
-            }
-        );
+sortTransactionsOldestFirst(transactions);
 
 
         // =================================================
@@ -9769,24 +9894,11 @@ async function renderDeletedTransactionsReport() {
         );
 
 
-        // =================================================
-        // SORT — NEWEST FIRST
-        // =================================================
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-        transactions.sort(
-            function (a, b) {
-
-                return String(
-                    b.date || ""
-                ).localeCompare(
-                    String(
-                        a.date || ""
-                    )
-                );
-
-            }
-        );
-
+sortTransactionsOldestFirst(transactions);
 
         // =================================================
         // UPDATE COUNT
@@ -10280,22 +10392,11 @@ async function renderEditedTransactionsReport() {
 
         });
 
-        // Latest edit first
-        transactions.sort(function (a, b) {
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-            const timeA =
-                a.updatedAt?.toMillis
-                    ? a.updatedAt.toMillis()
-                    : 0;
-
-            const timeB =
-                b.updatedAt?.toMillis
-                    ? b.updatedAt.toMillis()
-                    : 0;
-
-            return timeB - timeA;
-
-        });
+sortTransactionsOldestFirst(transactions);
 
         const countElement =
             document.getElementById("editedTransactionCount");
@@ -10530,7 +10631,7 @@ async function renderRecentlyAddedTransactionsReport() {
 
                         <span>
                             <strong>Reporting Period:</strong>
-                            All Transactions, Newest First
+                            All Transactions, Oldest First
                         </span>
 
                     </div>
@@ -10649,21 +10750,11 @@ async function renderRecentlyAddedTransactionsReport() {
         });
 
 
-        // Newest transaction first
-        transactions.sort(function (a, b) {
+// =================================================
+// SORT — OLDEST FIRST / ASCENDING
+// =================================================
 
-            const timeA = a.createdAt?.toMillis
-                ? a.createdAt.toMillis()
-                : new Date(a.createdAt).getTime();
-
-            const timeB = b.createdAt?.toMillis
-                ? b.createdAt.toMillis()
-                : new Date(b.createdAt).getTime();
-
-            return timeB - timeA;
-
-        });
-
+sortTransactionsOldestFirst(transactions);
 
         const countElement = document.getElementById(
             "recentTransactionCount"
@@ -10762,8 +10853,6 @@ async function renderRecentlyAddedTransactionsReport() {
 
                 <tr>
 
-                    <td>${addedOn}</td>
-
                     <td>${transactionDate}</td>
 
                     <td>${transaction.type || "-"}</td>
@@ -10785,6 +10874,8 @@ async function renderRecentlyAddedTransactionsReport() {
                     <td>${transaction.linkedModule || "-"}</td>
 
                     <td>${transaction.notes || "-"}</td>
+
+                    <td>${addedOn}</td>
 
                 </tr>
 
@@ -11200,11 +11291,23 @@ async function renderTransactionsByPartyReport() {
 
     const backButton = document.getElementById("backToTransactionReports");
 
-    if (backButton) {
-        backButton.addEventListener("click", function () {
-            renderTransactionReports();
-        });
-    }
+   
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        console.log("BACK BUTTON CLICKED - REPORT #16");
+
+        document.querySelector(".reports-header").style.display = "none";
+        document.querySelector(".reports-search-section").style.display = "none";
+        document.querySelector(".reports-categories-section").style.display = "none";
+
+        renderTransactionReports();
+
+        console.log("TRANSACTION REPORTS RENDERED");
+    };
+}
 
     const user = auth.currentUser;
 
@@ -12129,18 +12232,66 @@ async function renderTransactionsWithoutCategoryReport() {
 
 
 async function renderTransactionsWithoutPartyReport() {
-    reportWorkArea.innerHTML = `
-        <div class="report-section">
-            <h3>Transactions without Party</h3>
-            <p>Transactions where the party name is missing.</p>
-            <div id="transactionsWithoutPartyContent">Loading...</div>
+    
+reportWorkArea.innerHTML = `
+    <div class="selected-report-container">
+
+        <button type="button"
+            class="back-to-reports-button"
+            id="backToNoPartyReport">
+            ← Back to Transaction Reports
+        </button>
+
+        <div class="report-document-header">
+
+            <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                <strong style="font-size:22px; color:#173b70;">
+                    #35 Transactions without Party
+                </strong>
+                <p style="color:#64748b;">
+                    Transactions where the party name is missing
+                </p>
+            </div>
+
+            <div style="padding:20px 30px;">
+                <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                    <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                        Transactions without Party
+                    </div>
+                    <strong id="noPartyCount"
+                        style="color:#173b70; font-size:21px;">0</strong>
+                </div>
+            </div>
+
         </div>
-    `;
+
+        <div id="transactionsWithoutPartyContent"
+             style="padding:0 30px 30px;">
+            <div style="padding:30px; text-align:center; color:#64748b;">
+                Loading transactions...
+            </div>
+        </div>
+
+    </div>
+`;
+
+document.getElementById("backToNoPartyReport")
+    ?.addEventListener("click", function () {
+        renderTransactionReports();
+    });
+
 
     const content = document.getElementById("transactionsWithoutPartyContent");
 
     try {
-        const snapshot = await getDocs(collection(db, "transactions"));
+        if (!currentUser) {
+    content.innerHTML = `<p>Please log in to view this report.</p>`;
+    return;
+}
+
+const snapshot = await getDocs(
+    collection(db, "users", currentUser.uid, "transactions")
+);
 
         const transactions = [];
 
@@ -12160,6 +12311,9 @@ async function renderTransactionsWithoutPartyReport() {
                 });
             }
         });
+
+        document.getElementById("noPartyCount").textContent =
+    transactions.length;
 
         if (transactions.length === 0) {
             content.innerHTML = `
@@ -12204,7 +12358,8 @@ async function renderTransactionsWithoutPartyReport() {
                     <tbody>
                         ${transactions.map(transaction => `
                             <tr>
-                                <td>${transaction.date || "-"}</td>
+                            
+<td>${formatTransactionDate(transaction.date)}</td>
                                 <td>${transaction.type || "-"}</td>
                                 <td>₹${(
                                     Number(transaction.amount) || 0
@@ -12234,42 +12389,114 @@ async function renderTransactionsWithoutPartyReport() {
 }
 
 
+
 async function renderTransactionsWithoutNotesReport() {
+
+    console.log("REPORT #36 FUNCTION STARTED");
+
     reportWorkArea.innerHTML = `
-        <div class="report-section">
-            <h3>Transactions without Notes</h3>
-            <p>Transactions where notes or descriptions are missing.</p>
-            <div id="transactionsWithoutNotesContent">Loading...</div>
+        <div class="selected-report-container">
+
+            <button type="button"
+                class="back-to-reports-button"
+                id="backToNoNotesReport">
+                ← Back to Transaction Reports
+            </button>
+
+            <div class="report-document-header">
+
+                <div style="padding:24px 30px 18px; border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px; color:#173b70;">
+                        #36 Transactions without Notes
+                    </strong>
+                    <p style="color:#64748b;">
+                        Transactions where notes or descriptions are missing
+                    </p>
+                </div>
+
+                <div style="padding:20px 30px;">
+                    <div style="padding:16px 18px; border:1px solid #dce5f0; border-radius:10px; background:#f8fbff;">
+                        <div style="color:#64748b; font-size:12px; margin-bottom:5px;">
+                            Transactions without Notes
+                        </div>
+                        <strong id="noNotesCount"
+                            style="color:#173b70; font-size:21px;">0</strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="transactionsWithoutNotesContent"
+                 style="padding:0 30px 30px;">
+                <div style="padding:30px; text-align:center; color:#64748b;">
+                    Loading transactions...
+                </div>
+            </div>
+
         </div>
     `;
+
+    document.getElementById("backToNoNotesReport")
+        ?.addEventListener("click", function () {
+            renderTransactionReports();
+        });
 
     const content = document.getElementById(
         "transactionsWithoutNotesContent"
     );
+        
 
     try {
-        const snapshot = await getDocs(
-            collection(db, "transactions")
-        );
+       const user = auth.currentUser;
+
+if (!user) {
+    content.innerHTML = `
+        <div style="padding:25px; color:#b00020;">
+            Please log in to view this report.
+        </div>
+    `;
+    return;
+}
+
+const snapshot = await getDocs(
+    collection(db, "users", user.uid, "transactions")
+);
 
         const transactions = [];
 
         snapshot.forEach((docSnap) => {
             const transaction = docSnap.data();
 
+            
+console.log("REPORT #36 CHECK:", {
+    id: docSnap.id,
+    date: transaction.date,
+    category: transaction.category,
+    amount: transaction.amount,
+    notes: transaction.notes,
+    deleted: transaction.deleted
+});
+
             if (transaction.deleted === true) return;
 
-            const notes = String(
-                transaction.notes ?? ""
-            ).trim();
+const notes = String(
+    transaction.notes ?? ""
+).trim();
 
-            if (!notes) {
+if (!notes || notes === "-" || notes === "—") {
+
                 transactions.push({
                     id: docSnap.id,
                     ...transaction
                 });
             }
+
+            
         });
+
+
+// Oldest First — ascending transaction date
+sortTransactionsOldestFirst(transactions);
 
         if (transactions.length === 0) {
             content.innerHTML = `
@@ -12284,55 +12511,77 @@ async function renderTransactionsWithoutNotesReport() {
             0
         );
 
-        content.innerHTML = `
-            <div class="report-summary">
-                <div class="summary-card">
-                    <h4>Transactions without Notes</h4>
-                    <p>${transactions.length}</p>
-                </div>
 
-                <div class="summary-card">
-                    <h4>Total Amount</h4>
-                    <p>₹${totalAmount.toLocaleString("en-IN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    })}</p>
-                </div>
-            </div>
+document.getElementById("noNotesCount").textContent =
+    transactions.length;
 
-            <div class="table-responsive">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Amount</th>
-                            <th>Category</th>
-                            <th>Party</th>
-                            <th>Transaction ID</th>
-                        </tr>
-                    </thead>
+const formatAmount = amount =>
+    (Number(amount) || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 
-                    <tbody>
-                        ${transactions.map(transaction => `
-                            <tr>
-                                <td>${transaction.date || "-"}</td>
-                                <td>${transaction.type || "-"}</td>
-                                <td>₹${(
-                                    Number(transaction.amount) || 0
-                                ).toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                })}</td>
-                                <td>${transaction.category || "-"}</td>
-                                <td>${transaction.partyName || "-"}</td>
-                                <td>${transaction.id}</td>
-                            </tr>
-                        `).join("")}
-                    </tbody>
-                </table>
-            </div>
-        `;
+const escapeText = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
+
+content.innerHTML = `
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:20px;">
+        <div class="summary-card" style="flex:1; min-width:200px;">
+            <h4>Transactions without Notes</h4>
+            <p>${transactions.length}</p>
+        </div>
+
+        <div class="summary-card" style="flex:1; min-width:200px;">
+            <h4>Total Amount</h4>
+            <p>₹${formatAmount(totalAmount)}</p>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto; border:1px solid #dce5f0; border-radius:10px;">
+        <table style="width:100%; min-width:850px; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#173f78; color:white;">
+                    <th style="text-align:left; padding:12px;">Date</th>
+                    <th style="text-align:left; padding:12px;">Type</th>
+                    <th style="text-align:right; padding:12px;">Amount</th>
+                    <th style="text-align:left; padding:12px;">Category</th>
+                    <th style="text-align:left; padding:12px;">Party</th>
+                    <th style="text-align:left; padding:12px;">Transaction ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${transactions.map(transaction => `
+                    <tr style="border-bottom:1px solid #e5ebf3;">
+                        <td style="padding:11px;">${escapeText(transaction.date || "-")}</td>
+                        <td style="padding:11px;">${escapeText(transaction.type || "-")}</td>
+                        <td style="padding:11px; text-align:right; white-space:nowrap;">
+                            ₹${formatAmount(transaction.amount)}
+                        </td>
+                        <td style="padding:11px;">${escapeText(transaction.category || "-")}</td>
+                        <td style="padding:11px;">${escapeText(transaction.partyName || "-")}</td>
+                        <td style="padding:11px; white-space:nowrap;">${escapeText(transaction.id)}</td>
+                    </tr>
+                `).join("")}
+            </tbody>
+            <tfoot>
+                <tr style="background:#f8fbff; font-weight:700;">
+                    <td colspan="2" style="padding:12px;">Grand Total</td>
+                    <td style="padding:12px; text-align:right; white-space:nowrap;">
+                        ₹${formatAmount(totalAmount)}
+                    </td>
+                    <td colspan="3"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+`;
+
     } catch (error) {
         console.error(
             "Error generating Transactions without Notes report:",
@@ -12347,6 +12596,433 @@ async function renderTransactionsWithoutNotesReport() {
 
 
 function renderSelectedReport(report) {
+
+    
+async function renderHighValueTransactionsReport() {
+    reportWorkArea.innerHTML = `
+<div class="selected-report-container">
+    <button type="button" class="back-to-reports-button"
+        id="backFromReport37"
+        style="margin:10px 0 16px;">
+        ← Back to Transaction Reports
+    </button>
+
+    <div class="report-document-header">
+
+
+    <div style="padding:24px 30px;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #37 High-value Transactions
+                    </strong>
+                    <p style="color:#64748b;">
+                        Transactions equal to or above the selected amount
+                    </p>
+                </div>
+            </div>
+            <div style="padding:20px 30px;">
+                <label for="highValueThreshold">Minimum Amount (₹)</label>
+                <input id="highValueThreshold" type="number"
+                    min="0" value="50000"
+                    style="padding:10px;border:1px solid #cbd5e1;border-radius:6px;margin:8px;">
+                <button id="applyHighValueFilter" type="button"
+                    style="padding:10px 16px;cursor:pointer;">
+                    Apply Filter
+                </button>
+                <div id="highValueContent" style="margin-top:20px;">
+                    Loading transactions...
+                </div>
+            </div>
+            
+        </div>`;
+
+        document.getElementById("backFromReport37")
+    .addEventListener("click", () => renderTransactionReports());
+    
+    const content = document.getElementById("highValueContent");
+
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            content.textContent = "Please log in to view this report.";
+            return;
+        }
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const transactions = [];
+        snapshot.forEach(docSnap => {
+            const t = docSnap.data();
+            if (t.deleted === true) return;
+            transactions.push({ id: docSnap.id, ...t });
+        });
+
+        const formatAmount = amount =>
+            (Number(amount) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const esc = value => String(value ?? "-").replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;",
+            '"': "&quot;", "'": "&#39;"
+        })[c]);
+
+        
+const formatDate = value => {
+    if (!value) return "-";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (match) {
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    return String(value);
+};
+
+
+        function display() {
+            const threshold = Math.max(
+                0,
+                Number(document.getElementById("highValueThreshold").value) || 0
+            );
+
+            const filtered = transactions
+                .filter(t => (Number(t.amount) || 0) >= threshold)
+                .sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+
+            const total = filtered.reduce(
+                (sum, t) => sum + (Number(t.amount) || 0), 0
+            );
+
+            content.innerHTML = `
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+                    <div class="summary-card" style="flex:1;min-width:180px;">
+                        <h4>Matching Transactions</h4><p>${filtered.length}</p>
+                    </div>
+                    <div class="summary-card" style="flex:1;min-width:180px;">
+                        <h4>Total Amount</h4><p>₹${formatAmount(total)}</p>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                    <table style="width:100%;min-width:750px;border-collapse:collapse;">
+                        <thead><tr style="background:#173f78;color:white;">
+                            <th style="padding:12px;text-align:left;">Date</th>
+                            <th style="padding:12px;text-align:left;">Type</th>
+                            <th style="padding:12px;text-align:left;">Category</th>
+                            <th style="padding:12px;text-align:left;">Party</th>
+                            <th style="padding:12px;text-align:right;">Amount</th>
+                        </tr></thead>
+                        <tbody>${filtered.map(t => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${esc(formatDate(t.date))}</td>
+                                <td style="padding:10px;">${esc(t.type)}</td>
+                                <td style="padding:10px;">${esc(t.category)}</td>
+                                <td style="padding:10px;">${esc(t.partyName)}</td>
+                                <td style="padding:10px;text-align:right;white-space:nowrap;">
+                                    ₹${formatAmount(t.amount)}
+                                </td>
+                            </tr>`).join("") || `
+                            <tr><td colspan="5" style="padding:20px;text-align:center;">
+                                No matching transactions found.
+                            </td></tr>`}
+                        </tbody>
+                        <tfoot><tr style="background:#f8fbff;font-weight:700;">
+                            <td colspan="4" style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:right;">₹${formatAmount(total)}</td>
+                        </tr></tfoot>
+                    </table>
+                </div>`;
+        }
+
+        document.getElementById("applyHighValueFilter")
+            .addEventListener("click", display);
+        display();
+    } catch (error) {
+        console.error("Report #37 error:", error);
+        content.textContent = "Unable to load this report. Check the console.";
+    }
+}
+
+
+async function renderDuplicateTransactionReport() {
+    reportWorkArea.innerHTML = `
+        
+<div class="selected-report-container">
+    <button type="button" class="back-to-reports-button"
+        id="backFromReport38"
+        style="margin:10px 0 16px;">
+        ← Back to Transaction Reports
+    </button>
+
+    <div class="report-document-header">
+
+
+                <div style="padding:24px 30px;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #38 Duplicate Transaction Detection
+                    </strong>
+                    <p style="color:#64748b;">
+                        Possible duplicates with matching date, amount, type, category and party
+                    </p>
+                </div>
+            </div>
+            <div id="duplicateTransactionsContent" style="padding:20px 30px;">
+                Loading transactions...
+            </div>
+        </div>`;
+
+        document.getElementById("backFromReport38")
+    .addEventListener("click", () => renderTransactionReports());
+
+    const content = document.getElementById("duplicateTransactionsContent");
+
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            content.textContent = "Please log in to view this report.";
+            return;
+        }
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const groups = new Map();
+
+        snapshot.forEach(docSnap => {
+            const t = docSnap.data();
+            if (t.deleted === true) return;
+
+            const key = [
+                t.date ?? "",
+                Number(t.amount) || 0,
+                String(t.type ?? "").trim().toLowerCase(),
+                String(t.category ?? "").trim().toLowerCase(),
+                String(t.partyName ?? "").trim().toLowerCase()
+            ].join("|");
+
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push({ id: docSnap.id, ...t });
+        });
+
+        const duplicates = [...groups.values()].filter(group => group.length > 1);
+        const formatAmount = amount =>
+            (Number(amount) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        const esc = value => String(value ?? "-").replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;",
+            '"': "&quot;", "'": "&#39;"
+        })[c]);
+
+        
+const formatDate = value => {
+    if (!value) return "-";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (match) {
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    return String(value);
+};
+
+        const duplicateCount = duplicates.reduce(
+            (sum, group) => sum + group.length, 0
+        );
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+                <div class="summary-card" style="flex:1;min-width:180px;">
+                    <h4>Possible Duplicate Groups</h4><p>${duplicates.length}</p>
+                </div>
+                <div class="summary-card" style="flex:1;min-width:180px;">
+                    <h4>Transactions in Groups</h4><p>${duplicateCount}</p>
+                </div>
+            </div>
+            ${duplicates.length ? duplicates.map((group, index) => `
+                <div style="margin-bottom:20px;overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="padding:12px;background:#f8fbff;font-weight:700;">
+                        Possible Duplicate Group ${index + 1} — ${group.length} entries
+                    </div>
+                    <table style="width:100%;min-width:750px;border-collapse:collapse;">
+                        <thead><tr style="background:#173f78;color:white;">
+                            <th style="padding:10px;text-align:left;">Date</th>
+                            <th style="padding:10px;text-align:left;">Type</th>
+                            <th style="padding:10px;text-align:left;">Category</th>
+                            <th style="padding:10px;text-align:left;">Party</th>
+                            <th style="padding:10px;text-align:right;">Amount</th>
+                            <th style="padding:10px;text-align:left;">Transaction ID</th>
+                        </tr></thead>
+                        <tbody>${group.map(t => `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${esc(formatDate(t.date))}</td>
+                                <td style="padding:10px;">${esc(t.type)}</td>
+                                <td style="padding:10px;">${esc(t.category)}</td>
+                                <td style="padding:10px;">${esc(t.partyName)}</td>
+                                <td style="padding:10px;text-align:right;">₹${formatAmount(t.amount)}</td>
+                                <td style="padding:10px;">${esc(t.id)}</td>
+                            </tr>`).join("")}
+                        </tbody>
+                    </table>
+                </div>`).join("") : `
+                <div style="padding:30px;text-align:center;color:#64748b;border:1px solid #dce5f0;border-radius:10px;">
+                    No possible duplicate transactions found.
+                </div>`}
+        `;
+    } catch (error) {
+        console.error("Report #38 error:", error);
+        content.textContent = "Unable to load this report. Check the console.";
+    }
+}
+
+
+async function renderTransactionAuditReport() {
+    reportWorkArea.innerHTML = `
+
+<div class="selected-report-container">
+    <button type="button" class="back-to-reports-button"
+        id="backFromReport39"
+        style="margin:10px 0 16px;">
+        ← Back to Transaction Reports
+    </button>
+
+    <div class="report-document-header">
+
+    <div style="padding:24px 30px;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #39 Transaction Audit Report
+                    </strong>
+                    <p style="color:#64748b;">
+                        Review transaction records and identify missing details
+                    </p>
+                </div>
+            </div>
+            <div id="transactionAuditContent" style="padding:20px 30px;">
+                Loading transactions...
+            </div>
+        </div>`;
+
+        document.getElementById("backFromReport39")
+    .addEventListener("click", () => renderTransactionReports());
+
+    const content = document.getElementById("transactionAuditContent");
+
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            content.textContent = "Please log in to view this report.";
+            return;
+        }
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        const transactions = [];
+        snapshot.forEach(docSnap => {
+            const t = docSnap.data();
+            if (t.deleted === true) return;
+            transactions.push({ id: docSnap.id, ...t });
+        });
+
+        transactions.sort((a, b) =>
+            String(b.date ?? "").localeCompare(String(a.date ?? ""))
+        );
+
+        const esc = value => String(value ?? "-").replace(/[&<>"']/g, c => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;",
+            '"': "&quot;", "'": "&#39;"
+        })[c]);
+
+const formatDate = value => {
+    if (!value) return "-";
+
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (match) {
+        return `${match[3]}-${match[2]}-${match[1]}`;
+    }
+
+    return String(value);
+};
+
+        const formatAmount = amount =>
+            (Number(amount) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const missingDetails = t => {
+            const missing = [];
+            if (!String(t.date ?? "").trim()) missing.push("Date");
+            if (!String(t.type ?? "").trim()) missing.push("Type");
+            if (t.amount === undefined || t.amount === null || t.amount === "") {
+                missing.push("Amount");
+            }
+            if (!String(t.category ?? "").trim()) missing.push("Category");
+            if (!String(t.partyName ?? "").trim()) missing.push("Party");
+            if (!String(t.notes ?? "").trim() || String(t.notes).trim() === "-") {
+                missing.push("Notes");
+            }
+            return missing;
+        };
+
+        const flagged = transactions.filter(t => missingDetails(t).length > 0);
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+                <div class="summary-card" style="flex:1;min-width:180px;">
+                    <h4>Total Transactions Reviewed</h4><p>${transactions.length}</p>
+                </div>
+                <div class="summary-card" style="flex:1;min-width:180px;">
+                    <h4>Transactions with Missing Details</h4><p>${flagged.length}</p>
+                </div>
+            </div>
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                <table style="width:100%;min-width:900px;border-collapse:collapse;">
+                    <thead><tr style="background:#173f78;color:white;">
+                        <th style="padding:11px;text-align:left;">Date</th>
+                        <th style="padding:11px;text-align:left;">Type</th>
+                        <th style="padding:11px;text-align:left;">Category</th>
+                        <th style="padding:11px;text-align:left;">Party</th>
+                        <th style="padding:11px;text-align:right;">Amount</th>
+                        <th style="padding:11px;text-align:left;">Notes</th>
+                        <th style="padding:11px;text-align:left;">Audit Status</th>
+                        <th style="padding:11px;text-align:left;">Transaction ID</th>
+                    </tr></thead>
+                    <tbody>${transactions.map(t => {
+                        const missing = missingDetails(t);
+                        return `
+                            <tr style="border-bottom:1px solid #e5ebf3;">
+                                <td style="padding:10px;">${esc(formatDate(t.date))}</td>
+                                <td style="padding:10px;">${esc(t.type)}</td>
+                                <td style="padding:10px;">${esc(t.category)}</td>
+                                <td style="padding:10px;">${esc(t.partyName)}</td>
+                                <td style="padding:10px;text-align:right;white-space:nowrap;">₹${formatAmount(t.amount)}</td>
+                                <td style="padding:10px;">${esc(t.notes || "-")}</td>
+                                <td style="padding:10px;color:${missing.length ? "#b45309" : "#15803d"};">
+                                    ${missing.length ? "Review: " + esc(missing.join(", ")) : "Complete"}
+                                </td>
+                                <td style="padding:10px;">${esc(t.id)}</td>
+                            </tr>`;
+                    }).join("") || `
+                        <tr><td colspan="8" style="padding:20px;text-align:center;">
+                            No transactions found.
+                        </td></tr>`}
+                    </tbody>
+                </table>
+            </div>`;
+    } catch (error) {
+        console.error("Report #39 error:", error);
+        content.textContent = "Unable to load this report. Check the console.";
+    }
+}
 
         window.activeTransactionReport = report;
 
@@ -12556,6 +13232,27 @@ if (report.number === 35) {
     return;
 }
 
+
+if (report.number === 36) {
+    renderTransactionsWithoutNotesReport();
+    return;
+}
+
+
+if (report.number === 37) {
+    renderHighValueTransactionsReport();
+    return;
+}
+
+if (report.number === 38) {
+    renderDuplicateTransactionReport();
+    return;
+}
+
+if (report.number === 39) {
+    renderTransactionAuditReport();
+    return;
+}
 
 
 
@@ -13170,4 +13867,17 @@ function formatReportDate(value) {
 
     }
 
+});
+
+
+document.getElementById("backToDashboardButton")?.addEventListener("click", () => {
+    try {
+        if (window.self !== window.top) {
+            window.parent.location.href = "../index.html";
+        } else {
+            window.location.href = "../index.html";
+        }
+    } catch (error) {
+        window.location.href = "../index.html";
+    }
 });
