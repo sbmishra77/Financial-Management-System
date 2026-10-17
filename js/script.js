@@ -13407,6 +13407,11 @@ if (quickCard) {
     const section =
         quickCard.dataset.section;
 
+    if (section === "reports") {
+        window.location.href = "reports-module/reports.html";
+        return;
+    }
+
     console.log(
         "MODULE CARD CLICK:",
         section
