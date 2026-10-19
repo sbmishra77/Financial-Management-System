@@ -371,22 +371,1221 @@ const categoryCards = document.querySelectorAll(
 );
 
 categoryCards.forEach(card => {
-    card.addEventListener("click", () => {
-        const title = card
-            .querySelector(".report-category-title")
-            ?.textContent?.trim();
 
-        console.log("Clicked category:", title);
+    card.addEventListener("click", () => {
+
+        const title =
+            card.querySelector(
+                ".report-category-title"
+            )?.textContent?.trim();
 
         if (title === "Transactions") {
-            console.log("Opening Transaction Reports");
 
-            hideReportModuleStartPage();
             renderTransactionReports();
-        }
-    });
-});
 
+        }
+
+if (title === "Accounts") {
+
+    console.log("🏦 ACCOUNTS REPORTS SELECTED");
+
+    hideReportModuleStartPage();
+
+    if (reportWorkArea) {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+                        <h2>🏦 Accounts Reports</h2>
+
+                        <p>
+                            Select an Accounts report
+                        </p>
+                    </div>
+
+                </div>
+
+                <div
+                    id="accountsReportsGrid"
+                    class="transaction-reports-grid"
+                >
+
+                    <div
+                        class="transaction-report-card"
+                        data-report="all-accounts"
+                    >
+                        <div class="transaction-report-number">
+                            1
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>🏦 All Accounts</h3>
+
+                            <p>
+                                View all accounts
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="transaction-report-card"
+                        data-report="account-balances"
+                    >
+                        <div class="transaction-report-number">
+                            2
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>💰 Account Balances</h3>
+
+                            <p>
+                                View account balances
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <div
+                        class="transaction-report-card"
+                        data-report="account-wise-transactions"
+                    >
+                        <div class="transaction-report-number">
+                            3
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>📊 Account-wise Transactions</h3>
+
+                            <p>
+                                View transactions by account
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+const allAccountsReport =
+    document.querySelector(
+        '[data-report="all-accounts"]'
+    );
+
+
+    const accountBalancesReport =
+    document.querySelector(
+        '[data-report="account-balances"]'
+    );
+
+console.log(
+    "🔎 ACCOUNT BALANCES CARD:",
+    accountBalancesReport
+);
+
+if (accountBalancesReport) {
+
+accountBalancesReport.addEventListener(
+    "click",
+    async () => {
+
+        console.log(
+            "💰 ACCOUNT BALANCES REPORT SELECTED"
+        );
+
+        if (reportWorkArea) {
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+
+                    <div class="transaction-reports-header">
+
+                        <div>
+                            <h2>💰 Account Balances</h2>
+
+                            <p>
+                                View opening and current balances for all accounts
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div
+                        id="accountBalancesTable"
+                        style="margin-top:20px;"
+                    >
+
+                        <div
+                            style="
+                                display:grid;
+                                grid-template-columns:2fr 1fr 1fr;
+                                padding:10px 16px;
+                                background:#f1f5f9;
+                                border-bottom:2px solid #cbd5e1;
+                                font-weight:600;
+                            "
+                        >
+                            <div>Account Name</div>
+
+                            <div style="text-align:right;">
+                                Opening Balance
+                            </div>
+
+                            <div style="text-align:right;">
+                                Current Balance
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }
+
+        const user = auth.currentUser;
+
+        if (!user) {
+
+            console.log(
+                "❌ ACCOUNT BALANCES: USER NOT FOUND"
+            );
+
+            return;
+
+        }
+
+        const accountsSnapshot =
+            await getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
+            );
+
+        let totalOpeningBalance = 0;
+        let totalCurrentBalance = 0;
+
+        const accountBalancesTable =
+            document.querySelector(
+                "#accountBalancesTable"
+            );
+
+        if (accountBalancesTable) {
+
+            accountsSnapshot.forEach(
+                (accountDoc) => {
+
+                    const account =
+                        accountDoc.data();
+
+                    const openingBalance =
+                        Number(
+                            account.openingBalance ?? 0
+                        );
+
+                    const currentBalance =
+                        Number(
+                            account.balance ?? 0
+                        );
+
+                    totalOpeningBalance +=
+                        openingBalance;
+
+                    totalCurrentBalance +=
+                        currentBalance;
+
+                    const row =
+                        document.createElement("div");
+
+                    row.style.display = "grid";
+
+                    row.style.gridTemplateColumns =
+                        "2fr 1fr 1fr";
+
+                    row.style.alignItems =
+                        "center";
+
+                    row.style.padding =
+                        "12px 16px";
+
+                    row.style.borderBottom =
+                        "1px solid #ddd";
+
+                    row.style.fontSize =
+                        "14px";
+
+                    row.innerHTML = `
+                        <div>
+                            <strong>
+                                ${account.name || "Unnamed Account"}
+                            </strong>
+                        </div>
+
+                        <div style="text-align:right;">
+                            ₹ ${openingBalance.toFixed(2)}
+                        </div>
+
+                        <div style="text-align:right;">
+                            ₹ ${currentBalance.toFixed(2)}
+                        </div>
+                    `;
+
+                    accountBalancesTable.appendChild(
+                        row
+                    );
+
+                }
+            );
+
+            // TOTAL ROW
+
+            const totalRow =
+                document.createElement("div");
+
+            totalRow.style.display = "grid";
+
+            totalRow.style.gridTemplateColumns =
+                "2fr 1fr 1fr";
+
+            totalRow.style.alignItems =
+                "center";
+
+            totalRow.style.padding =
+                "13px 16px";
+
+            totalRow.style.marginTop =
+                "2px";
+
+            totalRow.style.background =
+                "#eef2ff";
+
+            totalRow.style.borderTop =
+                "2px solid #94a3b8";
+
+            totalRow.style.fontWeight =
+                "700";
+
+            totalRow.style.fontSize =
+                "14px";
+
+            totalRow.innerHTML = `
+                <div>
+                    Total
+                </div>
+
+                <div style="text-align:right;">
+                    ₹ ${totalOpeningBalance.toFixed(2)}
+                </div>
+
+                <div style="text-align:right;">
+                    ₹ ${totalCurrentBalance.toFixed(2)}
+                </div>
+            `;
+
+            accountBalancesTable.appendChild(
+                totalRow
+            );
+
+        }
+
+    }
+);
+
+}
+
+const accountWiseTransactionsReport =
+    document.querySelector(
+        '[data-report="account-wise-transactions"]'
+    );
+
+console.log(
+    "🔎 ACCOUNT-WISE TRANSACTIONS CARD:",
+    accountWiseTransactionsReport
+);
+
+if (accountWiseTransactionsReport) {
+
+    accountWiseTransactionsReport.addEventListener(
+    "click",
+    async () => {
+
+            console.log(
+                "📊 ACCOUNT-WISE TRANSACTIONS REPORT SELECTED"
+            );
+
+            if (reportWorkArea) {
+
+                reportWorkArea.innerHTML = `
+
+                    <div class="transaction-reports-container">
+
+                        <div class="transaction-reports-header">
+
+                            <div>
+
+                                <h2>
+                                    📊 Account-wise Transactions
+                                </h2>
+
+                                <p>
+                                    View account transactions like a bank statement
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                display:grid;
+                                grid-template-columns:
+                                    2fr 1fr 1fr 1fr;
+                                gap:16px;
+                                align-items:end;
+                                margin-top:20px;
+                                padding:18px;
+                                background:#f8fafc;
+                                border:1px solid #e2e8f0;
+                                border-radius:12px;
+                            "
+                        >
+
+                            <div>
+
+                                <label
+                                    style="
+                                        display:block;
+                                        margin-bottom:6px;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Account
+                                </label>
+
+                                <select
+                                    id="statementAccount"
+                                    style="
+                                        width:100%;
+                                        padding:10px 12px;
+                                        border:1px solid #cbd5e1;
+                                        border-radius:8px;
+                                        background:white;
+                                    "
+                                >
+
+                                    <option value="">
+                                        Select Account
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label
+                                    style="
+                                        display:block;
+                                        margin-bottom:6px;
+                                        font-weight:600;
+                                    "
+                                >
+                                    From Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    id="statementFromDate"
+                                    style="
+                                        width:100%;
+                                        padding:10px 12px;
+                                        border:1px solid #cbd5e1;
+                                        border-radius:8px;
+                                    "
+                                >
+
+                            </div>
+
+
+                            <div>
+
+                                <label
+                                    style="
+                                        display:block;
+                                        margin-bottom:6px;
+                                        font-weight:600;
+                                    "
+                                >
+                                    To Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    id="statementToDate"
+                                    style="
+                                        width:100%;
+                                        padding:10px 12px;
+                                        border:1px solid #cbd5e1;
+                                        border-radius:8px;
+                                    "
+                                >
+
+                            </div>
+
+
+                            <div>
+
+                                <label
+                                    style="
+                                        display:block;
+                                        margin-bottom:6px;
+                                        font-weight:600;
+                                    "
+                                >
+                                    Transaction Type
+                                </label>
+
+                                <select
+                                    id="statementType"
+                                    style="
+                                        width:100%;
+                                        padding:10px 12px;
+                                        border:1px solid #cbd5e1;
+                                        border-radius:8px;
+                                        background:white;
+                                    "
+                                >
+
+                                    <option value="all">
+                                        ALL
+                                    </option>
+
+                                    <option value="credit">
+                                        CREDIT
+                                    </option>
+
+                                    <option value="debit">
+                                        DEBIT
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+<div
+    id="accountStatementContainer"
+    style="
+        margin-top:20px;
+        overflow-x:auto;
+    "
+>
+    <div
+        style="
+            padding:20px;
+            text-align:center;
+            color:#64748b;
+            background:#f8fafc;
+            border:1px dashed #cbd5e1;
+            border-radius:10px;
+        "
+    >
+        Select account and date range
+        to view transactions.
+    </div>
+</div>
+
+
+                    </div>
+
+                `;
+
+                const statementAccount =
+                    document.querySelector("#statementAccount");
+
+statementAccount.addEventListener(
+    "change",
+    async () => {
+        const selectedAccountId = statementAccount.value;
+
+        console.log(
+            "🏦 SELECTED ACCOUNT ID:",
+            selectedAccountId
+        );
+
+        if (!selectedAccountId) return;
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            console.log("❌ NO LOGGED-IN USER");
+            return;
+        }
+
+        const transactionsSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            )
+        );
+
+        console.log(
+            "💳 TOTAL TRANSACTIONS:",
+            transactionsSnapshot.size
+        );
+
+        const statementFromDate =
+            document.querySelector(
+                "#statementFromDate"
+            );
+
+        const statementToDate =
+            document.querySelector(
+                "#statementToDate"
+            );
+
+        const statementType =
+            document.querySelector(
+                "#statementType"
+            );
+
+        const fromDate =
+            statementFromDate
+                ? statementFromDate.value
+                : "";
+
+        const toDate =
+            statementToDate
+                ? statementToDate.value
+                : "";
+
+        const selectedType =
+            statementType
+                ? statementType.value
+                : "all";
+
+        console.log(
+            "📅 STATEMENT DATE RANGE:",
+            fromDate,
+            "TO",
+            toDate
+        );
+
+        console.log(
+            "🔄 STATEMENT TYPE:",
+            selectedType
+        );
+
+        const filteredTransactions = [];
+
+        transactionsSnapshot.forEach(
+            (transactionDoc) => {
+
+                const transaction =
+                    transactionDoc.data();
+
+                const fromAccountId =
+                    transaction.fromAccountId;
+
+                const toAccountId =
+                    transaction.toAccountId;
+
+                const transactionDate =
+                    transaction.date || "";
+
+                // Account filter
+                const accountMatches =
+                    fromAccountId ===
+                        selectedAccountId ||
+                    toAccountId ===
+                        selectedAccountId;
+
+                if (!accountMatches) return;
+
+                // From date filter
+                if (
+                    fromDate &&
+                    transactionDate < fromDate
+                ) {
+                    return;
+                }
+
+                // To date filter
+                if (
+                    toDate &&
+                    transactionDate > toDate
+                ) {
+                    return;
+                }
+
+                // Determine credit / debit
+                let transactionType =
+                    "neutral";
+
+                if (
+                    toAccountId ===
+                        selectedAccountId &&
+                    fromAccountId !==
+                        selectedAccountId
+                ) {
+                    transactionType = "credit";
+                }
+
+                if (
+                    fromAccountId ===
+                        selectedAccountId &&
+                    toAccountId !==
+                        selectedAccountId
+                ) {
+                    transactionType = "debit";
+                }
+
+                // Transaction type filter
+                if (
+                    selectedType !== "all" &&
+                    transactionType !== selectedType
+                ) {
+                    return;
+                }
+
+                filteredTransactions.push({
+                    id: transactionDoc.id,
+                    ...transaction,
+                    transactionType
+                });
+            }
+        );
+
+        console.log(
+            "📊 FILTERED ACCOUNT TRANSACTIONS:",
+            filteredTransactions.length
+        );
+
+        console.log(
+            "📋 FILTERED TRANSACTIONS DATA:",
+            filteredTransactions
+        );
+
+        // --------------------------------
+        // RENDER STATEMENT TABLE
+        // --------------------------------
+
+        const statementContainer =
+            document.querySelector(
+                "#accountStatementContainer"
+            );
+
+        if (!statementContainer) {
+            console.log(
+                "❌ ACCOUNT STATEMENT CONTAINER NOT FOUND"
+            );
+            return;
+        }
+
+        if (
+            filteredTransactions.length === 0
+        ) {
+            statementContainer.innerHTML = `
+                <div
+                    style="
+                        padding:20px;
+                        text-align:center;
+                        color:#777;
+                    "
+                >
+                    No transactions found
+                    for the selected filters.
+                </div>
+            `;
+
+            return;
+        }
+
+        let runningBalance = 0;
+
+        let rows = "";
+
+filteredTransactions
+    .sort((a, b) =>
+        (a.date || "").localeCompare(
+            b.date || ""
+        )
+    )
+    .forEach((transaction) => {
+                const amount =
+                    Number(
+                        transaction.amount ?? 0
+                    );
+
+                const isCredit =
+                    transaction.transactionType ===
+                    "credit";
+
+                const isDebit =
+                    transaction.transactionType ===
+                    "debit";
+
+                if (isCredit) {
+                    runningBalance += amount;
+                }
+
+                if (isDebit) {
+                    runningBalance -= amount;
+                }
+
+                const description =
+                    transaction.notes ||
+                    transaction.category ||
+                    transaction.partyName ||
+                    transaction.investmentName ||
+                    transaction.type ||
+                    "-";
+
+                rows += `
+                    <tr>
+
+  <td>
+    ${
+        transaction.date
+            ? transaction.date
+                .split("-")
+                .reverse()
+                .join("-")
+            : "-"
+    }
+</td>
+
+                        <td>
+                            ${description}
+                        </td>
+
+                        <td>
+                            ${transaction.type || "-"}
+                        </td>
+
+                        <td
+                            style="
+                                text-align:right;
+                                color:#b42318;
+                            "
+                        >
+                            ${
+                                isDebit
+                                    ? "₹" +
+                                      amount.toLocaleString(
+                                          "en-IN",
+                                          {
+                                              minimumFractionDigits: 2
+                                          }
+                                      )
+                                    : "-"
+                            }
+                        </td>
+
+                        <td
+                            style="
+                                text-align:right;
+                                color:#067647;
+                            "
+                        >
+                            ${
+                                isCredit
+                                    ? "₹" +
+                                      amount.toLocaleString(
+                                          "en-IN",
+                                          {
+                                              minimumFractionDigits: 2
+                                          }
+                                      )
+                                    : "-"
+                            }
+                        </td>
+
+                        <td
+                            style="
+                                text-align:right;
+                            "
+                        >
+                            ₹${runningBalance.toLocaleString(
+                                "en-IN",
+                                {
+                                    minimumFractionDigits: 2
+                                }
+                            )}
+                        </td>
+
+                    </tr>
+                `;
+            });
+
+        statementContainer.innerHTML = `
+            <div
+                style="
+                    margin-top:20px;
+                    overflow-x:auto;
+                "
+            >
+
+                <table
+                    style="
+                        width:100%;
+                        border-collapse:collapse;
+                        font-size:14px;
+                    "
+                >
+
+                    <thead>
+
+                        <tr
+                            style="
+                                background:#f5f5f5;
+                            "
+                        >
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:left;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Date
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:left;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Description
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:left;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Type
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Debit
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Credit
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:right;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Balance
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+                        ${rows}
+                    </tbody>
+
+                </table>
+
+            </div>
+        `;
+    }
+);
+
+                const statementFromDate =
+                    document.querySelector("#statementFromDate");
+
+                const statementToDate =
+                    document.querySelector("#statementToDate");
+
+                if (statementFromDate) {
+
+                    statementFromDate.addEventListener(
+                        "change",
+                        () => {
+
+                            console.log(
+                                "📅 FROM DATE CHANGED:",
+                                statementFromDate.value
+                            );
+
+                            statementAccount.dispatchEvent(
+                                new Event("change")
+                            );
+
+                        }
+                    );
+
+                }
+
+                if (statementToDate) {
+
+                    statementToDate.addEventListener(
+                        "change",
+                        () => {
+
+                            console.log(
+                                "📅 TO DATE CHANGED:",
+                                statementToDate.value
+                            );
+
+                            statementAccount.dispatchEvent(
+                                new Event("change")
+                            );
+
+                        }
+                    );
+
+                }
+
+                console.log(
+                    "🔎 STATEMENT ACCOUNT SELECT:",
+                    statementAccount
+                );
+
+                const user = auth.currentUser;
+
+                if (user && statementAccount) {
+
+                    const accountsSnapshot =
+                        await getDocs(
+                            collection(
+                                db,
+                                "users",
+                                user.uid,
+                                "accounts"
+                            )
+                        );
+
+                    console.log(
+                        "🏦 STATEMENT ACCOUNTS COUNT:",
+                        accountsSnapshot.size
+                    );
+
+                    accountsSnapshot.forEach(
+                        (accountDoc) => {
+
+                            const account =
+                                accountDoc.data();
+
+                            console.log(
+                                "🏦 STATEMENT ACCOUNT:",
+                                accountDoc.id,
+                                account
+                            );
+
+                            const option =
+                                document.createElement("option");
+
+                            option.value =
+                                accountDoc.id;
+
+                            option.textContent =
+                                account.name ||
+                                "Unnamed Account";
+
+                            statementAccount.appendChild(
+                                option
+                            );
+
+                        }
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+}
+console.log(
+    "🔎 ALL ACCOUNTS CARD:",
+    allAccountsReport
+);
+
+if (allAccountsReport) {
+
+    console.log(
+        "✅ ALL ACCOUNTS CARD FOUND"
+    );
+
+allAccountsReport.addEventListener(
+    "click",
+    async () => {
+
+            console.log(
+                "🏦 ALL ACCOUNTS REPORT SELECTED"
+            );
+
+            const user = auth.currentUser;
+
+console.log(
+    "👤 REPORT USER:",
+    user
+);
+
+if (user) {
+
+    const accountsSnapshot =
+        await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            )
+        );
+
+    console.log(
+        "🏦 ACCOUNTS COUNT:",
+        accountsSnapshot.size
+    );
+
+    const header = document.createElement("div");
+
+header.style.display = "grid";
+header.style.gridTemplateColumns = "2fr 1fr 1fr";
+header.style.alignItems = "center";
+header.style.padding = "10px 16px";
+header.style.background = "#f1f5f9";
+header.style.borderBottom = "2px solid #cbd5e1";
+header.style.fontWeight = "600";
+header.style.fontSize = "13px";
+
+header.innerHTML = `
+    <div>Account Name</div>
+    <div>Account Type</div>
+    <div style="text-align:right;">Balance</div>
+`;
+
+reportWorkArea.appendChild(header);
+let totalBalance = 0;
+    accountsSnapshot.forEach(
+    (accountDoc) => {
+
+        const account = accountDoc.data();
+
+        console.log(
+            "🏦 ACCOUNT:",
+            accountDoc.id,
+            account
+        );
+
+const row = document.createElement("div");
+
+row.style.display = "grid";
+row.style.gridTemplateColumns = "2fr 1fr 1fr";
+row.style.alignItems = "center";
+row.style.padding = "12px 16px";
+row.style.borderBottom = "1px solid #ddd";
+row.style.fontSize = "14px";
+
+const numericBalance =
+    Number(account.balance ?? 0);
+
+totalBalance += numericBalance;
+
+const balance =
+    numericBalance.toFixed(2);
+
+row.innerHTML = `
+    <div>
+        <strong>${account.name || "Unnamed Account"}</strong>
+    </div>
+
+    <div>
+        ${account.type || "-"}
+    </div>
+
+    <div style="text-align:right;">
+        ₹ ${balance}
+    </div>
+`;
+
+reportWorkArea.appendChild(row);
+
+    }
+);
+
+const totalRow = document.createElement("div");
+
+totalRow.style.display = "grid";
+totalRow.style.gridTemplateColumns = "2fr 1fr 1fr";
+totalRow.style.alignItems = "center";
+totalRow.style.padding = "13px 16px";
+totalRow.style.marginTop = "2px";
+totalRow.style.background = "#eef2ff";
+totalRow.style.borderTop = "2px solid #94a3b8";
+totalRow.style.fontWeight = "700";
+totalRow.style.fontSize = "14px";
+
+totalRow.innerHTML = `
+    <div>Grand Total</div>
+
+    <div></div>
+
+    <div style="text-align:right;">
+        ₹ ${totalBalance.toFixed(2)}
+    </div>
+`;
+
+reportWorkArea.appendChild(totalRow);
+
+}
+
+        }
+    );
+
+    
+}
+
+    }
+
+}
+
+    });
+
+});
 
     // =====================================================
     // OPEN A CATEGORY DIRECTLY FROM AN ERP MODULE BUTTON

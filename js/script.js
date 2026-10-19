@@ -1,4 +1,4 @@
-import {
+﻿import {
     auth,
     db
 } from "./firebase.js";
@@ -13387,6 +13387,347 @@ if (selectedModule) {
 }
 
 // ======================================================
+// GLOBAL DASHBOARD REPORT BUTTONS
+// STEP 1 — OVERLAY BUTTONS
+// IMPORTANT: DO NOT WRAP MASTER CARDS
+// ======================================================
+
+(function setupGlobalDashboardReportButtons() {
+
+    const REPORT_CATEGORIES = {
+        accounts: "accounts",
+        transactions: "transactions",
+        investments: "investments",
+        loans: "loans",
+        properties: "properties",
+        insurance: "insurance",
+        vehicles: "vehicles",
+        repairs: "repairs",
+        financialGoals: "financialGoals",
+        fundsAvailable: "fundsAvailable",
+        calendar: "calendar"
+    };
+
+    let reportButtons = [];
+
+    function removeOldDashboardReportButtons() {
+
+        document
+            .querySelectorAll(
+                ".master-card-reports-button"
+            )
+            .forEach(button => {
+                button.remove();
+            });
+
+        reportButtons = [];
+    }
+
+    function createDashboardReportButtons() {
+
+        const dashboard =
+            document.getElementById(
+                "masterDashboard"
+            );
+
+        if (!dashboard) {
+            return;
+        }
+
+        const cards =
+            dashboard.querySelectorAll(
+                ".master-module-card"
+            );
+
+        removeOldDashboardReportButtons();
+
+        cards.forEach(card => {
+
+            const section =
+                card.dataset.section;
+
+            // Reports card को skip करें
+            if (!REPORT_CATEGORIES[section]) {
+                return;
+            }
+
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+
+            button.className =
+                "master-card-reports-button";
+
+            button.dataset.openReports =
+                "true";
+
+            button.dataset.reportCategory =
+                REPORT_CATEGORIES[section];
+
+            button.textContent =
+                "📊 Reports";
+
+            button.title =
+                section + " Reports";
+
+            // ------------------------------------------------
+            // BUTTON STYLE
+            // ------------------------------------------------
+
+            button.style.position =
+                "fixed";
+
+            button.style.zIndex =
+                "9999";
+
+// --------------------------------------------------
+// SAME STYLE AS EXISTING TRANSACTIONS REPORT BUTTON
+// --------------------------------------------------
+
+button.className =
+    "view-module-button master-card-reports-button";
+
+button.style.position =
+    "fixed";
+
+button.style.zIndex =
+    "9999";
+
+button.style.cursor =
+    "pointer";
+
+button.style.whiteSpace =
+    "nowrap";
+
+            button.style.lineHeight =
+                "1";
+
+            button.style.cursor =
+                "pointer";
+
+            button.style.whiteSpace =
+                "nowrap";
+
+            button.style.boxShadow =
+                "0 2px 5px rgba(0,0,0,0.12)";
+
+            // Button click
+            button.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    const category =
+                        button.dataset.reportCategory;
+
+                    console.log(
+                        "📊 DASHBOARD REPORT:",
+                        category
+                    );
+
+button.addEventListener(
+    "click",
+    function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const category =
+            button.dataset.reportCategory;
+
+        console.log(
+            "📊 DASHBOARD REPORT:",
+            category
+        );
+
+        // अभी केवल Transactions Reports बनी है
+        if (category !== "transactions") {
+
+            console.log(
+                "⏳ Report अभी तैयार नहीं है:",
+                category
+            );
+
+            return;
+        }
+
+        // Transactions Reports
+        window.location.href =
+            "reports-module/reports.html?category=transactions";
+    }
+);
+                }
+            );
+
+            document.body.appendChild(
+                button
+            );
+
+            reportButtons.push({
+                card: card,
+                button: button
+            });
+        });
+
+        positionDashboardReportButtons();
+    }
+
+
+    // ======================================================
+// POSITION REPORT BUTTONS
+// ALIGN WITH CARD TITLE
+// ======================================================
+
+function positionDashboardReportButtons() {
+
+    reportButtons.forEach(item => {
+
+        const card = item.card;
+        const button = item.button;
+
+        if (
+            !card ||
+            !button ||
+            !document.body.contains(card)
+        ) {
+            return;
+        }
+
+        const cardRect =
+            card.getBoundingClientRect();
+
+        const title =
+            card.querySelector(
+                ".module-card-title"
+            );
+
+        if (!title) {
+            return;
+        }
+
+        const titleRect =
+            title.getBoundingClientRect();
+
+        // Right corner — card के अंदर
+        button.style.left =
+            (
+                cardRect.right -
+                button.offsetWidth -
+                8
+            ) + "px";
+
+        // Title की exact vertical line
+        button.style.top =
+            (
+                titleRect.top +
+                (
+                    titleRect.height -
+                    button.offsetHeight
+                ) / 2
+            ) + "px";
+    });
+}
+    // ======================================================
+    // INITIAL LOAD
+    // ======================================================
+
+    function install() {
+
+        createDashboardReportButtons();
+
+        // थोड़ी देर बाद फिर position करें
+        // ताकि dashboard layout पूरी तरह settle हो जाए।
+        setTimeout(
+            positionDashboardReportButtons,
+            100
+        );
+
+        setTimeout(
+            positionDashboardReportButtons,
+            500
+        );
+    }
+
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            install,
+            {
+                once: true
+            }
+        );
+
+    } else {
+
+        install();
+    }
+
+
+    // ======================================================
+    // KEEP BUTTONS ALIGNED
+    // ======================================================
+
+    window.addEventListener(
+        "resize",
+        positionDashboardReportButtons
+    );
+
+    window.addEventListener(
+        "scroll",
+        positionDashboardReportButtons,
+        true
+    );
+
+
+    // ======================================================
+    // DASHBOARD RE-OPEN होने पर REPOSITION
+    // ======================================================
+
+    const observer =
+        new MutationObserver(
+            function () {
+
+                if (
+                    reportButtons.length
+                ) {
+                    positionDashboardReportButtons();
+                }
+
+            }
+        );
+
+    const dashboard =
+        document.getElementById(
+            "masterDashboard"
+        );
+
+    if (dashboard) {
+
+        observer.observe(
+            dashboard,
+            {
+                attributes: true,
+                attributeFilter: [
+                    "style",
+                    "class"
+                ]
+            }
+        );
+    }
+
+
+})();
+
+// ======================================================
 // MASTER SIDEBAR NAVIGATION — STEP 1
 // Dashboard + Transactions
 // ======================================================
@@ -13461,6 +13802,19 @@ if (sidebarMenu) {
 
     const section =
         menuButton.dataset.section;
+
+        // ==================================================
+// REPORTS MODULE
+// ==================================================
+
+if (section === "reports") {
+
+    console.log("REPORTS SIDEBAR CLICKED");
+
+    window.location.href = "reports-module/reports.html";
+
+    return;
+}
 
 // ==========================================
 // RESET PREVIOUS MODULE STATE

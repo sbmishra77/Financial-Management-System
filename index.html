@@ -438,14 +438,39 @@
     </button>
 </div>
 
-    <div class="transactions-module-header">
+<div class="transactions-module-header"
+     style="display:flex; justify-content:space-between; align-items:center; width:100%;">
 
-        <div>
-            <h2>💳 Transactions</h2>
-            <p>Income • Expenses • Transfers • Investments</p>
-        </div>
-
+    <div>
+        <h2>💳 Transactions</h2>
+        <p>Income • Expenses • Transfers • Investments</p>
     </div>
+
+    <button
+        type="button"
+        class="view-module-button"
+        data-open-reports
+        data-report-category="transactions"
+        onclick="window.location.href='reports-module/reports.html?category=transactions';"
+        style="
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            padding:7px 12px;
+            border:1px solid #2563eb;
+            border-radius:6px;
+            background:#eff6ff;
+            color:#1d4ed8;
+            font-size:12px;
+            font-weight:600;
+            cursor:pointer;
+            white-space:nowrap;
+            margin-left:auto;
+        ">
+        📊 Reports
+    </button>
+
+</div>
 
 <!-- ===============================
    ADD TRANSACTION FORM
@@ -1473,10 +1498,14 @@
 
             <div class="module-big-icon">💳</div>
 
-            <div class="module-card-title">
-                TRANSACTIONS
-            </div>
+            <div class="module-card-title"
+     style="display:flex; justify-content:space-between; align-items:center; width:100%;">
 
+    <span>
+        TRANSACTIONS
+    </span>
+
+</div>
             <div class="module-card-subtitle">
                 INCOME • EXPENSE<br>
                 TRANSFER • INVESTMENT
