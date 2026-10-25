@@ -403,7 +403,7 @@ async function loadSavedProperties() {
 
 }
 
-    
+
 
 
     try {
@@ -439,7 +439,7 @@ propertySnapshot.forEach((propertyDoc) => {
     const property =
         propertyDoc.data();
 
-    
+
     // ===============================
     // USAGE COUNT
     // ===============================
@@ -689,7 +689,7 @@ if (property.purchaseDate) {
             <td>
                 ${formattedPurchaseDate}
             </td>
-            
+
             <td>
                 ₹${property.purchaseValue || 0}
             </td>
@@ -783,7 +783,7 @@ if (
             await loadSavedProperties();
 
         }
-        
+
     );
 
 }
@@ -903,7 +903,7 @@ document.addEventListener(
             propertyId
         );
 
-        
+
 // =========================================
 // GET CURRENT USER
 // =========================================
@@ -3473,6 +3473,7 @@ console.log(
             // =====================================
 
             await loadRentalUnitsForRentRegister();
+            await loadRentalReceivedInAccounts();
 
 
             // =====================================
@@ -4124,7 +4125,7 @@ if (rentMonth) {
                 if (rentPaymentDate) {
 
                     rentPaymentDate.value =
-                        existingRent.paymentDate || "";
+                        rent.paymentDate || "";
 
                 }
 
@@ -4136,10 +4137,11 @@ if (rentMonth) {
                 if (rentPaymentMode) {
 
                     rentPaymentMode.value =
-                        existingRent.paymentMode || "upi";
+                        rent.paymentMode || "upi";
 
                 }
 
+console.log("RENT EDIT LOAD BLOCK REACHED");
 
                 // =================================
                 // LOAD PAYMENT STATUS
@@ -4148,11 +4150,267 @@ if (rentMonth) {
                 if (rentPaymentStatus) {
 
                     rentPaymentStatus.value =
-                        existingRent.paymentStatus || "pending";
+                        rent.paymentStatus || "pending";
 
                 }
 
+// =================================
+// RECEIVED IN ACCOUNT / BANK
+// =================================
 
+if (rentReceivedInAccount) {
+
+    let editReceivedInAccountId =
+        rent.receivedInAccountId || "";
+
+    // OLD RENTAL ENTRY FALLBACK
+    // If old Rent Register record has no
+    // receivedInAccountId, recover it from
+    // the most likely linked Rental Income transaction.
+    if (!editReceivedInAccountId) {
+
+        try {
+
+            const transactionCollection =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                );
+
+                 console.log("BEFORE TRANSACTION GETDOCS");
+
+            const transactionSnapshot =
+                await getDocs(
+                    transactionCollection
+                );
+
+                console.log(
+            "AFTER TRANSACTION GETDOCS",
+            transactionSnapshot.size
+        );
+
+            const rentTenantName =
+                String(
+                    rent.tenantName || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+            const rentPaymentDate =
+                String(
+                    rent.paymentDate || ""
+                ).trim();
+
+            const rentAmount =
+                Number(
+                    rent.paidAmount ||
+                    rent.totalReceived ||
+                    rent.amount ||
+                    0
+                );
+
+            const candidateTransactions = [];
+
+            transactionSnapshot.forEach(
+                (transactionDoc) => {
+
+                    const transaction =
+                        transactionDoc.data();
+
+                    if (
+                        transaction.deleted === true
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        transaction.type !==
+                        "income"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        transaction.category !==
+                        "Rental Income"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        !transaction.toAccountId
+                    ) {
+                        return;
+                    }
+
+                    let score = 0;
+
+                    const transactionDate =
+                        String(
+                            transaction.date || ""
+                        ).trim();
+
+                    const partyName =
+                        String(
+                            transaction.partyName ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const notes =
+                        String(
+                            transaction.notes ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const transactionText =
+                        (
+                            partyName +
+                            " " +
+                            notes
+                        );
+
+                    // Exact payment date match
+                    if (
+                        rentPaymentDate &&
+                        transactionDate ===
+                            rentPaymentDate
+                    ) {
+                        score += 5;
+                    }
+
+                    // Exact amount match
+                    if (
+                        rentAmount > 0 &&
+                        Number(
+                            transaction.amount || 0
+                        ) === rentAmount
+                    ) {
+                        score += 5;
+                    }
+
+// Tenant name word matching
+const tenantWords =
+    rentTenantName
+        .split(/\s+/)
+        .filter(
+            (word) =>
+                word.length >= 3
+        );
+
+let matchedTenantWords = 0;
+
+tenantWords.forEach(
+    (word) => {
+
+        if (
+            transactionText.includes(
+                word
+            )
+        ) {
+            matchedTenantWords++;
+            score += 2;
+        }
+
+    }
+);
+
+// Strong tenant-name match
+// Example:
+// "ANIL KUMAR DUBEY"
+// matches "Rent+Electric Bill Anil Dubey"
+if (matchedTenantWords >= 1) {
+    score += 3;
+}
+
+// Accept a strong name match even when
+// payment date or amount is different.
+if (
+    score >= 7 ||
+    matchedTenantWords >= 1
+) {
+                        candidateTransactions.push(
+                            {
+                                transactionId:
+                                    transactionDoc.id,
+                                score:
+                                    score,
+                                date:
+                                    transaction.date ||
+                                    "",
+                                partyName:
+                                    transaction.partyName ||
+                                    "",
+                                notes:
+                                    transaction.notes ||
+                                    "",
+                                amount:
+                                    Number(
+                                        transaction.amount ||
+                                        0
+                                    ),
+                                toAccountId:
+                                    transaction.toAccountId ||
+                                    ""
+                            }
+                        );
+
+                    }
+
+                }
+            );
+
+            candidateTransactions.sort(
+                (a, b) =>
+                    b.score - a.score
+            );
+
+            if (
+                candidateTransactions.length > 0
+            ) {
+
+                const bestMatch =
+                    candidateTransactions[0];
+
+                editReceivedInAccountId =
+                    bestMatch.toAccountId;
+
+                console.log(
+                    "EDIT RENT RECEIVED ACCOUNT FALLBACK:",
+                    bestMatch
+                );
+
+            } else {
+
+                console.log(
+                    "EDIT RENT RECEIVED ACCOUNT FALLBACK: NO MATCH FOUND"
+                );
+
+            }
+
+        } catch (error) {
+
+            console.error(
+                "EDIT RENT RECEIVED ACCOUNT FALLBACK ERROR:",
+                error
+            );
+
+        }
+    }
+
+    rentReceivedInAccount.value =
+        editReceivedInAccountId;
+
+    console.log(
+        "EDIT RENT RECEIVED ACCOUNT:",
+        editReceivedInAccountId
+    );
+}
                 // =================================
                 // LOAD REMARKS
                 // =================================
@@ -4440,6 +4698,14 @@ const paymentStatus =
     rentPaymentStatus?.value ||
     "pending";
 
+
+    // =====================================
+// RENTAL RECEIVED IN ACCOUNT
+// =====================================
+
+const receivedInAccountId =
+    rentReceivedInAccount?.value || "";
+
     // =========================================
 // RENTAL TRANSACTION LINK DEBUG
 // =========================================
@@ -4543,7 +4809,7 @@ currentMeterReading,
                 "#commonUseWaiverUnits"
             )?.value || 0
         ),
-        
+
 unitsConsumed,
 
 commonUseWaiver:
@@ -4591,17 +4857,19 @@ electricityCharge,
     // =================================
 
     paymentDate,
+paymentMode,
+paymentStatus,
 
-    paymentMode,
+receivedInAccountId,
 
-    paymentStatus,
-
-
-    remarks,
+remarks,
 
 
     createdAt:
         serverTimestamp(),
+
+        linkedTransactionId:
+    linkedTransactionId || null,
 
     updatedAt:
         serverTimestamp()
@@ -4670,6 +4938,25 @@ if (duplicateEntry) {
 let rentDocId = "";
 let linkedTransactionId = "";
 
+// =====================================
+// RENTAL INCOME ACCOUNT VALIDATION
+// =====================================
+
+if (
+    !editingRentEntryId &&
+    window.pendingRentalIncomeTransactionRow &&
+    Number(paidAmount || 0) > 0
+) {
+
+const rentalToAccount =
+    receivedInAccountId || "";
+
+if (!rentalToAccount) {
+    alert("Rental Income के लिए पहले Received In Account / Bank select करें।");
+    return;
+}
+
+}
 
 if (editingRentEntryId) {
 
@@ -4685,6 +4972,349 @@ if (editingRentEntryId) {
             "rentRegister",
             editingRentEntryId
         );
+
+
+        // =================================
+// PRESERVE LINKED TRANSACTION ID
+// =================================
+
+const existingRentSnapshot =
+    await getDoc(
+        rentRef
+    );
+
+if (
+    existingRentSnapshot.exists()
+) {
+
+    const existingRent =
+        existingRentSnapshot.data();
+
+    linkedTransactionId =
+        existingRent.linkedTransactionId ||
+        null;
+}
+
+// =================================
+// LOAD LINKED RENTAL TRANSACTION
+// =================================
+
+let oldRentalAmount = 0;
+let oldRentalToAccountId = null;
+
+if (linkedTransactionId) {
+
+    const linkedTransactionRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            linkedTransactionId
+        );
+
+    const linkedTransactionSnapshot =
+        await getDoc(
+            linkedTransactionRef
+        );
+
+    if (
+        linkedTransactionSnapshot.exists()
+    ) {
+
+        const oldRentalTransaction =
+            linkedTransactionSnapshot.data();
+
+            oldRentalAmount =
+    Number(oldRentalTransaction.amount || 0);
+
+oldRentalToAccountId =
+    oldRentalTransaction.toAccountId || null;
+
+        console.log(
+            "RENTAL EDIT OLD TRANSACTION:",
+            {
+                id:
+                    linkedTransactionId,
+
+                amount:
+                    Number(
+                        oldRentalTransaction.amount || 0
+                    ),
+
+                toAccountId:
+                    oldRentalTransaction.toAccountId ||
+                    null
+            }
+        );
+    }
+}
+
+// =================================
+// PREPARE UPDATED RENTAL TRANSACTION
+// =================================
+
+if (linkedTransactionId) {
+
+    const linkedTransactionRef =
+        doc(
+            db,
+            "users",
+            user.uid,
+            "transactions",
+            linkedTransactionId
+        );
+
+    await updateDoc(
+        linkedTransactionRef,
+        {
+            date:
+                window.pendingRentalIncomeTransactionRow
+                    ?.querySelector(".transaction-date")
+                    ?.value
+                || paymentDate
+                || new Date()
+                    .toISOString()
+                    .slice(0, 10),
+
+            type: "income",
+
+            category: "Rental Income",
+
+            partyName:
+                tenantName,
+
+            amount:
+                Number(paidAmount || 0),
+
+            fromAccountId:
+                null,
+
+toAccountId:
+    receivedInAccountId || null,
+            paymentMethod:
+                paymentMode || "",
+
+            linkedModule:
+                "rentRegister",
+
+            rentEntryId:
+                rentDocId,
+
+            propertyName:
+                propertyName,
+
+            rentalUnitName:
+                rentalUnitName,
+
+            tenantName:
+                tenantName,
+
+            rentMonth:
+                rentMonthValue,
+
+            notes:
+                remarks || "",
+
+            updatedAt:
+                serverTimestamp()
+        }
+    );
+
+    console.log(
+        "RENTAL LINKED TRANSACTION UPDATED:",
+        {
+            id:
+                linkedTransactionId,
+
+            amount:
+                Number(paidAmount || 0),
+
+            toAccountId:
+                window.pendingRentalIncomeTransactionRow
+                    ?.querySelector(
+                        ".transaction-to-account"
+                    )?.value
+                || null
+        }
+    );
+}
+
+            // =================================
+            // RENTAL EDIT → REVERSE OLD BALANCE
+            // + APPLY NEW BALANCE
+            // =================================
+
+            if (linkedTransactionId) {
+
+                const linkedTransactionRef =
+                    doc(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactions",
+                        linkedTransactionId
+                    );
+
+                const linkedTransactionSnapshot =
+                    await getDoc(
+                        linkedTransactionRef
+                    );
+
+                if (
+                    linkedTransactionSnapshot.exists()
+                ) {
+
+                    const oldRentalTransaction =
+                        linkedTransactionSnapshot.data();
+
+const oldAmount =
+    oldRentalAmount;
+
+const oldToAccountId =
+    oldRentalToAccountId;
+
+                    const newAmount =
+                        Number(
+                            paidAmount || 0
+                        );
+
+const newToAccountId =
+    receivedInAccountId || null;
+
+                    const updateRentalAccountBalance =
+                        async (
+                            accountId,
+                            changeAmount
+                        ) => {
+
+                            if (
+                                !accountId ||
+                                !Number.isFinite(changeAmount) ||
+                                changeAmount === 0
+                            ) {
+                                return;
+                            }
+
+                            const accountRef =
+                                doc(
+                                    db,
+                                    "users",
+                                    user.uid,
+                                    "accounts",
+                                    accountId
+                                );
+
+                            const accountSnapshot =
+                                await getDoc(
+                                    accountRef
+                                );
+
+                            if (
+                                !accountSnapshot.exists()
+                            ) {
+                                return;
+                            }
+
+                            const account =
+                                accountSnapshot.data();
+
+                            if (
+                                account.type !== "bank" &&
+                                account.type !== "cash" &&
+                                account.type !== "cashback"
+                            ) {
+                                return;
+                            }
+
+                            const currentBalance =
+                                Number(
+                                    account.balance || 0
+                                );
+
+                            await updateDoc(
+                                accountRef,
+                                {
+                                    balance:
+                                        currentBalance +
+                                        changeAmount,
+
+                                    updatedAt:
+                                        serverTimestamp()
+                                }
+                            );
+
+                            console.log(
+                                "RENTAL EDIT ACCOUNT BALANCE:",
+                                {
+                                    account:
+                                        account.name,
+
+                                    accountId:
+                                        accountId,
+
+                                    change:
+                                        changeAmount,
+
+                                    oldBalance:
+                                        currentBalance,
+
+                                    newBalance:
+                                        currentBalance +
+                                        changeAmount
+                                }
+                            );
+                        };
+
+                    // ---------------------------------
+                    // 1. REVERSE OLD RENTAL
+                    // ---------------------------------
+
+                    if (
+                        oldToAccountId &&
+                        oldAmount > 0
+                    ) {
+
+                        await updateRentalAccountBalance(
+                            oldToAccountId,
+                            -oldAmount
+                        );
+                    }
+
+                    // ---------------------------------
+                    // 2. APPLY NEW RENTAL
+                    // ---------------------------------
+
+                    if (
+                        newToAccountId &&
+                        newAmount > 0
+                    ) {
+
+                        await updateRentalAccountBalance(
+                            newToAccountId,
+                            newAmount
+                        );
+                    }
+
+                    console.log(
+                        "RENTAL EDIT BALANCE RESULT:",
+                        {
+                            oldAmount:
+                                oldAmount,
+
+                            newAmount:
+                                newAmount,
+
+                            oldToAccountId:
+                                oldToAccountId,
+
+                            newToAccountId:
+                                newToAccountId
+                        }
+                    );
+                }
+            }
+
 
 
     await updateDoc(
@@ -4724,7 +5354,7 @@ else {
     // =================================
     // ADD NEW RENT ENTRY
     // =================================
-    
+
     const rentDoc =
         await addDoc(
             rentCollection,
@@ -4813,11 +5443,7 @@ else {
 
 
             toAccountId:
-                window.pendingRentalIncomeTransactionRow
-                    .querySelector(
-                        ".transaction-to-account"
-                    )?.value
-                || null,
+    receivedInAccountId || null,
 
 
             paymentMethod:
@@ -4866,11 +5492,132 @@ else {
         // SAVE TRANSACTION
         // =================================
 
-        await addDoc(
-            transactionCollection,
-            transactionData
+        await setDoc(
+    transactionRef,
+    transactionData
+);
+
+linkedTransactionId =
+    transactionRef.id;
+
+    // =================================
+// LINK RENT REGISTER ↔ TRANSACTION
+// =================================
+
+await updateDoc(
+    doc(
+        db,
+        "users",
+        user.uid,
+        "rentRegister",
+        rentDoc.id
+    ),
+    {
+        linkedTransactionId:
+            linkedTransactionId,
+
+        updatedAt:
+            serverTimestamp()
+    }
+);
+
+        console.log(
+    "RENTAL BALANCE DEBUG:",
+    {
+        amount: transactionData.amount,
+        toAccountId: transactionData.toAccountId,
+        linkedModule: transactionData.linkedModule,
+        rentEntryId: transactionData.rentEntryId
+    }
+);
+
+// =================================
+// RENTAL INCOME → UPDATE ACCOUNT BALANCE
+// =================================
+
+if (
+    transactionData.type === "income" &&
+    transactionData.toAccountId &&
+    Number(transactionData.amount || 0) > 0
+) {
+
+    try {
+
+        const rentalAccountRef =
+            doc(
+                db,
+                "users",
+                user.uid,
+                "accounts",
+                transactionData.toAccountId
+            );
+
+        const rentalAccountSnapshot =
+            await getDoc(rentalAccountRef);
+
+        if (rentalAccountSnapshot.exists()) {
+
+            const rentalAccount =
+                rentalAccountSnapshot.data();
+
+            if (
+                rentalAccount.type === "bank" ||
+                rentalAccount.type === "cash" ||
+                rentalAccount.type === "cashback"
+            ) {
+
+                const oldBalance =
+                    Number(
+                        rentalAccount.balance || 0
+                    );
+
+                const newBalance =
+                    oldBalance +
+                    Number(transactionData.amount || 0);
+
+                await updateDoc(
+                    rentalAccountRef,
+                    {
+                        balance:
+                            newBalance,
+
+                        updatedAt:
+                            serverTimestamp()
+                    }
+                );
+
+                console.log(
+                    "RENTAL BANK BALANCE UPDATED:",
+                    {
+                        account:
+                            rentalAccount.name,
+
+                        oldBalance:
+                            oldBalance,
+
+                        rentalAmount:
+                            Number(
+                                transactionData.amount || 0
+                            ),
+
+                        newBalance:
+                            newBalance
+                    }
+                );
+
+            }
+        }
+
+    }
+    catch (rentalBalanceError) {
+
+        console.error(
+            "RENTAL BALANCE UPDATE ERROR:",
+            rentalBalanceError
         );
 
+    }
+}
 
         console.log(
             "Rental Income Transaction saved successfully."
@@ -5044,7 +5791,7 @@ async function loadRentRegisterEntries() {
 
         }
 
-        // =====================================
+// =====================================
 // SORT RENT ENTRIES
 // TENANT → RENT MONTH
 // =====================================
@@ -5534,7 +6281,125 @@ document.addEventListener(
             const rent =
                 rentSnapshot.data();
 
+console.log(
+    "ACTIVE RENT EDIT DEBUG:",
+    {
+        rentEntryId: rentEntryId,
+        tenantName: rent.tenantName,
+        rentMonth: rent.rentMonth,
+        receivedInAccountId:
+            rent.receivedInAccountId,
+        linkedTransactionId:
+            rent.linkedTransactionId
+    }
+);
 
+// =================================
+// READ-ONLY RENTAL TRANSACTION DEBUG
+// =================================
+
+try {
+
+    const transactionCollection =
+        collection(
+            db,
+            "users",
+            user.uid,
+            "transactions"
+        );
+
+    const transactionSnapshot =
+        await getDocs(
+            transactionCollection
+        );
+
+    const rentalTransactionMatches = [];
+
+    transactionSnapshot.forEach(
+        (transactionDoc) => {
+
+            const transaction =
+                transactionDoc.data();
+
+            if (
+                transaction.deleted === true
+            ) {
+                return;
+            }
+
+            if (
+                transaction.type !==
+                "income"
+            ) {
+                return;
+            }
+
+            if (
+                transaction.category !==
+                "Rental Income"
+            ) {
+                return;
+            }
+
+            if (
+                !transaction.date ||
+                !transaction.date.startsWith(
+                    rent.rentMonth || ""
+                )
+            ) {
+                return;
+            }
+
+            rentalTransactionMatches.push({
+
+                transactionId:
+                    transactionDoc.id,
+
+                date:
+                    transaction.date,
+
+                partyName:
+                    transaction.partyName || "",
+
+                notes:
+                    transaction.notes || "",
+
+                amount:
+                    transaction.amount,
+
+                toAccountId:
+                    transaction.toAccountId || "",
+
+                fromAccountId:
+                    transaction.fromAccountId || "",
+
+                linkedModule:
+                    transaction.linkedModule || "",
+
+                rentEntryId:
+                    transaction.rentEntryId || "",
+
+                linkedTransactionId:
+                    transaction.linkedTransactionId || ""
+
+            });
+
+        }
+    );
+
+    console.log(
+        "READ-ONLY OCTOBER RENTAL TRANSACTIONS:",
+        rentalTransactionMatches
+    );
+
+} catch (error) {
+
+    console.error(
+        "READ-ONLY RENTAL TRANSACTION DEBUG ERROR:",
+        error
+    );
+
+}
             // =================================
             // SET EDITING ID
             // =================================
@@ -5548,6 +6413,7 @@ document.addEventListener(
             // =================================
 
             await loadRentalUnitsForRentRegister();
+            await loadRentalReceivedInAccounts();
 
 
             // =================================
@@ -5828,6 +6694,241 @@ document.addEventListener(
 
             }
 
+// =================================
+// RECEIVED IN ACCOUNT / BANK
+// =================================
+
+if (rentReceivedInAccount) {
+
+    let editReceivedInAccountId =
+        rent.receivedInAccountId || "";
+
+    // OLD RENTAL ENTRY FALLBACK
+    // Recover account from the most likely
+    // linked Rental Income transaction.
+    if (!editReceivedInAccountId) {
+
+        try {
+
+            const transactionCollection =
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                );
+
+            const transactionSnapshot =
+                await getDocs(
+                    transactionCollection
+                );
+
+            const rentTenantName =
+                String(
+                    rent.tenantName || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+            const rentPaymentDate =
+                String(
+                    rent.paymentDate || ""
+                ).trim();
+
+            const rentAmount =
+                Number(
+                    rent.paidAmount ||
+                    rent.totalReceived ||
+                    rent.amount ||
+                    0
+                );
+
+            const candidateTransactions = [];
+
+            transactionSnapshot.forEach(
+                (transactionDoc) => {
+
+                    const transaction =
+                        transactionDoc.data();
+
+                    if (
+                        transaction.deleted === true
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        transaction.type !==
+                        "income"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        transaction.category !==
+                        "Rental Income"
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        !transaction.toAccountId
+                    ) {
+                        return;
+                    }
+
+                    let score = 0;
+
+                    const transactionDate =
+                        String(
+                            transaction.date || ""
+                        ).trim();
+
+                    const partyName =
+                        String(
+                            transaction.partyName ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const notes =
+                        String(
+                            transaction.notes ||
+                            ""
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const transactionText =
+                        partyName +
+                        " " +
+                        notes;
+
+                    // Exact payment date match
+                    if (
+                        rentPaymentDate &&
+                        transactionDate ===
+                            rentPaymentDate
+                    ) {
+                        score += 5;
+                    }
+
+                    // Exact amount match
+                    if (
+                        rentAmount > 0 &&
+                        Number(
+                            transaction.amount || 0
+                        ) === rentAmount
+                    ) {
+                        score += 5;
+                    }
+
+                    // Tenant name word matching
+                    const tenantWords =
+                        rentTenantName
+                            .split(/\s+/)
+                            .filter(
+                                (word) =>
+                                    word.length >= 3
+                            );
+
+                    tenantWords.forEach(
+                        (word) => {
+
+                            if (
+                                transactionText.includes(
+                                    word
+                                )
+                            ) {
+                                score += 2;
+                            }
+
+                        }
+                    );
+
+                    if (score >= 7) {
+
+                        candidateTransactions.push(
+                            {
+                                transactionId:
+                                    transactionDoc.id,
+                                score:
+                                    score,
+                                date:
+                                    transaction.date ||
+                                    "",
+                                partyName:
+                                    transaction.partyName ||
+                                    "",
+                                notes:
+                                    transaction.notes ||
+                                    "",
+                                amount:
+                                    Number(
+                                        transaction.amount ||
+                                        0
+                                    ),
+                                toAccountId:
+                                    transaction.toAccountId ||
+                                    ""
+                            }
+                        );
+
+                    }
+
+                }
+            );
+
+            candidateTransactions.sort(
+                (a, b) =>
+                    b.score - a.score
+            );
+
+            if (
+                candidateTransactions.length > 0
+            ) {
+
+                const bestMatch =
+                    candidateTransactions[0];
+
+                editReceivedInAccountId =
+                    bestMatch.toAccountId;
+
+                console.log(
+                    "EDIT RENT RECEIVED ACCOUNT FALLBACK:",
+                    bestMatch
+                );
+
+            } else {
+
+                console.log(
+                    "EDIT RENT RECEIVED ACCOUNT FALLBACK: NO MATCH FOUND"
+                );
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "EDIT RENT RECEIVED ACCOUNT FALLBACK ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+    rentReceivedInAccount.value =
+        editReceivedInAccountId;
+
+    console.log(
+        "EDIT RENT RECEIVED ACCOUNT:",
+        editReceivedInAccountId
+    );
+
+}
 
             // =================================
             // DEDUCTION / PAYMENT REMARKS
@@ -6524,6 +7625,97 @@ const rentPaymentStatus =
         "#rentPaymentStatus"
     );
 
+// =========================================
+// RENTAL RECEIVED IN ACCOUNT
+// =========================================
+
+const rentReceivedInAccount =
+    document.querySelector(
+        "#rentReceivedInAccount"
+    );
+
+
+// =========================================
+// LOAD ACCOUNTS INTO RENTAL DROPDOWN
+// =========================================
+
+async function loadRentalReceivedInAccounts() {
+
+    const user =
+        auth.currentUser;
+
+    if (
+        !user ||
+        !rentReceivedInAccount
+    ) {
+        return;
+    }
+
+    try {
+
+        const accountsCollection =
+            collection(
+                db,
+                "users",
+                user.uid,
+                "accounts"
+            );
+
+        const accountsSnapshot =
+            await getDocs(
+                accountsCollection
+            );
+
+        rentReceivedInAccount.innerHTML = `
+            <option value="">
+                -- Select Account / Bank --
+            </option>
+        `;
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+
+                const account =
+                    accountDoc.data();
+
+
+                    if (account.type !== "bank") {
+    return;
+}
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    accountDoc.id;
+
+                option.textContent =
+                    account.name ||
+                    "Unnamed Account";
+
+                rentReceivedInAccount
+                    .appendChild(
+                        option
+                    );
+            }
+        );
+
+        console.log(
+            "RENTAL RECEIVED IN ACCOUNTS LOADED:",
+            accountsSnapshot.size
+        );
+
+    }
+    catch (error) {
+
+        console.error(
+            "LOAD RENTAL RECEIVED IN ACCOUNTS ERROR:",
+            error
+        );
+    }
+}
 
 // =========================================
 // CALCULATE ELECTRICITY
@@ -6990,7 +8182,7 @@ if (rentPaidAmount) {
     );
 
 }
-    
+
 // =========================================
 // ELECTRICITY INPUT EVENTS
 // =========================================

@@ -999,6 +999,12 @@ console.log(
 window.pendingRentalIncomeTransactionRow =
     row;
 
+    // =================================
+// RENTAL → REFRESH ACCOUNT DROPDOWNS
+// =================================
+
+loadTransactionAccounts();
+
             // =================================
             // OPEN RENT ENTRY FORM
             // =================================
@@ -6489,6 +6495,8 @@ if (
     }
 }
 
+if (!editingTransactionId) {
+
 // =================================
 // UPDATE BANK ACCOUNT BALANCE
 // INCOME → TO ACCOUNT = ADD
@@ -6650,7 +6658,7 @@ catch (bankBalanceError) {
     );
 
 }
-
+}
 // =================================
 // INVESTMENT → FROM ACCOUNT = MONEY OUT
 // INVESTMENT → TO ACCOUNT = MONEY IN
