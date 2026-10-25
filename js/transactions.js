@@ -6429,6 +6429,7 @@ else {
 // =================================
 
 if (
+    !editingTransactionId &&
     type === "cashback" &&
     toAccountId
 ) {
