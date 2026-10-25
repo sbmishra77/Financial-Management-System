@@ -6038,15 +6038,13 @@ if (type === "transfer") {
         }
 
 
-        // =================================
-        // 6. APPLY NEW INVESTMENT
-        // =================================
+  // =================================
+// 6. APPLY NEW INVESTMENT
+// =================================
 
-
-        if (
-            type === "investment" &&
-            category !== "Fixed Deposit"
-        ) {
+if (
+    type === "investment"
+) {
 
             // New From → Bank से पैसा कम
             if (fromAccountId) {
