@@ -365,6 +365,30 @@ if (reportWorkArea) {
     // CATEGORY CARDS — NO PAGE RELOAD
     // =====================================================
 
+// =====================================================
+// REPORT CATEGORY TITLE NORMALIZER
+// Keeps dashboard names user-friendly while preserving
+// existing internal category logic.
+// =====================================================
+
+function getReportCategoryKey(card) {
+
+    const rawTitle =
+        card.querySelector(
+            ".report-category-title"
+        )?.textContent?.trim() || "";
+
+    const cleanTitle =
+        rawTitle
+            .replace(/\s+Reports$/i, "")
+            .trim();
+
+    const aliases = {
+        "Accounts & Banks": "Accounts"
+    };
+
+    return aliases[cleanTitle] || cleanTitle;
+}
 
 const categoryCards = document.querySelectorAll(
     ".report-category-card"
@@ -374,10 +398,8 @@ categoryCards.forEach(card => {
 
     card.addEventListener("click", () => {
 
-        const title =
-            card.querySelector(
-                ".report-category-title"
-            )?.textContent?.trim();
+ const title =
+    getReportCategoryKey(card);
 
         if (title === "Transactions") {
 
@@ -496,6 +518,11 @@ accountBalancesReport.addEventListener(
         console.log(
             "💰 ACCOUNT BALANCES REPORT SELECTED"
         );
+
+        window.activeTransactionReport = {
+    number: 2,
+    name: "Account Balances"
+};
 
         if (reportWorkArea) {
 
@@ -693,6 +720,77 @@ accountBalancesReport.addEventListener(
             accountBalancesTable.appendChild(
                 totalRow
             );
+// =====================================================
+// EXPORT TABLE — ACCOUNT BALANCES
+// Creates a real HTML table for PDF / Excel / Print
+// =====================================================
+
+const exportTable = document.createElement("table");
+
+exportTable.style.display = "none";
+exportTable.className = "report-export-table";
+
+exportTable.innerHTML = `
+    <thead>
+        <tr>
+            <th>Account Name</th>
+            <th>Opening Balance</th>
+            <th>Current Balance</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        ${accountsSnapshot.docs.map((accountDoc) => {
+
+            const account = accountDoc.data();
+
+            const openingBalance =
+                Number(account.openingBalance ?? 0);
+
+            const currentBalance =
+                Number(account.balance ?? 0);
+
+            return `
+                <tr>
+                    <td>
+                        ${account.name || "Unnamed Account"}
+                    </td>
+
+                    <td>
+                        ₹ ${openingBalance.toFixed(2)}
+                    </td>
+
+                    <td>
+                        ₹ ${currentBalance.toFixed(2)}
+                    </td>
+                </tr>
+            `;
+
+        }).join("")}
+
+        <tr>
+            <td>
+                <strong>Total</strong>
+            </td>
+
+            <td>
+                <strong>
+                    ₹ ${totalOpeningBalance.toFixed(2)}
+                </strong>
+            </td>
+
+            <td>
+                <strong>
+                    ₹ ${totalCurrentBalance.toFixed(2)}
+                </strong>
+            </td>
+        </tr>
+    </tbody>
+`;
+
+reportWorkArea
+    .querySelector(".transaction-reports-container")
+    .appendChild(exportTable);
 
         }
 
@@ -720,6 +818,12 @@ if (accountWiseTransactionsReport) {
             console.log(
                 "📊 ACCOUNT-WISE TRANSACTIONS REPORT SELECTED"
             );
+
+            // SET ACTIVE REPORT FOR GLOBAL HEADER / TOOLBAR
+window.activeTransactionReport = {
+    number: 31,
+    name: "Transactions by Account"
+};
 
             if (reportWorkArea) {
 
@@ -918,7 +1022,8 @@ if (accountWiseTransactionsReport) {
 statementAccount.addEventListener(
     "change",
     async () => {
-        const selectedAccountId = statementAccount.value;
+        const selectedAccountId =
+            statementAccount.value;
 
         console.log(
             "🏦 SELECTED ACCOUNT ID:",
@@ -930,23 +1035,72 @@ statementAccount.addEventListener(
         const user = auth.currentUser;
 
         if (!user) {
-            console.log("❌ NO LOGGED-IN USER");
+            console.log(
+                "❌ NO LOGGED-IN USER"
+            );
             return;
         }
 
-        const transactionsSnapshot = await getDocs(
-            collection(
-                db,
-                "users",
-                user.uid,
-                "transactions"
+        // =========================================
+        // LOAD TRANSACTIONS + ACCOUNTS
+        // =========================================
+
+        const [
+            transactionsSnapshot,
+            accountsSnapshot
+        ] = await Promise.all([
+            getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                )
+            ),
+
+            getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
             )
-        );
+        ]);
 
         console.log(
             "💳 TOTAL TRANSACTIONS:",
             transactionsSnapshot.size
         );
+
+        console.log(
+            "🏦 TOTAL ACCOUNTS:",
+            accountsSnapshot.size
+        );
+
+        // =========================================
+        // ACCOUNT NAME MAP
+        // =========================================
+
+        const accountNameMap = new Map();
+
+        accountsSnapshot.forEach(
+            (accountDoc) => {
+                const account =
+                    accountDoc.data();
+
+                accountNameMap.set(
+                    accountDoc.id,
+                    account.name ||
+                    account.accountName ||
+                    "Unnamed Account"
+                );
+            }
+        );
+
+        // =========================================
+        // DATE / TYPE FILTERS
+        // =========================================
 
         const statementFromDate =
             document.querySelector(
@@ -978,6 +1132,9 @@ statementAccount.addEventListener(
                 ? statementType.value
                 : "all";
 
+        const isAllAccounts =
+            selectedAccountId === "all";
+
         console.log(
             "📅 STATEMENT DATE RANGE:",
             fromDate,
@@ -990,7 +1147,83 @@ statementAccount.addEventListener(
             selectedType
         );
 
+        console.log(
+            "🏦 ALL ACCOUNTS MODE:",
+            isAllAccounts
+        );
+
+        // =========================================
+        // FILTERED / LEDGER TRANSACTIONS
+        // =========================================
+
         const filteredTransactions = [];
+
+        // =========================================
+        // NORMALIZE ACCOUNT ID
+        // =========================================
+
+        function resolveAccountId(value) {
+            if (!value) return "";
+
+            if (
+                typeof value === "object"
+            ) {
+                return String(
+                    value.id ||
+                    value.accountId ||
+                    value.uid ||
+                    ""
+                );
+            }
+
+            return String(value);
+        }
+
+        // =========================================
+        // ADD ONE ACCOUNT-SIDE LEDGER ROW
+        // =========================================
+
+        function addLedgerRow(
+            transactionDoc,
+            transaction,
+            accountId,
+            transactionType
+        ) {
+            if (!accountId) return;
+
+            // CREDIT / DEBIT FILTER
+            if (
+                selectedType !== "all" &&
+                transactionType !== selectedType
+            ) {
+                return;
+            }
+
+            filteredTransactions.push({
+                id: transactionDoc.id,
+
+                ...transaction,
+
+                // IMPORTANT:
+                // Account represented by this row
+                statementAccountId:
+                    accountId,
+
+                statementAccountName:
+                    accountNameMap.get(
+                        accountId
+                    ) ||
+                    "Unknown Account",
+
+                // CREDIT / DEBIT determined
+                // ONLY from FROM / TO ACCOUNT
+                transactionType
+            });
+        }
+
+        // =========================================
+        // PROCESS EVERY TRANSACTION
+        // =========================================
 
         transactionsSnapshot.forEach(
             (transactionDoc) => {
@@ -998,25 +1231,37 @@ statementAccount.addEventListener(
                 const transaction =
                     transactionDoc.data();
 
+                // ---------------------------------
+                // IGNORE SOFT DELETED TRANSACTIONS
+                // ---------------------------------
+
+                if (
+                    transaction.deleted === true
+                ) {
+                    return;
+                }
+
+                // ---------------------------------
+                // ACCOUNT IDS
+                // ---------------------------------
+
                 const fromAccountId =
-                    transaction.fromAccountId;
+                    resolveAccountId(
+                        transaction.fromAccountId
+                    );
 
                 const toAccountId =
-                    transaction.toAccountId;
+                    resolveAccountId(
+                        transaction.toAccountId
+                    );
 
                 const transactionDate =
                     transaction.date || "";
 
-                // Account filter
-                const accountMatches =
-                    fromAccountId ===
-                        selectedAccountId ||
-                    toAccountId ===
-                        selectedAccountId;
+                // ---------------------------------
+                // DATE FILTER
+                // ---------------------------------
 
-                if (!accountMatches) return;
-
-                // From date filter
                 if (
                     fromDate &&
                     transactionDate < fromDate
@@ -1024,7 +1269,6 @@ statementAccount.addEventListener(
                     return;
                 }
 
-                // To date filter
                 if (
                     toDate &&
                     transactionDate > toDate
@@ -1032,7 +1276,99 @@ statementAccount.addEventListener(
                     return;
                 }
 
-                // Determine credit / debit
+                // =================================
+                // ALL ACCOUNTS MODE
+                // =================================
+
+                if (isAllAccounts) {
+
+                    // ---------------------------------
+                    // TRANSFER:
+                    // FROM ACCOUNT = DEBIT
+                    // TO ACCOUNT   = CREDIT
+                    // ---------------------------------
+
+                    if (
+                        fromAccountId &&
+                        toAccountId &&
+                        fromAccountId !==
+                            toAccountId
+                    ) {
+
+                        addLedgerRow(
+                            transactionDoc,
+                            transaction,
+                            fromAccountId,
+                            "debit"
+                        );
+
+                        addLedgerRow(
+                            transactionDoc,
+                            transaction,
+                            toAccountId,
+                            "credit"
+                        );
+
+                        return;
+                    }
+
+                    // ---------------------------------
+                    // ONLY FROM ACCOUNT
+                    // = DEBIT
+                    // ---------------------------------
+
+                    if (fromAccountId) {
+
+                        addLedgerRow(
+                            transactionDoc,
+                            transaction,
+                            fromAccountId,
+                            "debit"
+                        );
+
+                        return;
+                    }
+
+                    // ---------------------------------
+                    // ONLY TO ACCOUNT
+                    // = CREDIT
+                    // ---------------------------------
+
+                    if (toAccountId) {
+
+                        addLedgerRow(
+                            transactionDoc,
+                            transaction,
+                            toAccountId,
+                            "credit"
+                        );
+
+                        return;
+                    }
+
+                    // No account attached
+                    return;
+                }
+
+                // =================================
+                // SINGLE ACCOUNT MODE
+                // =================================
+
+                const accountMatches =
+                    fromAccountId ===
+                        selectedAccountId ||
+                    toAccountId ===
+                        selectedAccountId;
+
+                if (!accountMatches) {
+                    return;
+                }
+
+                // ---------------------------------
+                // CREDIT / DEBIT
+                // BASED ONLY ON FROM / TO ACCOUNT
+                // ---------------------------------
+
                 let transactionType =
                     "neutral";
 
@@ -1042,7 +1378,8 @@ statementAccount.addEventListener(
                     fromAccountId !==
                         selectedAccountId
                 ) {
-                    transactionType = "credit";
+                    transactionType =
+                        "credit";
                 }
 
                 if (
@@ -1051,20 +1388,36 @@ statementAccount.addEventListener(
                     toAccountId !==
                         selectedAccountId
                 ) {
-                    transactionType = "debit";
+                    transactionType =
+                        "debit";
                 }
 
-                // Transaction type filter
+                // ---------------------------------
+                // APPLY CREDIT / DEBIT FILTER
+                // ---------------------------------
+
                 if (
                     selectedType !== "all" &&
-                    transactionType !== selectedType
+                    transactionType !==
+                        selectedType
                 ) {
                     return;
                 }
 
                 filteredTransactions.push({
                     id: transactionDoc.id,
+
                     ...transaction,
+
+                    statementAccountId:
+                        selectedAccountId,
+
+                    statementAccountName:
+                        accountNameMap.get(
+                            selectedAccountId
+                        ) ||
+                        "Unknown Account",
+
                     transactionType
                 });
             }
@@ -1080,9 +1433,9 @@ statementAccount.addEventListener(
             filteredTransactions
         );
 
-        // --------------------------------
-        // RENDER STATEMENT TABLE
-        // --------------------------------
+        // =========================================
+        // STATEMENT CONTAINER
+        // =========================================
 
         const statementContainer =
             document.querySelector(
@@ -1090,15 +1443,22 @@ statementAccount.addEventListener(
             );
 
         if (!statementContainer) {
+
             console.log(
                 "❌ ACCOUNT STATEMENT CONTAINER NOT FOUND"
             );
+
             return;
         }
+
+        // =========================================
+        // NO DATA
+        // =========================================
 
         if (
             filteredTransactions.length === 0
         ) {
+
             statementContainer.innerHTML = `
                 <div
                     style="
@@ -1115,17 +1475,34 @@ statementAccount.addEventListener(
             return;
         }
 
-        let runningBalance = 0;
+        // =========================================
+        // SORT BY DATE
+        // =========================================
+
+        filteredTransactions.sort(
+            (a, b) =>
+                String(a.date || "")
+                    .localeCompare(
+                        String(b.date || "")
+                    )
+        );
+
+        // =========================================
+        // RUNNING BALANCE PER ACCOUNT
+        // =========================================
+
+        const runningBalances =
+            new Map();
 
         let rows = "";
 
-filteredTransactions
-    .sort((a, b) =>
-        (a.date || "").localeCompare(
-            b.date || ""
-        )
-    )
-    .forEach((transaction) => {
+        // =========================================
+        // BUILD TABLE ROWS
+        // =========================================
+
+        filteredTransactions.forEach(
+            (transaction) => {
+
                 const amount =
                     Number(
                         transaction.amount ?? 0
@@ -1139,6 +1516,18 @@ filteredTransactions
                     transaction.transactionType ===
                     "debit";
 
+                const accountId =
+                    transaction.statementAccountId;
+
+                // ---------------------------------
+                // CURRENT ACCOUNT BALANCE
+                // ---------------------------------
+
+                let runningBalance =
+                    runningBalances.get(
+                        accountId
+                    ) ?? 0;
+
                 if (isCredit) {
                     runningBalance += amount;
                 }
@@ -1146,6 +1535,15 @@ filteredTransactions
                 if (isDebit) {
                     runningBalance -= amount;
                 }
+
+                runningBalances.set(
+                    accountId,
+                    runningBalance
+                );
+
+                // ---------------------------------
+                // DESCRIPTION
+                // ---------------------------------
 
                 const description =
                     transaction.notes ||
@@ -1155,82 +1553,138 @@ filteredTransactions
                     transaction.type ||
                     "-";
 
+                // ---------------------------------
+                // FORMAT AMOUNT
+                // ---------------------------------
+
+                const formattedAmount =
+                    amount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                const formattedBalance =
+                    runningBalance.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                // ---------------------------------
+                // TABLE ROW
+                // ---------------------------------
+
                 rows += `
                     <tr>
 
-  <td>
-    ${
-        transaction.date
-            ? transaction.date
-                .split("-")
-                .reverse()
-                .join("-")
-            : "-"
-    }
-</td>
-
-                        <td>
-                            ${description}
-                        </td>
-
-                        <td>
-                            ${transaction.type || "-"}
+                        <td
+                            style="
+                                padding:10px;
+                                border-bottom:1px solid #eee;
+                            "
+                        >
+                            ${
+                                transaction.date
+                                    ? transaction.date
+                                        .split("-")
+                                        .reverse()
+                                        .join("-")
+                                    : "-"
+                            }
                         </td>
 
                         <td
                             style="
+                                padding:10px;
+                                border-bottom:1px solid #eee;
+                                font-weight:600;
+                            "
+                        >
+                            ${
+                                transaction.statementAccountName ||
+                                "-"
+                            }
+                        </td>
+
+                        <td
+                            style="
+                                padding:10px;
+                                border-bottom:1px solid #eee;
+                            "
+                        >
+                            ${description}
+                        </td>
+
+                        <td
+                            style="
+                                padding:10px;
+                                border-bottom:1px solid #eee;
+                            "
+                        >
+                            ${
+                                transaction.type ||
+                                "-"
+                            }
+                        </td>
+
+                        <td
+                            style="
+                                padding:10px;
                                 text-align:right;
+                                border-bottom:1px solid #eee;
                                 color:#b42318;
+                                font-weight:600;
                             "
                         >
                             ${
                                 isDebit
                                     ? "₹" +
-                                      amount.toLocaleString(
-                                          "en-IN",
-                                          {
-                                              minimumFractionDigits: 2
-                                          }
-                                      )
+                                      formattedAmount
                                     : "-"
                             }
                         </td>
 
                         <td
                             style="
+                                padding:10px;
                                 text-align:right;
+                                border-bottom:1px solid #eee;
                                 color:#067647;
+                                font-weight:600;
                             "
                         >
                             ${
                                 isCredit
                                     ? "₹" +
-                                      amount.toLocaleString(
-                                          "en-IN",
-                                          {
-                                              minimumFractionDigits: 2
-                                          }
-                                      )
+                                      formattedAmount
                                     : "-"
                             }
                         </td>
 
                         <td
                             style="
+                                padding:10px;
                                 text-align:right;
+                                border-bottom:1px solid #eee;
+                                font-weight:600;
                             "
                         >
-                            ₹${runningBalance.toLocaleString(
-                                "en-IN",
-                                {
-                                    minimumFractionDigits: 2
-                                }
-                            )}
+                            ₹${formattedBalance}
                         </td>
 
                     </tr>
                 `;
-            });
+            }
+        );
+
+        // =========================================
+        // FINAL TABLE
+        // =========================================
 
         statementContainer.innerHTML = `
             <div
@@ -1245,6 +1699,7 @@ filteredTransactions
                         width:100%;
                         border-collapse:collapse;
                         font-size:14px;
+                        min-width:950px;
                     "
                 >
 
@@ -1264,6 +1719,16 @@ filteredTransactions
                                 "
                             >
                                 Date
+                            </th>
+
+                            <th
+                                style="
+                                    padding:10px;
+                                    text-align:left;
+                                    border-bottom:1px solid #ddd;
+                                "
+                            >
+                                Account
                             </th>
 
                             <th
@@ -1328,6 +1793,39 @@ filteredTransactions
 
             </div>
         `;
+
+        // =====================================================
+// EXPORT TABLE — ACCOUNT-WISE TRANSACTIONS
+// Creates a real HTML table for PDF / Excel / Print
+// =====================================================
+
+const exportTable = document.createElement("table");
+
+exportTable.style.display = "none";
+exportTable.className = "report-export-table";
+
+exportTable.innerHTML = `
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Account</th>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Balance</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        ${rows}
+    </tbody>
+`;
+
+statementContainer
+    .closest(".transaction-reports-container")
+    .appendChild(exportTable);
+
     }
 );
 
@@ -1377,6 +1875,26 @@ filteredTransactions
 
                 }
 
+                const statementType =
+    document.querySelector("#statementType");
+
+if (statementType) {
+    statementType.addEventListener(
+        "change",
+        () => {
+            console.log(
+                "🔄 TRANSACTION TYPE CHANGED:",
+                statementType.value
+            );
+
+            if (!statementAccount?.value) return;
+
+            statementAccount.dispatchEvent(
+                new Event("change")
+            );
+        }
+    );
+}
                 console.log(
                     "🔎 STATEMENT ACCOUNT SELECT:",
                     statementAccount
@@ -1400,6 +1918,12 @@ filteredTransactions
                         "🏦 STATEMENT ACCOUNTS COUNT:",
                         accountsSnapshot.size
                     );
+
+// ADD ALL ACCOUNTS OPTION
+const allOption = document.createElement("option");
+allOption.value = "all";
+allOption.textContent = "ALL";
+statementAccount.appendChild(allOption);
 
                     accountsSnapshot.forEach(
                         (accountDoc) => {
@@ -1457,12 +1981,19 @@ allAccountsReport.addEventListener(
                 "🏦 ALL ACCOUNTS REPORT SELECTED"
             );
 
+            // SET ACTIVE REPORT FOR GLOBAL HEADER / TOOLBAR
+window.activeTransactionReport = {
+    number: 1,
+    name: "All Accounts"
+};
+
             const user = auth.currentUser;
 
 console.log(
     "👤 REPORT USER:",
     user
 );
+
 
 if (user) {
 
@@ -1570,13 +2101,73 @@ totalRow.innerHTML = `
 `;
 
 reportWorkArea.appendChild(totalRow);
+// =====================================================
+// EXPORT TABLE — ALL ACCOUNTS
+// Creates a real HTML table for PDF / Excel / Print
+// =====================================================
+
+const exportTable = document.createElement("table");
+
+exportTable.style.display = "none";
+exportTable.className = "report-export-table";
+
+exportTable.innerHTML = `
+    <thead>
+        <tr>
+            <th>Account Name</th>
+            <th>Account Type</th>
+            <th>Balance</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        ${accountsSnapshot.docs.map((accountDoc) => {
+
+            const account = accountDoc.data();
+
+            const balance =
+                Number(account.balance ?? 0);
+
+            return `
+                <tr>
+                    <td>
+                        ${account.name || "Unnamed Account"}
+                    </td>
+
+                    <td>
+                        ${account.type || "-"}
+                    </td>
+
+                    <td>
+                        ₹ ${balance.toFixed(2)}
+                    </td>
+                </tr>
+            `;
+
+        }).join("")}
+
+        <tr>
+            <td><strong>Grand Total</strong></td>
+            <td></td>
+            <td>
+                <strong>
+                    ₹ ${totalBalance.toFixed(2)}
+                </strong>
+            </td>
+        </tr>
+    </tbody>
+`;
+
+reportWorkArea
+    .querySelector(".transaction-reports-container")
+    .appendChild(exportTable);
 
 }
 
         }
     );
 
-    
+
 }
 
     }
@@ -1609,19 +2200,19 @@ reportWorkArea.appendChild(totalRow);
         };
 
         const requestedTitle = categoryMap[requestedCategory] || "Transactions";
-        const requestedCard = Array.from(categoryCards).find(card =>
-            card.querySelector(".report-category-title")?.textContent?.trim() === requestedTitle
-        );
+const requestedCard = Array.from(categoryCards).find(
+    card => getReportCategoryKey(card) === requestedTitle
+);
 
         if (requestedCard) {
             requestedCard.classList.add("report-category-card-selected");
-            
+
 if (requestedTitle === "Transactions") {
     hideReportModuleStartPage();
     renderTransactionReports();
 }
- 
-            
+
+
             else if (reportWorkArea) {
                 reportWorkArea.innerHTML = `
                     <div class="transaction-reports-container">
@@ -1639,7 +2230,7 @@ if (requestedTitle === "Transactions") {
     }
 
 
-    
+
 const reportNumberFromUrl = Number(
     new URLSearchParams(window.location.search).get("report")
 );
@@ -1651,10 +2242,9 @@ if (reportNumberFromUrl) {
 
     if (reportToOpen) {
         const transactionsCategory = Array.from(categoryCards).find(
-            card =>
-                card.querySelector(".report-category-title")
-                    ?.textContent.trim() === "Transactions"
-        );
+    card =>
+        getReportCategoryKey(card) === "Transactions"
+);
 
         if (transactionsCategory) {
             renderTransactionReports();
@@ -3332,7 +3922,7 @@ if (backButton) {
     };
 }
 
-    
+
 
     // =====================================================
     // YEAR DROPDOWN
@@ -4619,9 +5209,9 @@ if (transaction.deleted === true) {
 function injectUniversalReportHeader() {
 
     const reportContainer =
-        reportWorkArea.querySelector(
-            ".selected-report-container"
-        );
+    reportWorkArea.querySelector(
+        ".selected-report-container, .transaction-reports-container"
+    );
 
 
     if (!reportContainer) {
@@ -4632,15 +5222,7 @@ function injectUniversalReportHeader() {
 
 
     const report =
-        window.activeTransactionReport;
-
-
-    if (!report) {
-
-        return;
-
-    }
-
+    window.activeTransactionReport || null;
 
     const userDetails =
         getCurrentUserDetails();
@@ -4880,8 +5462,29 @@ else if (report.number === 23) {
         ).toUpperCase();
 
 
-    const finalReportTitle =
-        `Financial Report - ${report.name} — ${reportPeriod}`;
+    let fallbackReportName = "";
+
+if (!report) {
+    const reportHeading =
+        reportContainer.querySelector(
+            ".report-document-header strong"
+        );
+
+    if (reportHeading) {
+        fallbackReportName =
+            reportHeading.textContent
+                .trim()
+                .replace(/^#\d+\s*/, "");
+    }
+}
+
+const finalReportTitle =
+    report
+        ? `Financial Report - ${report.name} — ${reportPeriod}`
+        : `Financial Report - ${
+              fallbackReportName ||
+              "Financial Report"
+          }`;
 
 
     if (
@@ -5261,10 +5864,10 @@ function injectReportToolbar() {
     // Find currently opened report
     // -------------------------------------------------
 
-    const reportContainer =
-        reportWorkArea.querySelector(
-            ".selected-report-container"
-        );
+   const reportContainer =
+    reportWorkArea.querySelector(
+        ".selected-report-container, .transaction-reports-container"
+    );
 
 
     // No report currently open
@@ -5599,11 +6202,10 @@ function getReportTotalsForExport(
 
 function exportCurrentReportPDF() {
 
-    const reportContainer =
-        reportWorkArea.querySelector(
-            ".selected-report-container"
-        );
-
+const reportContainer =
+    reportWorkArea.querySelector(
+        ".selected-report-container, .transaction-reports-container"
+    );
 
     if (!reportContainer) {
 
@@ -6215,11 +6817,10 @@ if (
 
 function exportCurrentReportExcel() {
 
-    const reportContainer =
-        reportWorkArea.querySelector(
-            ".selected-report-container"
-        );
-
+const reportContainer =
+    reportWorkArea.querySelector(
+        ".selected-report-container, .transaction-reports-container"
+    );
 
     if (!reportContainer) {
 
@@ -6511,10 +7112,10 @@ const excelData = [
 
 function printCurrentReport() {
 
-    const reportContainer =
-        reportWorkArea.querySelector(
-            ".selected-report-container"
-        );
+const reportContainer =
+    reportWorkArea.querySelector(
+        ".selected-report-container, .transaction-reports-container"
+    );
 
 
     if (!reportContainer) {
@@ -12490,7 +13091,7 @@ async function renderTransactionsByPartyReport() {
 
     const backButton = document.getElementById("backToTransactionReports");
 
-   
+
 if (backButton) {
     backButton.onclick = function (event) {
         event.preventDefault();
@@ -12931,7 +13532,7 @@ async function renderTransactionsByPaymentMethodReport() {
 
         const methodMap = new Map();
 
-        
+
         snapshot.forEach(function (docSnap) {
             const transaction = docSnap.data();
 
@@ -13431,7 +14032,7 @@ async function renderTransactionsWithoutCategoryReport() {
 
 
 async function renderTransactionsWithoutPartyReport() {
-    
+
 reportWorkArea.innerHTML = `
     <div class="selected-report-container">
 
@@ -13557,7 +14158,7 @@ const snapshot = await getDocs(
                     <tbody>
                         ${transactions.map(transaction => `
                             <tr>
-                            
+
 <td>${formatTransactionDate(transaction.date)}</td>
                                 <td>${transaction.type || "-"}</td>
                                 <td>₹${(
@@ -13643,7 +14244,7 @@ async function renderTransactionsWithoutNotesReport() {
     const content = document.getElementById(
         "transactionsWithoutNotesContent"
     );
-        
+
 
     try {
        const user = auth.currentUser;
@@ -13666,7 +14267,7 @@ const snapshot = await getDocs(
         snapshot.forEach((docSnap) => {
             const transaction = docSnap.data();
 
-            
+
 console.log("REPORT #36 CHECK:", {
     id: docSnap.id,
     date: transaction.date,
@@ -13690,7 +14291,7 @@ if (!notes || notes === "-" || notes === "—") {
                 });
             }
 
-            
+
         });
 
 
@@ -13796,7 +14397,9 @@ content.innerHTML = `
 
 function renderSelectedReport(report) {
 
-    
+        // SET ACTIVE REPORT FOR GLOBAL HEADER & TOOLBAR
+    window.activeTransactionReport = report;
+
 async function renderHighValueTransactionsReport() {
     reportWorkArea.innerHTML = `
 <div class="selected-report-container">
@@ -13831,12 +14434,12 @@ async function renderHighValueTransactionsReport() {
                     Loading transactions...
                 </div>
             </div>
-            
+
         </div>`;
 
         document.getElementById("backFromReport37")
     .addEventListener("click", () => renderTransactionReports());
-    
+
     const content = document.getElementById("highValueContent");
 
     try {
@@ -13868,7 +14471,7 @@ async function renderHighValueTransactionsReport() {
             '"': "&quot;", "'": "&#39;"
         })[c]);
 
-        
+
 const formatDate = value => {
     if (!value) return "-";
 
@@ -13948,7 +14551,7 @@ const formatDate = value => {
 
 async function renderDuplicateTransactionReport() {
     reportWorkArea.innerHTML = `
-        
+
 <div class="selected-report-container">
     <button type="button" class="back-to-reports-button"
         id="backFromReport38"
@@ -14018,7 +14621,7 @@ async function renderDuplicateTransactionReport() {
             '"': "&quot;", "'": "&#39;"
         })[c]);
 
-        
+
 const formatDate = value => {
     if (!value) return "-";
 
@@ -14223,10 +14826,7 @@ const formatDate = value => {
     }
 }
 
-        window.activeTransactionReport = report;
-
-    const userDetails = getCurrentUserDetails();
-
+const userDetails = getCurrentUserDetails();
 
     // =====================================================
     // REPORT #16 — ALL TRANSACTIONS
