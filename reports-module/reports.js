@@ -282,6 +282,46 @@ function sortTransactionsOldestFirst(transactions) {
     });
 }
 
+// =====================================================
+// GLOBAL DATE DISPLAY FORMAT — DD-MM-YYYY
+// =====================================================
+
+function formatDateDisplay(value) {
+
+    if (!value) return "";
+
+    const dateString = String(value).trim();
+
+    // YYYY-MM-DD
+    let match = dateString.match(
+        /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    );
+
+    if (match) {
+        return (
+            match[3].padStart(2, "0") + "-" +
+            match[2].padStart(2, "0") + "-" +
+            match[1]
+        );
+    }
+
+    // DD-MM-YYYY or DD/MM/YYYY
+    match = dateString.match(
+        /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+    );
+
+    if (match) {
+        return (
+            match[1].padStart(2, "0") + "-" +
+            match[2].padStart(2, "0") + "-" +
+            match[3]
+        );
+    }
+
+    // Leave unknown formats unchanged
+    return dateString;
+}
+
 // -----------------------------------------------------
 // SHOW REPORT MODULE STARTING PAGE
 // -----------------------------------------------------
@@ -312,41 +352,57 @@ function showReportModuleStartPage() {
     );
 
 
-    // Clear currently opened report/list
-
-    reportWorkArea.innerHTML = `
-
-        <div class="report-work-placeholder">
-
-            <div class="placeholder-icon">
-                📊
-            </div>
-
-            <h2>
-                Select a Report
-            </h2>
-
-            <p>
-                Choose a report category above to begin.
-            </p>
-
-        </div>
-
-    `;
+// Clear currently opened report/list
+reportWorkArea.innerHTML = "";
 
 }
 
+    // =====================================================
+    // BACK TO MAIN FINANCIAL REPORTS DASHBOARD
+    // =====================================================
+
+    const backToReportsDashboardButton =
+        document.getElementById("backToReportsDashboardButton");
+
+    if (backToReportsDashboardButton) {
+        backToReportsDashboardButton.addEventListener("click", () => {
+            showReportModuleStartPage();
+            backToReportsDashboardButton.style.display = "none";
+
+            window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+});
+        });
+    }
+
+
+
+ // =====================================================
+// GLOBAL REPORT TOOLBAR OBSERVER — OPTIMIZED
 // =====================================================
-// GLOBAL REPORT TOOLBAR OBSERVER
-// =====================================================
+
+let reportToolbarUpdateScheduled = false;
 
 const reportToolbarObserver =
     new MutationObserver(function () {
 
-        injectReportToolbar();
+        // Combine multiple DOM changes into one update.
+        if (reportToolbarUpdateScheduled) {
+            return;
+        }
+
+        reportToolbarUpdateScheduled = true;
+
+        requestAnimationFrame(function () {
+
+            reportToolbarUpdateScheduled = false;
+
+            injectReportToolbar();
+
+        });
 
     });
-
 
 if (reportWorkArea) {
 
@@ -401,11 +457,1833 @@ categoryCards.forEach(card => {
  const title =
     getReportCategoryKey(card);
 
+    window.activeReportCategory = title;
+
+    const backToReportsDashboardButton =
+    document.getElementById("backToReportsDashboardButton");
+
+if (backToReportsDashboardButton) {
+    backToReportsDashboardButton.style.display = "inline-block";
+}
+
         if (title === "Transactions") {
 
             renderTransactionReports();
 
         }
+
+// =====================================================
+// INCOME & EXPENSES REPORTS
+// =====================================================
+
+if (title === "Income & Expenses") {
+
+    console.log("💰 INCOME & EXPENSES REPORTS SELECTED");
+
+    hideReportModuleStartPage();
+
+    if (reportWorkArea) {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+                        <h2>💰 Income & Expenses Reports</h2>
+
+                        <p>
+                            Income, expenses and financial performance analysis
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="transaction-reports-grid"
+                    style="margin-top:20px;"
+                >
+
+                    <!-- 1 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="income-summary"
+                    >
+                        <div class="transaction-report-number">
+                            1
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>💰 Income Summary Report</h3>
+
+                            <p>
+                                View total income and income details
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 2 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="expense-summary"
+                    >
+                        <div class="transaction-report-number">
+                            2
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>💸 Expense Summary Report</h3>
+
+                            <p>
+                                View total expenses and expense details
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 3 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="income-vs-expense"
+                    >
+                        <div class="transaction-report-number">
+                            3
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>📊 Income vs Expense Report</h3>
+
+                            <p>
+                                Compare income and expenses
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 4 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="monthly-income-expense"
+                    >
+                        <div class="transaction-report-number">
+                            4
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>📅 Monthly Income & Expense Report</h3>
+
+                            <p>
+                                Analyze monthly financial performance
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 5 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="category-wise-income"
+                    >
+                        <div class="transaction-report-number">
+                            5
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>📈 Category-wise Income Report</h3>
+
+                            <p>
+                                Analyze income by category
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 6 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="category-wise-expense"
+                    >
+                        <div class="transaction-report-number">
+                            6
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>📉 Category-wise Expense Report</h3>
+
+                            <p>
+                                Analyze expenses by category
+                            </p>
+                        </div>
+                    </div>
+
+
+                    <!-- 7 -->
+                    <div
+                        class="transaction-report-card"
+                        data-report="profit-loss"
+                    >
+                        <div class="transaction-report-number">
+                            7
+                        </div>
+
+                        <div class="transaction-report-content">
+                            <h3>🧾 Profit & Loss Report</h3>
+
+                            <p>
+                                View income, expenses and net result
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+// =============================================
+// INCOME SUMMARY REPORT — CLICK HANDLER
+// =============================================
+
+const incomeSummaryCard =
+    reportWorkArea.querySelector(
+        '[data-report="income-summary"]'
+    );
+
+if (incomeSummaryCard) {
+    incomeSummaryCard.addEventListener(
+        "click",
+        async () => {
+
+            window.activeTransactionReport = {
+                number: 40,
+                name: "Income Summary"
+            };
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("Please login first.");
+                return;
+            }
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>💰 Income Summary Report</h2>
+                            <p>Loading income transactions...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const snapshot = await getDocs(
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactions"
+                    )
+                );
+
+const incomeRows = sortTransactionsOldestFirst(
+    snapshot.docs
+        .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }))
+        .filter(tx =>
+            tx.type === "income" &&
+            tx.deleted !== true &&
+            Number(tx.amount || 0) > 0
+        )
+);
+
+                const totalIncome = incomeRows.reduce(
+                    (sum, tx) =>
+                        sum + Number(tx.amount || 0),
+                    0
+                );
+
+                const money = amount =>
+                    "₹ " + amount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                const escapeHTML = value =>
+                    String(value ?? "").replace(
+                        /[&<>"']/g,
+                        char => ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;"
+                        })[char]
+                    );
+
+                reportWorkArea.innerHTML = `
+                    <div class="transaction-reports-container">
+
+                        <div class="transaction-reports-header">
+                            <div>
+                                <h2>💰 Income Summary Report</h2>
+                                <p>All recorded income transactions</p>
+                            </div>
+                        </div>
+
+                        <div style="
+                            margin:20px 0;
+                            padding:20px;
+                            border-radius:12px;
+                            background:#ecfdf5;
+                            border:1px solid #a7f3d0;
+                        ">
+                            <div>Total Income</div>
+                            <h2 style="color:#047857;">
+                                ${money(totalIncome)}
+                            </h2>
+                            <div>
+                                ${incomeRows.length} transactions
+                            </div>
+                        </div>
+
+                        <div style="overflow-x:auto;">
+                            <table class="report-export-table"
+                                style="
+                                    width:100%;
+                                    border-collapse:collapse;
+                                ">
+                                <thead>
+                                    <tr>
+                                        <th style="padding:10px;">Date</th>
+                                        <th style="padding:10px;">Category</th>
+                                        <th style="padding:10px;">Party / Description</th>
+                                        <th style="padding:10px;text-align:right;">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${incomeRows.map(tx => `
+                                        <tr>
+                                            <td style="padding:10px;">
+                                             ${escapeHTML(formatDateDisplay(tx.date))}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(tx.category)}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(
+                                                    tx.partyName ||
+                                                    tx.notes ||
+                                                    "-"
+                                                )}
+                                            </td>
+                                            <td style="padding:10px;text-align:right;">
+                                                ${money(Number(tx.amount || 0))}
+                                            </td>
+                                        </tr>
+                                    `).join("")}
+
+                                    <tr>
+                                        <td colspan="3"
+                                            style="padding:10px;font-weight:bold;">
+                                            Total Income
+                                        </td>
+                                        <td style="padding:10px;text-align:right;font-weight:bold;">
+                                            ${money(totalIncome)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error(
+                    "INCOME SUMMARY REPORT ERROR:",
+                    error
+                );
+
+                alert(
+                    "Income Summary Report load nahi hua. Console error check karein."
+                );
+            }
+        }
+    );
+}
+
+
+ // =============================================
+ // EXPENSE SUMMARY REPORT — CLICK HANDLER
+ // =============================================
+
+const expenseSummaryCard =
+    reportWorkArea.querySelector(
+        '[data-report="expense-summary"]'
+    );
+
+if (expenseSummaryCard) {
+    expenseSummaryCard.addEventListener(
+        "click",
+        async () => {
+
+            window.activeTransactionReport = {
+                number: 41,
+                name: "Expense Summary"
+            };
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("Please login first.");
+                return;
+            }
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>💸 Expense Summary Report</h2>
+                            <p>Loading expense transactions...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const snapshot = await getDocs(
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactions"
+                    )
+                );
+
+const expenseRows = sortTransactionsOldestFirst(
+    snapshot.docs
+        .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }))
+        .filter(tx =>
+            tx.type === "expense" &&
+            tx.deleted !== true &&
+            tx.behavior !== "money_out_non_expense" &&
+            Number(tx.amount || 0) > 0
+        )
+);
+                const totalExpense = expenseRows.reduce(
+                    (sum, tx) =>
+                        sum + Number(tx.amount || 0),
+                    0
+                );
+
+                const money = amount =>
+                    "₹ " + amount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                const escapeHTML = value =>
+                    String(value ?? "").replace(
+                        /[&<>"']/g,
+                        char => ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;"
+                        })[char]
+                    );
+
+                reportWorkArea.innerHTML = `
+                    <div class="transaction-reports-container">
+
+                        <div class="transaction-reports-header">
+                            <div>
+                                <h2>💸 Expense Summary Report</h2>
+                                <p>All recorded expense transactions</p>
+                            </div>
+                        </div>
+
+                        <div style="
+                            margin:20px 0;
+                            padding:20px;
+                            border-radius:12px;
+                            background:#fff1f2;
+                            border:1px solid #fecdd3;
+                        ">
+                            <div>Total Expenses</div>
+                            <h2 style="color:#be123c;">
+                                ${money(totalExpense)}
+                            </h2>
+                            <div>
+                                ${expenseRows.length} transactions
+                            </div>
+                        </div>
+
+                        <div style="overflow-x:auto;">
+                            <table
+                                class="report-export-table"
+                                style="
+                                    width:100%;
+                                    border-collapse:collapse;
+                                "
+                            >
+                                <thead>
+                                    <tr>
+                                        <th style="padding:10px;">Date</th>
+                                        <th style="padding:10px;">Category</th>
+                                        <th style="padding:10px;">Party / Description</th>
+                                        <th style="padding:10px;text-align:right;">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    ${expenseRows.map(tx => `
+                                        <tr>
+                                            <td style="padding:10px;">
+                                               ${escapeHTML(formatDateDisplay(tx.date))}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(tx.category)}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(
+                                                    tx.partyName ||
+                                                    tx.notes ||
+                                                    "-"
+                                                )}
+                                            </td>
+                                            <td style="padding:10px;text-align:right;">
+                                                ${money(Number(tx.amount || 0))}
+                                            </td>
+                                        </tr>
+                                    `).join("")}
+
+                                    <tr>
+                                        <td
+                                            colspan="3"
+                                            style="padding:10px;font-weight:bold;"
+                                        >
+                                            Total Expenses
+                                        </td>
+                                        <td style="
+                                            padding:10px;
+                                            text-align:right;
+                                            font-weight:bold;
+                                        ">
+                                            ${money(totalExpense)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error(
+                    "EXPENSE SUMMARY REPORT ERROR:",
+                    error
+                );
+
+                alert(
+                    "Expense Summary Report load nahi hua. Console error check karein."
+                );
+            }
+        }
+    );
+}
+
+
+ // =============================================
+ // CATEGORY-WISE INCOME REPORT — CLICK HANDLER
+ // =============================================
+
+const categoryIncomeCard = reportWorkArea.querySelector(
+    '[data-report="category-wise-income"]'
+);
+
+if (categoryIncomeCard) {
+    categoryIncomeCard.addEventListener("click", async () => {
+
+        window.activeTransactionReport = {
+            number: 44,
+            name: "Category-wise Income"
+        };
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("Please login first.");
+            return;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>📈 Category-wise Income Report</h2>
+                <p>Loading income transactions...</p>
+            </div>
+        `;
+
+        try {
+            const snapshot = await getDocs(
+                collection(db, "users", user.uid, "transactions")
+            );
+
+            const incomeRows = sortTransactionsOldestFirst(
+                snapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(tx =>
+                        tx.type === "income" &&
+                        tx.deleted !== true &&
+                        Number(tx.amount || 0) > 0
+                    )
+            );
+
+            const money = amount =>
+                "₹ " + amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            const escapeHTML = value =>
+                String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                })[char]);
+
+            const categoryTotals = {};
+
+            incomeRows.forEach(tx => {
+                const category = String(
+                    tx.category || "Uncategorized"
+                ).trim() || "Uncategorized";
+
+                if (!categoryTotals[category]) {
+                    categoryTotals[category] = {
+                        total: 0,
+                        count: 0
+                    };
+                }
+
+                categoryTotals[category].total +=
+                    Number(tx.amount || 0);
+
+                categoryTotals[category].count++;
+            });
+
+            const categories = Object.entries(categoryTotals)
+                .sort((a, b) => b[1].total - a[1].total);
+
+            const totalIncome = incomeRows.reduce(
+                (sum, tx) => sum + Number(tx.amount || 0),
+                0
+            );
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>📈 Category-wise Income Report</h2>
+                            <p>Income grouped by category — oldest transactions first</p>
+                        </div>
+                    </div>
+
+                    <div style="
+                        margin:20px 0;
+                        padding:20px;
+                        border-radius:12px;
+                        background:#ecfdf5;
+                        border:1px solid #a7f3d0;
+                    ">
+                        <div>Total Income</div>
+                        <h2 style="color:#047857;">
+                            ${money(totalIncome)}
+                        </h2>
+                        <div>
+                            ${incomeRows.length} transactions
+                            across ${categories.length} categories
+                        </div>
+                    </div>
+
+                    <h3>Category Summary</h3>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table"
+    style="
+        width:100%;
+        border-collapse:collapse;
+        table-layout:fixed;
+    ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:12px 14px;">Category</th>
+                                    <th style="padding:12px 14px;text-align:right;">
+                                        Transactions
+                                    </th>
+                                    <th style="padding:12px 14px;text-align:right;">
+                                        Total Income
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${categories.map(([category, data]) => `
+                                    <tr>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(category)}
+                                        </td>
+                                        <td style="padding:12px 14px;text-align:right;">
+                                            ${data.count}
+                                        </td>
+                                        <td style="padding:12px 14px;text-align:right;">
+                                            ${money(data.total)}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+
+                                <tr>
+                                    <td colspan="2"
+                                        style="padding:12px 14px;font-weight:bold;">
+                                        Total Income
+                                    </td>
+                                    <td style="padding:12px 14px;text-align:right;font-weight:bold;">
+                                        ${money(totalIncome)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top:28px;">
+                        Income Transaction Details
+                    </h3>
+
+                    <div style="overflow-x:auto;">
+                        
+<table class="report-export-table"
+    style="
+        width:100%;
+        border-collapse:collapse;
+        table-layout:fixed;
+    ">
+
+                            <thead>
+                                <tr>
+<th style="padding:12px 14px;width:12%;text-align:left;">Date</th>
+<th style="padding:12px 14px;width:22%;text-align:left;">Category</th>
+<th style="padding:12px 14px;width:46%;text-align:left;">Party / Description</th>
+<th style="padding:12px 14px;width:20%;text-align:right;">Amount</th>
+
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${incomeRows.map(tx => `
+                                    <tr>
+                                        <td style="padding:10px;">
+                                            ${escapeHTML(formatDateDisplay(tx.date))}
+                                        </td>
+                                        <td style="padding:10px;">
+                                            ${escapeHTML(tx.category || "Uncategorized")}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(tx.partyName || tx.notes || "-")}
+                                        </td>
+                                       <td style="padding:12px 14px;text-align:right;">
+                                            ${money(Number(tx.amount || 0))}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            `;
+
+        } catch (error) {
+            console.error("CATEGORY-WISE INCOME REPORT ERROR:", error);
+
+            alert(
+                "Category-wise Income Report load nahi hua. Console error check karein."
+            );
+        }
+    });
+}
+
+
+ // =============================================
+ // CATEGORY-WISE EXPENSE REPORT — CLICK HANDLER
+ // =============================================
+
+const categoryExpenseCard = reportWorkArea.querySelector(
+    '[data-report="category-wise-expense"]'
+);
+
+if (categoryExpenseCard) {
+    categoryExpenseCard.addEventListener("click", async () => {
+
+        window.activeTransactionReport = {
+            number: 45,
+            name: "Category-wise Expense"
+        };
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("Please login first.");
+            return;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>📉 Category-wise Expense Report</h2>
+                <p>Loading expense transactions...</p>
+            </div>
+        `;
+
+        try {
+            const snapshot = await getDocs(
+                collection(db, "users", user.uid, "transactions")
+            );
+
+            const expenseRows = sortTransactionsOldestFirst(
+                snapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(tx =>
+                        tx.type === "expense" &&
+                        tx.deleted !== true &&
+                        tx.behavior !== "money_out_non_expense" &&
+                        Number(tx.amount || 0) > 0
+                    )
+            );
+
+            const money = amount =>
+                "₹ " + amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            const escapeHTML = value =>
+                String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                })[char]);
+
+            const categoryTotals = {};
+
+            expenseRows.forEach(tx => {
+                const category = String(
+                    tx.category || "Uncategorized"
+                ).trim() || "Uncategorized";
+
+                if (!categoryTotals[category]) {
+                    categoryTotals[category] = {
+                        total: 0,
+                        count: 0
+                    };
+                }
+
+                categoryTotals[category].total +=
+                    Number(tx.amount || 0);
+
+                categoryTotals[category].count++;
+            });
+
+            const categories = Object.entries(categoryTotals)
+                .sort((a, b) => b[1].total - a[1].total);
+
+            const totalExpense = expenseRows.reduce(
+                (sum, tx) => sum + Number(tx.amount || 0),
+                0
+            );
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>📉 Category-wise Expense Report</h2>
+                            <p>
+                                Expenses grouped by category —
+                                oldest transactions first
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="
+                        margin:20px 0;
+                        padding:20px;
+                        border-radius:12px;
+                        background:#fff1f2;
+                        border:1px solid #fecdd3;
+                    ">
+                        <div>Total Expenses</div>
+
+                        <h2 style="color:#be123c;">
+                            ${money(totalExpense)}
+                        </h2>
+
+                        <div>
+                            ${expenseRows.length} transactions
+                            across ${categories.length} categories
+                        </div>
+                    </div>
+
+                    <h3>Category Summary</h3>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table"
+                            style="
+                                width:100%;
+                                border-collapse:collapse;
+                                table-layout:fixed;
+                            ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:12px 14px;width:50%;text-align:left;">
+                                        Category
+                                    </th>
+                                    <th style="padding:12px 14px;width:20%;text-align:right;">
+                                        Transactions
+                                    </th>
+                                    <th style="padding:12px 14px;width:30%;text-align:right;">
+                                        Total Expenses
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                ${categories.map(([category, data]) => `
+                                    <tr>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(category)}
+                                        </td>
+                                        <td style="padding:12px 14px;text-align:right;">
+                                            ${data.count}
+                                        </td>
+                                        <td style="padding:12px 14px;text-align:right;">
+                                            ${money(data.total)}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+
+                                <tr>
+                                    <td colspan="2"
+                                        style="padding:12px 14px;font-weight:bold;">
+                                        Total Expenses
+                                    </td>
+                                    <td style="padding:12px 14px;text-align:right;font-weight:bold;">
+                                        ${money(totalExpense)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top:28px;">
+                        Expense Transaction Details
+                    </h3>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table"
+                            style="
+                                width:100%;
+                                border-collapse:collapse;
+                                table-layout:fixed;
+                            ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:12px 14px;width:12%;text-align:left;">
+                                        Date
+                                    </th>
+                                    <th style="padding:12px 14px;width:22%;text-align:left;">
+                                        Category
+                                    </th>
+                                    <th style="padding:12px 14px;width:46%;text-align:left;">
+                                        Party / Description
+                                    </th>
+                                    <th style="padding:12px 14px;width:20%;text-align:right;">
+                                        Amount
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                ${expenseRows.map(tx => `
+                                    <tr>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(formatDateDisplay(tx.date))}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(tx.category || "Uncategorized")}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(tx.partyName || tx.notes || "-")}
+                                        </td>
+                                        <td style="padding:12px 14px;text-align:right;">
+                                            ${money(Number(tx.amount || 0))}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            `;
+
+        } catch (error) {
+            console.error(
+                "CATEGORY-WISE EXPENSE REPORT ERROR:",
+                error
+            );
+
+            alert(
+                "Category-wise Expense Report load nahi hua. Console error check karein."
+            );
+        }
+    });
+}
+
+
+// =============================================
+// INCOME VS EXPENSE REPORT — CLICK HANDLER
+// =============================================
+
+const incomeVsExpenseCard =
+    reportWorkArea.querySelector(
+        '[data-report="income-vs-expense"]'
+    );
+
+if (incomeVsExpenseCard) {
+    incomeVsExpenseCard.addEventListener(
+        "click",
+        async () => {
+
+            window.activeTransactionReport = {
+                number: 42,
+                name: "Income vs Expense"
+            };
+
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("Please login first.");
+                return;
+            }
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>📊 Income vs Expense Report</h2>
+                            <p>Loading income and expense transactions...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const snapshot = await getDocs(
+                    collection(
+                        db,
+                        "users",
+                        user.uid,
+                        "transactions"
+                    )
+                );
+
+                const transactions = snapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(tx =>
+                        (tx.type === "income" ||
+                         tx.type === "expense") &&
+                        tx.deleted !== true &&
+                        tx.behavior !== "money_out_non_expense" &&
+                        Number(tx.amount || 0) > 0
+                    );
+
+                // Oldest First
+                const sortedTransactions =
+                    sortTransactionsOldestFirst(transactions);
+
+                const incomeRows = sortedTransactions.filter(
+                    tx => tx.type === "income"
+                );
+
+                const expenseRows = sortedTransactions.filter(
+                    tx => tx.type === "expense"
+                );
+
+                const totalIncome = incomeRows.reduce(
+                    (sum, tx) => sum + Number(tx.amount || 0),
+                    0
+                );
+
+                const totalExpense = expenseRows.reduce(
+                    (sum, tx) => sum + Number(tx.amount || 0),
+                    0
+                );
+
+                const netAmount = totalIncome - totalExpense;
+
+                const money = amount =>
+                    "₹ " + amount.toLocaleString(
+                        "en-IN",
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+                const escapeHTML = value =>
+                    String(value ?? "").replace(
+                        /[&<>"']/g,
+                        char => ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;"
+                        })[char]
+                    );
+
+                reportWorkArea.innerHTML = `
+                    <div class="transaction-reports-container">
+
+                        <div class="transaction-reports-header">
+                            <div>
+                                <h2>📊 Income vs Expense Report</h2>
+                                <p>
+                                    Comparison of recorded income and expenses
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="
+                            display:grid;
+                            grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                            gap:16px;
+                            margin:20px 0;
+                        ">
+
+                            <div style="
+                                padding:20px;
+                                border-radius:12px;
+                                background:#ecfdf5;
+                                border:1px solid #a7f3d0;
+                            ">
+                                <div>Total Income</div>
+                                <h2 style="color:#047857;">
+                                    ${money(totalIncome)}
+                                </h2>
+                                <div>${incomeRows.length} transactions</div>
+                            </div>
+
+                            <div style="
+                                padding:20px;
+                                border-radius:12px;
+                                background:#fef2f2;
+                                border:1px solid #fecaca;
+                            ">
+                                <div>Total Expenses</div>
+                                <h2 style="color:#b91c1c;">
+                                    ${money(totalExpense)}
+                                </h2>
+                                <div>${expenseRows.length} transactions</div>
+                            </div>
+
+                            <div style="
+                                padding:20px;
+                                border-radius:12px;
+                                background:#eff6ff;
+                                border:1px solid #bfdbfe;
+                            ">
+                                <div>Net Savings / Surplus</div>
+                                <h2 style="color:${netAmount >= 0 ? "#1d4ed8" : "#b91c1c"};">
+                                    ${money(netAmount)}
+                                </h2>
+                                <div>
+                                    ${netAmount >= 0
+                                        ? "Income exceeds expenses"
+                                        : "Expenses exceed income"}
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div style="overflow-x:auto;">
+                            <table class="report-export-table" style="
+                                width:100%;
+                                border-collapse:collapse;
+                            ">
+                                <thead>
+                                    <tr>
+                                        <th style="padding:10px;">Date</th>
+                                        <th style="padding:10px;">Type</th>
+                                        <th style="padding:10px;">Category</th>
+                                        <th style="padding:10px;">Party / Description</th>
+                                        <th style="padding:10px;text-align:right;">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+${sortedTransactions.map(tx => `
+    <tr>
+        <td style="padding:10px;">
+            ${escapeHTML(formatDateDisplay(tx.date))}
+        </td>
+                                                    <td style="padding:10px;">
+                                                ${tx.type === "income"
+                                                    ? "Income"
+                                                    : "Expense"}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(tx.category || "Uncategorized")}
+                                            </td>
+                                            <td style="padding:10px;">
+                                                ${escapeHTML(
+                                                    tx.partyName ||
+                                                    tx.notes ||
+                                                    "-"
+                                                )}
+                                            </td>
+                                            <td style="
+                                                padding:10px;
+                                                text-align:right;
+                                                color:${tx.type === "income" ? "#047857" : "#b91c1c"};
+                                            ">
+                                                ${money(Number(tx.amount || 0))}
+                                            </td>
+                                        </tr>
+                                    `).join("")}
+
+                                    <tr>
+                                        <td colspan="4" style="padding:10px;font-weight:bold;">
+                                            Total Income
+                                        </td>
+                                        <td style="padding:10px;text-align:right;font-weight:bold;">
+                                            ${money(totalIncome)}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="4" style="padding:10px;font-weight:bold;">
+                                            Total Expenses
+                                        </td>
+                                        <td style="padding:10px;text-align:right;font-weight:bold;">
+                                            ${money(totalExpense)}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="4" style="padding:10px;font-weight:bold;">
+                                            Net Savings / Surplus
+                                        </td>
+                                        <td style="padding:10px;text-align:right;font-weight:bold;">
+                                            ${money(netAmount)}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error(
+                    "INCOME VS EXPENSE REPORT ERROR:",
+                    error
+                );
+
+                alert(
+                    "Income vs Expense Report load nahi hua. Console error check karein."
+                );
+            }
+        }
+    );
+}
+        reportWorkArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+}
+
+// =============================================
+// MONTHLY INCOME & EXPENSE REPORT — CLICK HANDLER
+// =============================================
+
+const monthlyIncomeExpenseCard = reportWorkArea.querySelector(
+    '[data-report="monthly-income-expense"]'
+);
+
+if (monthlyIncomeExpenseCard) {
+    monthlyIncomeExpenseCard.addEventListener("click", async () => {
+
+        window.activeTransactionReport = {
+            number: 43,
+            name: "Monthly Income & Expense"
+        };
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("Please login first.");
+            return;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>📅 Monthly Income & Expense Report</h2>
+                <p>Loading monthly financial data...</p>
+            </div>
+        `;
+
+        try {
+            const snapshot = await getDocs(
+                collection(db, "users", user.uid, "transactions")
+            );
+
+            const transactions = sortTransactionsOldestFirst(
+                snapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(tx =>
+                        (tx.type === "income" || tx.type === "expense") &&
+                        tx.deleted !== true &&
+                        tx.behavior !== "money_out_non_expense" &&
+                        Number(tx.amount || 0) > 0
+                    )
+            );
+
+            const monthlyTotals = {};
+
+            transactions.forEach(tx => {
+                const value = String(tx.date || "").trim();
+                let match;
+                let year;
+                let month;
+
+                // YYYY-MM-DD
+                match = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+                if (match) {
+                    year = match[1];
+                    month = match[2].padStart(2, "0");
+                } else {
+                    // DD-MM-YYYY or DD/MM/YYYY
+                    match = value.match(
+                        /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+                    );
+
+                    if (!match) return;
+
+                    year = match[3];
+                    month = match[2].padStart(2, "0");
+                }
+
+                const monthKey = `${year}-${month}`;
+
+                if (!monthlyTotals[monthKey]) {
+                    monthlyTotals[monthKey] = {
+                        income: 0,
+                        expense: 0,
+                        count: 0
+                    };
+                }
+
+                if (tx.type === "income") {
+                    monthlyTotals[monthKey].income += Number(tx.amount || 0);
+                } else {
+                    monthlyTotals[monthKey].expense += Number(tx.amount || 0);
+                }
+
+                monthlyTotals[monthKey].count++;
+            });
+
+            const money = amount =>
+                "₹ " + amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            const monthRows = Object.keys(monthlyTotals)
+                .sort((a, b) => a.localeCompare(b))
+                .map(key => {
+                    const [year, month] = key.split("-");
+                    const totals = monthlyTotals[key];
+
+                    return {
+                        key,
+                        monthLabel: new Date(
+                            Number(year),
+                            Number(month) - 1,
+                            1
+                        ).toLocaleDateString("en-US", {
+                            month: "long",
+                            year: "numeric"
+                        }),
+                        ...totals,
+                        net: totals.income - totals.expense
+                    };
+                });
+
+            const totalIncome = monthRows.reduce(
+                (sum, row) => sum + row.income, 0
+            );
+
+            const totalExpense = monthRows.reduce(
+                (sum, row) => sum + row.expense, 0
+            );
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>📅 Monthly Income & Expense Report</h2>
+                            <p>Monthly financial performance — Oldest First</p>
+                        </div>
+                    </div>
+
+                    <div style="
+                        display:grid;
+                        grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                        gap:16px;
+                        margin:20px 0;
+                    ">
+                        <div style="padding:18px;border-radius:12px;background:#ecfdf5;">
+                            <div>Total Income</div>
+                            <h2 style="color:#047857;">${money(totalIncome)}</h2>
+                        </div>
+
+                        <div style="padding:18px;border-radius:12px;background:#fef2f2;">
+                            <div>Total Expenses</div>
+                            <h2 style="color:#b91c1c;">${money(totalExpense)}</h2>
+                        </div>
+
+                        <div style="padding:18px;border-radius:12px;background:#eff6ff;">
+                            <div>Net Savings / Surplus</div>
+                            <h2 style="color:#1d4ed8;">
+                                ${money(totalIncome - totalExpense)}
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table" style="
+                            width:100%;
+                            border-collapse:collapse;
+                        ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:10px;">Month</th>
+                                    <th style="padding:10px;text-align:right;">Income</th>
+                                    <th style="padding:10px;text-align:right;">Expenses</th>
+                                    <th style="padding:10px;text-align:right;">Net Savings</th>
+                                    <th style="padding:10px;text-align:right;">Transactions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${monthRows.map(row => `
+                                    <tr>
+                                        <td style="padding:10px;">
+                                            ${row.monthLabel}
+                                        </td>
+                                        <td style="padding:10px;text-align:right;color:#047857;">
+                                            ${money(row.income)}
+                                        </td>
+                                        <td style="padding:10px;text-align:right;color:#b91c1c;">
+                                            ${money(row.expense)}
+                                        </td>
+                                        <td style="padding:10px;text-align:right;">
+                                            ${money(row.net)}
+                                        </td>
+                                        <td style="padding:10px;text-align:right;">
+                                            ${row.count}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            reportWorkArea.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        } catch (error) {
+            console.error("MONTHLY INCOME & EXPENSE REPORT ERROR:", error);
+            alert("Monthly Report load nahi hua. Console error check karein.");
+        }
+    });
+}
+
+
+// =============================================
+// PROFIT & LOSS REPORT — CLICK HANDLER
+// =============================================
+
+const profitLossCard = reportWorkArea.querySelector(
+    '[data-report="profit-loss"]'
+);
+
+if (profitLossCard) {
+    profitLossCard.addEventListener("click", async () => {
+
+        window.activeTransactionReport = {
+            number: 46,
+            name: "Profit & Loss"
+        };
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            alert("Please login first.");
+            return;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>🧾 Profit & Loss Report</h2>
+                <p>Loading financial data...</p>
+            </div>
+        `;
+
+        try {
+            const snapshot = await getDocs(
+                collection(db, "users", user.uid, "transactions")
+            );
+
+            const transactions = sortTransactionsOldestFirst(
+                snapshot.docs
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }))
+                    .filter(tx =>
+                        (tx.type === "income" || tx.type === "expense") &&
+                        tx.deleted !== true &&
+                        tx.behavior !== "money_out_non_expense" &&
+                        Number(tx.amount || 0) > 0
+                    )
+            );
+
+            const incomeRows = transactions.filter(
+                tx => tx.type === "income"
+            );
+
+            const expenseRows = transactions.filter(
+                tx => tx.type === "expense"
+            );
+
+            const totalIncome = incomeRows.reduce(
+                (sum, tx) => sum + Number(tx.amount || 0),
+                0
+            );
+
+            const totalExpense = expenseRows.reduce(
+                (sum, tx) => sum + Number(tx.amount || 0),
+                0
+            );
+
+            const netResult = totalIncome - totalExpense;
+
+            const money = amount =>
+                "₹ " + amount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+            const escapeHTML = value =>
+                String(value ?? "").replace(/[&<>"']/g, char => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                })[char]);
+
+            // Category-wise totals
+            const categoryTotals = {};
+
+            transactions.forEach(tx => {
+                const category = String(
+                    tx.category || "Uncategorized"
+                ).trim() || "Uncategorized";
+
+                if (!categoryTotals[category]) {
+                    categoryTotals[category] = {
+                        income: 0,
+                        expense: 0,
+                        incomeCount: 0,
+                        expenseCount: 0
+                    };
+                }
+
+                const amount = Number(tx.amount || 0);
+
+                if (tx.type === "income") {
+                    categoryTotals[category].income += amount;
+                    categoryTotals[category].incomeCount++;
+                } else {
+                    categoryTotals[category].expense += amount;
+                    categoryTotals[category].expenseCount++;
+                }
+            });
+
+            const categoryRows = Object.entries(categoryTotals)
+                .sort((a, b) => a[0].localeCompare(b[0]));
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+
+                    <div class="transaction-reports-header">
+                        <div>
+                            <h2>🧾 Profit & Loss Report</h2>
+                            <p>
+                                Income, expenses and net financial result
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="
+                        display:grid;
+                        grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+                        gap:16px;
+                        margin:20px 0;
+                    ">
+
+                        <div style="
+                            padding:20px;
+                            border-radius:12px;
+                            background:#ecfdf5;
+                            border:1px solid #a7f3d0;
+                        ">
+                            <div>Total Income</div>
+                            <h2 style="color:#047857;">
+                                ${money(totalIncome)}
+                            </h2>
+                            <div>${incomeRows.length} transactions</div>
+                        </div>
+
+                        <div style="
+                            padding:20px;
+                            border-radius:12px;
+                            background:#fef2f2;
+                            border:1px solid #fecaca;
+                        ">
+                            <div>Total Expenses</div>
+                            <h2 style="color:#b91c1c;">
+                                ${money(totalExpense)}
+                            </h2>
+                            <div>${expenseRows.length} transactions</div>
+                        </div>
+
+                        <div style="
+                            padding:20px;
+                            border-radius:12px;
+                            background:#eff6ff;
+                            border:1px solid #bfdbfe;
+                        ">
+                            <div>${netResult >= 0 ? "Net Profit / Surplus" : "Net Loss / Deficit"}</div>
+                            <h2 style="color:${netResult >= 0 ? "#1d4ed8" : "#b91c1c"};">
+                                ${money(Math.abs(netResult))}
+                            </h2>
+                            <div>
+                                ${netResult >= 0
+                                    ? "Income exceeds expenses"
+                                    : "Expenses exceed income"}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <h3>Category-wise Profit & Loss</h3>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table" style="
+                            width:100%;
+                            border-collapse:collapse;
+                            table-layout:fixed;
+                        ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:12px 14px;width:28%;text-align:left;">
+                                        Category
+                                    </th>
+                                    <th style="padding:12px 14px;width:24%;text-align:right;">
+                                        Income
+                                    </th>
+                                    <th style="padding:12px 14px;width:24%;text-align:right;">
+                                        Expenses
+                                    </th>
+                                    <th style="padding:12px 14px;width:24%;text-align:right;">
+                                        Net
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                ${categoryRows.map(([category, data]) => {
+                                    const categoryNet = data.income - data.expense;
+
+                                    return `
+                                        <tr>
+                                            <td style="padding:12px 14px;">
+                                                ${escapeHTML(category)}
+                                            </td>
+                                            <td style="padding:12px 14px;text-align:right;color:#047857;">
+                                                ${money(data.income)}
+                                            </td>
+                                            <td style="padding:12px 14px;text-align:right;color:#b91c1c;">
+                                                ${money(data.expense)}
+                                            </td>
+                                            <td style="padding:12px 14px;text-align:right;">
+                                                ${money(categoryNet)}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join("")}
+
+                                <tr>
+                                    <td style="padding:12px 14px;font-weight:bold;">
+                                        Grand Total
+                                    </td>
+                                    <td style="padding:12px 14px;text-align:right;font-weight:bold;">
+                                        ${money(totalIncome)}
+                                    </td>
+                                    <td style="padding:12px 14px;text-align:right;font-weight:bold;">
+                                        ${money(totalExpense)}
+                                    </td>
+                                    <td style="padding:12px 14px;text-align:right;font-weight:bold;">
+                                        ${money(netResult)}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="margin-top:28px;">
+                        Transaction Details — Oldest First
+                    </h3>
+
+                    <div style="overflow-x:auto;">
+                        <table class="report-export-table" style="
+                            width:100%;
+                            border-collapse:collapse;
+                            table-layout:fixed;
+                        ">
+                            <thead>
+                                <tr>
+                                    <th style="padding:12px 14px;width:12%;text-align:left;">
+                                        Date
+                                    </th>
+                                    <th style="padding:12px 14px;width:12%;text-align:left;">
+                                        Type
+                                    </th>
+                                    <th style="padding:12px 14px;width:20%;text-align:left;">
+                                        Category
+                                    </th>
+                                    <th style="padding:12px 14px;width:36%;text-align:left;">
+                                        Party / Description
+                                    </th>
+                                    <th style="padding:12px 14px;width:20%;text-align:right;">
+                                        Amount
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                ${transactions.map(tx => `
+                                    <tr>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(formatDateDisplay(tx.date))}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${tx.type === "income" ? "Income" : "Expense"}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(tx.category || "Uncategorized")}
+                                        </td>
+                                        <td style="padding:12px 14px;">
+                                            ${escapeHTML(tx.partyName || tx.notes || "-")}
+                                        </td>
+                                        <td style="
+                                            padding:12px 14px;
+                                            text-align:right;
+                                            color:${tx.type === "income" ? "#047857" : "#b91c1c"};
+                                        ">
+                                            ${money(Number(tx.amount || 0))}
+                                        </td>
+                                    </tr>
+                                `).join("")}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            `;
+
+            reportWorkArea.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        } catch (error) {
+            console.error("PROFIT & LOSS REPORT ERROR:", error);
+
+            alert(
+                "Profit & Loss Report load nahi hua. Console error check karein."
+            );
+        }
+    });
+}
+
 
 if (title === "Accounts") {
 
@@ -5240,7 +7118,7 @@ function injectUniversalReportHeader() {
     // REPORT #16
     // -----------------------------------------------
 
-    if (report.number === 16) {
+    if (report?.number === 16) {
 
         reportPeriod =
             "All Transactions";
@@ -5252,7 +7130,7 @@ function injectUniversalReportHeader() {
     // REPORT #17
     // -----------------------------------------------
 
-    else if (report.number === 17) {
+    else if (report?.number === 17) {
 
         const fromDate =
             document.getElementById(
@@ -5287,7 +7165,7 @@ function injectUniversalReportHeader() {
     // REPORT #18
     // -----------------------------------------------
 
-    else if (report.number === 18) {
+    else if (report?.number === 18) {
 
         const selectedYear =
             document.getElementById(
@@ -5316,35 +7194,35 @@ function injectUniversalReportHeader() {
 // REPORT #19
 // -----------------------------------------------
 
-else if (report.number === 19) {
+else if (report?.number === 19) {
 
     reportPeriod =
         "All Available Financial Years";
 
 }
 
-else if (report.number === 20) {
+else if (report?.number === 20) {
 
     reportPeriod =
         "All Income Transactions";
 
 }
 
-else if (report.number === 21) {
+else if (report?.number === 21) {
 
     reportPeriod =
         "All Expense Transactions";
 
 }
 
-else if (report.number === 22) {
+else if (report?.number === 22) {
 
     reportPeriod =
         "All Investment Transactions";
 
 }
 
-else if (report.number === 23) {
+else if (report?.number === 23) {
 
     reportPeriod =
         "All Transfer Transactions";
@@ -5929,6 +7807,22 @@ function injectReportToolbar() {
 
     toolbar.innerHTML = `
 
+    <button
+    type="button"
+    data-report-action="back-reports"
+    style="
+        padding: 8px 14px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+    "
+>
+    ← Back to Reports
+</button>
+
         <button
             type="button"
             data-report-action="pdf"
@@ -6019,6 +7913,64 @@ function injectReportToolbar() {
 
     }
 
+// =====================================================
+// BACK TO REPORTS
+// =====================================================
+
+const backReportsButton =
+    toolbar.querySelector(
+        '[data-report-action="back-reports"]'
+    );
+
+if (backReportsButton) {
+    backReportsButton.addEventListener(
+        "click",
+        function () {
+
+            const category =
+                window.activeReportCategory || "Transactions";
+
+            if (category === "Income & Expenses") {
+                const incomeExpenseCard =
+                    Array.from(
+                        document.querySelectorAll(
+                            ".report-category-card"
+                        )
+                    ).find(
+                        card =>
+                            getReportCategoryKey(card) ===
+                            "Income & Expenses"
+                    );
+
+                if (incomeExpenseCard) {
+                    incomeExpenseCard.click();
+                }
+
+                return;
+            }
+
+            if (category === "Accounts") {
+                const accountsCard =
+                    Array.from(
+                        document.querySelectorAll(
+                            ".report-category-card"
+                        )
+                    ).find(
+                        card =>
+                            getReportCategoryKey(card) === "Accounts"
+                    );
+
+                if (accountsCard) {
+                    accountsCard.click();
+                }
+
+                return;
+            }
+
+            renderTransactionReports();
+        }
+    );
+}
 
     // =================================================
     // CLOSE
