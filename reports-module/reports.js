@@ -93,6 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
             name: "Investment Transactions"
         },
 
+        
+        {
+            number: 117,
+            name: "Investment Summary"
+        },
+
         {
             number: 23,
             name: "Transfer Transactions"
@@ -2282,6 +2288,13 @@ if (profitLossCard) {
             );
         }
     });
+}
+
+
+if (title === "Investments") {
+    console.log("📈 INVESTMENTS REPORTS SELECTED");
+    renderInvestmentReports();
+    return;
 }
 
 
@@ -7760,15 +7773,27 @@ function injectReportToolbar() {
     // Prevent duplicate toolbar
     // -------------------------------------------------
 
-    if (
-        reportContainer.querySelector(
-            ".report-action-toolbar"
-        )
-    ) {
+    
+const existingToolbar =
+    reportContainer.querySelector(".report-action-toolbar");
 
-        return;
+if (existingToolbar) {
+    const backButton = existingToolbar.querySelector(
+        '[data-report-action="back-reports"]'
+    );
 
+    const isReportList =
+        !!reportContainer.querySelector(
+            "#investmentReportsGrid, .transaction-reports-grid"
+        );
+
+    if (backButton) {
+        backButton.style.display = isReportList ? "none" : "";
     }
+
+    return;
+}
+
 
 
     // -------------------------------------------------
@@ -7922,6 +7947,20 @@ const backReportsButton =
         '[data-report-action="back-reports"]'
     );
 
+    
+    // Hide toolbar Back button on the main Investments Reports list
+    
+const isReportList =
+    !!reportContainer.querySelector(
+        "#investmentReportsGrid, .transaction-reports-grid"
+    );
+
+if (backReportsButton) {
+    backReportsButton.style.display =
+        isReportList ? "none" : "";
+}
+
+
 if (backReportsButton) {
     backReportsButton.addEventListener(
         "click",
@@ -7929,6 +7968,18 @@ if (backReportsButton) {
 
             const category =
                 window.activeReportCategory || "Transactions";
+
+                
+            // Investment Summary: return to Investments Reports
+if (
+    document.getElementById("investmentSummaryContent") ||
+    document.getElementById("investmentWiseDetailsContent") ||
+    document.getElementById("investmentCategoryWiseContent")
+) {
+    renderInvestmentReports();
+    return;
+}
+
 
             if (category === "Income & Expenses") {
                 const incomeExpenseCard =
@@ -11162,6 +11213,742 @@ async function renderInvestmentTransactionsReport() {
     }
 
 }
+
+
+/* =====================================================
+   REPORT #117 — INVESTMENT SUMMARY
+   Read-only report
+===================================================== */
+
+async function renderInvestmentSummaryReport() {
+    if (!reportWorkArea) {
+        console.error("Report work area not found.");
+        return;
+    }
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+           
+            <h2>Investment Summary</h2>
+            <p>Overview of recorded investment transactions.</p>
+
+            <div id="investmentSummaryContent" style="padding:16px;">
+                Loading investment summary...
+            </div>
+        </div>
+    `;
+
+
+const backButton = document.getElementById("backToInvestmentSummaryReports");
+
+if (backButton) {
+    backButton.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        renderInvestmentReports();
+    };
+}
+
+    const content = document.getElementById("investmentSummaryContent");
+
+    if (!currentUser) {
+        content.textContent = "Please log in to view investment summary.";
+        return;
+    }
+
+    try {
+        const transactionsRef = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "transactions"
+        );
+
+        const snapshot = await getDocs(transactionsRef);
+        const transactions = [];
+
+        snapshot.forEach((doc) => {
+            const transaction = doc.data();
+
+            if (transaction.deleted === true) return;
+
+            if (
+                String(transaction.type || "").toLowerCase() !==
+                "investment"
+            ) return;
+
+            transactions.push({
+                id: doc.id,
+                ...transaction
+            });
+        });
+
+        const totalAmount = transactions.reduce(
+            (sum, transaction) =>
+                sum + (Number(transaction.amount) || 0),
+            0
+        );
+
+        const categoryTotals = {};
+
+        transactions.forEach((transaction) => {
+            const category = transaction.category || "Uncategorized";
+            categoryTotals[category] =
+                (categoryTotals[category] || 0) +
+                (Number(transaction.amount) || 0);
+        });
+
+        const money = (value) =>
+            "₹" + value.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const categoryRows = Object.entries(categoryTotals)
+            .sort((a, b) => b[1] - a[1])
+            .map(([category, amount]) => `
+                <tr>
+                    <td style="padding:10px;border-bottom:1px solid #e5ebf3;">
+                        ${escapeHtml(String(category))}
+                    </td>
+                    <td style="padding:10px;text-align:right;border-bottom:1px solid #e5ebf3;">
+                        ${money(amount)}
+                    </td>
+                </tr>
+            `).join("");
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:22px;">
+                <div style="flex:1;min-width:200px;padding:20px;border:1px solid #dce5f0;border-radius:12px;">
+                    <div style="color:#64748b;">Investment Transactions</div>
+                    <h2>${transactions.length}</h2>
+                </div>
+
+                <div style="flex:1;min-width:200px;padding:20px;border:1px solid #dce5f0;border-radius:12px;">
+                    <div style="color:#64748b;">Total Recorded Amount</div>
+                    <h2>${money(totalAmount)}</h2>
+                </div>
+
+                <div style="flex:1;min-width:200px;padding:20px;border:1px solid #dce5f0;border-radius:12px;">
+                    <div style="color:#64748b;">Categories</div>
+                    <h2>${Object.keys(categoryTotals).length}</h2>
+                </div>
+            </div>
+
+            <h3>Category-wise Summary</h3>
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;background:#fff;">
+                    <thead>
+                        <tr style="background:#173b70;color:#fff;">
+                            <th style="padding:11px;text-align:left;">Category</th>
+                            <th style="padding:11px;text-align:right;">Recorded Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${categoryRows || `
+                            <tr>
+                                <td colspan="2" style="padding:18px;text-align:center;">
+                                    No investment transactions found.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top:14px;color:#64748b;font-size:12px;">
+                This report includes non-deleted investment transactions only.
+                Total Recorded Amount is the sum of transaction amounts;
+                it is not a portfolio valuation or profit/loss calculation.
+            </p>
+        `;
+    } catch (error) {
+        console.error("Investment Summary Report Error:", error);
+        content.textContent = "Unable to load Investment Summary. Check the console for details.";
+    }
+}
+
+
+/* =====================================================
+   INVESTMENTS REPORTS — CATEGORY LIST
+===================================================== */
+
+/* =====================================================
+   REPORT #118 — INVESTMENT-WISE DETAILS
+===================================================== */
+
+async function renderInvestmentWiseDetailsReport() {
+    if (!reportWorkArea) return;
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px;
+                            border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #118 Investment-wise Details
+                    </strong>
+                    <p style="color:#64748b;">
+                        Detailed investment records grouped by investment name.
+                    </p>
+                </div>
+            </div>
+
+            <div id="investmentWiseDetailsContent"
+                 style="padding:20px 30px 30px;">
+                <p>Loading investment details...</p>
+            </div>
+        </div>
+    `;
+
+    const content = document.getElementById(
+        "investmentWiseDetailsContent"
+    );
+
+    if (!currentUser) {
+        content.textContent = "Please log in to view investment details.";
+        return;
+    }
+
+    try {
+        const transactionsRef = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "transactions"
+        );
+
+        const snapshot = await getDocs(transactionsRef);
+        const transactions = [];
+
+        snapshot.forEach((doc) => {
+            const transaction = doc.data();
+
+            if (transaction.deleted === true) return;
+
+            if (
+                String(transaction.type || "").toLowerCase() !==
+                "investment"
+            ) return;
+
+            transactions.push({
+                id: doc.id,
+                ...transaction
+            });
+        });
+
+        transactions.sort((a, b) =>
+            String(a.date || "").localeCompare(String(b.date || ""))
+        );
+
+        if (!transactions.length) {
+            content.innerHTML = `
+                <div style="padding:35px;text-align:center;color:#64748b;">
+                    No investment transactions found.
+                </div>
+            `;
+            return;
+        }
+
+        const groups = new Map();
+
+        transactions.forEach((t) => {
+            const name =
+                t.investmentName ||
+                t.assetName ||
+                t.securityName ||
+                t.investment ||
+                t.category ||
+                "Investment Name Not Recorded";
+
+            if (!groups.has(name)) {
+                groups.set(name, {
+                    name,
+                    count: 0,
+                    total: 0,
+                    transactions: []
+                });
+            }
+
+            const group = groups.get(name);
+            group.count++;
+            group.total += Number(t.amount) || 0;
+            group.transactions.push(t);
+        });
+
+        const totalAmount = transactions.reduce(
+            (sum, t) => sum + (Number(t.amount) || 0),
+            0
+        );
+
+        const money = (value) =>
+            (Number(value) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const safe = (value) =>
+            escapeHtml(String(value ?? "—"));
+
+        const summaryRows = Array.from(groups.values())
+            .map((g) => `
+                <tr style="border-bottom:1px solid #e5ebf3;">
+                    <td style="padding:11px;">${safe(g.name)}</td>
+                    <td style="padding:11px;text-align:center;">
+                        ${g.count}
+                    </td>
+                    <td style="padding:11px;text-align:right;white-space:nowrap;">
+                        ₹${money(g.total)}
+                    </td>
+                </tr>
+            `).join("");
+
+        const detailRows = transactions.map((t) => {
+            const name =
+                t.investmentName ||
+                t.assetName ||
+                t.securityName ||
+                t.investment ||
+                t.category ||
+                "Investment Name Not Recorded";
+
+            return `
+                <tr style="border-bottom:1px solid #e5ebf3;">
+                    <td style="padding:10px;white-space:nowrap;">
+                        ${safe(formatReportDate(t.date))}
+                    </td>
+                    <td style="padding:10px;">${safe(name)}</td>
+                    <td style="padding:10px;">${safe(t.category)}</td>
+                    <td style="padding:10px;">${safe(t.partyName)}</td>
+                    <td style="padding:10px;text-align:right;white-space:nowrap;">
+                        ₹${money(t.amount)}
+                    </td>
+                    <td style="padding:10px;">${safe(t.paymentMethod)}</td>
+                    <td style="padding:10px;">${safe(t.notes)}</td>
+                </tr>
+            `;
+        }).join("");
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+                <div style="flex:1;min-width:180px;padding:18px;
+                            border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Names</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${groups.size}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:180px;padding:18px;
+                            border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Transactions</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${transactions.length}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:180px;padding:18px;
+                            border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Total Recorded Amount</div>
+                    <strong style="font-size:22px;color:#087443;">
+                        ₹${money(totalAmount)}
+                    </strong>
+                </div>
+            </div>
+
+            <h3 style="color:#173b70;">Investment-wise Summary</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;
+                        border-radius:10px;margin-bottom:28px;">
+                <table style="width:100%;border-collapse:collapse;min-width:500px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Investment Name</th>
+                            <th style="padding:12px;text-align:center;">Transactions</th>
+                            <th style="padding:12px;text-align:right;">Total Recorded Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>${summaryRows}</tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:center;">
+                                ${transactions.length}
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                ₹${money(totalAmount)}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h3 style="color:#173b70;">Detailed Investment Transactions</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;
+                        border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;min-width:950px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Date</th>
+                            <th style="padding:12px;text-align:left;">Investment Name</th>
+                            <th style="padding:12px;text-align:left;">Category</th>
+                            <th style="padding:12px;text-align:left;">Party</th>
+                            <th style="padding:12px;text-align:right;">Amount</th>
+                            <th style="padding:12px;text-align:left;">Payment Method</th>
+                            <th style="padding:12px;text-align:left;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>${detailRows}</tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("Report #118 error:", error);
+
+        content.textContent =
+            "Unable to load Investment-wise Details. Please check the console.";
+    }
+}
+
+
+/* =====================================================
+   REPORT #119 — INVESTMENT CATEGORY-WISE
+===================================================== */
+
+async function renderInvestmentCategoryWiseReport() {
+    if (!reportWorkArea) return;
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px;
+                            border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #119 Investment Category-wise
+                    </strong>
+                    <p style="color:#64748b;">
+                        Investment transactions grouped by category.
+                    </p>
+                </div>
+            </div>
+
+            <div id="investmentCategoryWiseContent"
+                 style="padding:20px 30px 30px;">
+                <p>Loading category-wise investment report...</p>
+            </div>
+        </div>
+    `;
+
+    const content = document.getElementById(
+        "investmentCategoryWiseContent"
+    );
+
+    if (!currentUser) {
+        content.textContent = "Please log in to view this report.";
+        return;
+    }
+
+    try {
+        const transactionsRef = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "transactions"
+        );
+
+        const snapshot = await getDocs(transactionsRef);
+        const transactions = [];
+
+        snapshot.forEach((doc) => {
+            const t = doc.data();
+
+            if (t.deleted === true) return;
+
+            if (
+                String(t.type || "").toLowerCase() !== "investment"
+            ) return;
+
+            transactions.push({
+                id: doc.id,
+                ...t
+            });
+        });
+
+        transactions.sort((a, b) =>
+            String(a.date || "").localeCompare(String(b.date || ""))
+        );
+
+        const money = (value) =>
+            (Number(value) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const safe = (value) =>
+            escapeHtml(String(value ?? "—"));
+
+        if (!transactions.length) {
+            content.innerHTML = `
+                <div style="padding:35px;text-align:center;color:#64748b;">
+                    No investment transactions found.
+                </div>
+            `;
+            return;
+        }
+
+        const categories = new Map();
+
+        transactions.forEach((t) => {
+            const category =
+                String(t.category || "").trim() ||
+                "Category Not Recorded";
+
+            if (!categories.has(category)) {
+                categories.set(category, {
+                    name: category,
+                    count: 0,
+                    total: 0,
+                    transactions: []
+                });
+            }
+
+            const group = categories.get(category);
+            group.count++;
+            group.total += Number(t.amount) || 0;
+            group.transactions.push(t);
+        });
+
+        const categoryGroups = Array.from(categories.values())
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        const totalAmount = transactions.reduce(
+            (sum, t) => sum + (Number(t.amount) || 0),
+            0
+        );
+
+        const summaryRows = categoryGroups.map((g) => `
+            <tr style="border-bottom:1px solid #e5ebf3;">
+                <td style="padding:11px;">${safe(g.name)}</td>
+                <td style="padding:11px;text-align:center;">${g.count}</td>
+                <td style="padding:11px;text-align:right;white-space:nowrap;">
+                    ₹${money(g.total)}
+                </td>
+                <td style="padding:11px;text-align:right;">
+                    ${totalAmount
+                        ? ((g.total / totalAmount) * 100).toFixed(2)
+                        : "0.00"}%
+                </td>
+            </tr>
+        `).join("");
+
+        const detailRows = transactions.map((t) => {
+            const investmentName =
+                t.investmentName ||
+                t.assetName ||
+                t.securityName ||
+                t.investment ||
+                t.category ||
+                "Investment Name Not Recorded";
+
+            return `
+                <tr style="border-bottom:1px solid #e5ebf3;">
+                    <td style="padding:10px;white-space:nowrap;">
+                        ${safe(formatReportDate(t.date))}
+                    </td>
+                    <td style="padding:10px;">${safe(t.category || "Category Not Recorded")}</td>
+                    <td style="padding:10px;">${safe(investmentName)}</td>
+                    <td style="padding:10px;">${safe(t.partyName)}</td>
+                    <td style="padding:10px;text-align:right;white-space:nowrap;">
+                        ₹${money(t.amount)}
+                    </td>
+                    <td style="padding:10px;">${safe(t.paymentMethod)}</td>
+                    <td style="padding:10px;">${safe(t.notes)}</td>
+                </tr>
+            `;
+        }).join("");
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+                <div style="flex:1;min-width:170px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Categories</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${categoryGroups.length}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:170px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Transactions</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${transactions.length}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:190px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Total Recorded Amount</div>
+                    <strong style="font-size:22px;color:#087443;">
+                        ₹${money(totalAmount)}
+                    </strong>
+                </div>
+            </div>
+
+            <h3 style="color:#173b70;">Category-wise Summary</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;margin-bottom:28px;">
+                <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Investment Category</th>
+                            <th style="padding:12px;text-align:center;">Transactions</th>
+                            <th style="padding:12px;text-align:right;">Total Recorded Amount</th>
+                            <th style="padding:12px;text-align:right;">Share of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${summaryRows}</tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:center;">
+                                ${transactions.length}
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                ₹${money(totalAmount)}
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                ${totalAmount ? "100.00%" : "0.00%"}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h3 style="color:#173b70;">Detailed Investment Transactions</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;min-width:950px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Date</th>
+                            <th style="padding:12px;text-align:left;">Category</th>
+                            <th style="padding:12px;text-align:left;">Investment Name</th>
+                            <th style="padding:12px;text-align:left;">Party</th>
+                            <th style="padding:12px;text-align:right;">Amount</th>
+                            <th style="padding:12px;text-align:left;">Payment Method</th>
+                            <th style="padding:12px;text-align:left;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>${detailRows}</tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("Report #119 error:", error);
+        content.textContent =
+            "Unable to load Investment Category-wise report. Please check the console.";
+    }
+}
+
+
+function renderInvestmentReports() {
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) return;
+
+    const investmentReports = [
+        [117, "Investment Summary"],
+        [118, "Investment-wise Details"],
+        [119, "Investment Category-wise"],
+        [120, "Investment Date-wise"],
+        [121, "Investment Account-wise"],
+        [122, "Investment Purchase"],
+        [123, "Investment Sale"],
+        [124, "Investment Income"],
+        [125, "Dividend Report"],
+        [126, "Interest Report"],
+        [127, "Capital Gain"],
+        [128, "Capital Loss"],
+        [129, "Amount Invested"],
+        [130, "Amount Received"],
+        [131, "Investment Cash Flow"],
+        [132, "Investment Portfolio"],
+        [133, "Investment Performance"],
+        [134, "Investment-wise History"],
+        [135, "Shares Summary"],
+        [136, "Share-wise Transactions"],
+        [137, "Share Purchase"],
+        [138, "Share Sale"],
+        [139, "Share Dividend"],
+        [140, "SIP Summary"],
+        [141, "SIP-wise Report"],
+        [142, "SIP Contribution"],
+        [143, "SIP Monthly Report"],
+        [144, "Mutual Fund Summary"],
+        [145, "Mutual Fund Investment"],
+        [146, "Mutual Fund Redemption"]
+    ];
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+            <div class="transaction-reports-header">
+                <div>
+                    <h2>📈 Investments Reports</h2>
+                    <p>Select an investment report to continue.</p>
+                </div>
+            </div>
+
+            <div class="transaction-reports-grid"
+                 id="investmentReportsGrid"
+                 style="margin-top:20px;">
+            </div>
+        </div>
+    `;
+
+    const grid = document.getElementById("investmentReportsGrid");
+
+    investmentReports.forEach(([number, name]) => {
+        const card = document.createElement("button");
+
+        card.type = "button";
+        card.className = "transaction-report-card";
+        card.style.cssText =
+            "width:100%;text-align:left;cursor:pointer;";
+
+        card.innerHTML = `
+            <div class="transaction-report-number">${number}</div>
+            <div class="transaction-report-content">
+                <h3>${name}</h3>
+                <p>Open ${name}</p>
+            </div>
+        `;
+
+        
+card.addEventListener("click", () => {
+    if (number === 117) {
+        renderInvestmentSummaryReport();
+    } else if (number === 118) {
+        renderInvestmentWiseDetailsReport();
+} else if (number === 119) {
+    renderInvestmentCategoryWiseReport();
+
+    } else {
+        alert(
+            `${name} अभी planned है। इसे हम आगे implement करेंगे।`
+        );
+    }
+});
+
+
+        grid.appendChild(card);
+    });
+
+    reportWorkArea.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
 
 // =========================================================
 // #23 TRANSFER TRANSACTIONS
@@ -16854,6 +17641,12 @@ if (report.number === 22) {
 
     return;
 
+}
+
+
+if (report.number === 117) {
+    renderInvestmentSummaryReport();
+    return;
 }
 
 // =====================================================

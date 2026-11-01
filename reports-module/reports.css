@@ -1041,9 +1041,16 @@ body {
 }
 
 /* BACK TO DASHBOARD BUTTON */
+
 .reports-navigation {
-    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 12px;
 }
+
 
 .back-to-dashboard-button {
     display: inline-flex;
@@ -1062,4 +1069,465 @@ body {
 
 .back-to-dashboard-button:hover {
     background: #eaf2fc;
+}
+
+/* =========================================================
+   PREMIUM REPORTS DASHBOARD — PHASE 1
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   HEADER SELECT A REPORT
+   --------------------------------------------------------- */
+
+.reports-select-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    min-width: 190px;
+    padding: 10px 16px;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.14),
+            rgba(255,255,255,0.06)
+        );
+
+    border: 1px solid rgba(255,255,255,0.22);
+
+    color: #ffffff;
+
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.08);
+}
+
+.reports-select-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 11px;
+
+    background: rgba(255,255,255,0.14);
+
+    font-size: 21px;
+}
+
+.reports-select-status strong {
+    display: block;
+
+    font-size: 16px;
+    font-weight: 800;
+
+    letter-spacing: 0.2px;
+}
+
+.reports-select-status small {
+    display: block;
+
+    margin-top: 3px;
+
+    color: rgba(255,255,255,0.72);
+
+    font-size: 10px;
+    font-weight: 500;
+}
+
+
+/* ---------------------------------------------------------
+   CATEGORY SECTION
+   --------------------------------------------------------- */
+
+.reports-categories-section {
+    margin-top: 8px;
+    margin-bottom: 28px;
+}
+
+.reports-categories-section h2 {
+    margin: 0 0 18px;
+
+    color: #173b70;
+
+    font-size: 23px;
+    font-weight: 800;
+
+    letter-spacing: -0.2px;
+}
+
+
+/* ---------------------------------------------------------
+   CATEGORY GRID
+   --------------------------------------------------------- */
+
+.report-categories-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(235px, 1fr)
+        );
+
+    gap: 18px;
+}
+
+
+/* ---------------------------------------------------------
+   PREMIUM CATEGORY CARD
+   --------------------------------------------------------- */
+
+.report-category-card {
+    position: relative;
+    overflow: hidden;
+
+    min-height: 190px;
+
+    padding: 22px;
+
+    border: 1px solid rgba(210,220,235,0.9);
+
+    border-radius: 21px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    color: #173b70;
+
+    box-shadow:
+        0 8px 24px rgba(31,61,96,0.08);
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+
+/* Decorative glow */
+
+.report-category-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 120px;
+    height: 120px;
+
+    right: -45px;
+    top: -45px;
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.30);
+
+    transition:
+        transform 0.3s ease;
+}
+
+
+.report-category-card::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 5px;
+    height: 100%;
+
+    background: rgba(23,59,112,0.35);
+
+    border-radius: 21px 0 0 21px;
+}
+
+
+/* Hover */
+
+.report-category-card:hover {
+    transform: translateY(-7px);
+
+    border-color: rgba(125,155,195,0.8);
+
+    box-shadow:
+        0 18px 38px rgba(31,61,96,0.15);
+}
+
+
+.report-category-card:hover::before {
+    transform: scale(1.5);
+}
+
+
+/* ---------------------------------------------------------
+   CARD ICON
+   --------------------------------------------------------- */
+
+.report-category-icon {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 17px;
+
+    border-radius: 17px;
+
+    background: rgba(255,255,255,0.62);
+
+    border: 1px solid rgba(255,255,255,0.8);
+
+    font-size: 30px;
+
+    box-shadow:
+        0 6px 15px rgba(31,61,96,0.08);
+}
+
+
+/* ---------------------------------------------------------
+   CARD TITLE
+   --------------------------------------------------------- */
+
+.report-category-title {
+    position: relative;
+    z-index: 2;
+
+    color: #173b70;
+
+    font-size: 18px;
+    font-weight: 850;
+
+    line-height: 1.25;
+}
+
+
+/* ---------------------------------------------------------
+   CARD DESCRIPTION
+   --------------------------------------------------------- */
+
+.report-category-description {
+    position: relative;
+    z-index: 2;
+
+    max-width: 92%;
+
+    margin-top: 8px;
+
+    color: #536b89;
+
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+
+/* ---------------------------------------------------------
+   CARD FOOTER
+   --------------------------------------------------------- */
+
+.report-category-meta {
+    position: absolute;
+
+    left: 22px;
+    right: 22px;
+    bottom: 17px;
+
+    z-index: 3;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-top: 10px;
+
+    border-top: 1px solid rgba(23,59,112,0.10);
+
+    color: #315d8e;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 0.4px;
+
+    text-transform: uppercase;
+}
+
+.report-category-meta span:last-child {
+    font-size: 19px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+.report-category-card:hover
+.report-category-meta span:last-child {
+    transform: translateX(4px);
+}
+
+
+/* =========================================================
+   DIFFERENT CARD BACKGROUNDS
+   ========================================================= */
+
+.report-card-transactions {
+    background:
+        linear-gradient(145deg, #eaf3ff, #dbeafe);
+}
+
+.report-card-income {
+    background:
+        linear-gradient(145deg, #ecfdf3, #d8f8e5);
+}
+
+.report-card-accounts {
+    background:
+        linear-gradient(145deg, #eef2ff, #e0e7ff);
+}
+
+.report-card-investments {
+    background:
+        linear-gradient(145deg, #f0fdf4, #dcfce7);
+}
+
+.report-card-fd {
+    background:
+        linear-gradient(145deg, #eff6ff, #dbeafe);
+}
+
+.report-card-properties {
+    background:
+        linear-gradient(145deg, #fff7ed, #ffedd5);
+}
+
+.report-card-rental {
+    background:
+        linear-gradient(145deg, #fdf4ff, #fae8ff);
+}
+
+.report-card-repairs {
+    background:
+        linear-gradient(145deg, #fff7ed, #fed7aa);
+}
+
+.report-card-vehicles {
+    background:
+        linear-gradient(145deg, #f0f9ff, #dff4ff);
+}
+
+.report-card-loans {
+    background:
+        linear-gradient(145deg, #fff7ed, #ffedd5);
+}
+
+.report-card-credit {
+    background:
+        linear-gradient(145deg, #f5f3ff, #ede9fe);
+}
+
+.report-card-insurance {
+    background:
+        linear-gradient(145deg, #ecfeff, #cffafe);
+}
+
+.report-card-parties {
+    background:
+        linear-gradient(145deg, #fdf2f8, #fce7f3);
+}
+
+.report-card-period {
+    background:
+        linear-gradient(145deg, #f8fafc, #e2e8f0);
+}
+
+.report-card-tax {
+    background:
+        linear-gradient(145deg, #fffbeb, #fef3c7);
+}
+
+.report-card-tds {
+    background:
+        linear-gradient(145deg, #fefce8, #fef9c3);
+}
+
+.report-card-statements {
+    background:
+        linear-gradient(145deg, #f8fafc, #e5e7eb);
+}
+
+.report-card-cashflow {
+    background:
+        linear-gradient(145deg, #ecfdf5, #d1fae5);
+}
+
+.report-card-networth {
+    background:
+        linear-gradient(145deg, #eff6ff, #dbeafe);
+}
+
+.report-card-audit {
+    background:
+        linear-gradient(145deg, #f8fafc, #e2e8f0);
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .report-categories-grid {
+        grid-template-columns:
+            repeat(
+                auto-fit,
+                minmax(210px, 1fr)
+            );
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .reports-select-status {
+        min-width: auto;
+        padding: 8px 11px;
+    }
+
+    .reports-select-status strong {
+        font-size: 13px;
+    }
+
+    .reports-select-status small {
+        font-size: 9px;
+    }
+
+    .report-categories-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .report-category-card {
+        min-height: 175px;
+    }
+
+}
+
+/* =========================================================
+   HIDE EMPTY REPORT WORK AREA
+   Keep it available when an actual report is opened.
+   ========================================================= */
+
+.report-work-area:has(.report-work-placeholder) {
+    display: none;
 }

@@ -22,7 +22,8 @@
 
     <div class="reports-page">
 
-<!-- BACK TO DASHBOARD -->
+
+<!-- REPORTS NAVIGATION -->
 <div class="reports-navigation">
     <button
         type="button"
@@ -30,7 +31,16 @@
         class="back-to-dashboard-button">
         ← Back to Dashboard
     </button>
+
+    <button
+        type="button"
+        id="backToReportsDashboardButton"
+        class="back-to-dashboard-button"
+        style="display: none;">
+        ← Back to Reports
+    </button>
 </div>
+
 
 
         <!-- =========================================
@@ -52,13 +62,13 @@
             </div>
 
 
-            <div class="reports-status">
-
-                <span>
-                    REPORTS MODULE
-                </span>
-
-            </div>
+            <div class="reports-status reports-select-status">
+    <span class="reports-select-status-icon">📊</span>
+    <div>
+        <strong>Select a Report</strong>
+        <small>Choose a reporting section below</small>
+    </div>
+</div>
 
         </header>
 
@@ -90,188 +100,430 @@
             </h2>
 
 
-            <div
-                id="reportCategories"
-                class="report-categories-grid">
+<div
+    id="reportCategories"
+    class="report-categories-grid">
 
+    <!-- TRANSACTIONS -->
+    <button type="button"
+        class="report-category-card report-card-transactions">
 
-                <!-- TRANSACTIONS -->
+        <div class="report-category-icon">💳</div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-title">
+            Transactions Reports
+        </div>
 
-                    <div class="report-category-icon">
-                        💳
-                    </div>
+        <div class="report-category-description">
+            Income, expenses, transfers and complete transaction analysis
+        </div>
 
-                    <div class="report-category-title">
-                        Transactions
-                    </div>
+        <div class="report-category-meta">
+            <span>24 Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-description">
-                        Income, expenses, transfers and transactions
-                    </div>
 
-                </button>
+    <!-- INCOME & EXPENSES -->
+    <button type="button"
+        class="report-category-card report-card-income">
 
+        <div class="report-category-icon">💰</div>
 
+        <div class="report-category-title">
+            Income & Expenses Reports
+        </div>
 
-                <!-- INCOME & EXPENSE -->
+        <div class="report-category-description">
+            Income, expenses, trends and financial performance
+        </div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-meta">
+            <span>Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-icon">
-                        💰
-                    </div>
 
-                    <div class="report-category-title">
-                        Income & Expenses
-                    </div>
+    <!-- ACCOUNTS -->
+    <button type="button"
+        class="report-category-card report-card-accounts">
 
-                    <div class="report-category-description">
-                        Income, expenses and financial analysis
-                    </div>
+        <div class="report-category-icon">🏦</div>
 
-                </button>
+<div class="report-category-title">
+    Accounts & Banks Reports
+</div>
 
+        <div class="report-category-description">
+            Bank accounts, cash, wallets and account balances
+        </div>
 
+        <div class="report-category-meta">
+            <span>Account Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                <!-- ACCOUNTS -->
 
-                <button
-                    type="button"
-                    class="report-category-card">
+    <!-- INVESTMENTS -->
+    <button type="button"
+        class="report-category-card report-card-investments">
 
-                    <div class="report-category-icon">
-                        🏦
-                    </div>
+        <div class="report-category-icon">📈</div>
 
-                    <div class="report-category-title">
-                        Accounts
-                    </div>
+        <div class="report-category-title">
+            Investments Reports
+        </div>
 
-                    <div class="report-category-description">
-                        Bank accounts, cash and balances
-                    </div>
+        <div class="report-category-description">
+            Stocks, mutual funds, returns and investment analysis
+        </div>
 
-                </button>
+        <div class="report-category-meta">
+            <span>Investment Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
 
+    <!-- FIXED DEPOSITS -->
+    <button type="button"
+        class="report-category-card report-card-fd">
 
-                <!-- INVESTMENTS -->
+        <div class="report-category-icon">🏦</div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-title">
+            Fixed Deposits Reports
+        </div>
 
-                    <div class="report-category-icon">
-                        📈
-                    </div>
+        <div class="report-category-description">
+            FD balances, maturity, interest and renewal analysis
+        </div>
 
-                    <div class="report-category-title">
-                        Investments
-                    </div>
+        <div class="report-category-meta">
+            <span>FD Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-description">
-                        Stocks, mutual funds and investment analysis
-                    </div>
 
-                </button>
+    <!-- PROPERTIES -->
+    <button type="button"
+        class="report-category-card report-card-properties">
 
+        <div class="report-category-icon">🏠</div>
 
+        <div class="report-category-title">
+            Properties Reports
+        </div>
 
-                <!-- LOANS -->
+        <div class="report-category-description">
+            Property ownership, value, expenses and performance
+        </div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-meta">
+            <span>Property Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-icon">
-                        💵
-                    </div>
 
-                    <div class="report-category-title">
-                        Loans & Borrowings
-                    </div>
+    <!-- RENTAL PROPERTIES -->
+    <button type="button"
+        class="report-category-card report-card-rental">
 
-                    <div class="report-category-description">
-                        Loans, EMIs, repayments and interest
-                    </div>
+        <div class="report-category-icon">🏘️</div>
 
-                </button>
+        <div class="report-category-title">
+            Rental Properties Reports
+        </div>
 
+        <div class="report-category-description">
+            Rent received, pending rent, tenants, arrears and yield
+        </div>
 
+        <div class="report-category-meta">
+            <span>Rental Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                <!-- ASSETS -->
 
-                <button
-                    type="button"
-                    class="report-category-card">
+    <!-- REPAIRS & MAINTENANCE -->
+    <button type="button"
+        class="report-category-card report-card-repairs">
 
-                    <div class="report-category-icon">
-                        🏠
-                    </div>
+        <div class="report-category-icon">🔧</div>
 
-                    <div class="report-category-title">
-                        Assets
-                    </div>
+        <div class="report-category-title">
+            Repairs & Maintenance Reports
+        </div>
 
-                    <div class="report-category-description">
-                        Properties, vehicles and other assets
-                    </div>
+        <div class="report-category-description">
+            Repair history, maintenance costs and property expenses
+        </div>
 
-                </button>
+        <div class="report-category-meta">
+            <span>Maintenance Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
 
+    <!-- VEHICLES -->
+    <button type="button"
+        class="report-category-card report-card-vehicles">
 
-                <!-- LIABILITIES -->
+        <div class="report-category-icon">🚗</div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-title">
+            Vehicle Management Reports
+        </div>
 
-                    <div class="report-category-icon">
-                        ⚠️
-                    </div>
+        <div class="report-category-description">
+            Fuel, servicing, repairs, insurance and vehicle costs
+        </div>
 
-                    <div class="report-category-title">
-                        Liabilities
-                    </div>
+        <div class="report-category-meta">
+            <span>Vehicle Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-description">
-                        Outstanding liabilities and obligations
-                    </div>
 
-                </button>
+    <!-- LOANS -->
+    <button type="button"
+        class="report-category-card report-card-loans">
 
+        <div class="report-category-icon">💵</div>
 
+        <div class="report-category-title">
+            Loans & Borrowings Reports
+        </div>
 
-                <!-- NET WORTH -->
+        <div class="report-category-description">
+            Loans, EMIs, repayments, interest and outstanding balances
+        </div>
 
-                <button
-                    type="button"
-                    class="report-category-card">
+        <div class="report-category-meta">
+            <span>Loan Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
-                    <div class="report-category-icon">
-                        💎
-                    </div>
 
-                    <div class="report-category-title">
-                        Net Worth
-                    </div>
+    <!-- CREDIT CARDS -->
+    <button type="button"
+        class="report-category-card report-card-credit">
 
-                    <div class="report-category-description">
-                        Assets, liabilities and net worth analysis
-                    </div>
+        <div class="report-category-icon">💳</div>
 
-                </button>
+        <div class="report-category-title">
+            Credit Cards Reports
+        </div>
 
+        <div class="report-category-description">
+            Bills, payments, utilization, outstanding and card analysis
+        </div>
 
-            </div>
+        <div class="report-category-meta">
+            <span>Card Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 
+
+    <!-- INSURANCE -->
+    <button type="button"
+        class="report-category-card report-card-insurance">
+
+        <div class="report-category-icon">🛡️</div>
+
+        <div class="report-category-title">
+            Insurance Reports
+        </div>
+
+        <div class="report-category-description">
+            Policies, premiums, renewals and insurance coverage
+        </div>
+
+        <div class="report-category-meta">
+            <span>Insurance Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- PARTIES -->
+    <button type="button"
+        class="report-category-card report-card-parties">
+
+        <div class="report-category-icon">👥</div>
+
+        <div class="report-category-title">
+            Parties & Merchants Reports
+        </div>
+
+        <div class="report-category-description">
+            Customers, vendors, tenants, merchants and party analysis
+        </div>
+
+        <div class="report-category-meta">
+            <span>Party Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- DATE & PERIOD -->
+    <button type="button"
+        class="report-category-card report-card-period">
+
+        <div class="report-category-icon">📅</div>
+
+        <div class="report-category-title">
+            Date & Period Reports
+        </div>
+
+        <div class="report-category-description">
+            Daily, monthly, yearly and custom period financial analysis
+        </div>
+
+        <div class="report-category-meta">
+            <span>Period Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- INCOME TAX -->
+    <button type="button"
+        class="report-category-card report-card-tax">
+
+        <div class="report-category-icon">🧾</div>
+
+        <div class="report-category-title">
+            Income Tax / ITR Reports
+        </div>
+
+        <div class="report-category-description">
+            Taxable income, deductions, tax summary and ITR preparation
+        </div>
+
+        <div class="report-category-meta">
+            <span>Tax Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- TDS -->
+    <button type="button"
+        class="report-category-card report-card-tds">
+
+        <div class="report-category-icon">📑</div>
+
+        <div class="report-category-title">
+            TDS Reports
+        </div>
+
+        <div class="report-category-description">
+            TDS deductions, certificates, parties and annual summary
+        </div>
+
+        <div class="report-category-meta">
+            <span>TDS Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- FINANCIAL STATEMENTS -->
+    <button type="button"
+        class="report-category-card report-card-statements">
+
+        <div class="report-category-icon">📚</div>
+
+        <div class="report-category-title">
+            Financial Statements Reports
+        </div>
+
+        <div class="report-category-description">
+            Income statement, balance sheet and financial summaries
+        </div>
+
+        <div class="report-category-meta">
+            <span>Statements</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- CASH FLOW -->
+    <button type="button"
+        class="report-category-card report-card-cashflow">
+
+        <div class="report-category-icon">💸</div>
+
+        <div class="report-category-title">
+            Cash Flow Reports
+        </div>
+
+        <div class="report-category-description">
+            Cash inflow, outflow, movement and liquidity analysis
+        </div>
+
+        <div class="report-category-meta">
+            <span>Cash Flow Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- NET WORTH -->
+    <button type="button"
+        class="report-category-card report-card-networth">
+
+        <div class="report-category-icon">💎</div>
+
+        <div class="report-category-title">
+            Net Worth Reports
+        </div>
+
+        <div class="report-category-description">
+            Assets, liabilities, wealth position and net worth trends
+        </div>
+
+        <div class="report-category-meta">
+            <span>Net Worth Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+
+    <!-- AUDIT -->
+    <button type="button"
+        class="report-category-card report-card-audit">
+
+        <div class="report-category-icon">🔍</div>
+
+        <div class="report-category-title">
+            Audit & Control Reports
+        </div>
+
+        <div class="report-category-description">
+            Reconciliation, duplicates, deleted records and audit analysis
+        </div>
+
+        <div class="report-category-meta">
+            <span>Audit Reports</span>
+            <span>→</span>
+        </div>
+    </button>
+
+</div>
         </section>
 
 
