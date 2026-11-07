@@ -5,6 +5,7 @@
 import {
     collection,
     addDoc,
+    setDoc,
     getDocs,
     query,
     where,
@@ -2927,6 +2928,20 @@ const rentEntryForm =
         "#rentEntryForm"
     );
 
+    // =====================================
+// PAYMENT DATE — READ ONLY
+// DATE IS CONTROLLED BY TRANSACTION
+// =====================================
+
+const rentPaymentDateInput =
+    document.querySelector("#rentPaymentDate");
+
+if (rentPaymentDateInput) {
+    rentPaymentDateInput.readOnly = true;
+    rentPaymentDateInput.title =
+        "Payment Date is synced from Transaction Date";
+}
+
 const cancelRentEntryButton =
     document.querySelector(
         "#cancelRentEntryButton"
@@ -3421,8 +3436,16 @@ console.log(
 
             }
 
+// =====================================
+// AUTO-FILL PAYMENT DATE FROM TRANSACTION
+// =====================================
 
-            if (rentPaymentDate) {
+if (rentPaymentDate) {
+
+    const pendingTransactionDate =
+        window.pendingRentalIncomeTransactionRow
+            ?.querySelector(".transaction-date")
+            ?.value || "";
 
     const today =
         new Date();
@@ -3433,21 +3456,18 @@ console.log(
     const mm =
         String(
             today.getMonth() + 1
-        ).padStart(
-            2,
-            "0"
-        );
+        ).padStart(2, "0");
 
     const dd =
         String(
             today.getDate()
-        ).padStart(
-            2,
-            "0"
-        );
+        ).padStart(2, "0");
+
+    const todayDate =
+        `${yyyy}-${mm}-${dd}`;
 
     rentPaymentDate.value =
-        `${yyyy}-${mm}-${dd}`;
+        pendingTransactionDate || todayDate;
 
 }
 
@@ -3557,6 +3577,46 @@ console.log(
 
 }
 
+// =====================================
+// SYNC TRANSACTION DATE → RENT PAYMENT DATE
+// =====================================
+
+document.addEventListener(
+    "change",
+    (event) => {
+
+        if (
+            !event.target.matches(".transaction-date")
+        ) {
+            return;
+        }
+
+        const pendingRow =
+            window.pendingRentalIncomeTransactionRow;
+
+        // Only sync the currently linked transaction row
+        if (
+            !pendingRow ||
+            !pendingRow.contains(event.target)
+        ) {
+            return;
+        }
+
+        const rentPaymentDateInput =
+            document.querySelector("#rentPaymentDate");
+
+        if (
+            rentPaymentDateInput &&
+            event.target.value
+        ) {
+
+            rentPaymentDateInput.value =
+                event.target.value;
+
+        }
+
+    }
+);
 
 // =========================================
 // CANCEL RENT ENTRY FORM
@@ -3568,18 +3628,20 @@ if (
     rentEntryForm
 ) {
 
-    cancelRentEntryButton.addEventListener(
-        "click",
-        () => {
+cancelRentEntryButton.addEventListener(
+    "click",
+    () => {
 
-            rentEntryForm.reset();
+        rentEntryForm.reset();
 
-            rentEntryFormContainer.style.display =
-                "none";
+        window.pendingRentalIncomeTransactionRow =
+            null;
 
-        }
-    );
+        rentEntryFormContainer.style.display =
+            "none";
 
+    }
+);
 }
 
 
@@ -4706,7 +4768,7 @@ const paymentStatus =
 const receivedInAccountId =
     rentReceivedInAccount?.value || "";
 
-    // =========================================
+// =========================================
 // RENTAL TRANSACTION LINK DEBUG
 // =========================================
 
@@ -4769,6 +4831,13 @@ if (
         }`;
 
 }
+
+// =====================================
+// RENTAL TRANSACTION LINK VARIABLES
+// =====================================
+
+let rentDocId = "";
+let linkedTransactionId = "";
 
 const rentData = {
 
@@ -4934,10 +5003,7 @@ if (duplicateEntry) {
 // =====================================
 // ADD NEW OR UPDATE EXISTING RENT ENTRY
 // =====================================
-
-let rentDocId = "";
-let linkedTransactionId = "";
-
+ 
 // =====================================
 // RENTAL INCOME ACCOUNT VALIDATION
 // =====================================
@@ -4993,6 +5059,9 @@ if (
     linkedTransactionId =
         existingRent.linkedTransactionId ||
         null;
+
+        rentData.linkedTransactionId =
+    linkedTransactionId || null;
 }
 
 // =================================
@@ -5500,7 +5569,7 @@ else {
 linkedTransactionId =
     transactionRef.id;
 
-    // =================================
+// =================================
 // LINK RENT REGISTER ↔ TRANSACTION
 // =================================
 
@@ -5636,15 +5705,15 @@ if (
 
 }
 
-                rentEntryForm.reset();
+rentEntryForm.reset();
 
+window.pendingRentalIncomeTransactionRow =
+    null;
 
-                rentEntryFormContainer.style.display =
-                    "none";
+rentEntryFormContainer.style.display =
+    "none";
 
-
-                await loadRentRegisterEntries();
-
+await loadRentRegisterEntries();
             }
             catch (error) {
 
