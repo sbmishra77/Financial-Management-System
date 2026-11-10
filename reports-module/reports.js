@@ -452,6 +452,4292 @@ function getReportCategoryKey(card) {
     return aliases[cleanTitle] || cleanTitle;
 }
 
+
+// =====================================================
+// SBM PROPERTY REPORTS — COMMON REPORT ENGINE
+// Reports #163–179
+// Paste INSIDE the existing DOMContentLoaded callback.
+// Uses only the verified users/{uid}/properties collection.
+// =====================================================
+
+const PROPERTY_REPORT_CATALOGUE = [
+
+    {
+        number: 163,
+        id: "property-summary",
+        name: "Property Summary",
+        description: "Complete property portfolio overview",
+        sourceReady: true
+    },
+
+    {
+        number: 164,
+        id: "property-details",
+        name: "Property-wise Details",
+        description: "Detailed information of every property",
+        sourceReady: true
+    },
+
+    {
+        number: 165,
+        id: "property-investment",
+        name: "Property Investment",
+        description: "Total recorded acquisition investment",
+        sourceReady: true
+    },
+
+    {
+        number: 166,
+        id: "property-purchase",
+        name: "Property Purchase",
+        description: "Property purchase history and cost",
+        sourceReady: true
+    },
+
+    {
+        number: 168,
+        id: "property-value",
+        name: "Property Value",
+        description: "Purchase value versus current value",
+        sourceReady: true
+    },
+
+    {
+        number: 178,
+        id: "property-roi",
+        name: "Property ROI",
+        description: "Value-appreciation return on recorded purchase value",
+        sourceReady: true
+    }
+
+];
+
+// All unsupported reports remain visible. Their source requirements are stated
+// instead of guessing collection names or silently treating missing data as zero.
+const PROPERTY_REPORT_SOURCE_REQUIREMENTS = {
+    167: "Verified sale fields are required, such as saleDate, saleValue, sellingCosts and a property reference. The current Property record does not contain these fields.",
+    169: "Income records must identify the related property using a stable propertyId (or a verified property link). The current Transactions records do not expose that link. Rental income remains in the separate Rentals module.",
+    170: "Expense records must identify the related property using a stable propertyId. No verified property-linked expense source is currently present in the supplied code.",
+    171: "This report needs property-linked income and expense records. Both source mappings must be verified before net cash flow can be calculated.",
+    172: "Maintenance records need a property reference, date, amount and maintenance category. No verified maintenance collection/field mapping was found in the supplied code.",
+    173: "Property-tax records need a property reference, tax period, assessed/due amount and paid amount/date. These fields are not part of the current Property master record.",
+    174: "Insurance records need a property reference, insurer, policy number, coverage, premium and policy dates. These fields are not in the current Property master record.",
+    175: "A document register needs a property reference, document type, issue/expiry dates and a verified file URL/path. No such Property document source was found.",
+    176: "Profitability needs verified property-linked income and expense totals (and, if applicable, acquisition/sale costs). These source links are not currently available.",
+    177: "Annual performance needs property-linked income, expense, purchase and sale events by date. The current Property master only stores one purchaseDate per property.",
+    179: "Cost-versus-income needs property-linked income and all relevant cost records. The supplied code does not currently expose a verified property reference on those transactions."
+};
+
+// -----------------------------------------------------
+// COMMON PROPERTY DATA + FORMATTING HELPERS
+// -----------------------------------------------------
+
+function propertyEscapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function propertyHasNumber(value) {
+    return value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+}
+
+function propertyNumber(value) {
+    return propertyHasNumber(value) ? Number(value) : null;
+}
+
+// The current Property form converts blank purchase/current-value inputs to 0.
+// Treat non-positive acquisition/valuation entries as unentered to avoid false ROI.
+function propertyPositiveValue(value) {
+    const number = propertyNumber(value);
+    return number !== null && number > 0 ? number : null;
+}
+
+function propertyRecordedValueMoney(value) {
+    const number = propertyPositiveValue(value);
+    return number === null ? "Not entered" : propertyMoney(number);
+}
+
+function propertyMoney(value) {
+    if (!propertyHasNumber(value)) return "Not entered";
+    return "₹ " + Number(value).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function propertyPercent(value) {
+    if (!Number.isFinite(value)) return "—";
+    return value.toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }) + "%";
+}
+
+function propertyDisplayDate(value) {
+    if (!value) return "—";
+    const raw = String(value);
+    const parts = raw.split("-");
+    if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return propertyEscapeHtml(raw);
+}
+
+function propertyLabel(value) {
+    if (value === null || value === undefined || value === "") return "Not specified";
+    return String(value)
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
+async function loadPropertyReportData(user) {
+    if (!user || !user.uid) {
+        throw new Error("No authenticated user was found.");
+    }
+
+    const propertySnapshot = await getDocs(
+        collection(db, "users", user.uid, "properties")
+    );
+
+    return propertySnapshot.docs.map(propertyDoc => ({
+        id: propertyDoc.id,
+        ...propertyDoc.data()
+    }));
+}
+
+function getPropertyFilterOptions(rows, field) {
+    return [...new Set(
+        rows
+            .map(row => row[field])
+            .filter(value => value !== null && value !== undefined && String(value).trim() !== "")
+            .map(value => String(value))
+    )].sort((a, b) => a.localeCompare(b));
+}
+
+function applyPropertyReportFilters(rows, filters = {}) {
+    const search = String(filters.search || "").trim().toLowerCase();
+
+    return rows.filter(property => {
+        if (filters.propertyType && String(property.propertyType || "") !== filters.propertyType) return false;
+        if (filters.ownership && String(property.ownership || "") !== filters.ownership) return false;
+        if (filters.usage && String(property.usage || "") !== filters.usage) return false;
+        if (filters.status && String(property.status || "") !== filters.status) return false;
+
+        if (search) {
+            const searchable = [
+                property.propertyName,
+                property.propertyType,
+                property.ownership,
+                property.ownerNames,
+                property.usage,
+                property.address,
+                property.status
+            ].join(" ").toLowerCase();
+
+            if (!searchable.includes(search)) return false;
+        }
+
+        return true;
+    });
+}
+
+function propertyFilterSelect(label, field, rows) {
+    const options = getPropertyFilterOptions(rows, field);
+    return `
+        <label class="property-report-filter">
+            <span>${label}</span>
+            <select data-property-filter="${field}">
+                <option value="">All</option>
+                ${options.map(value => `
+                    <option value="${propertyEscapeHtml(value)}">${propertyEscapeHtml(propertyLabel(value))}</option>
+                `).join("")}
+            </select>
+        </label>
+    `;
+}
+
+function renderPropertyReportFilters(rows) {
+    return `
+        <div class="property-report-filters">
+            <label class="property-report-filter property-report-search">
+                <span>Search property</span>
+                <input type="search" data-property-filter="search" placeholder="Name, owner or address">
+            </label>
+            ${propertyFilterSelect("Property Type", "propertyType", rows)}
+            ${propertyFilterSelect("Ownership", "ownership", rows)}
+            ${propertyFilterSelect("Usage", "usage", rows)}
+            ${propertyFilterSelect("Status", "status", rows)}
+            <button type="button" class="property-report-reset" data-property-filter-reset>Reset Filters</button>
+        </div>
+    `;
+}
+
+function renderPropertyKpi(label, value, detail = "") {
+    return `
+        <div class="property-report-kpi">
+            <div class="property-report-kpi-label">${propertyEscapeHtml(label)}</div>
+            <div class="property-report-kpi-value">${value}</div>
+            ${detail ? `<div class="property-report-kpi-detail">${propertyEscapeHtml(detail)}</div>` : ""}
+        </div>
+    `;
+}
+
+function renderPropertyReportTable(columns, rows, emptyMessage = "No matching property records found.") {
+    return `
+        <div class="property-report-table-wrap">
+            <table class="property-report-table report-export-table">
+                <thead>
+                    <tr>${columns.map(column => `<th>${propertyEscapeHtml(column.label)}</th>`).join("")}</tr>
+                </thead>
+                <tbody>
+                    ${rows.length ? rows.map(row => `
+                        <tr>
+                            ${columns.map(column => `<td>${column.render ? column.render(row) : propertyEscapeHtml(row[column.key] ?? "—")}</td>`).join("")}
+                        </tr>
+                    `).join("") : `
+                        <tr><td colspan="${columns.length}" class="property-report-empty">${propertyEscapeHtml(emptyMessage)}</td></tr>
+                    `}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderPropertyBreakdown(title, rows, field) {
+    const totals = {};
+    rows.forEach(property => {
+        const label = propertyLabel(property[field]);
+        totals[label] = (totals[label] || 0) + 1;
+    });
+
+    const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(1, ...entries.map(([, count]) => count));
+
+    return `
+        <section class="property-report-panel">
+            <h3>${propertyEscapeHtml(title)}</h3>
+            ${entries.length ? entries.map(([label, count]) => `
+                <div class="property-report-bar-row">
+                    <div class="property-report-bar-label"><span>${propertyEscapeHtml(label)}</span><strong>${count}</strong></div>
+                    <div class="property-report-bar-track"><div class="property-report-bar-fill" style="width:${(count / max) * 100}%"></div></div>
+                </div>
+            `).join("") : `<p class="property-report-muted">No data available.</p>`}
+        </section>
+    `;
+}
+
+function renderPropertyMasterTable(rows) {
+    return renderPropertyReportTable([
+        { label: "Property", render: row => `<strong>${propertyEscapeHtml(row.propertyName || "Unnamed property")}</strong><div class="property-report-subtext">${propertyEscapeHtml(row.address || "Address not entered")}</div>` },
+        { label: "Type", render: row => propertyEscapeHtml(propertyLabel(row.propertyType)) },
+        { label: "Ownership", render: row => propertyEscapeHtml(propertyLabel(row.ownership)) },
+        { label: "Owner(s)", render: row => propertyEscapeHtml(row.ownerNames || "—") },
+        { label: "Usage", render: row => propertyEscapeHtml(propertyLabel(row.usage)) },
+        { label: "Purchase Date", render: row => propertyDisplayDate(row.purchaseDate) },
+        { label: "Purchase Value", render: row => propertyRecordedValueMoney(row.purchaseValue) },
+        { label: "Current Value", render: row => propertyRecordedValueMoney(row.currentValue) },
+        { label: "Status", render: row => propertyEscapeHtml(propertyLabel(row.status)) }
+    ], rows);
+}
+
+function getPropertyValuationStats(rows) {
+    let purchaseTotal = 0;
+    let purchaseCount = 0;
+    let currentTotal = 0;
+    let currentCount = 0;
+    let comparablePurchaseTotal = 0;
+    let comparableCurrentTotal = 0;
+    let comparableCount = 0;
+
+    rows.forEach(property => {
+        const purchase = propertyPositiveValue(property.purchaseValue);
+        const current = propertyPositiveValue(property.currentValue);
+
+        if (purchase !== null) {
+            purchaseTotal += purchase;
+            purchaseCount++;
+        }
+
+        if (current !== null) {
+            currentTotal += current;
+            currentCount++;
+        }
+
+        if (purchase !== null && purchase > 0 && current !== null) {
+            comparablePurchaseTotal += purchase;
+            comparableCurrentTotal += current;
+            comparableCount++;
+        }
+    });
+
+    const appreciation = comparableCurrentTotal - comparablePurchaseTotal;
+    const appreciationRate = comparablePurchaseTotal > 0
+        ? (appreciation / comparablePurchaseTotal) * 100
+        : null;
+
+    return {
+        purchaseTotal,
+        purchaseCount,
+        currentTotal,
+        currentCount,
+        comparablePurchaseTotal,
+        comparableCurrentTotal,
+        comparableCount,
+        appreciation,
+        appreciationRate,
+        missingPurchaseCount: rows.length - purchaseCount,
+        missingCurrentCount: rows.length - currentCount
+    };
+}
+
+// -----------------------------------------------------
+// REPORT-SPECIFIC CALCULATIONS — REUSED BY ONE ENGINE
+// -----------------------------------------------------
+
+function renderPropertySummaryReport(rows) {
+    const stats = getPropertyValuationStats(rows);
+    const appreciationTone = stats.appreciation >= 0 ? "property-positive" : "property-negative";
+
+    return `
+        <div class="property-report-kpi-grid">
+            ${renderPropertyKpi("Total Properties", rows.length, "Records in current filter")}
+            ${renderPropertyKpi("Recorded Purchase Value", propertyMoney(stats.purchaseCount ? stats.purchaseTotal : null), `${stats.purchaseCount} of ${rows.length} records have a purchase value`)}
+            ${renderPropertyKpi("Recorded Current Value", propertyMoney(stats.currentCount ? stats.currentTotal : null), `${stats.currentCount} of ${rows.length} records have a current value`)}
+            ${renderPropertyKpi("Value Appreciation", stats.comparableCount ? `<span class="${appreciationTone}">${propertyMoney(stats.appreciation)}</span>` : "—", `${stats.comparableCount} comparable records · ${stats.appreciationRate === null ? "ROI unavailable" : propertyPercent(stats.appreciationRate)}`)}
+        </div>
+
+        <p class="property-report-note">
+            Valuation totals include only positive purchase/current values. In the current Property form, blank value inputs are saved as 0, so this report treats 0 as “Not entered” to avoid false ROI. Appreciation is calculated only where both values are positive. Rental receipts, expenses, taxes, insurance and sale proceeds are not included.
+        </p>
+
+        <div class="property-report-chart-grid">
+            ${renderPropertyBreakdown("Property Type", rows, "propertyType")}
+            ${renderPropertyBreakdown("Ownership", rows, "ownership")}
+            ${renderPropertyBreakdown("Usage", rows, "usage")}
+            ${renderPropertyBreakdown("Status", rows, "status")}
+        </div>
+
+        <section class="property-report-panel">
+            <h3>Property Portfolio Details</h3>
+            ${renderPropertyMasterTable(rows)}
+        </section>
+    `;
+}
+
+function renderPropertyDetailsReport(rows) {
+    return `
+        <div class="property-report-kpi-grid">
+            ${renderPropertyKpi("Properties", rows.length)}
+            ${renderPropertyKpi("Property Types", new Set(rows.map(row => row.propertyType).filter(Boolean)).size)}
+            ${renderPropertyKpi("Ownership Types", new Set(rows.map(row => row.ownership).filter(Boolean)).size)}
+            ${renderPropertyKpi("With Purchase Date", rows.filter(row => !!row.purchaseDate).length)}
+        </div>
+        <section class="property-report-panel">
+            <h3>Complete Property Register</h3>
+            ${renderPropertyMasterTable(rows)}
+        </section>
+    `;
+}
+
+function renderPropertyInvestmentReport(rows) {
+    const stats = getPropertyValuationStats(rows);
+    const averagePurchase = stats.purchaseCount ? stats.purchaseTotal / stats.purchaseCount : null;
+
+    const ordered = [...rows].sort((a, b) =>
+        (propertyNumber(b.purchaseValue) ?? -1) - (propertyNumber(a.purchaseValue) ?? -1)
+    );
+
+    return `
+        <div class="property-report-kpi-grid">
+            ${renderPropertyKpi("Recorded Investment", propertyMoney(stats.purchaseCount ? stats.purchaseTotal : null), `${stats.purchaseCount} properties with purchase value`)}
+            ${renderPropertyKpi("Properties", rows.length)}
+            ${renderPropertyKpi("Average Recorded Purchase", averagePurchase === null ? "—" : propertyMoney(averagePurchase))}
+            ${renderPropertyKpi("Purchase Value Missing", stats.missingPurchaseCount)}
+        </div>
+        <p class="property-report-note">Investment here means the purchaseValue recorded in the Property master. Additional stamp duty, registration, renovation, loan interest or other acquisition costs are not added unless stored in a verified linked source.</p>
+        <section class="property-report-panel">
+            <h3>Property-wise Recorded Investment</h3>
+            ${renderPropertyReportTable([
+                { label: "Property", render: row => propertyEscapeHtml(row.propertyName || "Unnamed property") },
+                { label: "Purchase Date", render: row => propertyDisplayDate(row.purchaseDate) },
+                { label: "Type", render: row => propertyEscapeHtml(propertyLabel(row.propertyType)) },
+                { label: "Ownership", render: row => propertyEscapeHtml(propertyLabel(row.ownership)) },
+                { label: "Purchase Value", render: row => propertyRecordedValueMoney(row.purchaseValue) }
+            ], ordered)}
+        </section>
+    `;
+}
+
+function renderPropertyPurchaseReport(rows) {
+
+    const purchases = rows
+        .filter(row =>
+            !!row.purchaseDate ||
+            propertyPositiveValue(row.purchaseValue) !== null
+        )
+        .sort((a, b) =>
+            String(b.purchaseDate || "")
+                .localeCompare(String(a.purchaseDate || ""))
+        );
+
+    const total = purchases.reduce((sum, row) => {
+        const value = propertyNumber(row.purchaseValue);
+        return sum + (value === null ? 0 : value);
+    }, 0);
+
+    const recordedValueCount = purchases.filter(row =>
+        propertyPositiveValue(row.purchaseValue) !== null
+    ).length;
+
+    // Missing information is counted across ALL filtered properties
+    const missingDateCount = rows.filter(row =>
+        !row.purchaseDate
+    ).length;
+
+    const missingValueCount = rows.filter(row =>
+        propertyPositiveValue(row.purchaseValue) === null
+    ).length;
+
+    return `
+        <div class="property-report-kpi-grid">
+
+            ${renderPropertyKpi(
+                "Purchase Records",
+                purchases.length
+            )}
+
+            ${renderPropertyKpi(
+                "Recorded Purchase Amount",
+                propertyMoney(
+                    recordedValueCount ? total : null
+                ),
+                `${recordedValueCount} records have a purchase value`
+            )}
+
+            ${renderPropertyKpi(
+                "Purchase Date Missing",
+                missingDateCount
+            )}
+
+            ${renderPropertyKpi(
+                "Purchase Value Missing",
+                missingValueCount
+            )}
+
+        </div>
+
+        <p class="property-report-note">
+            The Property master stores one purchaseDate and purchaseValue per property.
+            This is a purchase register view, not a multi-installment payment ledger.
+            Missing date and value counts are based on all filtered properties.
+        </p>
+
+        <section class="property-report-panel">
+
+            <h3>Purchase History</h3>
+
+            ${renderPropertyReportTable([
+
+                {
+                    label: "Purchase Date",
+                    render: row => propertyDisplayDate(row.purchaseDate)
+                },
+
+                {
+                    label: "Property",
+                    render: row => propertyEscapeHtml(
+                        row.propertyName || "Unnamed property"
+                    )
+                },
+
+                {
+                    label: "Type",
+                    render: row => propertyEscapeHtml(
+                        propertyLabel(row.propertyType)
+                    )
+                },
+
+                {
+                    label: "Ownership",
+                    render: row => propertyEscapeHtml(
+                        propertyLabel(row.ownership)
+                    )
+                },
+
+                {
+                    label: "Purchase Value",
+                    render: row => propertyRecordedValueMoney(
+                        row.purchaseValue
+                    )
+                },
+
+                {
+                    label: "Address",
+                    render: row => propertyEscapeHtml(
+                        row.address || "—"
+                    )
+                }
+
+            ], purchases)}
+
+        </section>
+    `;
+}
+
+function renderPropertyValueReport(rows) {
+    const stats = getPropertyValuationStats(rows);
+    const valuationRows = rows.filter(row =>
+        propertyPositiveValue(row.purchaseValue) !== null || propertyPositiveValue(row.currentValue) !== null
+    );
+
+    return `
+        <div class="property-report-kpi-grid">
+            ${renderPropertyKpi("Recorded Purchase Value", propertyMoney(stats.purchaseCount ? stats.purchaseTotal : null))}
+            ${renderPropertyKpi("Recorded Current Value", propertyMoney(stats.currentCount ? stats.currentTotal : null))}
+            ${renderPropertyKpi("Appreciation / Depreciation", propertyMoney(stats.appreciation), `${stats.comparableCount} comparable properties`)}
+            ${renderPropertyKpi("Appreciation Rate", stats.appreciationRate === null ? "—" : propertyPercent(stats.appreciationRate), "Weighted on comparable purchase values")}
+        </div>
+        <p class="property-report-note">Only properties with positive purchase and current values contribute to appreciation and the weighted percentage. Zero values are treated as “Not entered” because the current Property form saves blank value inputs as 0.</p>
+        <section class="property-report-panel">
+            <h3>Purchase Value vs Current Value</h3>
+            ${renderPropertyReportTable([
+                { label: "Property", render: row => propertyEscapeHtml(row.propertyName || "Unnamed property") },
+                { label: "Purchase Value", render: row => propertyRecordedValueMoney(row.purchaseValue) },
+                { label: "Current Value", render: row => propertyRecordedValueMoney(row.currentValue) },
+                { label: "Appreciation / Depreciation", render: row => {
+                    const purchase = propertyPositiveValue(row.purchaseValue);
+                    const current = propertyPositiveValue(row.currentValue);
+                    if (purchase === null || current === null) return "—";
+                    const change = current - purchase;
+                    const className = change >= 0 ? "property-positive" : "property-negative";
+                    return `<span class="${className}">${propertyMoney(change)}</span>`;
+                } },
+                { label: "Value Change %", render: row => {
+                    const purchase = propertyPositiveValue(row.purchaseValue);
+                    const current = propertyPositiveValue(row.currentValue);
+                    if (purchase === null || current === null) return "—";
+                    return propertyPercent(((current - purchase) / purchase) * 100);
+                } }
+            ], valuationRows)}
+        </section>
+    `;
+}
+
+function renderPropertyRoiReport(rows) {
+    const eligible = rows.filter(row => {
+        const purchase = propertyPositiveValue(row.purchaseValue);
+        const current = propertyPositiveValue(row.currentValue);
+        return purchase !== null && current !== null;
+    });
+
+    const purchaseTotal = eligible.reduce((sum, row) => sum + Number(row.purchaseValue), 0);
+    const currentTotal = eligible.reduce((sum, row) => sum + Number(row.currentValue), 0);
+    const gain = currentTotal - purchaseTotal;
+    const weightedRoi = purchaseTotal > 0 ? (gain / purchaseTotal) * 100 : null;
+
+    return `
+        <div class="property-report-kpi-grid">
+            ${renderPropertyKpi("Eligible Properties", eligible.length, "Both purchase and current values recorded")}
+            ${renderPropertyKpi("Comparable Purchase Value", eligible.length ? propertyMoney(purchaseTotal) : "—")}
+            ${renderPropertyKpi("Comparable Current Value", eligible.length ? propertyMoney(currentTotal) : "—")}
+            ${renderPropertyKpi("Value Appreciation ROI", weightedRoi === null ? "—" : propertyPercent(weightedRoi), `Value change: ${eligible.length ? propertyMoney(gain) : "—"}`)}
+        </div>
+        <p class="property-report-note"><strong>Important:</strong> This is an unrealized value-appreciation ROI based only on (currentValue − purchaseValue) ÷ purchaseValue, and excludes zero/missing values. It is not total investment return: rental income, operating expenses, tax, insurance, financing cost, purchase costs and sale proceeds are excluded.</p>
+        <section class="property-report-panel">
+            <h3>Property-wise Value Appreciation ROI</h3>
+            ${renderPropertyReportTable([
+                { label: "Property", render: row => propertyEscapeHtml(row.propertyName || "Unnamed property") },
+                { label: "Purchase Value", render: row => propertyRecordedValueMoney(row.purchaseValue) },
+                { label: "Current Value", render: row => propertyRecordedValueMoney(row.currentValue) },
+                { label: "Value Change", render: row => {
+                    const change = Number(row.currentValue) - Number(row.purchaseValue);
+                    const className = change >= 0 ? "property-positive" : "property-negative";
+                    return `<span class="${className}">${propertyMoney(change)}</span>`;
+                } },
+                { label: "ROI", render: row => propertyPercent(((Number(row.currentValue) - Number(row.purchaseValue)) / Number(row.purchaseValue)) * 100) }
+            ], eligible)}
+        </section>
+    `;
+}
+
+function renderUnsupportedPropertyReport(report) {
+    const requirement = PROPERTY_REPORT_SOURCE_REQUIREMENTS[report.number] ||
+        "A verified data source and property link are required before this calculation can be implemented.";
+
+    return `
+        <section class="property-report-source-pending">
+            <div class="property-report-pending-icon">🧩</div>
+            <h3>${propertyEscapeHtml(report.name)} — Source Mapping Required</h3>
+            <p>${propertyEscapeHtml(requirement)}</p>
+            <p class="property-report-muted">No report total is being calculated yet. This avoids showing misleading zero values or mixing Rental module records into Property reports.</p>
+        </section>
+    `;
+}
+
+function renderPropertyReportBody(report, allRows, filters = {}) {
+    const rows = applyPropertyReportFilters(allRows, filters);
+    let reportHtml = "";
+
+    switch (report.number) {
+        case 163:
+            reportHtml = renderPropertySummaryReport(rows);
+            break;
+        case 164:
+            reportHtml = renderPropertyDetailsReport(rows);
+            break;
+        case 165:
+            reportHtml = renderPropertyInvestmentReport(rows);
+            break;
+        case 166:
+            reportHtml = renderPropertyPurchaseReport(rows);
+            break;
+        case 168:
+            reportHtml = renderPropertyValueReport(rows);
+            break;
+        case 178:
+            reportHtml = renderPropertyRoiReport(rows);
+            break;
+        default:
+            reportHtml = renderUnsupportedPropertyReport(report);
+    }
+
+    const filterHtml = report.sourceReady
+        ? renderPropertyReportFilters(allRows)
+        : "";
+
+    return `
+        ${filterHtml}
+        <div class="property-report-result-count">Showing ${rows.length} of ${allRows.length} properties after filters</div>
+        ${reportHtml}
+    `;
+}
+
+// -----------------------------------------------------
+// COMMON PROPERTY REPORT RENDERER
+// -----------------------------------------------------
+
+async function renderPropertyReport(reportNumber) {
+    const report = PROPERTY_REPORT_CATALOGUE.find(
+        item => item.number === Number(reportNumber)
+    );
+
+    if (!report) {
+        console.error("Property report not found:", reportNumber);
+        return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+        alert("Please login first.");
+        return;
+    }
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Property report work area was not found.");
+        return;
+    }
+
+    reportWorkArea.style.display = "block";
+    window.activePropertyReport = report;
+    window.activeReportCategory = "Properties";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>🏠 ${propertyEscapeHtml(report.name)}</h2>
+                    <p>${propertyEscapeHtml(report.description)}</p>
+                </div>
+                <button type="button" class="back-to-dashboard-button" id="backToPropertyReports">
+                    ← Back to Property Reports
+                </button>
+            </div>
+            <div id="propertyReportContent">
+                <div class="property-report-loading">Loading property information...</div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("backToPropertyReports")?.addEventListener(
+        "click",
+        renderPropertyReportsDashboard
+    );
+
+    try {
+        const allRows = await loadPropertyReportData(user);
+        const content = document.getElementById("propertyReportContent");
+        if (!content) return;
+
+        if (!report.sourceReady) {
+            content.innerHTML = renderPropertyReportBody(report, allRows);
+            return;
+        }
+
+        const renderWithFilters = () => {
+            const filters = {
+                search: content.querySelector('[data-property-filter="search"]')?.value || "",
+                propertyType: content.querySelector('[data-property-filter="propertyType"]')?.value || "",
+                ownership: content.querySelector('[data-property-filter="ownership"]')?.value || "",
+                usage: content.querySelector('[data-property-filter="usage"]')?.value || "",
+                status: content.querySelector('[data-property-filter="status"]')?.value || ""
+            };
+
+            content.innerHTML = renderPropertyReportBody(report, allRows, filters);
+
+            // Keep the user's selected filter values visible after re-render.
+            Object.entries(filters).forEach(([field, value]) => {
+                const control = content.querySelector(`[data-property-filter="${field}"]`);
+                if (control) control.value = value;
+            });
+
+            bindPropertyReportFilterEvents();
+        };
+
+        content.innerHTML = renderPropertyReportBody(report, allRows);
+        bindPropertyReportFilterEvents();
+
+        function bindPropertyReportFilterEvents() {
+            const filterControls = content.querySelectorAll("[data-property-filter]");
+            filterControls.forEach(control => {
+                control.addEventListener("change", renderWithFilters);
+            });
+
+            content.querySelector("[data-property-filter-reset]")?.addEventListener("click", () => {
+                content.innerHTML = renderPropertyReportBody(report, allRows);
+                bindPropertyReportFilterEvents();
+            });
+        }
+    } catch (error) {
+        console.error("PROPERTY REPORT LOAD ERROR:", error);
+        const content = document.getElementById("propertyReportContent");
+        if (content) {
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Property report could not be loaded</h3>
+                    <p>${propertyEscapeHtml(error.message || "Unknown error")}</p>
+                    <p>Please check Firebase permissions and the browser console.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// -----------------------------------------------------
+// PROPERTY REPORTS CATALOGUE SCREEN
+// -----------------------------------------------------
+
+function renderPropertyReportsDashboard() {
+    console.log("✅ PROPERTY DASHBOARD FUNCTION ENTERED");
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("❌ PROPERTY REPORT WORK AREA NOT FOUND");
+        return;
+    }
+
+    reportWorkArea.style.display = "block";
+    window.activeReportCategory = "Properties";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+            <div class="transaction-reports-header">
+                <div>
+                    <h2>🏠 Properties Reports</h2>
+                    <p>Property portfolio, valuation and performance analytics</p>
+                </div>
+            </div>
+
+            <div class="transaction-reports-grid">
+                ${PROPERTY_REPORT_CATALOGUE.map(report => `
+                    <div class="transaction-report-card" data-property-report="${report.number}">
+                        <div class="transaction-report-number">${report.number}</div>
+                        <div class="transaction-report-content">
+                            <h3>${propertyEscapeHtml(report.name)}</h3>
+                            <p>${propertyEscapeHtml(report.description)}</p>
+                            <span class="property-report-card-status ${report.sourceReady ? "is-ready" : "is-pending"}">
+                                ${report.sourceReady ? "Property master data" : "Source mapping required"}
+                            </span>
+                        </div>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+    `;
+
+    console.log("✅ PROPERTY REPORTS HTML RENDERED:", {
+        htmlLength: reportWorkArea.innerHTML.length,
+        reportCards: reportWorkArea.querySelectorAll("[data-property-report]").length,
+        display: getComputedStyle(reportWorkArea).display
+    });
+
+    reportWorkArea.querySelectorAll("[data-property-report]").forEach(card => {
+        card.addEventListener("click", () => {
+            renderPropertyReport(Number(card.dataset.propertyReport));
+        });
+    });
+}
+
+// -----------------------------------------------------
+// PROPERTY REPORT STYLES — SCOPED TO THIS MODULE
+// -----------------------------------------------------
+
+if (!document.getElementById("propertyReportsEngineStyles")) {
+    const propertyStyle = document.createElement("style");
+    propertyStyle.id = "propertyReportsEngineStyles";
+    propertyStyle.textContent = `
+        .property-report-container { color:#172033; }
+        .property-report-header { align-items:center; gap:16px; flex-wrap:wrap; }
+        .property-report-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; margin:18px 0; }
+        .property-report-kpi { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:17px 18px; min-width:0; box-shadow:0 2px 8px rgba(15,23,42,.035); }
+        .property-report-kpi-label { color:#64748b; font-size:13px; font-weight:600; margin-bottom:9px; }
+        .property-report-kpi-value { color:#172554; font-size:clamp(20px,2vw,27px); line-height:1.25; font-weight:750; overflow-wrap:anywhere; }
+        .property-report-kpi-detail { color:#64748b; font-size:12px; margin-top:7px; line-height:1.45; }
+        .property-report-chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:14px; margin:18px 0; }
+        .property-report-panel { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:18px; margin:16px 0; min-width:0; }
+        .property-report-panel h3 { margin:0 0 15px; color:#172554; font-size:16px; }
+        .property-report-bar-row { margin:12px 0; }
+        .property-report-bar-label { display:flex; justify-content:space-between; gap:10px; color:#334155; font-size:13px; margin-bottom:6px; }
+        .property-report-bar-track { height:9px; width:100%; background:#e8eef6; border-radius:99px; overflow:hidden; }
+        .property-report-bar-fill { height:100%; background:linear-gradient(90deg,#2563eb,#0f766e); border-radius:99px; min-width:2px; }
+        .property-report-filters { display:flex; flex-wrap:wrap; align-items:end; gap:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:13px; margin:16px 0 8px; }
+        .property-report-filter { display:flex; flex-direction:column; gap:5px; min-width:145px; flex:1; color:#475569; font-size:12px; font-weight:650; }
+        .property-report-filter input,.property-report-filter select { width:100%; min-height:38px; border:1px solid #cbd5e1; border-radius:7px; background:#fff; color:#0f172a; padding:7px 9px; font:inherit; font-size:13px; }
+        .property-report-search { min-width:210px; flex:1.5; }
+        .property-report-reset { min-height:38px; border:1px solid #cbd5e1; border-radius:7px; background:#fff; color:#334155; padding:7px 12px; cursor:pointer; font-weight:650; }
+        .property-report-result-count { color:#64748b; font-size:12px; margin:8px 2px 14px; }
+        .property-report-table-wrap { width:100%; overflow:auto; border:1px solid #e2e8f0; border-radius:9px; }
+        .property-report-table { width:100%; min-width:850px; border-collapse:collapse; background:#fff; font-size:13px; }
+        .property-report-table th { background:#173b70; color:#fff; text-align:left; padding:11px 12px; white-space:nowrap; }
+        .property-report-table td { padding:10px 12px; border-bottom:1px solid #e8edf4; color:#334155; vertical-align:top; }
+        .property-report-table tbody tr:last-child td { border-bottom:0; }
+        .property-report-table tbody tr:hover { background:#f8fafc; }
+        .property-report-subtext { color:#64748b; font-size:11px; margin-top:4px; max-width:260px; white-space:normal; }
+        .property-report-empty { text-align:center; color:#64748b !important; padding:22px !important; }
+        .property-report-note { padding:12px 14px; margin:14px 0; border-left:3px solid #94a3b8; background:#f8fafc; border-radius:6px; color:#475569; font-size:12px; line-height:1.6; }
+        .property-positive { color:#047857; font-weight:700; }
+        .property-negative { color:#b91c1c; font-weight:700; }
+        .property-report-muted { color:#64748b; font-size:12px; line-height:1.55; }
+        .property-report-source-pending,.property-report-error { background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:24px; margin:18px 0; }
+        .property-report-source-pending h3,.property-report-error h3 { color:#172554; margin:8px 0 10px; }
+        .property-report-source-pending p,.property-report-error p { color:#475569; line-height:1.65; }
+        .property-report-pending-icon { font-size:28px; }
+        .property-report-loading { padding:24px; color:#64748b; }
+        .property-report-card-status { display:inline-block; margin-top:8px; font-size:10px; line-height:1.3; font-weight:700; }
+        .property-report-card-status.is-ready { color:#047857; }
+        .property-report-card-status.is-pending { color:#a16207; }
+        @media(max-width:640px) { .property-report-panel { padding:13px; } .property-report-filters { align-items:stretch; } .property-report-filter,.property-report-search { min-width:100%; } }
+    `;
+    document.head.appendChild(propertyStyle);
+}
+
+
+// =====================================================
+// RENTAL PROPERTIES REPORTS — COMMON CATALOGUE
+// =====================================================
+
+const RENTAL_REPORT_CATALOGUE = [
+
+    {
+        number: 180,
+        id: "rental-summary",
+        name: "Rental Summary",
+        description: "Overall rental income and collection summary"
+    },
+    {
+        number: 181,
+        id: "property-rental-income",
+        name: "Property-wise Rental Income",
+        description: "Rental collection by property"
+    },
+    {
+        number: 182,
+        id: "tenant-wise-rent",
+        name: "Tenant-wise Rent",
+        description: "Tenant-wise rent and outstanding details"
+    },
+    {
+        number: 183,
+        id: "rent-received",
+        name: "Rent Received",
+        description: "Register of rent payments received"
+    },
+    {
+        number: 184,
+        id: "rent-pending",
+        name: "Rent Pending",
+        description: "Pending rent and outstanding amounts"
+    },
+    {
+        number: 186,
+        id: "rent-arrears",
+        name: "Rent Arrears",
+        description: "Overdue rent after due date"
+    },
+    {
+        number: 187,
+        id: "monthly-rent-collection",
+        name: "Monthly Rent Collection",
+        description: "Month-wise rent collection analysis"
+    },
+    {
+        number: 188,
+        id: "annual-rent-collection",
+        name: "Annual Rent Collection",
+        description: "Year-wise rent collection summary"
+    },
+    {
+        number: 189,
+        id: "rental-agreements",
+        name: "Rental Agreement Report",
+        description: "Tenant and rental agreement register"
+    },
+    {
+        number: 190,
+        id: "lease-expiry",
+        name: "Lease Expiry Report",
+        description: "Upcoming and expired rental agreements"
+    },
+    {
+        number: 194,
+        id: "rental-yield",
+        name: "Rental Yield",
+        description: "Gross rental yield by property"
+    }
+
+];
+
+
+// =====================================================
+// RENTAL REPORTS DASHBOARD
+// =====================================================
+
+function renderRentalReportsDashboard() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error(
+            "Rental Report Work Area Not Found"
+        );
+        return;
+    }
+
+    reportWorkArea.style.display = "block";
+
+    window.activeReportCategory = "Rental Properties";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header">
+
+                <div>
+                    <h2>🏘️ Rental Properties Reports</h2>
+
+                    <p>
+                        Rental income, tenants and collection analytics
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="transaction-reports-grid">
+
+                ${RENTAL_REPORT_CATALOGUE.map(report => `
+
+                    <div
+                        class="transaction-report-card"
+                        data-rental-report="${report.number}">
+
+                        <div class="transaction-report-number">
+                            ${report.number}
+                        </div>
+
+                        <div class="transaction-report-content">
+
+                            <h3>
+                                ${propertyEscapeHtml(report.name)}
+                            </h3>
+
+                            <p>
+                                ${propertyEscapeHtml(report.description)}
+                            </p>
+
+                            <span class="property-report-card-status is-ready">
+                                Rental Module Data
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+
+    `;
+
+    console.log(
+        "✅ RENTAL REPORTS DASHBOARD RENDERED:",
+        reportWorkArea.querySelectorAll(
+            "[data-rental-report]"
+        ).length
+    );
+
+// -----------------------------------------------------
+// RENTAL REPORT CARD CLICK TEST
+// -----------------------------------------------------
+// -----------------------------------------------------
+// RENTAL REPORT CARD CLICK HANDLER
+// -----------------------------------------------------
+
+reportWorkArea.querySelectorAll("[data-rental-report]").forEach(card => {
+
+    card.addEventListener("click", () => {
+
+        const reportNumber = Number(
+            card.dataset.rentalReport
+        );
+
+        console.log(
+            "🏘️ RENTAL REPORT CARD CLICKED:",
+            reportNumber
+        );
+
+        // Rental Summary
+        // Rental Summary — #180
+if (reportNumber === 180) {
+
+    renderRentalSummaryReport();
+
+    return;
+}
+
+// Property-wise Rental Income — #181
+if (reportNumber === 181) {
+
+    renderPropertyWiseRentalIncomeReport();
+
+    return;
+}
+
+
+// Tenant-wise Rent — #182
+if (reportNumber === 182) {
+
+    renderTenantWiseRentReport();
+
+    return;
+}
+
+// Rent Received — #183
+if (reportNumber === 183) {
+
+    renderRentReceivedReport();
+
+    return;
+}
+
+// Advanced Rental Reports — #184, #186, #187, #188, #189, #190, #194
+
+if ([184, 186, 187, 188, 189, 190, 194].includes(reportNumber)) {
+
+    renderRentalAdvancedReport(reportNumber);
+
+    return;
+
+}
+        console.log(
+            "⏳ This Rental Report is not connected yet:",
+            reportNumber
+        );
+
+    });
+
+});
+
+}
+
+
+
+// =====================================================
+// COMMON RENTAL REPORT DATA & CALCULATION ENGINE
+// Used by all Rental Reports
+// =====================================================
+
+let rentalReportDataCache = null;
+
+
+// -----------------------------------------------------
+// COMMON NUMBER CONVERSION
+// -----------------------------------------------------
+
+function rentalReportNumber(value) {
+
+    if (value === null || value === undefined || value === "") {
+        return 0;
+    }
+
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    const cleanedValue = String(value)
+        .replace(/[₹,\s]/g, "")
+        .trim();
+
+    const number = Number(cleanedValue);
+
+    return Number.isFinite(number) ? number : 0;
+}
+
+
+// -----------------------------------------------------
+// COMMON DATE CONVERSION
+// -----------------------------------------------------
+
+function rentalReportDate(value) {
+
+    if (!value) return null;
+
+    if (value instanceof Date) {
+        return isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value.toDate === "function") {
+        return value.toDate();
+    }
+
+    if (typeof value === "object" && value.seconds) {
+        return new Date(value.seconds * 1000);
+    }
+
+    const dateString = String(value).trim();
+
+    if (/^\d{4}-\d{2}$/.test(dateString)) {
+        return new Date(dateString + "-01T00:00:00");
+    }
+
+    const date = new Date(dateString);
+
+    return isNaN(date.getTime()) ? null : date;
+}
+
+// -----------------------------------------------------
+// COMMON RENT MONTH DISPLAY FORMAT
+// Example: 2026-11 → November 2026
+// -----------------------------------------------------
+
+function rentalReportMonthLabel(value) {
+
+    if (!value) return "—";
+
+    const raw = String(value).trim();
+
+    const match = raw.match(/^(\d{4})-(\d{1,2})$/);
+
+    if (match) {
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+
+        if (month >= 1 && month <= 12) {
+
+            return new Date(year, month - 1, 1)
+                .toLocaleDateString("en-US", {
+                    month: "long",
+                    year: "numeric"
+                });
+
+        }
+
+    }
+
+    const date = rentalReportDate(value);
+
+    if (date) {
+
+        return date.toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric"
+        });
+
+    }
+
+    return raw;
+
+}
+
+// =====================================================
+// COMMON RENTAL GROUPING & AGGREGATION
+// Used by Property, Tenant, Monthly and Annual Reports
+// =====================================================
+
+function groupRentalReportEntries(
+    entries,
+    getGroupKey,
+    getGroupLabel
+) {
+
+    const grouped = new Map();
+
+    entries.forEach(entry => {
+
+        const rawKey = getGroupKey(entry);
+
+        const key =
+            rawKey !== null &&
+            rawKey !== undefined &&
+            String(rawKey).trim() !== ""
+                ? String(rawKey)
+                : "__unmapped__";
+
+
+        if (!grouped.has(key)) {
+
+            grouped.set(key, {
+
+                key,
+
+                label: getGroupLabel(entry) || "Not specified",
+
+                rentEntryCount: 0,
+
+                totalDue: 0,
+
+                totalReceived: 0,
+
+                totalPending: 0,
+
+                overduePending: 0,
+
+                paidEntryCount: 0,
+
+                partiallyPaidEntryCount: 0,
+
+                pendingEntryCount: 0
+
+            });
+
+        }
+
+
+        const group = grouped.get(key);
+
+        group.rentEntryCount++;
+
+        group.totalDue += entry.totalDue;
+
+        group.totalReceived += entry.paidAmount;
+
+        group.totalPending += entry.pendingAmount;
+
+
+        if (entry.isOverdue) {
+
+            group.overduePending += entry.pendingAmount;
+
+        }
+
+
+        if (entry.collectionStatus === "Paid") {
+
+            group.paidEntryCount++;
+
+        } else if (entry.collectionStatus === "Partially Paid") {
+
+            group.partiallyPaidEntryCount++;
+
+        } else {
+
+            group.pendingEntryCount++;
+
+        }
+
+    });
+
+
+    return Array.from(grouped.values()).sort(
+        (a, b) => b.totalReceived - a.totalReceived
+    );
+
+}
+
+// -----------------------------------------------------
+// LOAD ALL COMMON RENTAL DATA
+// -----------------------------------------------------
+
+async function loadRentalReportData(forceRefresh = false) {
+
+    const user = auth.currentUser || currentUser;
+
+    if (!user) {
+        throw new Error("No logged-in user found.");
+    }
+
+    // Reuse cached data for the same user
+    if (
+        !forceRefresh &&
+        rentalReportDataCache &&
+        rentalReportDataCache.uid === user.uid
+    ) {
+        return rentalReportDataCache.promise;
+    }
+
+    const dataPromise = (async () => {
+
+        console.log("🏘️ Loading Common Rental Report Data...");
+
+
+        // Fetch all three verified collections together
+        const [
+            rentSnapshot,
+            unitSnapshot,
+            propertySnapshot
+        ] = await Promise.all([
+
+            getDocs(
+                collection(db, "users", user.uid, "rentRegister")
+            ),
+
+            getDocs(
+                collection(db, "users", user.uid, "rentalUnits")
+            ),
+
+            getDocs(
+                collection(db, "users", user.uid, "properties")
+            )
+
+        ]);
+
+
+        // -------------------------------------------------
+        // RAW COLLECTION DATA
+        // -------------------------------------------------
+
+        const rentalUnits = unitSnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+        }));
+
+        const properties = propertySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            id: doc.id
+        }));
+
+
+        // Fast rental unit lookup
+        const unitsById = new Map(
+            rentalUnits.map(unit => [
+                String(unit.id),
+                unit
+            ])
+        );
+
+
+        // -------------------------------------------------
+        // NORMALIZE RENT REGISTER
+        // -------------------------------------------------
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const rentEntries = rentSnapshot.docs.map(doc => {
+
+            const source = doc.data();
+
+            const rentalUnit = unitsById.get(
+                String(source.rentalId || "")
+            ) || null;
+
+
+            // Common financial calculations
+            const totalDue = rentalReportNumber(
+                source.totalDue ??
+                source.netPayableRent ??
+                source.rentAmount
+            );
+
+            const paidAmount = rentalReportNumber(
+                source.paidAmount
+            );
+
+            const pendingAmount = Math.max(
+                totalDue - paidAmount,
+                0
+            );
+
+
+            // Common date fields
+            const dueDate = rentalReportDate(
+                source.rentDueDate
+            );
+
+            const paymentDate = rentalReportDate(
+                source.paymentDate
+            );
+
+            const normalizedDueDate = dueDate
+                ? new Date(dueDate)
+                : null;
+
+            if (normalizedDueDate) {
+                normalizedDueDate.setHours(0, 0, 0, 0);
+            }
+
+
+            // Common collection status
+            let collectionStatus = "Pending";
+
+            if (pendingAmount <= 0) {
+                collectionStatus = "Paid";
+            } else if (paidAmount > 0) {
+                collectionStatus = "Partially Paid";
+            }
+
+
+            const isOverdue = Boolean(
+                pendingAmount > 0 &&
+                normalizedDueDate &&
+                normalizedDueDate < today
+            );
+
+
+            // Common month key
+            let rentMonth = source.rentMonth || "";
+
+            if (!rentMonth && dueDate) {
+
+                rentMonth =
+                    dueDate.getFullYear() +
+                    "-" +
+                    String(dueDate.getMonth() + 1).padStart(2, "0");
+
+            }
+
+
+            return {
+
+                ...source,
+
+                id: doc.id,
+
+                rentalUnit: rentalUnit,
+
+                rentalId: source.rentalId || rentalUnit?.id || "",
+
+                propertyId:
+                    source.rentalPropertyId ||
+                    rentalUnit?.rentalPropertyId ||
+                    "",
+
+                propertyName:
+                    source.propertyName ||
+                    rentalUnit?.propertyName ||
+                    "",
+
+                rentalUnitName:
+                    source.rentalUnitName ||
+                    rentalUnit?.rentalUnitName ||
+                    "",
+
+                tenantName:
+                    source.tenantName ||
+                    rentalUnit?.tenantName ||
+                    "",
+
+                totalDue,
+
+                paidAmount,
+
+                pendingAmount,
+
+                dueDate,
+
+                paymentDate,
+
+                rentMonth,
+
+                collectionStatus,
+
+                isOverdue
+
+            };
+
+        });
+
+
+        // -------------------------------------------------
+        // COMMON AGGREGATE CALCULATIONS
+        // -------------------------------------------------
+
+        const totalDue = rentEntries.reduce(
+            (sum, entry) => sum + entry.totalDue,
+            0
+        );
+
+        const totalReceived = rentEntries.reduce(
+            (sum, entry) => sum + entry.paidAmount,
+            0
+        );
+
+        const totalPending = rentEntries.reduce(
+            (sum, entry) => sum + entry.pendingAmount,
+            0
+        );
+
+        const collectionRate = totalDue > 0
+            ? (totalReceived / totalDue) * 100
+            : 0;
+
+
+        // -------------------------------------------------
+        // RETURN COMMON DATASET
+        // -------------------------------------------------
+
+        return {
+
+            rentEntries,
+
+            rentalUnits,
+
+            properties,
+
+            totals: {
+
+                totalDue,
+
+                totalReceived,
+
+                totalPending,
+
+                collectionRate,
+
+                rentEntryCount: rentEntries.length,
+
+                rentalUnitCount: rentalUnits.length,
+
+                propertyCount: properties.length
+
+            },
+
+            loadedAt: new Date()
+
+        };
+
+    })();
+
+
+    rentalReportDataCache = {
+        uid: user.uid,
+        promise: dataPromise
+    };
+
+
+    try {
+
+        return await dataPromise;
+
+    } catch (error) {
+
+        rentalReportDataCache = null;
+
+        throw error;
+
+    }
+
+}
+
+// =====================================================
+// RENTAL REPORT #180 — RENTAL SUMMARY
+// Uses Common Rental Data Engine
+// =====================================================
+
+async function renderRentalSummaryReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Rental report work area not found.");
+        return;
+    }
+
+    window.activeReportCategory = "Rental Properties";
+    window.activeRentalReportNumber = 180;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>🏘️ Rental Summary</h2>
+                    <p>Overall rental income and collection summary</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRentalReports"
+                >
+                    ← Back to Rental Reports
+                </button>
+            </div>
+
+            <div id="rentalReportContent">
+                <div class="property-report-loading">
+                    Loading rental information...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRentalReports")?.addEventListener(
+        "click",
+        renderRentalReportsDashboard
+    );
+
+    try {
+
+        // Use the common rental data engine
+        const data = await loadRentalReportData();
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // COMMON FINANCIAL TOTALS
+        // -------------------------------------------------
+
+        const totals = data.totals;
+
+        const overduePending = data.rentEntries
+            .filter(entry => entry.isOverdue)
+            .reduce((sum, entry) => sum + entry.pendingAmount, 0);
+
+
+        // -------------------------------------------------
+        // RECENT RENT REGISTER ENTRIES
+        // -------------------------------------------------
+
+        const recentEntries = [...data.rentEntries].sort((a, b) => {
+
+            const dateA = a.dueDate || a.paymentDate;
+            const dateB = b.dueDate || b.paymentDate;
+
+            return (dateB?.getTime() || 0) - (dateA?.getTime() || 0);
+
+        }).slice(0, 15);
+
+
+        // -------------------------------------------------
+        // KPI CARDS + RENT REGISTER TABLE
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Rental Units",
+                    totals.rentalUnitCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Rent Register Entries",
+                    totals.rentEntryCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Due",
+                    propertyMoney(totals.totalDue)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Received",
+                    propertyMoney(totals.totalReceived)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Pending",
+                    propertyMoney(totals.totalPending)
+                )}
+
+                ${renderPropertyKpi(
+                    "Collection Rate",
+                    propertyPercent(totals.collectionRate)
+                )}
+
+                ${renderPropertyKpi(
+                    "Overdue Pending",
+                    propertyMoney(overduePending)
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                Financial totals are calculated from the Rent Register.
+                Overdue Pending includes only unpaid amounts whose rent due
+                date has passed. Mirrored transaction records are not added
+                again, to avoid double counting.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Recent Rent Register Entries</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+    label: "Rent Month",
+    render: row => propertyEscapeHtml(
+        rentalReportMonthLabel(row.rentMonth)
+    )
+},
+
+                    {
+                        label: "Property",
+                        render: row => propertyEscapeHtml(
+                            row.propertyName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Unit",
+                        render: row => propertyEscapeHtml(
+                            row.rentalUnitName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Tenant",
+                        render: row => propertyEscapeHtml(
+                            row.tenantName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Total Due",
+                        render: row => propertyMoney(row.totalDue)
+                    },
+
+                    {
+                        label: "Received",
+                        render: row => propertyMoney(row.paidAmount)
+                    },
+
+                    {
+                        label: "Pending",
+                        render: row => propertyMoney(row.pendingAmount)
+                    },
+
+                    {
+                        label: "Status",
+                        render: row => propertyEscapeHtml(
+                            row.isOverdue
+                                ? "Overdue"
+                                : row.collectionStatus
+                        )
+                    }
+
+                ], recentEntries, "No Rent Register entries found.")}
+
+                <p class="property-report-muted">
+                    Showing the latest 15 entries, sorted by due date or
+                    payment date.
+                </p>
+
+            </section>
+
+        `;
+
+        console.log("✅ RENTAL SUMMARY REPORT LOADED:", totals);
+
+    } catch (error) {
+
+        console.error("RENTAL SUMMARY REPORT ERROR:", error);
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Rental Summary could not be loaded</h3>
+                    <p>${propertyEscapeHtml(error.message || "Unknown error")}</p>
+                    <p>Please check Firebase permissions and the browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// RENTAL REPORT #182 — TENANT-WISE RENT
+// Uses Common Rental Data + Grouping Engine
+// =====================================================
+
+async function renderTenantWiseRentReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Tenant report work area not found.");
+        return;
+    }
+
+    window.activeReportCategory = "Rental Properties";
+    window.activeRentalReportNumber = 182;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>👥 Tenant-wise Rent</h2>
+                    <p>Tenant-wise rent due, received and outstanding analysis</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRentalReports"
+                >
+                    ← Back to Rental Reports
+                </button>
+            </div>
+
+            <div id="rentalReportContent">
+                <div class="property-report-loading">
+                    Loading tenant-wise rental information...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRentalReports")?.addEventListener(
+        "click",
+        renderRentalReportsDashboard
+    );
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON RENTAL DATA
+        // -------------------------------------------------
+
+        const data = await loadRentalReportData();
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // COMMON TENANT GROUP KEY
+        // Name + Mobile Number
+        // -------------------------------------------------
+
+        function getTenantGroupKey(entry) {
+
+            const tenantName = String(
+                entry.tenantName || ""
+            ).trim().toLowerCase();
+
+            const tenantMobile = String(
+                entry.rentalUnit?.tenantMobile ||
+                entry.tenantMobile ||
+                ""
+            ).replace(/\D/g, "");
+
+            if (!tenantName) {
+                return "__unmapped__";
+            }
+
+            return `${tenantName}::${tenantMobile || "no-mobile"}`;
+
+        }
+
+
+        // -------------------------------------------------
+        // GROUP RENT ENTRIES USING COMMON FUNCTION
+        // -------------------------------------------------
+
+        const groupedTenants = groupRentalReportEntries(
+
+            data.rentEntries,
+
+            entry => getTenantGroupKey(entry),
+
+            entry => entry.tenantName || "Tenant not specified"
+
+        );
+
+
+        // -------------------------------------------------
+        // COLLECT TENANT CONTACT & PROPERTY DETAILS
+        // -------------------------------------------------
+
+        const tenantDetails = new Map();
+
+        data.rentEntries.forEach(entry => {
+
+            const key = getTenantGroupKey(entry);
+
+            if (!tenantDetails.has(key)) {
+
+                tenantDetails.set(key, {
+
+                    mobile:
+                        entry.rentalUnit?.tenantMobile ||
+                        entry.tenantMobile ||
+                        "—",
+
+                    properties: new Set(),
+
+                    units: new Set()
+
+                });
+
+            }
+
+            const details = tenantDetails.get(key);
+
+            if (entry.propertyName) {
+                details.properties.add(entry.propertyName);
+            }
+
+            if (entry.rentalUnitName) {
+                details.units.add(entry.rentalUnitName);
+            }
+
+        });
+
+
+        // -------------------------------------------------
+        // COMBINE GROUP TOTALS WITH TENANT DETAILS
+        // -------------------------------------------------
+
+        const tenantRows = groupedTenants.map(group => {
+
+            const details = tenantDetails.get(group.key);
+
+            return {
+
+                ...group,
+
+                mobile: details?.mobile || "—",
+
+                properties: details
+                    ? [...details.properties].join(", ")
+                    : "—",
+
+                units: details
+                    ? [...details.units].join(", ")
+                    : "—"
+
+            };
+
+        });
+
+
+        // -------------------------------------------------
+        // COMMON OVERDUE CALCULATION
+        // -------------------------------------------------
+
+        const overduePending = data.rentEntries
+
+            .filter(entry => entry.isOverdue)
+
+            .reduce(
+                (sum, entry) => sum + entry.pendingAmount,
+                0
+            );
+
+
+        const namedTenantCount = tenantRows.filter(
+            row => row.key !== "__unmapped__"
+        ).length;
+
+
+        // -------------------------------------------------
+        // RENDER TENANT-WISE REPORT
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Tenants with Rent Entries",
+                    namedTenantCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Rent Register Entries",
+                    data.rentEntries.length
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Due",
+                    propertyMoney(data.totals.totalDue)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Received",
+                    propertyMoney(data.totals.totalReceived)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Pending",
+                    propertyMoney(data.totals.totalPending)
+                )}
+
+                ${renderPropertyKpi(
+                    "Overdue Pending",
+                    propertyMoney(overduePending)
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                Rent entries are grouped by tenant name and mobile number
+                wherever available. Entries without a tenant name are shown
+                separately as Tenant not specified. Financial totals are
+                calculated using the common Rental Report Engine.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Tenant-wise Rent Details</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Tenant Name",
+                        render: row => propertyEscapeHtml(row.label)
+                    },
+
+                    {
+                        label: "Mobile",
+                        render: row => propertyEscapeHtml(row.mobile)
+                    },
+
+                    {
+                        label: "Property",
+                        render: row => propertyEscapeHtml(row.properties)
+                    },
+
+                    {
+                        label: "Rental Unit",
+                        render: row => propertyEscapeHtml(row.units)
+                    },
+
+                    {
+                        label: "Rent Entries",
+                        render: row => row.rentEntryCount
+                    },
+
+                    {
+                        label: "Total Due",
+                        render: row => propertyMoney(row.totalDue)
+                    },
+
+                    {
+                        label: "Received",
+                        render: row => propertyMoney(row.totalReceived)
+                    },
+
+                    {
+                        label: "Pending",
+                        render: row => propertyMoney(row.totalPending)
+                    },
+
+                    {
+                        label: "Overdue Pending",
+                        render: row => propertyMoney(row.overduePending)
+                    }
+
+                ], tenantRows, "No tenant-wise rent records found.")}
+
+                <p class="property-report-muted">
+                    Tenants are sorted by highest rent received first.
+                </p>
+
+            </section>
+
+        `;
+
+        console.log("✅ TENANT-WISE RENT REPORT LOADED:", {
+            tenantGroups: tenantRows.length,
+            tenantDetails: tenantRows
+        });
+
+    } catch (error) {
+
+        console.error("TENANT-WISE RENT REPORT ERROR:", error);
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Tenant-wise Rent Report could not be loaded</h3>
+                    <p>${propertyEscapeHtml(error.message || "Unknown error")}</p>
+                    <p>Please check Firebase permissions and the browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// RENTAL REPORT #181 — PROPERTY-WISE RENTAL INCOME
+// Uses Common Rental Data + Grouping Engine
+// =====================================================
+
+async function renderPropertyWiseRentalIncomeReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Property rental report work area not found.");
+        return;
+    }
+
+    window.activeReportCategory = "Rental Properties";
+    window.activeRentalReportNumber = 181;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>🏘️ Property-wise Rental Income</h2>
+                    <p>Property-wise rent due, received and outstanding analysis</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRentalReports"
+                >
+                    ← Back to Rental Reports
+                </button>
+            </div>
+
+            <div id="rentalReportContent">
+                <div class="property-report-loading">
+                    Loading property-wise rental information...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRentalReports")?.addEventListener(
+        "click",
+        renderRentalReportsDashboard
+    );
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON RENTAL DATA
+        // -------------------------------------------------
+
+        const data = await loadRentalReportData();
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // PROPERTY GROUP KEY
+        // Prefer stable property ID.
+        // Use property name only when ID is unavailable.
+        // -------------------------------------------------
+
+        function getPropertyGroupKey(entry) {
+
+            const propertyId = String(
+                entry.propertyId || ""
+            ).trim();
+
+            if (propertyId) {
+                return `property-id::${propertyId}`;
+            }
+
+            const propertyName = String(
+                entry.propertyName || ""
+            ).trim().toLowerCase();
+
+            if (propertyName) {
+                return `property-name::${propertyName}`;
+            }
+
+            return "__unmapped__";
+        }
+
+
+        // -------------------------------------------------
+        // GROUP RENT ENTRIES PROPERTY-WISE
+        // -------------------------------------------------
+
+        const groupedProperties = groupRentalReportEntries(
+
+            data.rentEntries,
+
+            entry => getPropertyGroupKey(entry),
+
+            entry => entry.propertyName || "Property not linked"
+
+        );
+
+
+        // -------------------------------------------------
+        // COLLECT PROPERTY DETAILS
+        // -------------------------------------------------
+
+        const propertyDetails = new Map();
+
+        data.rentEntries.forEach(entry => {
+
+            const key = getPropertyGroupKey(entry);
+
+            if (!propertyDetails.has(key)) {
+
+                propertyDetails.set(key, {
+
+                    units: new Set(),
+
+                    tenants: new Set()
+
+                });
+
+            }
+
+            const details = propertyDetails.get(key);
+
+
+            // Distinct rental units
+            const unitKey =
+                entry.rentalId ||
+                entry.rentalUnitName;
+
+            if (unitKey) {
+                details.units.add(String(unitKey));
+            }
+
+
+            // Distinct tenants
+            const tenantKey = (
+                String(entry.tenantName || "").trim().toLowerCase() +
+                "::" +
+                String(
+                    entry.rentalUnit?.tenantMobile ||
+                    entry.tenantMobile ||
+                    ""
+                ).replace(/\D/g, "")
+            );
+
+            if (entry.tenantName) {
+                details.tenants.add(tenantKey);
+            }
+
+        });
+
+
+        // -------------------------------------------------
+        // PREPARE PROPERTY REPORT ROWS
+        // -------------------------------------------------
+
+        const propertyRows = groupedProperties.map(group => {
+
+            const details = propertyDetails.get(group.key);
+
+            return {
+
+                ...group,
+
+                unitCount: details?.units.size || 0,
+
+                tenantCount: details?.tenants.size || 0
+
+            };
+
+        });
+
+
+        // -------------------------------------------------
+        // OVERDUE PENDING
+        // -------------------------------------------------
+
+        const overduePending = data.rentEntries
+
+            .filter(entry => entry.isOverdue)
+
+            .reduce(
+                (sum, entry) => sum + entry.pendingAmount,
+                0
+            );
+
+
+        // -------------------------------------------------
+        // RENDER REPORT
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Properties with Rent Entries",
+                    propertyRows.filter(
+                        row => row.key !== "__unmapped__"
+                    ).length
+                )}
+
+                ${renderPropertyKpi(
+                    "Rental Units",
+                    data.totals.rentalUnitCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Due",
+                    propertyMoney(data.totals.totalDue)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Received",
+                    propertyMoney(data.totals.totalReceived)
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Pending",
+                    propertyMoney(data.totals.totalPending)
+                )}
+
+                ${renderPropertyKpi(
+                    "Overdue Pending",
+                    propertyMoney(overduePending)
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                Rental income is grouped using the rental unit's linked
+                Property ID wherever available. Property name is used only
+                when a Property ID is unavailable. Unlinked entries are
+                displayed separately. Financial totals use the common
+                Rental Report Engine.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Property-wise Rental Income Details</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Property",
+                        render: row => propertyEscapeHtml(row.label)
+                    },
+
+                    {
+                        label: "Rental Units",
+                        render: row => row.unitCount
+                    },
+
+                    {
+                        label: "Tenants",
+                        render: row => row.tenantCount
+                    },
+
+                    {
+                        label: "Rent Entries",
+                        render: row => row.rentEntryCount
+                    },
+
+                    {
+                        label: "Total Due",
+                        render: row => propertyMoney(row.totalDue)
+                    },
+
+                    {
+                        label: "Received",
+                        render: row => propertyMoney(row.totalReceived)
+                    },
+
+                    {
+                        label: "Pending",
+                        render: row => propertyMoney(row.totalPending)
+                    },
+
+                    {
+                        label: "Overdue Pending",
+                        render: row => propertyMoney(row.overduePending)
+                    }
+
+                ], propertyRows, "No property-wise rental records found.")}
+
+                <p class="property-report-muted">
+                    Properties are sorted by highest rent received first.
+                </p>
+
+            </section>
+
+        `;
+
+        console.log("✅ PROPERTY-WISE RENTAL INCOME REPORT LOADED:", {
+            propertyGroups: propertyRows.length,
+            propertyDetails: propertyRows
+        });
+
+    } catch (error) {
+
+        console.error("PROPERTY-WISE RENTAL INCOME REPORT ERROR:", error);
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Property-wise Rental Income could not be loaded</h3>
+                    <p>${propertyEscapeHtml(error.message || "Unknown error")}</p>
+                    <p>Please check Firebase permissions and the browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// RENTAL REPORT #183 — RENT RECEIVED
+// Uses Common Rental Data Engine
+// =====================================================
+
+async function renderRentReceivedReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Rent received report work area not found.");
+        return;
+    }
+
+    window.activeReportCategory = "Rental Properties";
+    window.activeRentalReportNumber = 183;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>💰 Rent Received</h2>
+                    <p>Register of rent payments received from tenants</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRentalReports"
+                >
+                    ← Back to Rental Reports
+                </button>
+            </div>
+
+            <div id="rentalReportContent">
+                <div class="property-report-loading">
+                    Loading received rent records...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRentalReports")?.addEventListener(
+        "click",
+        renderRentalReportsDashboard
+    );
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON RENTAL DATA
+        // -------------------------------------------------
+
+        const data = await loadRentalReportData();
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // FILTER ACTUAL RECEIVED RENT ENTRIES
+        // Include partial and full payments
+        // -------------------------------------------------
+
+        const receivedEntries = data.rentEntries
+            .filter(entry => entry.paidAmount > 0)
+            .sort((a, b) => {
+
+                const dateA = a.paymentDate?.getTime() || 0;
+                const dateB = b.paymentDate?.getTime() || 0;
+
+                return dateB - dateA;
+
+            });
+
+
+        // -------------------------------------------------
+        // COMMON RECEIVED AMOUNT TOTAL
+        // -------------------------------------------------
+
+        const totalReceived = receivedEntries.reduce(
+            (sum, entry) => sum + entry.paidAmount,
+            0
+        );
+
+        const fullyPaidCount = receivedEntries.filter(
+            entry => entry.pendingAmount <= 0
+        ).length;
+
+        const partiallyPaidCount = receivedEntries.filter(
+            entry => entry.pendingAmount > 0
+        ).length;
+
+        const remainingPending = receivedEntries.reduce(
+            (sum, entry) => sum + entry.pendingAmount,
+            0
+        );
+
+
+        // -------------------------------------------------
+        // DATE DISPLAY
+        // -------------------------------------------------
+
+        function receivedDateLabel(value) {
+
+            if (!value) return "Not recorded";
+
+            const date = rentalReportDate(value);
+
+            if (!date) return "Not recorded";
+
+            return date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
+
+        }
+
+
+        // -------------------------------------------------
+        // RENDER RECEIVED RENT REPORT
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Received Rent Entries",
+                    receivedEntries.length
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Rent Received",
+                    propertyMoney(totalReceived)
+                )}
+
+                ${renderPropertyKpi(
+                    "Fully Paid Entries",
+                    fullyPaidCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Partially Paid Entries",
+                    partiallyPaidCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Remaining Pending",
+                    propertyMoney(remainingPending)
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                Only Rent Register entries with an amount received greater
+                than zero are included. Partially paid entries are also
+                included. Received amounts are taken from the Rent Register;
+                mirrored transaction records are not counted again.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Rent Received Register</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Payment Date",
+                        render: row => propertyEscapeHtml(
+                            receivedDateLabel(row.paymentDate)
+                        )
+                    },
+
+                    {
+                        label: "Rent Month",
+                        render: row => propertyEscapeHtml(
+                            rentalReportMonthLabel(row.rentMonth)
+                        )
+                    },
+
+                    {
+                        label: "Property",
+                        render: row => propertyEscapeHtml(
+                            row.propertyName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Rental Unit",
+                        render: row => propertyEscapeHtml(
+                            row.rentalUnitName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Tenant",
+                        render: row => propertyEscapeHtml(
+                            row.tenantName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Total Due",
+                        render: row => propertyMoney(row.totalDue)
+                    },
+
+                    {
+                        label: "Amount Received",
+                        render: row => propertyMoney(row.paidAmount)
+                    },
+
+                    {
+                        label: "Pending",
+                        render: row => propertyMoney(row.pendingAmount)
+                    },
+
+                    {
+                        label: "Payment Mode",
+                        render: row => propertyEscapeHtml(
+                            propertyLabel(row.paymentMode)
+                        )
+                    },
+
+                    {
+                        label: "Status",
+                        render: row => propertyEscapeHtml(
+                            row.collectionStatus
+                        )
+                    }
+
+                ], receivedEntries, "No rent received records found.")}
+
+                <p class="property-report-muted">
+                    Records are sorted by latest payment date first.
+                </p>
+
+            </section>
+
+        `;
+
+        console.log("✅ RENT RECEIVED REPORT LOADED:", {
+            receivedEntries: receivedEntries.length,
+            totalReceived,
+            fullyPaidCount,
+            partiallyPaidCount,
+            remainingPending
+        });
+
+    } catch (error) {
+
+        console.error("RENT RECEIVED REPORT ERROR:", error);
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Rent Received Report could not be loaded</h3>
+                    <p>${propertyEscapeHtml(error.message || "Unknown error")}</p>
+                    <p>Please check Firebase permissions and the browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// RENTAL REPORTS #184, #186, #187, #188, #189, #190, #194
+// COMMON ADVANCED RENTAL REPORT RENDERER
+// =====================================================
+
+async function renderRentalAdvancedReport(reportNumber) {
+
+    const reportConfig = {
+
+        184: {
+            title: "Rent Pending",
+            description: "Pending rent and outstanding amounts"
+        },
+
+        186: {
+            title: "Rent Arrears",
+            description: "Overdue rent after due date"
+        },
+
+        187: {
+            title: "Monthly Rent Collection",
+            description: "Month-wise rent collection analysis"
+        },
+
+        188: {
+            title: "Annual Rent Collection",
+            description: "Year-wise rent collection summary"
+        },
+
+        189: {
+            title: "Rental Agreement Report",
+            description: "Tenant and rental agreement register"
+        },
+
+        190: {
+            title: "Lease Expiry Report",
+            description: "Upcoming and expired rental agreements"
+        },
+
+        194: {
+            title: "Rental Yield",
+            description: "Gross rental yield by property"
+        }
+
+    };
+
+    const config = reportConfig[Number(reportNumber)];
+
+    if (!config) {
+        console.error("Rental advanced report not found:", reportNumber);
+        return;
+    }
+
+
+    // -------------------------------------------------
+    // COMMON REPORT PAGE
+    // -------------------------------------------------
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Rental report work area not found.");
+        return;
+    }
+
+    window.activeReportCategory = "Rental Properties";
+    window.activeRentalReportNumber = Number(reportNumber);
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+
+                <div>
+                    <h2>🏘️ ${propertyEscapeHtml(config.title)}</h2>
+                    <p>${propertyEscapeHtml(config.description)}</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRentalReports"
+                >
+                    ← Back to Rental Reports
+                </button>
+
+            </div>
+
+            <div id="rentalReportContent">
+
+                <div class="property-report-loading">
+                    Loading rental report...
+                </div>
+
+            </div>
+
+        </div>
+    `;
+
+
+    document.getElementById("backToRentalReports")?.addEventListener(
+        "click",
+        renderRentalReportsDashboard
+    );
+
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON RENTAL DATA
+        // -------------------------------------------------
+
+        const data = await loadRentalReportData();
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (!content) return;
+
+
+        const entries = data.rentEntries;
+        const rentalUnits = data.rentalUnits;
+        const properties = data.properties;
+
+
+        // -------------------------------------------------
+        // COMMON DATE HELPERS
+        // -------------------------------------------------
+
+        function displayRentalDate(value) {
+
+            const date = rentalReportDate(value);
+
+            if (!date) return "—";
+
+            return date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            });
+
+        }
+
+
+        function getTodayStart() {
+
+            const date = new Date();
+
+            date.setHours(0, 0, 0, 0);
+
+            return date;
+
+        }
+
+
+        function getDaysOverdue(value) {
+
+            const dueDate = rentalReportDate(value);
+
+            if (!dueDate) return 0;
+
+            dueDate.setHours(0, 0, 0, 0);
+
+            return Math.max(
+                0,
+                Math.floor(
+                    (getTodayStart().getTime() - dueDate.getTime()) /
+                    86400000
+                )
+            );
+
+        }
+
+
+        function getUnitStatus(unit) {
+
+            return String(
+                unit.tenancyStatus || ""
+            ).trim().toLowerCase();
+
+        }
+
+
+        function isActiveRentalUnit(unit) {
+
+            const status = getUnitStatus(unit);
+
+            return [
+                "active",
+                "occupied",
+                "notice",
+                "on notice",
+                "notice period"
+            ].includes(status);
+
+        }
+
+
+        function getRentMonthKey(entry) {
+
+            const raw = String(
+                entry.rentMonth || ""
+            ).trim();
+
+            const match = raw.match(/^(\d{4})-(\d{1,2})$/);
+
+            if (match) {
+
+                return (
+                    match[1] + "-" +
+                    match[2].padStart(2, "0")
+                );
+
+            }
+
+            if (entry.dueDate) {
+
+                return (
+                    entry.dueDate.getFullYear() +
+                    "-" +
+                    String(entry.dueDate.getMonth() + 1).padStart(2, "0")
+                );
+
+            }
+
+            return "";
+
+        }
+
+
+        function getRentYear(entry) {
+
+            const monthKey = getRentMonthKey(entry);
+
+            if (monthKey) {
+                return monthKey.substring(0, 4);
+            }
+
+            return "";
+
+        }
+
+
+        function renderStandardReportTable(columns, rows, message) {
+
+            return renderPropertyReportTable(
+                columns,
+                rows,
+                message
+            );
+
+        }
+
+
+        // =================================================
+        // REPORT #184 — RENT PENDING
+        // =================================================
+
+        if (Number(reportNumber) === 184) {
+
+            const pendingEntries = entries
+
+                .filter(entry => entry.pendingAmount > 0)
+
+                .sort((a, b) => {
+
+                    const dateA = a.dueDate?.getTime() || Infinity;
+                    const dateB = b.dueDate?.getTime() || Infinity;
+
+                    return dateA - dateB;
+
+                });
+
+
+            const overduePending = pendingEntries
+
+                .filter(entry => entry.isOverdue)
+
+                .reduce(
+                    (sum, entry) => sum + entry.pendingAmount,
+                    0
+                );
+
+
+            const notYetDuePending =
+                pendingEntries.reduce(
+                    (sum, entry) => sum + entry.pendingAmount,
+                    0
+                ) - overduePending;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Pending Rent Entries",
+                        pendingEntries.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Pending",
+                        propertyMoney(data.totals.totalPending)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Overdue Pending",
+                        propertyMoney(overduePending)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Not Yet Due",
+                        propertyMoney(notYetDuePending)
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    This report includes all unpaid rent amounts, whether
+                    the due date has passed or is still in the future.
+                    Overdue and not-yet-due amounts are shown separately.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Pending Rent Register</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Rent Month",
+                            render: row => propertyEscapeHtml(
+                                rentalReportMonthLabel(row.rentMonth)
+                            )
+                        },
+
+                        {
+                            label: "Due Date",
+                            render: row => propertyEscapeHtml(
+                                displayRentalDate(row.dueDate)
+                            )
+                        },
+
+                        {
+                            label: "Property",
+                            render: row => propertyEscapeHtml(
+                                row.propertyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Unit",
+                            render: row => propertyEscapeHtml(
+                                row.rentalUnitName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Tenant",
+                            render: row => propertyEscapeHtml(
+                                row.tenantName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Total Due",
+                            render: row => propertyMoney(row.totalDue)
+                        },
+
+                        {
+                            label: "Received",
+                            render: row => propertyMoney(row.paidAmount)
+                        },
+
+                        {
+                            label: "Pending",
+                            render: row => propertyMoney(row.pendingAmount)
+                        },
+
+                        {
+                            label: "Status",
+                            render: row => row.isOverdue
+                                ? `<span class="property-negative">Overdue</span>`
+                                : "Not Yet Due"
+                        }
+
+                    ], pendingEntries, "No pending rent records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #186 — RENT ARREARS
+        // =================================================
+
+        else if (Number(reportNumber) === 186) {
+
+            const arrearsEntries = entries
+
+                .filter(entry =>
+                    entry.pendingAmount > 0 &&
+                    entry.isOverdue
+                )
+
+                .sort((a, b) => {
+
+                    const dateA = a.dueDate?.getTime() || 0;
+                    const dateB = b.dueDate?.getTime() || 0;
+
+                    return dateA - dateB;
+
+                });
+
+
+            const arrearsTotal = arrearsEntries.reduce(
+                (sum, entry) => sum + entry.pendingAmount,
+                0
+            );
+
+
+            const overdueTenantKeys = new Set(
+
+                arrearsEntries
+
+                    .filter(entry => entry.tenantName)
+
+                    .map(entry =>
+                        (
+                            String(entry.tenantName).trim().toLowerCase() +
+                            "::" +
+                            String(
+                                entry.rentalUnit?.tenantMobile ||
+                                entry.tenantMobile ||
+                                ""
+                            ).replace(/\D/g, "")
+                        )
+                    )
+
+            );
+
+
+            const oldestOverdueDate = arrearsEntries.length
+                ? displayRentalDate(arrearsEntries[0].dueDate)
+                : "—";
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Overdue Rent Entries",
+                        arrearsEntries.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Arrears",
+                        propertyMoney(arrearsTotal)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Tenants with Arrears",
+                        overdueTenantKeys.size
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Oldest Due Date",
+                        oldestOverdueDate
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Arrears include only pending amounts where the rent
+                    due date has already passed. Partially received rent
+                    contributes only its remaining unpaid balance.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Overdue Rent Details</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Rent Month",
+                            render: row => propertyEscapeHtml(
+                                rentalReportMonthLabel(row.rentMonth)
+                            )
+                        },
+
+                        {
+                            label: "Due Date",
+                            render: row => propertyEscapeHtml(
+                                displayRentalDate(row.dueDate)
+                            )
+                        },
+
+                        {
+                            label: "Days Overdue",
+                            render: row => getDaysOverdue(row.dueDate)
+                        },
+
+                        {
+                            label: "Property",
+                            render: row => propertyEscapeHtml(
+                                row.propertyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Unit",
+                            render: row => propertyEscapeHtml(
+                                row.rentalUnitName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Tenant",
+                            render: row => propertyEscapeHtml(
+                                row.tenantName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Total Due",
+                            render: row => propertyMoney(row.totalDue)
+                        },
+
+                        {
+                            label: "Received",
+                            render: row => propertyMoney(row.paidAmount)
+                        },
+
+                        {
+                            label: "Arrears",
+                            render: row => propertyMoney(row.pendingAmount)
+                        }
+
+                    ], arrearsEntries, "No overdue rent arrears found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #187 — MONTHLY RENT COLLECTION
+        // =================================================
+
+        else if (Number(reportNumber) === 187) {
+
+            const monthlyGroups = groupRentalReportEntries(
+
+                entries,
+
+                entry => getRentMonthKey(entry),
+
+                entry => rentalReportMonthLabel(
+                    getRentMonthKey(entry)
+                )
+
+            );
+
+
+            monthlyGroups.sort((a, b) =>
+                String(b.key).localeCompare(String(a.key))
+            );
+
+
+            const totalMonthlyReceived = monthlyGroups.reduce(
+                (sum, group) => sum + group.totalReceived,
+                0
+            );
+
+
+            const bestMonth = [...monthlyGroups].sort(
+                (a, b) => b.totalReceived - a.totalReceived
+            )[0];
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Months with Rent Records",
+                        monthlyGroups.filter(
+                            group => group.key !== "__unmapped__"
+                        ).length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Received",
+                        propertyMoney(totalMonthlyReceived)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Pending",
+                        propertyMoney(data.totals.totalPending)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Highest Collection Month",
+                        bestMonth?.label || "—",
+                        bestMonth
+                            ? propertyMoney(bestMonth.totalReceived)
+                            : ""
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Rent entries are grouped by Rent Month. Collection
+                    rate is calculated as received amount divided by
+                    total due for that month.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Month-wise Collection Details</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Rent Month",
+                            render: row => propertyEscapeHtml(row.label)
+                        },
+
+                        {
+                            label: "Rent Entries",
+                            render: row => row.rentEntryCount
+                        },
+
+                        {
+                            label: "Total Due",
+                            render: row => propertyMoney(row.totalDue)
+                        },
+
+                        {
+                            label: "Received",
+                            render: row => propertyMoney(row.totalReceived)
+                        },
+
+                        {
+                            label: "Pending",
+                            render: row => propertyMoney(row.totalPending)
+                        },
+
+                        {
+                            label: "Overdue Pending",
+                            render: row => propertyMoney(row.overduePending)
+                        },
+
+                        {
+                            label: "Collection Rate",
+                            render: row => propertyPercent(
+                                row.totalDue > 0
+                                    ? (row.totalReceived / row.totalDue) * 100
+                                    : 0
+                            )
+                        }
+
+                    ], monthlyGroups, "No monthly rent records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #188 — ANNUAL RENT COLLECTION
+        // =================================================
+
+        else if (Number(reportNumber) === 188) {
+
+            const annualGroups = groupRentalReportEntries(
+
+                entries,
+
+                entry => getRentYear(entry),
+
+                entry => getRentYear(entry) || "Year not specified"
+
+            );
+
+
+            annualGroups.sort((a, b) =>
+                String(b.key).localeCompare(String(a.key))
+            );
+
+
+            const totalAnnualReceived = annualGroups.reduce(
+                (sum, group) => sum + group.totalReceived,
+                0
+            );
+
+
+            const bestYear = [...annualGroups].sort(
+                (a, b) => b.totalReceived - a.totalReceived
+            )[0];
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Years with Rent Records",
+                        annualGroups.filter(
+                            group => group.key !== "__unmapped__"
+                        ).length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Received",
+                        propertyMoney(totalAnnualReceived)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Due",
+                        propertyMoney(data.totals.totalDue)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Rent Pending",
+                        propertyMoney(data.totals.totalPending)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Highest Collection Year",
+                        bestYear?.label || "—",
+                        bestYear
+                            ? propertyMoney(bestYear.totalReceived)
+                            : ""
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Annual collection is grouped using the year from Rent
+                    Month. If Rent Month is unavailable, the rent due date
+                    is used. This is a calendar-year summary.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Year-wise Collection Details</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Year",
+                            render: row => propertyEscapeHtml(row.label)
+                        },
+
+                        {
+                            label: "Rent Entries",
+                            render: row => row.rentEntryCount
+                        },
+
+                        {
+                            label: "Total Due",
+                            render: row => propertyMoney(row.totalDue)
+                        },
+
+                        {
+                            label: "Received",
+                            render: row => propertyMoney(row.totalReceived)
+                        },
+
+                        {
+                            label: "Pending",
+                            render: row => propertyMoney(row.totalPending)
+                        },
+
+                        {
+                            label: "Overdue Pending",
+                            render: row => propertyMoney(row.overduePending)
+                        },
+
+                        {
+                            label: "Collection Rate",
+                            render: row => propertyPercent(
+                                row.totalDue > 0
+                                    ? (row.totalReceived / row.totalDue) * 100
+                                    : 0
+                            )
+                        }
+
+                    ], annualGroups, "No annual rent records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #189 — RENTAL AGREEMENT REPORT
+        // =================================================
+
+        else if (Number(reportNumber) === 189) {
+
+            const agreementRows = [...rentalUnits].sort((a, b) =>
+                String(a.tenantName || "").localeCompare(
+                    String(b.tenantName || "")
+                )
+            );
+
+
+            const activeCount = agreementRows.filter(
+                unit => isActiveRentalUnit(unit)
+            ).length;
+
+
+            const missingStartDate = agreementRows.filter(
+                unit => !rentalReportDate(unit.tenancyStartDate)
+            ).length;
+
+
+            const missingEndDate = agreementRows.filter(
+                unit => !rentalReportDate(unit.tenancyEndDate)
+            ).length;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Rental Agreements / Units",
+                        agreementRows.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Active / Notice Units",
+                        activeCount
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Start Date Missing",
+                        missingStartDate
+                    )}
+
+                    ${renderPropertyKpi(
+                        "End Date Missing",
+                        missingEndDate
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    This report uses the Rental Units register. Agreement
+                    start and end dates are taken from tenancyStartDate
+                    and tenancyEndDate. Missing dates are shown as blank;
+                    no dates are assumed.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Rental Agreement Register</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Property",
+                            render: row => propertyEscapeHtml(
+                                row.propertyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Unit",
+                            render: row => propertyEscapeHtml(
+                                row.rentalUnitName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Floor",
+                            render: row => propertyEscapeHtml(
+                                row.rentalUnitFloor || "—"
+                            )
+                        },
+
+                        {
+                            label: "Tenant",
+                            render: row => propertyEscapeHtml(
+                                row.tenantName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Mobile",
+                            render: row => propertyEscapeHtml(
+                                row.tenantMobile || "—"
+                            )
+                        },
+
+                        {
+                            label: "Start Date",
+                            render: row => propertyEscapeHtml(
+                                displayRentalDate(row.tenancyStartDate)
+                            )
+                        },
+
+                        {
+                            label: "End Date",
+                            render: row => propertyEscapeHtml(
+                                displayRentalDate(row.tenancyEndDate)
+                            )
+                        },
+
+                        {
+                            label: "Monthly Rent",
+                            render: row => propertyMoney(
+                                rentalReportNumber(row.monthlyRent)
+                            )
+                        },
+
+                        {
+                            label: "Security Deposit",
+                            render: row => propertyMoney(
+                                rentalReportNumber(row.securityDeposit)
+                            )
+                        },
+
+                        {
+                            label: "Status",
+                            render: row => propertyEscapeHtml(
+                                propertyLabel(row.tenancyStatus)
+                            )
+                        }
+
+                    ], agreementRows, "No rental agreement records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #190 — LEASE EXPIRY REPORT
+        // =================================================
+
+        else if (Number(reportNumber) === 190) {
+
+            const today = getTodayStart();
+
+
+            const leaseRows = rentalUnits
+
+                .filter(unit => {
+
+                    const status = getUnitStatus(unit);
+
+                    // Exclude already vacated or terminated units
+                    if (
+                        status === "vacated" ||
+                        status === "terminated" ||
+                        status === "inactive"
+                    ) {
+                        return false;
+                    }
+
+                    return Boolean(
+                        rentalReportDate(unit.tenancyEndDate)
+                    );
+
+                })
+
+                .map(unit => {
+
+                    const endDate = rentalReportDate(
+                        unit.tenancyEndDate
+                    );
+
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const daysUntilExpiry = Math.floor(
+                        (
+                            endDate.getTime() -
+                            today.getTime()
+                        ) / 86400000
+                    );
+
+
+                    let expiryStatus = "";
+
+                    if (daysUntilExpiry < 0) {
+                        expiryStatus = "Expired";
+                    } else if (daysUntilExpiry === 0) {
+                        expiryStatus = "Expires Today";
+                    } else if (daysUntilExpiry <= 30) {
+                        expiryStatus = "Within 30 Days";
+                    } else if (daysUntilExpiry <= 60) {
+                        expiryStatus = "31–60 Days";
+                    } else if (daysUntilExpiry <= 90) {
+                        expiryStatus = "61–90 Days";
+                    } else {
+                        expiryStatus = "Beyond 90 Days";
+                    }
+
+
+                    return {
+
+                        ...unit,
+
+                        calculatedEndDate: endDate,
+
+                        daysUntilExpiry,
+
+                        expiryStatus
+
+                    };
+
+                })
+
+                .sort((a, b) =>
+                    a.calculatedEndDate - b.calculatedEndDate
+                );
+
+
+            const expiredCount = leaseRows.filter(
+                row => row.daysUntilExpiry < 0
+            ).length;
+
+
+            const expiring30Days = leaseRows.filter(
+                row =>
+                    row.daysUntilExpiry >= 0 &&
+                    row.daysUntilExpiry <= 30
+            ).length;
+
+
+            const expiring31To90Days = leaseRows.filter(
+                row =>
+                    row.daysUntilExpiry > 30 &&
+                    row.daysUntilExpiry <= 90
+            ).length;
+
+
+            const missingEndDateCount = rentalUnits.filter(unit => {
+
+                const status = getUnitStatus(unit);
+
+                const isNotVacated = ![
+                    "vacated",
+                    "terminated",
+                    "inactive"
+                ].includes(status);
+
+                return (
+                    isNotVacated &&
+                    !rentalReportDate(unit.tenancyEndDate)
+                );
+
+            }).length;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Agreements with End Date",
+                        leaseRows.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expired Agreements",
+                        expiredCount
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expiring Within 30 Days",
+                        expiring30Days
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expiring in 31–90 Days",
+                        expiring31To90Days
+                    )}
+
+                    ${renderPropertyKpi(
+                        "End Date Missing",
+                        missingEndDateCount
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Expiry status is calculated against today's date.
+                    Vacated, terminated and inactive units are excluded.
+                    Units without an end date are counted separately.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Lease Expiry Schedule</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Property",
+                            render: row => propertyEscapeHtml(
+                                row.propertyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Unit",
+                            render: row => propertyEscapeHtml(
+                                row.rentalUnitName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Tenant",
+                            render: row => propertyEscapeHtml(
+                                row.tenantName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Mobile",
+                            render: row => propertyEscapeHtml(
+                                row.tenantMobile || "—"
+                            )
+                        },
+
+                        {
+                            label: "Lease End Date",
+                            render: row => propertyEscapeHtml(
+                                displayRentalDate(row.calculatedEndDate)
+                            )
+                        },
+
+                        {
+                            label: "Days Until Expiry",
+                            render: row => row.daysUntilExpiry < 0
+                                ? `${Math.abs(row.daysUntilExpiry)} days overdue`
+                                : row.daysUntilExpiry
+                        },
+
+                        {
+                            label: "Expiry Status",
+                            render: row => propertyEscapeHtml(
+                                row.expiryStatus
+                            )
+                        },
+
+                        {
+                            label: "Monthly Rent",
+                            render: row => propertyMoney(
+                                rentalReportNumber(row.monthlyRent)
+                            )
+                        },
+
+                        {
+                            label: "Tenancy Status",
+                            render: row => propertyEscapeHtml(
+                                propertyLabel(row.tenancyStatus)
+                            )
+                        }
+
+                    ], leaseRows, "No upcoming or expired lease end dates found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #194 — RENTAL YIELD
+        // Gross Rental Yield = Annualized Rent / Current Value
+        // =================================================
+
+        else if (Number(reportNumber) === 194) {
+
+            const activeUnits = rentalUnits.filter(
+                unit => isActiveRentalUnit(unit)
+            );
+
+
+            const rentByProperty = new Map();
+
+
+            activeUnits.forEach(unit => {
+
+                const propertyId = String(
+                    unit.rentalPropertyId || ""
+                ).trim();
+
+                if (!propertyId) return;
+
+
+                if (!rentByProperty.has(propertyId)) {
+
+                    rentByProperty.set(propertyId, {
+
+                        monthlyRent: 0,
+
+                        unitCount: 0,
+
+                        tenants: new Set()
+
+                    });
+
+                }
+
+
+                const group = rentByProperty.get(propertyId);
+
+                group.monthlyRent += rentalReportNumber(
+                    unit.monthlyRent
+                );
+
+                group.unitCount++;
+
+
+                if (unit.tenantName) {
+                    group.tenants.add(
+                        String(unit.tenantName).trim().toLowerCase()
+                    );
+                }
+
+            });
+
+
+            const yieldRows = properties
+
+                .map(property => {
+
+                    const propertyId = String(property.id);
+
+                    const rentalData = rentByProperty.get(propertyId) || {
+                        monthlyRent: 0,
+                        unitCount: 0,
+                        tenants: new Set()
+                    };
+
+
+                    const currentValue = rentalReportNumber(
+                        property.currentValue
+                    );
+
+                    const annualRent = rentalData.monthlyRent * 12;
+
+
+                    const grossYield = (
+                        currentValue > 0 &&
+                        rentalData.unitCount > 0 &&
+                        annualRent > 0
+                    )
+                        ? (annualRent / currentValue) * 100
+                        : null;
+
+
+                    return {
+
+                        propertyName:
+                            property.propertyName ||
+                            "Unnamed property",
+
+                        unitCount: rentalData.unitCount,
+
+                        tenantCount: rentalData.tenants.size,
+
+                        monthlyRent: rentalData.monthlyRent,
+
+                        annualRent,
+
+                        currentValue,
+
+                        grossYield
+
+                    };
+
+                })
+
+                .filter(row =>
+                    row.unitCount > 0 ||
+                    row.currentValue > 0
+                )
+
+                .sort((a, b) =>
+                    (b.grossYield ?? -1) - (a.grossYield ?? -1)
+                );
+
+
+            const eligibleYieldRows = yieldRows.filter(
+                row => row.grossYield !== null
+            );
+
+
+            const annualRentTotal = yieldRows.reduce(
+                (sum, row) => sum + row.annualRent,
+                0
+            );
+
+
+            const eligibleAnnualRent = eligibleYieldRows.reduce(
+                (sum, row) => sum + row.annualRent,
+                0
+            );
+
+
+            const eligiblePropertyValue = eligibleYieldRows.reduce(
+                (sum, row) => sum + row.currentValue,
+                0
+            );
+
+
+            const overallGrossYield = eligiblePropertyValue > 0
+                ? (eligibleAnnualRent / eligiblePropertyValue) * 100
+                : null;
+
+
+            const missingValueCount = yieldRows.filter(
+                row =>
+                    row.unitCount > 0 &&
+                    row.currentValue <= 0
+            ).length;
+
+
+            const unlinkedActiveUnits = activeUnits.filter(
+                unit => !unit.rentalPropertyId
+            ).length;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Active / Notice Rental Units",
+                        activeUnits.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Annualized Contract Rent",
+                        propertyMoney(annualRentTotal)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Properties with Yield Data",
+                        eligibleYieldRows.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Weighted Gross Rental Yield",
+                        overallGrossYield === null
+                            ? "—"
+                            : propertyPercent(overallGrossYield)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Current Value Missing",
+                        missingValueCount
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Active Units without Property Link",
+                        unlinkedActiveUnits
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Gross Rental Yield = (Monthly contractual rent × 12)
+                    ÷ Property Current Value × 100. Only Active, Occupied
+                    and Notice-status rental units are included. Properties
+                    without a positive Current Value are excluded from the
+                    yield calculation. This is gross yield, not net return:
+                    maintenance, taxes, insurance, vacancy periods, finance
+                    costs and other expenses are not deducted.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Property-wise Gross Rental Yield</h3>
+
+                    ${renderStandardReportTable([
+
+                        {
+                            label: "Property",
+                            render: row => propertyEscapeHtml(
+                                row.propertyName
+                            )
+                        },
+
+                        {
+                            label: "Rental Units",
+                            render: row => row.unitCount
+                        },
+
+                        {
+                            label: "Tenants",
+                            render: row => row.tenantCount
+                        },
+
+                        {
+                            label: "Monthly Contract Rent",
+                            render: row => propertyMoney(row.monthlyRent)
+                        },
+
+                        {
+                            label: "Annualized Rent",
+                            render: row => propertyMoney(row.annualRent)
+                        },
+
+                        {
+                            label: "Current Property Value",
+                            render: row => propertyRecordedValueMoney(
+                                row.currentValue
+                            )
+                        },
+
+                        {
+                            label: "Gross Rental Yield",
+                            render: row => row.grossYield === null
+                                ? "—"
+                                : propertyPercent(row.grossYield)
+                        }
+
+                    ], yieldRows, "No property valuation or rental data available.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        console.log(
+            `✅ RENTAL REPORT #${reportNumber} LOADED`,
+            {
+                report: config.title,
+                rentEntries: entries.length,
+                rentalUnits: rentalUnits.length,
+                properties: properties.length
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            `RENTAL REPORT #${reportNumber} ERROR:`,
+            error
+        );
+
+
+        const content = document.getElementById("rentalReportContent");
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+
+                    <h3>${propertyEscapeHtml(config.title)} could not be loaded</h3>
+
+                    <p>${propertyEscapeHtml(
+                        error.message || "Unknown error"
+                    )}</p>
+
+                    <p>
+                        Please check Firebase permissions and the browser console.
+                    </p>
+
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
 const categoryCards = document.querySelectorAll(
     ".report-category-card"
 );
@@ -477,6 +4763,28 @@ if (backToReportsDashboardButton) {
             renderTransactionReports();
 
         }
+
+// =====================================================
+// PROPERTIES REPORTS
+// =====================================================
+if (title === "Properties") {
+    console.log("🏠 PROPERTY REPORTS SELECTED");
+    renderPropertyReportsDashboard();
+    return;
+}
+
+// =====================================================
+// RENTAL PROPERTIES REPORTS
+// =====================================================
+
+if (title === "Rental Properties") {
+
+    console.log("🏘️ RENTAL REPORTS SELECTED");
+
+    renderRentalReportsDashboard();
+
+    return;
+}
 
 // =====================================================
 // INCOME & EXPENSES REPORTS
@@ -2294,6 +6602,13 @@ if (profitLossCard) {
 if (title === "Investments") {
     console.log("📈 INVESTMENTS REPORTS SELECTED");
     renderInvestmentReports();
+    return;
+}
+
+
+if (title === "Fixed Deposits") {
+    console.log("🏦 FIXED DEPOSITS REPORTS SELECTED");
+    renderFixedDepositReports();
     return;
 }
 
@@ -7353,52 +11668,49 @@ else if (report?.number === 23) {
         ).toUpperCase();
 
 
-    let fallbackReportName = "";
 
-if (!report) {
-    const reportHeading =
-        reportContainer.querySelector(
-            ".report-document-header strong"
-        );
+let fallbackReportName = "";
 
-    if (reportHeading) {
-        fallbackReportName =
-            reportHeading.textContent
-                .trim()
-                .replace(/^#\d+\s*/, "");
-    }
+const reportHeading =
+    reportContainer.querySelector(
+        "#fixedDepositReportContent h2"
+    );
+
+if (reportHeading) {
+    fallbackReportName =
+        reportHeading.textContent
+            .trim()
+            .replace(/^#\d+\s*/, "");
 }
 
-const finalReportTitle =
-    report
-        ? `Financial Report - ${report.name} — ${reportPeriod}`
-        : `Financial Report - ${
-              fallbackReportName ||
-              "Financial Report"
-          }`;
+const isFixedDepositReport =
+    !!reportContainer.querySelector(
+        "#fixedDepositReportContent"
+    );
+
+const finalReportTitle = fallbackReportName
+    ? `Financial Report - ${fallbackReportName}`
+    : isFixedDepositReport
+        ? "Financial Report - Fixed Deposit Report"
+        : report
+            ? `Financial Report - ${report.name} — ${reportPeriod}`
+            : "Financial Report";
 
 
-    if (
-        userName &&
-        userName.textContent !== finalUserName
-    ) {
-
-        userName.textContent =
-            finalUserName;
-
-    }
+if (
+    userName &&
+    userName.textContent !== finalUserName
+) {
+    userName.textContent = finalUserName;
+}
 
 
-    if (
-        reportTitle &&
-        reportTitle.textContent !== finalReportTitle
-    ) {
-
-        reportTitle.textContent =
-            finalReportTitle;
-
-    }
-
+if (
+    reportTitle &&
+    reportTitle.textContent !== finalReportTitle
+) {
+    reportTitle.textContent = finalReportTitle;
+}
 
     // =================================================
     // GLOBAL PRINT CSS
@@ -7784,7 +12096,7 @@ if (existingToolbar) {
 
     const isReportList =
         !!reportContainer.querySelector(
-            "#investmentReportsGrid, .transaction-reports-grid"
+           "#investmentReportsGrid, #fixedDepositReportsGrid, .transaction-reports-grid"
         );
 
     if (backButton) {
@@ -7952,7 +12264,7 @@ const backReportsButton =
     
 const isReportList =
     !!reportContainer.querySelector(
-        "#investmentReportsGrid, .transaction-reports-grid"
+        "#investmentReportsGrid, #fixedDepositReportsGrid, .transaction-reports-grid"
     );
 
 if (backReportsButton) {
@@ -7968,17 +12280,30 @@ if (backReportsButton) {
 
             const category =
                 window.activeReportCategory || "Transactions";
-
-                
-            // Investment Summary: return to Investments Reports
-if (
-    document.getElementById("investmentSummaryContent") ||
-    document.getElementById("investmentWiseDetailsContent") ||
-    document.getElementById("investmentCategoryWiseContent")
-) {
-    renderInvestmentReports();
+                if (category === "Properties") {
+    renderPropertyReportsDashboard();
     return;
 }
+
+        // Fixed Deposits Reports: return to Fixed Deposits Reports
+            if (
+                document.getElementById("fixedDepositReportContent")
+            ) {
+                renderFixedDepositReports();
+                return;
+            }
+
+            // Investment Reports: return to Investments Reports
+            if (
+                document.getElementById("investmentSummaryContent") ||
+                document.getElementById("investmentWiseDetailsContent") ||
+                document.getElementById("investmentCategoryWiseContent") ||
+                document.getElementById("investmentDateWiseContent") ||
+                document.getElementById("investmentStandardReportContent")
+            ) {
+                renderInvestmentReports();
+                return;
+            }
 
 
             if (category === "Income & Expenses") {
@@ -8032,7 +12357,18 @@ if (
             '[data-report-action="close"]'
         );
 
+if (closeButton) {
 
+    closeButton.addEventListener(
+        "click",
+        function () {
+
+            renderTransactionReports();
+
+        }
+    );
+
+}
     if (closeButton) {
 
         closeButton.addEventListener(
@@ -11851,6 +16187,669 @@ async function renderInvestmentCategoryWiseReport() {
 }
 
 
+/* =====================================================
+   REPORT #120 — INVESTMENT DATE-WISE
+===================================================== */
+
+async function renderInvestmentDateWiseReport() {
+    if (!reportWorkArea) return;
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px;
+                            border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #120 Investment Date-wise
+                    </strong>
+                    <p style="color:#64748b;">
+                        Investment transactions grouped by transaction date.
+                    </p>
+                </div>
+            </div>
+
+            <div id="investmentDateWiseContent"
+                 style="padding:20px 30px 30px;">
+                <p>Loading Investment Date-wise report...</p>
+            </div>
+        </div>
+    `;
+
+    const content = document.getElementById(
+        "investmentDateWiseContent"
+    );
+
+    if (!currentUser) {
+        content.textContent = "Please log in to view this report.";
+        return;
+    }
+
+    try {
+        const transactionsRef = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "transactions"
+        );
+
+        const snapshot = await getDocs(transactionsRef);
+        const transactions = [];
+
+        snapshot.forEach((doc) => {
+            const t = doc.data();
+
+            if (t.deleted === true) return;
+
+            if (
+                String(t.type || "").toLowerCase() !== "investment"
+            ) return;
+
+            transactions.push({
+                id: doc.id,
+                ...t
+            });
+        });
+
+        // Display dates consistently and sort chronologically
+        function getDateKey(value) {
+            if (!value) return "Date not recorded";
+
+            if (typeof value === "string") {
+                const s = value.trim();
+
+                // YYYY-MM-DD
+                if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+                    return s.slice(0, 10);
+                }
+
+                // DD-MM-YYYY or DD/MM/YYYY
+                const match = s.match(
+                    /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+                );
+
+                if (match) {
+                    return `${match[3]}-${match[2].padStart(2, "0")}-${match[1].padStart(2, "0")}`;
+                }
+
+                return s;
+            }
+
+            if (typeof value.toDate === "function") {
+                return value.toDate().toISOString().slice(0, 10);
+            }
+
+            return String(value);
+        }
+
+        function displayDate(key) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                const [year, month, day] = key.split("-");
+                return `${day}-${month}-${year}`;
+            }
+
+            return key;
+        }
+
+        const money = (value) =>
+            (Number(value) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const safe = (value) =>
+            typeof escapeHtml === "function"
+                ? escapeHtml(String(value ?? ""))
+                : String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                })[ch]);
+
+        transactions.forEach((t) => {
+            t._reportDate = getDateKey(t.date);
+            t._reportAmount = Number(t.amount) || 0;
+        });
+
+        transactions.sort((a, b) =>
+            a._reportDate.localeCompare(b._reportDate)
+        );
+
+        const dateGroups = new Map();
+
+        transactions.forEach((t) => {
+            if (!dateGroups.has(t._reportDate)) {
+                dateGroups.set(t._reportDate, {
+                    count: 0,
+                    amount: 0
+                });
+            }
+
+            const group = dateGroups.get(t._reportDate);
+            group.count += 1;
+            group.amount += t._reportAmount;
+        });
+
+        const totalAmount = transactions.reduce(
+            (sum, t) => sum + t._reportAmount,
+            0
+        );
+
+        const summaryRows = Array.from(dateGroups.entries())
+            .map(([date, group]) => `
+                <tr>
+                    <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                        ${safe(displayDate(date))}
+                    </td>
+                    <td style="padding:10px;text-align:center;border-bottom:1px solid #e2e8f0;">
+                        ${group.count}
+                    </td>
+                    <td style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">
+                        ₹${money(group.amount)}
+                    </td>
+                    <td style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">
+                        ${totalAmount
+                            ? (group.amount / totalAmount * 100).toFixed(2)
+                            : "0.00"}%
+                    </td>
+                </tr>
+            `).join("");
+
+        const detailRows = transactions.map((t) => `
+            <tr>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(displayDate(t._reportDate))}
+                </td>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(t.investmentName || t.investment || t.name || t.category || "—")}
+                </td>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(t.category || "—")}
+                </td>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(t.party || t.account || "—")}
+                </td>
+                <td style="padding:10px;text-align:right;border-bottom:1px solid #e2e8f0;">
+                    ₹${money(t._reportAmount)}
+                </td>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(t.paymentMethod || t.payment_method || "—")}
+                </td>
+                <td style="padding:10px;border-bottom:1px solid #e2e8f0;">
+                    ${safe(t.notes || t.description || "—")}
+                </td>
+            </tr>
+        `).join("");
+
+        content.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:26px;">
+                <div style="flex:1;min-width:180px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Dates</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${dateGroups.size}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:180px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Investment Transactions</div>
+                    <strong style="font-size:24px;color:#173b70;">
+                        ${transactions.length}
+                    </strong>
+                </div>
+
+                <div style="flex:1;min-width:180px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Total Recorded Amount</div>
+                    <strong style="font-size:22px;color:#087443;">
+                        ₹${money(totalAmount)}
+                    </strong>
+                </div>
+            </div>
+
+            <h3 style="color:#173b70;">Date-wise Summary</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;margin-bottom:28px;">
+                <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Transaction Date</th>
+                            <th style="padding:12px;text-align:center;">Transactions</th>
+                            <th style="padding:12px;text-align:right;">Total Recorded Amount</th>
+                            <th style="padding:12px;text-align:right;">Share of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summaryRows || `
+                            <tr>
+                                <td colspan="4" style="padding:18px;text-align:center;">
+                                    No investment transactions found.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:center;">
+                                ${transactions.length}
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                ₹${money(totalAmount)}
+                            </td>
+                            <td style="padding:12px;text-align:right;">
+                                ${totalAmount ? "100.00%" : "0.00%"}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h3 style="color:#173b70;">Detailed Investment Transactions</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;min-width:950px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Date</th>
+                            <th style="padding:12px;text-align:left;">Investment Name</th>
+                            <th style="padding:12px;text-align:left;">Category</th>
+                            <th style="padding:12px;text-align:left;">Party / Account</th>
+                            <th style="padding:12px;text-align:right;">Amount</th>
+                            <th style="padding:12px;text-align:left;">Payment Method</th>
+                            <th style="padding:12px;text-align:left;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${detailRows || `
+                            <tr>
+                                <td colspan="7" style="padding:18px;text-align:center;">
+                                    No detailed transactions available.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td colspan="4" style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:right;">
+                                ₹${money(totalAmount)}
+                            </td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error("Report #120 error:", error);
+
+        content.textContent =
+            "Unable to load Investment Date-wise report. Please check the console.";
+    }
+}
+
+
+/* =========================================================
+   INVESTMENT REPORT ENGINE — REPORTS #121 TO #146
+   Shared renderer; existing reports #117–#120 untouched
+========================================================= */
+
+const INVESTMENT_REPORT_CONFIG = {
+    121: { name: "Investment Account-wise", group: "account" },
+    122: { name: "Investment Purchase", filter: "purchase" },
+    123: { name: "Investment Sale", filter: "sale" },
+    124: { name: "Investment Income", filter: "income" },
+    125: { name: "Dividend Report", filter: "dividend" },
+    126: { name: "Interest Report", filter: "interest" },
+    127: { name: "Capital Gain", filter: "gain" },
+    128: { name: "Capital Loss", filter: "loss" },
+    129: { name: "Amount Invested", filter: "invested" },
+    130: { name: "Amount Received", filter: "received" },
+    131: { name: "Investment Cash Flow", group: "month" },
+    132: { name: "Investment Portfolio", group: "investment" },
+    133: { name: "Investment Performance", group: "investment" },
+    134: { name: "Investment-wise History", group: "investment" },
+    135: { name: "Shares Summary", filter: "shares", group: "investment" },
+    136: { name: "Share-wise Transactions", filter: "shares", group: "investment" },
+    137: { name: "Share Purchase", filter: "sharePurchase" },
+    138: { name: "Share Sale", filter: "shareSale" },
+    139: { name: "Share Dividend", filter: "shareDividend" },
+    140: { name: "SIP Summary", filter: "sip", group: "investment" },
+    141: { name: "SIP-wise Report", filter: "sip", group: "investment" },
+    142: { name: "SIP Contribution", filter: "sipContribution", group: "month" },
+    143: { name: "SIP Monthly Report", filter: "sip", group: "month" },
+    144: { name: "Mutual Fund Summary", filter: "mutualFund", group: "investment" },
+    145: { name: "Mutual Fund Investment", filter: "mutualFundPurchase" },
+    146: { name: "Mutual Fund Redemption", filter: "mutualFundSale" }
+};
+
+async function renderInvestmentStandardReport(reportNumber) {
+    const config = INVESTMENT_REPORT_CONFIG[reportNumber];
+
+    if (!config || !reportWorkArea) return;
+
+    const contentId = "investmentStandardReportContent";
+
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <div class="report-document-header">
+                <div style="padding:24px 30px 18px;border-bottom:1px solid #d9e1ec;">
+                    <strong style="font-size:22px;color:#173b70;">
+                        #${reportNumber} ${config.name}
+                    </strong>
+                    <p style="color:#64748b;">
+                        Investment report based on recorded transaction data.
+                    </p>
+                </div>
+            </div>
+
+            <div id="${contentId}" style="padding:20px 30px 30px;">
+                <p>Loading report...</p>
+            </div>
+        </div>
+    `;
+
+    const content = document.getElementById(contentId);
+
+    if (!currentUser) {
+        content.textContent = "Please log in to view this report.";
+        return;
+    }
+
+    try {
+        const ref = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "transactions"
+        );
+
+        const snapshot = await getDocs(ref);
+        let transactions = [];
+
+        snapshot.forEach((doc) => {
+            const t = doc.data();
+
+            if (t.deleted === true) return;
+
+            if (
+                String(t.type || "").trim().toLowerCase() !==
+                "investment"
+            ) return;
+
+            transactions.push({ id: doc.id, ...t });
+        });
+
+        const valueOf = (t, keys) => {
+            for (const key of keys) {
+                const value = t[key];
+
+                if (value !== undefined && value !== null && value !== "") {
+                    return value;
+                }
+            }
+
+            return "";
+        };
+
+        const investmentName = (t) =>
+            String(valueOf(t, [
+                "investmentName", "assetName", "securityName",
+                "investment", "name", "category"
+            ]) || "Investment Name Not Recorded");
+
+        const accountName = (t) =>
+            String(valueOf(t, [
+                "accountName", "account", "accountTitle",
+                "paymentAccount", "bankAccount", "partyName", "party"
+            ]) || "Account Not Recorded");
+
+        const amountOf = (t) => Number(t.amount) || 0;
+
+        const dateOf = (t) => {
+            const d = t.date;
+
+            if (!d) return "";
+
+            if (typeof d === "string") return d.slice(0, 10);
+
+            if (typeof d.toDate === "function") {
+                return d.toDate().toISOString().slice(0, 10);
+            }
+
+            return String(d);
+        };
+
+        const textOf = (t) => [
+            t.category,
+            t.subcategory,
+            t.transactionType,
+            t.investmentType,
+            t.action,
+            t.transactionMode,
+            t.name,
+            t.investmentName,
+            t.assetName,
+            t.securityName,
+            t.investment,
+            t.notes,
+            t.description,
+            t.party,
+            t.partyName,
+            t.productType,
+            t.schemeName,
+            t.accountName
+        ].filter(Boolean).join(" ").toLowerCase();
+
+        const matches = (t, words) => {
+            const text = textOf(t);
+            return words.some(word => text.includes(word));
+        };
+
+        const filters = {
+            purchase: t => matches(t, ["purchase", "buy", "bought", "acquisition"]),
+            sale: t => matches(t, ["sale", "sell", "sold", "disposal"]),
+            income: t => matches(t, ["income", "investment income"]),
+            dividend: t => matches(t, ["dividend"]),
+            interest: t => matches(t, ["interest"]),
+            gain: t => matches(t, ["capital gain", "realized gain", "realised gain"]),
+            loss: t => matches(t, ["capital loss", "realized loss", "realised loss"]),
+            invested: t => matches(t, ["purchase", "buy", "bought", "sip contribution", "investment amount"]),
+            received: t => matches(t, ["sale", "sell", "sold", "redemption", "dividend", "interest", "income"]),
+            shares: t => matches(t, ["share", "shares", "stock", "equity"]),
+            sharePurchase: t => matches(t, ["share purchase", "stock purchase", "buy share", "buy stock"]),
+            shareSale: t => matches(t, ["share sale", "stock sale", "sell share", "sell stock"]),
+            shareDividend: t => matches(t, ["share dividend", "stock dividend", "dividend"]),
+            sip: t => matches(t, ["sip", "systematic investment"]),
+            sipContribution: t => matches(t, ["sip contribution", "sip installment", "sip instalment", "sip"]),
+            mutualFund: t => matches(t, ["mutual fund", "mutualfund", "mf "]),
+            mutualFundPurchase: t => matches(t, ["mutual fund purchase", "mutual fund investment", "mf purchase", "mutual fund", "mutualfund"]),
+            mutualFundSale: t => matches(t, ["mutual fund redemption", "mf redemption", "mutual fund sale", "redemption"])
+        };
+
+        if (config.filter && filters[config.filter]) {
+            transactions = transactions.filter(filters[config.filter]);
+        }
+
+        transactions.sort((a, b) =>
+            dateOf(a).localeCompare(dateOf(b))
+        );
+
+        const safe = (value) =>
+            typeof escapeHtml === "function"
+                ? escapeHtml(String(value ?? "—"))
+                : String(value ?? "—").replace(/[&<>"']/g, ch => ({
+                    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+                    '"': "&quot;", "'": "&#39;"
+                })[ch]);
+
+        const money = (value) =>
+            (Number(value) || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const groupKey = (t) => {
+            if (config.group === "account") return accountName(t);
+            if (config.group === "month") return dateOf(t).slice(0, 7) || "Date Not Recorded";
+            if (config.group === "investment") return investmentName(t);
+            return "All Transactions";
+        };
+
+        const groups = new Map();
+
+        transactions.forEach((t) => {
+            const key = groupKey(t);
+
+            if (!groups.has(key)) {
+                groups.set(key, { name: key, count: 0, total: 0 });
+            }
+
+            const g = groups.get(key);
+            g.count++;
+            g.total += amountOf(t);
+        });
+
+        const totalAmount = transactions.reduce(
+            (sum, t) => sum + amountOf(t), 0
+        );
+
+        const groupRows = Array.from(groups.values())
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map(g => `
+                <tr style="border-bottom:1px solid #e5ebf3;">
+                    <td style="padding:11px;">${safe(g.name)}</td>
+                    <td style="padding:11px;text-align:center;">${g.count}</td>
+                    <td style="padding:11px;text-align:right;white-space:nowrap;">
+                        ₹${money(g.total)}
+                    </td>
+                    <td style="padding:11px;text-align:right;">
+                        ${totalAmount ? (g.total / totalAmount * 100).toFixed(2) : "0.00"}%
+                    </td>
+                </tr>
+            `).join("");
+
+        const detailRows = transactions.map(t => `
+            <tr style="border-bottom:1px solid #e5ebf3;">
+                <td style="padding:10px;white-space:nowrap;">${safe(dateOf(t) || "—")}</td>
+                <td style="padding:10px;">${safe(investmentName(t))}</td>
+                <td style="padding:10px;">${safe(t.category || "—")}</td>
+                <td style="padding:10px;">${safe(accountName(t))}</td>
+                <td style="padding:10px;text-align:right;white-space:nowrap;">
+                    ₹${money(amountOf(t))}
+                </td>
+                <td style="padding:10px;">${safe(t.paymentMethod || "—")}</td>
+                <td style="padding:10px;">${safe(t.notes || t.description || "—")}</td>
+            </tr>
+        `).join("");
+
+        let note = "";
+
+        if ([127, 128, 132, 133].includes(reportNumber)) {
+            note = `
+                <div style="padding:14px;margin-bottom:20px;background:#fff8e6;
+                            border:1px solid #f2d28b;border-radius:8px;color:#805b13;">
+                    This report uses available transaction records. Realized capital gain/loss,
+                    portfolio valuation and investment performance require purchase cost,
+                    units/quantity and sale/current valuation fields. No profit or return is
+                    estimated where those fields are unavailable.
+                </div>
+            `;
+        }
+
+        if (!transactions.length) {
+            content.innerHTML = `
+                ${note}
+                <div style="padding:35px;text-align:center;color:#64748b;
+                            border:1px solid #dce5f0;border-radius:10px;">
+                    No matching investment transactions were found for this report.
+                    Check that the transaction category, name or notes identify the relevant
+                    purchase, sale, dividend, SIP or mutual fund activity.
+                </div>
+            `;
+            return;
+        }
+
+        content.innerHTML = `
+            ${note}
+
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+                <div style="flex:1;min-width:170px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Records</div>
+                    <strong style="font-size:24px;color:#173b70;">${transactions.length}</strong>
+                </div>
+
+                <div style="flex:1;min-width:170px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Groups</div>
+                    <strong style="font-size:24px;color:#173b70;">${groups.size}</strong>
+                </div>
+
+                <div style="flex:1;min-width:190px;padding:18px;border:1px solid #dce5f0;border-radius:10px;">
+                    <div style="color:#64748b;">Total Recorded Amount</div>
+                    <strong style="font-size:22px;color:#087443;">₹${money(totalAmount)}</strong>
+                </div>
+            </div>
+
+            <h3 style="color:#173b70;">${safe(config.name)} — Summary</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;margin-bottom:28px;">
+                <table style="width:100%;border-collapse:collapse;min-width:600px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">${config.group === "month" ? "Month" : config.group === "account" ? "Account" : "Investment"}</th>
+                            <th style="padding:12px;text-align:center;">Records</th>
+                            <th style="padding:12px;text-align:right;">Recorded Amount</th>
+                            <th style="padding:12px;text-align:right;">Share of Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${groupRows}</tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:center;">${transactions.length}</td>
+                            <td style="padding:12px;text-align:right;">₹${money(totalAmount)}</td>
+                            <td style="padding:12px;text-align:right;">100.00%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <h3 style="color:#173b70;">Detailed Transactions</h3>
+
+            <div style="overflow-x:auto;border:1px solid #dce5f0;border-radius:10px;">
+                <table style="width:100%;border-collapse:collapse;min-width:950px;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">Date</th>
+                            <th style="padding:12px;text-align:left;">Investment</th>
+                            <th style="padding:12px;text-align:left;">Category</th>
+                            <th style="padding:12px;text-align:left;">Account / Party</th>
+                            <th style="padding:12px;text-align:right;">Amount</th>
+                            <th style="padding:12px;text-align:left;">Payment Method</th>
+                            <th style="padding:12px;text-align:left;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>${detailRows}</tbody>
+                    <tfoot>
+                        <tr style="background:#f1f6fc;font-weight:700;">
+                            <td colspan="4" style="padding:12px;">Grand Total</td>
+                            <td style="padding:12px;text-align:right;">₹${money(totalAmount)}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+    } catch (error) {
+        console.error(`Investment Report #${reportNumber} error:`, error);
+        content.textContent =
+            "Unable to load this investment report. Please check the browser console.";
+    }
+}
+
+
 function renderInvestmentReports() {
     hideReportModuleStartPage();
 
@@ -11924,18 +16923,18 @@ function renderInvestmentReports() {
         `;
 
         
+
 card.addEventListener("click", () => {
     if (number === 117) {
         renderInvestmentSummaryReport();
     } else if (number === 118) {
         renderInvestmentWiseDetailsReport();
-} else if (number === 119) {
-    renderInvestmentCategoryWiseReport();
-
-    } else {
-        alert(
-            `${name} अभी planned है। इसे हम आगे implement करेंगे।`
-        );
+    } else if (number === 119) {
+        renderInvestmentCategoryWiseReport();
+    } else if (number === 120) {
+        renderInvestmentDateWiseReport();
+    } else if (INVESTMENT_REPORT_CONFIG[number]) {
+        renderInvestmentStandardReport(number);
     }
 });
 
@@ -11949,6 +16948,782 @@ card.addEventListener("click", () => {
     });
 }
 
+
+/* =========================================================
+   FIXED DEPOSITS REPORTS — #147 TO #162
+   Collection: users/{uid}/fixedDeposits
+   ========================================================= */
+
+const FD_REPORTS = [
+    [147, "FD Summary", "summary"],
+    [148, "FD-wise Details", "details"],
+    [149, "Bank-wise FD", "bank"],
+    [150, "Active FD", "active"],
+    [151, "Matured FD", "matured"],
+    [152, "Upcoming Maturity", "upcoming"],
+    [153, "FD Investment", "investment"],
+    [154, "FD Principal", "principal"],
+    [155, "FD Interest", "interest"],
+    [156, "FD Maturity Amount", "maturity"],
+    [157, "FD Renewal", "renewal"],
+    [158, "FD Maturity History", "history"],
+    [159, "FD Interest Earned", "earned"],
+    [160, "FD Cash Flow", "cashflow"],
+    [161, "FD Investment vs Maturity", "comparison"],
+    [162, "FD-wise Timeline", "timeline"]
+];
+
+function renderFixedDepositReports() {
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) return;
+
+    window.activeReportCategory = "Fixed Deposits";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+            <div class="transaction-reports-header">
+                <div>
+                    <h2>🏦 Fixed Deposits Reports</h2>
+                    <p>Select a Fixed Deposit report to continue.</p>
+                </div>
+            </div>
+
+            <div class="transaction-reports-grid"
+                 id="fixedDepositReportsGrid"
+                 style="margin-top:20px;">
+            </div>
+        </div>
+    `;
+
+    const grid = document.getElementById("fixedDepositReportsGrid");
+
+    FD_REPORTS.forEach(([number, name, key]) => {
+        const card = document.createElement("button");
+
+        card.type = "button";
+        card.className = "transaction-report-card";
+        card.style.cssText = "width:100%;text-align:left;cursor:pointer;";
+
+        card.innerHTML = `
+            <div class="transaction-report-number">${number}</div>
+            <div class="transaction-report-content">
+                <h3>${name}</h3>
+                <p>Open ${name}</p>
+            </div>
+        `;
+
+        card.addEventListener("click", () => {
+            renderFixedDepositReport(number, name, key);
+        });
+
+        grid.appendChild(card);
+    });
+
+    reportWorkArea.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+async function renderFixedDepositReport(number, title, reportKey) {
+    const user = auth.currentUser;
+
+    if (!user) {
+        alert("कृपया पहले Login करें।");
+        return;
+    }
+
+    window.activeReportCategory = "Fixed Deposits";
+window.activeTransactionReport = {
+    number: number,
+    name: title
+};
+    reportWorkArea.innerHTML = `
+        <div class="selected-report-container">
+            <div class="report-document-header">
+                <div id="fixedDepositReportContent"
+                     style="padding:24px;">
+                    <h2>#${number} ${title}</h2>
+                    <p>⏳ Loading Fixed Deposit data...</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const content = document.getElementById("fixedDepositReportContent");
+
+    try {
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "fixedDeposits")
+        );
+
+        console.log("===== FIXED DEPOSIT DIAGNOSTIC =====");
+console.log("Total Firestore FD documents:", snapshot.size);
+
+console.table(
+    snapshot.docs.map(doc => {
+        const fd = doc.data();
+
+        return {
+            documentId: doc.id,
+            name: fd.name ?? fd.fdName ?? "",
+            bank: fd.bank ?? "",
+            principal: fd.amount ?? "",
+            status: fd.status ?? fd.state ?? "",
+            active: fd.active,
+            isActive: fd.isActive,
+            is_active: fd.is_active,
+            deleted: fd.deleted,
+            isDeleted: fd.isDeleted,
+            isTest: fd.isTest,
+            isTestData: fd.isTestData,
+            fields: Object.keys(fd).join(", ")
+        };
+    })
+);
+
+const rows = snapshot.docs
+    .map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }))
+    .filter(fd => {
+
+        // Exclude the confirmed test FD
+if (String(fd.name ?? fd.fdName ?? "").trim() === "999") {
+    return false;
+}
+
+
+        if (
+            fd.deleted === true ||
+            fd.isDeleted === true ||
+            fd.is_deleted === true ||
+            fd.active === false ||
+            fd.isActive === false ||
+            fd.is_active === false ||
+            fd.isTest === true ||
+            fd.isTestData === true
+        ) {
+            return false;
+        }
+
+        const status = String(
+            fd.status ?? fd.state ?? ""
+        ).trim().toLowerCase();
+
+        return ![
+            "inactive",
+            "deleted",
+            "deactivated",
+            "archived"
+        ].includes(status);
+    });
+
+    
+// =========================================================
+// TEMPORARY FD RENEWAL DIAGNOSTIC
+// =========================================================
+
+if (reportKey === "renewal" || reportKey === "history") {
+
+    console.log("===== FD RENEWAL RELATIONSHIP CHECK =====");
+
+    console.table(
+        rows.map(fd => ({
+            documentId: fd.id,
+
+            name: fd.name ?? fd.fdName ?? "",
+
+            status: fd.status ?? fd.state ?? "",
+
+            renewedTo: fd.renewedTo ?? "",
+
+            renewedFrom: fd.renewedFrom ?? "",
+
+            renewedAt: fd.renewedAt ?? "",
+
+            depositDate: fd.depositDate ?? "",
+
+            maturityDate: fd.maturityDate ?? ""
+        }))
+    );
+
+    console.log(
+        "Total FD records checked:",
+        rows.length
+    );
+}
+
+
+        // =========================================================
+        // FD RENEWAL RELATIONSHIP MAP
+        // =========================================================
+
+        const fdById = new Map(
+            rows.map(fd => [fd.id, fd])
+        );
+
+        const renewalPairs = rows
+            .filter(oldFD => oldFD.renewedTo)
+            .map(oldFD => {
+                const newFD = fdById.get(
+                    String(oldFD.renewedTo)
+                );
+
+                return {
+                    oldFD,
+                    newFD
+                };
+            });
+
+        console.log("===== CONFIRMED FD RENEWAL PAIRS =====");
+
+        console.table(
+            renewalPairs.map(pair => ({
+                oldFD: pair.oldFD.name ?? pair.oldFD.fdName,
+                newFD: pair.newFD?.name ?? pair.newFD?.fdName ?? "Not Found",
+                oldDocumentId: pair.oldFD.id,
+                newDocumentId: pair.newFD?.id ?? "",
+                renewalDate:
+                    pair.newFD?.renewedAt ??
+                    pair.oldFD.renewedAt ??
+                    "Not Recorded"
+            }))
+        );
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const parseDate = value => {
+            if (!value) return null;
+
+            let date;
+
+            if (typeof value.toDate === "function") {
+                date = value.toDate();
+            } else if (
+                typeof value === "object" &&
+                typeof value.seconds === "number"
+            ) {
+                date = new Date(value.seconds * 1000);
+            } else {
+                date = new Date(value);
+            }
+
+            return Number.isNaN(date.getTime()) ? null : date;
+        };
+
+        const daysBetween = (start, end) =>
+            Math.floor((end - start) / 86400000);
+
+        const amount = value => {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : 0;
+        };
+
+        const money = value =>
+            "₹ " + amount(value).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const safe = value =>
+            String(value ?? "").replace(/[&<>"']/g, char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[char]);
+
+        const dateText = value => {
+            const date = parseDate(value);
+            return date
+                ? date.toLocaleDateString("en-IN")
+                : "—";
+        };
+
+        const principalOf = fd => amount(fd.amount);
+        const maturityOf = fd =>
+            amount(fd.maturityAmount) || principalOf(fd);
+
+        const interestOf = fd =>
+            Math.max(0, maturityOf(fd) - principalOf(fd));
+
+        const depositDateOf = fd => parseDate(fd.depositDate);
+        const maturityDateOf = fd => parseDate(fd.maturityDate);
+
+        const isMatured = fd => {
+            const date = maturityDateOf(fd);
+            return date && date < today;
+        };
+
+        const isUpcoming = fd => {
+            const date = maturityDateOf(fd);
+            if (!date || date < today) return false;
+
+            const days = daysBetween(today, date);
+            return days >= 0 && days <= 30;
+        };
+
+        // Current FD list: exclude settled, renewed and already matured FDs
+const currentRows = rows.filter(fd => {
+    const status = String(
+        fd.status ?? fd.state ?? ""
+    ).trim().toLowerCase();
+
+    // Exclude FDs already settled or renewed
+    if (
+        ["settled", "renewed", "closed", "matured", "redeemed"]
+            .includes(status)
+    ) {
+        return false;
+    }
+
+    // Exclude old FD if it has already been renewed into another FD
+    if (fd.renewedTo) {
+        return false;
+    }
+
+    // Exclude FDs whose maturity date has passed
+    if (isMatured(fd)) {
+        return false;
+    }
+
+    return true;
+});
+
+let filtered = [...currentRows];
+let grouping = null;
+let notice = "";
+
+switch (reportKey) {
+    case "summary":
+        filtered = [...currentRows];
+        break;
+
+    case "active":
+        filtered = [...currentRows];
+        break;
+
+    case "upcoming":
+        filtered = currentRows.filter(isUpcoming);
+        break;
+
+    case "matured":
+        // Keep matured, settled and renewed records in maturity history
+        filtered = rows.filter(isMatured);
+        break;
+
+    case "bank":
+        filtered = [...currentRows];
+        grouping = "bank";
+        break;
+
+    case "investment":
+    case "details":
+    case "principal":
+    case "interest":
+    case "maturity":
+    case "earned":
+    case "cashflow":
+    case "comparison":
+        filtered = [...currentRows];
+        break;
+
+case "renewal":
+    // Only confirmed old FD records linked to renewed FDs
+    filtered = renewalPairs.map(pair => pair.oldFD);
+
+    notice =
+        "Only confirmed FD renewal transactions are shown. " +
+        "Amounts represent the original FD records.";
+
+    break;
+
+case "history":
+    filtered = rows.filter(fd => {
+        const status = String(
+            fd.status ?? fd.state ?? ""
+        ).trim().toLowerCase();
+
+        // Exclude settled and active records
+        if (
+            ["settled", "closed", "redeemed"].includes(status)
+        ) {
+            return false;
+        }
+
+        // Include only FDs whose maturity date has passed
+        return isMatured(fd);
+    });
+
+    grouping = "name";
+    break;
+
+case "timeline":
+    filtered = [...rows];
+    grouping = "name";
+    break;
+}
+
+if (reportKey === "principal") {
+    notice = "Principal is the original amount saved in the FD record.";
+}
+
+if (reportKey === "interest") {
+    notice = "Interest shown is estimated as maturity amount minus principal; it is not a bank-confirmed interest statement.";
+}
+
+if (reportKey === "earned") {
+    notice = "Estimated accrued interest is prorated between deposit and maturity dates. Actual bank accrual may differ.";
+}
+
+if (reportKey === "renewal") {
+    notice = "Historical FD records are shown. Renewal relationships are displayed only where saved in the FD records.";
+}
+
+if (reportKey === "cashflow") {
+    notice = "Maturity amounts are projected from saved FD records; they are not confirmed receipts.";
+}
+
+if (reportKey === "comparison") {
+    notice = "Comparison uses the saved principal and maturity amount.";
+}
+        const principalTotal = filtered.reduce(
+            (sum, fd) => sum + principalOf(fd), 0
+        );
+
+        const maturityTotal = filtered.reduce(
+            (sum, fd) => sum + maturityOf(fd), 0
+        );
+
+        const interestTotal = filtered.reduce(
+            (sum, fd) => sum + interestOf(fd), 0
+        );
+
+        const accruedInterest = fd => {
+            const start = depositDateOf(fd);
+            const end = maturityDateOf(fd);
+
+            if (!start || !end || end <= start || today <= start) {
+                return 0;
+            }
+
+            const totalDays = daysBetween(start, end);
+            const elapsedDays = Math.min(
+                totalDays,
+                Math.max(0, daysBetween(start, today))
+            );
+
+            return interestOf(fd) * elapsedDays / totalDays;
+        };
+
+        const columnsForReport = () => {
+            switch (reportKey) {
+                case "summary":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Amount", fd => money(maturityOf(fd))],
+                        ["Maturity Date", fd => dateText(fd.maturityDate)]
+                    ];
+
+                case "bank":
+                    return [
+                        ["Bank", fd => fd.bank || "Unknown"],
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Amount", fd => money(maturityOf(fd))]
+                    ];
+
+                case "active":
+                case "matured":
+                case "upcoming":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Date", fd => dateText(fd.maturityDate)],
+                        ["Status", fd => isMatured(fd) ? "Matured" : isUpcoming(fd) ? "Upcoming" : "Active"]
+                    ];
+
+                case "principal":
+                case "investment":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Deposit Date", fd => dateText(fd.depositDate)],
+                        ["Principal", fd => money(principalOf(fd))]
+                    ];
+
+                case "interest":
+                case "earned":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Interest Rate (%)", fd => fd.interestRate ?? "—"],
+                        ["Estimated Interest", fd => money(reportKey === "earned" ? accruedInterest(fd) : interestOf(fd))]
+                    ];
+
+                case "maturity":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Date", fd => dateText(fd.maturityDate)],
+                        ["Maturity Amount", fd => money(maturityOf(fd))]
+                    ];
+
+                case "cashflow":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Deposit Date", fd => dateText(fd.depositDate)],
+                        ["Principal Outflow", fd => money(principalOf(fd))],
+                        ["Expected Maturity", fd => dateText(fd.maturityDate)],
+                        ["Projected Receipt", fd => money(maturityOf(fd))]
+                    ];
+
+                case "comparison":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Amount", fd => money(maturityOf(fd))],
+                        ["Estimated Difference", fd => money(interestOf(fd))]
+                    ];
+
+
+                case "renewal":
+                    return [
+                        [
+                            "Old FD",
+                            fd => fd.name || "Unnamed FD"
+                        ],
+                        [
+                            "New FD",
+                            fd => {
+                                const newFD = fdById.get(
+                                    String(fd.renewedTo || "")
+                                );
+
+                                return newFD?.name ||
+                                    newFD?.fdName ||
+                                    "Not Found";
+                            }
+                        ],
+                        [
+                            "Bank",
+                            fd => fd.bank || "—"
+                        ],
+                        [
+                            "Old FD Maturity",
+                            fd => dateText(fd.maturityDate)
+                        ],
+                        [
+                            "Renewal Date",
+                            fd => {
+                                const newFD = fdById.get(
+                                    String(fd.renewedTo || "")
+                                );
+
+                                const renewalDate =
+                                    newFD?.renewedAt ||
+                                    fd.renewedAt;
+
+                                return renewalDate
+                                    ? dateText(renewalDate)
+                                    : "Not Recorded";
+                            }
+                        ],
+                        [
+                            "Old Principal",
+                            fd => money(principalOf(fd))
+                        ],
+                        [
+                            "New Principal",
+                            fd => {
+                                const newFD = fdById.get(
+                                    String(fd.renewedTo || "")
+                                );
+
+                                return newFD
+                                    ? money(principalOf(newFD))
+                                    : "—";
+                            }
+                        ]
+                    ];
+
+                case "history":
+                case "timeline":
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Deposit Date", fd => dateText(fd.depositDate)],
+                        ["Maturity Date", fd => dateText(fd.maturityDate)],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Amount", fd => money(maturityOf(fd))],
+                        [
+    "Status",
+    fd => {
+        const status = String(
+            fd.status ?? fd.state ?? ""
+        ).trim().toLowerCase();
+
+        // 1. Settled FD
+        if (
+            ["settled", "closed", "redeemed"].includes(status)
+        ) {
+            return "Settled";
+        }
+
+        // 2. Renewed FD
+        if (
+            ["renewed", "renewal"].includes(status) ||
+            fd.renewedTo
+        ) {
+            return "Renewed";
+        }
+
+        // 3. Matured FD
+        if (
+            status === "matured" ||
+            status === "maturity" ||
+            isMatured(fd)
+        ) {
+            return "Matured";
+        }
+
+        // 4. Upcoming FD
+        if (isUpcoming(fd)) {
+            return "Upcoming";
+        }
+
+        // 5. Normal active FD
+        return "Active";
+    }
+]
+                    ];
+
+                default:
+                    return [
+                        ["FD Name", fd => fd.name || "Unnamed FD"],
+                        ["Bank", fd => fd.bank || "—"],
+                        ["Principal", fd => money(principalOf(fd))],
+                        ["Maturity Amount", fd => money(maturityOf(fd))]
+                    ];
+            }
+        };
+
+        let displayRows = [...filtered];
+
+        if (reportKey === "summary") {
+            // Summary remains one row per saved FD, with totals above.
+        }
+
+        if (reportKey === "timeline" || reportKey === "history" ||
+            reportKey === "maturity" || reportKey === "upcoming") {
+            displayRows.sort((a, b) =>
+                (maturityDateOf(a)?.getTime() || 0) -
+                (maturityDateOf(b)?.getTime() || 0)
+            );
+        } else {
+            displayRows.sort((a, b) =>
+                String(a.name || "").localeCompare(String(b.name || ""))
+            );
+        }
+
+        const columns = columnsForReport();
+
+        const table = `
+            <div style="overflow-x:auto;margin-top:20px;">
+                <table class="report-export-table"
+                       style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            ${columns.map(([label]) => `
+                                <th style="padding:12px;text-align:left;border-bottom:1px solid #dbe2ea;">
+                                    ${safe(label)}
+                                </th>
+                            `).join("")}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${displayRows.length ? displayRows.map(fd => `
+                            <tr>
+                                ${columns.map(([, getter]) => `
+                                    <td style="padding:11px;border-bottom:1px solid #edf0f4;">
+                                        ${safe(getter(fd))}
+                                    </td>
+                                `).join("")}
+                            </tr>
+                        `).join("") : `
+                            <tr>
+                                <td colspan="${columns.length}"
+                                    style="padding:24px;text-align:center;color:#64748b;">
+                                    No Fixed Deposit records found.
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        const summaryCards = `
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0;">
+                <div style="padding:16px;border:1px solid #dbe2ea;border-radius:10px;">
+                    <div style="color:#64748b;">FD Count</div>
+                    <strong>${filtered.length}</strong>
+                </div>
+                <div style="padding:16px;border:1px solid #dbe2ea;border-radius:10px;">
+                    <div style="color:#64748b;">Total Principal</div>
+                    <strong>${money(principalTotal)}</strong>
+                </div>
+                <div style="padding:16px;border:1px solid #dbe2ea;border-radius:10px;">
+                    <div style="color:#64748b;">Maturity Amount</div>
+                    <strong>${money(maturityTotal)}</strong>
+                </div>
+                <div style="padding:16px;border:1px solid #dbe2ea;border-radius:10px;">
+                    <div style="color:#64748b;">Estimated Interest</div>
+                    <strong>${money(interestTotal)}</strong>
+                </div>
+            </div>
+        `;
+
+        content.innerHTML = `
+            <h2>#${number} ${safe(title)}</h2>
+            <p style="color:#64748b;">Fixed Deposits Report · Generated ${today.toLocaleDateString("en-IN")}</p>
+            ${notice ? `
+                <p style="margin-top:12px;padding:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">
+                    ${safe(notice)}
+                </p>
+            ` : ""}
+            ${summaryCards}
+            ${table}
+        `;
+
+        reportWorkArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    } catch (error) {
+        console.error(`FD REPORT #${number} ERROR:`, error);
+
+        content.innerHTML = `
+            <h2>#${number} ${safe(title)}</h2>
+            <p style="color:#b91c1c;">
+                Report load नहीं हो पाया। Browser console में error देखें।
+            </p>
+        `;
+    }
+}
 
 // =========================================================
 // #23 TRANSFER TRANSACTIONS
