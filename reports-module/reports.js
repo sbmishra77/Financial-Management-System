@@ -4738,6 +4738,2047 @@ async function renderRentalAdvancedReport(reportNumber) {
 
 }
 
+// =====================================================
+// REPAIRS & MAINTENANCE REPORTS — CATALOGUE
+// =====================================================
+
+const REPAIR_REPORT_CATALOGUE = [
+
+    {
+        number: 195,
+        id: "repair-summary",
+        name: "Repair & Maintenance Summary",
+        description: "Overall repair records and maintenance expenses"
+    },
+
+    {
+        number: 196,
+        id: "repair-history",
+        name: "Repair History Register",
+        description: "Complete repair and maintenance history"
+    },
+
+    {
+        number: 197,
+        id: "repair-type-analysis",
+        name: "Repair Type Analysis",
+        description: "Expenses by repair and maintenance category"
+    },
+
+    {
+        number: 198,
+        id: "monthly-repair-expense",
+        name: "Monthly Maintenance Expense",
+        description: "Month-wise repair and maintenance costs"
+    },
+
+    {
+        number: 199,
+        id: "annual-repair-expense",
+        name: "Annual Maintenance Expense",
+        description: "Year-wise repair and maintenance costs"
+    },
+
+    {
+        number: 200,
+        id: "vendor-repair-expense",
+        name: "Vendor-wise Expense",
+        description: "Repair expenses by vendor or service centre"
+    },
+
+    {
+        number: 201,
+        id: "asset-repair-expense",
+        name: "Vehicle / Asset-wise Expense",
+        description: "Maintenance costs by vehicle or asset"
+    }
+
+];
+
+
+// =====================================================
+// REPAIRS & MAINTENANCE REPORTS DASHBOARD
+// =====================================================
+
+function renderRepairsMaintenanceReportsDashboard() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+
+        console.error(
+            "Repair Report Work Area Not Found"
+        );
+
+        return;
+    }
+
+    reportWorkArea.style.display = "block";
+
+    window.activeReportCategory = "Repairs & Maintenance";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header">
+
+                <div>
+                    <h2>🔧 Repairs & Maintenance Reports</h2>
+
+                    <p>
+                        Repair history, maintenance costs and
+                        asset-wise expense analytics
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="transaction-reports-grid">
+
+                ${REPAIR_REPORT_CATALOGUE.map(report => `
+
+                    <div
+                        class="transaction-report-card"
+                        data-repair-report="${report.number}"
+                    >
+
+                        <div class="transaction-report-number">
+                            ${report.number}
+                        </div>
+
+                        <div class="transaction-report-content">
+
+                            <h3>
+                                ${propertyEscapeHtml(report.name)}
+                            </h3>
+
+                            <p>
+                                ${propertyEscapeHtml(report.description)}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    console.log(
+        "✅ REPAIR REPORTS DASHBOARD RENDERED:",
+        reportWorkArea.querySelectorAll(
+            "[data-repair-report]"
+        ).length
+    );
+
+
+    // -------------------------------------------------
+// REPAIR REPORT CARD CLICK HANDLER
+// -------------------------------------------------
+
+reportWorkArea.querySelectorAll(
+    "[data-repair-report]"
+).forEach(card => {
+
+    card.addEventListener("click", () => {
+
+        const reportNumber = Number(
+            card.dataset.repairReport
+        );
+
+        console.log(
+            "🔧 REPAIR REPORT CARD CLICKED:",
+            reportNumber
+        );
+
+
+        // Repair & Maintenance Summary — #195
+        if (reportNumber === 195) {
+
+            renderRepairMaintenanceSummaryReport();
+
+            return;
+        }
+
+// Repair History Register — #196
+if (reportNumber === 196) {
+
+    renderRepairHistoryRegisterReport();
+
+    return;
+}
+
+// Repair Type Analysis — #197
+if (reportNumber === 197) {
+
+    renderRepairTypeAnalysisReport();
+
+    return;
+}
+
+        console.log(
+            "⏳ Repair Report not connected yet:",
+            reportNumber
+        );
+
+    });
+
+});
+}
+
+// =====================================================
+// COMMON REPAIR & MAINTENANCE DATA ENGINE
+// Used by Reports #195–201
+// Firestore: users/{uid}/repairs
+// =====================================================
+
+let repairReportDataCache = null;
+
+
+// -----------------------------------------------------
+// COMMON NUMBER CONVERSION
+// -----------------------------------------------------
+
+function repairReportNumber(value) {
+
+    if (value === null || value === undefined || value === "") {
+        return 0;
+    }
+
+    const cleaned = String(value)
+        .replace(/[₹,\s]/g, "")
+        .trim();
+
+    const number = Number(cleaned);
+
+    return Number.isFinite(number) ? number : 0;
+
+}
+
+
+// -----------------------------------------------------
+// COMMON DATE CONVERSION
+// Supports DD-MM-YYYY, YYYY-MM-DD and Firebase dates
+// -----------------------------------------------------
+
+function repairReportDate(value) {
+
+    if (!value) return null;
+
+    if (value instanceof Date) {
+        return isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value.toDate === "function") {
+        return value.toDate();
+    }
+
+    if (typeof value === "object" && value.seconds) {
+        return new Date(value.seconds * 1000);
+    }
+
+    const raw = String(value).trim();
+
+
+    // DD-MM-YYYY or DD/MM/YYYY
+    let match = raw.match(
+        /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/
+    );
+
+    if (match) {
+
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+
+        const date = new Date(year, month - 1, day);
+
+        if (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+        ) {
+            return date;
+        }
+
+        return null;
+    }
+
+
+    // YYYY-MM-DD
+    match = raw.match(
+        /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    );
+
+    if (match) {
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+
+        const date = new Date(year, month - 1, day);
+
+        if (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+        ) {
+            return date;
+        }
+
+        return null;
+    }
+
+
+    const parsed = new Date(raw);
+
+    return isNaN(parsed.getTime()) ? null : parsed;
+
+}
+
+
+// -----------------------------------------------------
+// COMMON DATE DISPLAY
+// -----------------------------------------------------
+
+function repairReportDateLabel(value) {
+
+    const date = repairReportDate(value);
+
+    if (!date) return "—";
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+
+}
+
+
+// -----------------------------------------------------
+// COMMON MONTH KEY
+// Example: 10-11-2026 → 2026-11
+// -----------------------------------------------------
+
+function repairReportMonthKey(value) {
+
+    const date = repairReportDate(value);
+
+    if (!date) return "__unmapped__";
+
+    return (
+        date.getFullYear() +
+        "-" +
+        String(date.getMonth() + 1).padStart(2, "0")
+    );
+
+}
+
+
+// -----------------------------------------------------
+// COMMON MONTH LABEL
+// Example: 2026-11 → November 2026
+// -----------------------------------------------------
+
+function repairReportMonthLabel(value) {
+
+    if (!value || value === "__unmapped__") {
+        return "Date not specified";
+    }
+
+    const date = repairReportDate(value);
+
+    if (!date) return String(value);
+
+    return date.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+    });
+
+}
+
+
+// -----------------------------------------------------
+// COMMON REPAIR CATEGORY
+// -----------------------------------------------------
+
+// -----------------------------------------------------
+// COMMON REPAIR CATEGORY MAPPING
+// -----------------------------------------------------
+// -----------------------------------------------------
+// COMMON REPAIR CATEGORY MAPPING
+// -----------------------------------------------------
+
+function repairReportCategory(type) {
+
+    const value = String(type || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ");
+
+    // VEHICLE
+    if (
+        value === "vehicle service" ||
+        value === "vehicle repair"
+    ) {
+        return "Vehicle";
+    }
+
+    // HOME / PROPERTY
+    if (
+        value === "home repair" ||
+        value === "property maintenance" ||
+        (
+            (value.includes("sewer") || value.includes("sever")) &&
+            value.includes("chamber")
+        )
+    ) {
+        return "Home / Property";
+    }
+
+    // OTHER
+    return "Other";
+}
+
+
+// -----------------------------------------------------
+// LOAD ALL REPAIR RECORDS
+// -----------------------------------------------------
+
+async function loadRepairReportData(forceRefresh = false) {
+
+    const user = auth.currentUser || currentUser;
+
+    if (!user || !user.uid) {
+        throw new Error("No logged-in user found.");
+    }
+
+
+    // Reuse previously loaded data
+    if (
+        !forceRefresh &&
+        repairReportDataCache &&
+        repairReportDataCache.uid === user.uid
+    ) {
+        return repairReportDataCache.promise;
+    }
+
+
+    const dataPromise = (async () => {
+
+        console.log("🔧 Loading Common Repair Report Data...");
+
+
+        const snapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "repairs"
+            )
+        );
+
+
+        // -------------------------------------------------
+        // NORMALIZE REPAIR RECORDS
+        // -------------------------------------------------
+
+        const records = snapshot.docs.map(docSnapshot => {
+
+            const source = docSnapshot.data();
+
+            const repairDate = repairReportDate(
+                source.repairDate
+            );
+
+            const amount = repairReportNumber(
+                source.amount
+            );
+
+            const repairType = String(
+                source.repairType || "Other Maintenance"
+            ).trim();
+
+
+            return {
+
+                ...source,
+
+                id: docSnapshot.id,
+
+                repairType,
+
+                repairDate,
+
+                repairDateLabel: repairReportDateLabel(
+                    source.repairDate
+                ),
+
+                monthKey: repairReportMonthKey(
+                    source.repairDate
+                ),
+
+                yearKey: repairDate
+                    ? String(repairDate.getFullYear())
+                    : "__unmapped__",
+
+                amount,
+
+                vendor: String(
+                    source.vendor || ""
+                ).trim(),
+
+                vehicle: String(
+                    source.vehicle || ""
+                ).trim(),
+
+                category: repairReportCategory(
+                    repairType
+                )
+
+            };
+
+        });
+
+
+        // -------------------------------------------------
+        // COMMON TOTALS
+        // -------------------------------------------------
+
+        const totalExpense = records.reduce(
+            (sum, record) => sum + record.amount,
+            0
+        );
+
+
+        const vehicleRecords = records.filter(
+            record => record.category === "Vehicle"
+        );
+
+        const propertyRecords = records.filter(
+            record => record.category === "Home / Property"
+        );
+
+        const otherRecords = records.filter(
+            record => record.category === "Other"
+        );
+
+
+        const vehicleExpense = vehicleRecords.reduce(
+            (sum, record) => sum + record.amount,
+            0
+        );
+
+        const propertyExpense = propertyRecords.reduce(
+            (sum, record) => sum + record.amount,
+            0
+        );
+
+        const otherExpense = otherRecords.reduce(
+            (sum, record) => sum + record.amount,
+            0
+        );
+
+
+        // -------------------------------------------------
+        // RETURN COMMON DATASET
+        // -------------------------------------------------
+
+        return {
+
+            records,
+
+            totals: {
+
+                totalRecords: records.length,
+
+                totalExpense,
+
+                vehicleRecords: vehicleRecords.length,
+
+                vehicleExpense,
+
+                propertyRecords: propertyRecords.length,
+
+                propertyExpense,
+
+                otherRecords: otherRecords.length,
+
+                otherExpense
+
+            },
+
+            loadedAt: new Date()
+
+        };
+
+    })();
+
+
+    repairReportDataCache = {
+        uid: user.uid,
+        promise: dataPromise
+    };
+
+
+    try {
+
+        return await dataPromise;
+
+    } catch (error) {
+
+        repairReportDataCache = null;
+
+        throw error;
+
+    }
+
+}
+
+
+// -----------------------------------------------------
+// COMMON GROUPING & AGGREGATION
+// Used by Category, Month, Year, Vendor and Asset Reports
+// -----------------------------------------------------
+
+function groupRepairReportRecords(
+    records,
+    getGroupKey,
+    getGroupLabel
+) {
+
+    const grouped = new Map();
+
+
+    records.forEach(record => {
+
+        const rawKey = getGroupKey(record);
+
+        const key =
+            rawKey !== null &&
+            rawKey !== undefined &&
+            String(rawKey).trim() !== ""
+                ? String(rawKey)
+                : "__unmapped__";
+
+
+        if (!grouped.has(key)) {
+
+            grouped.set(key, {
+
+                key,
+
+                label: getGroupLabel(record) || "Not specified",
+
+                recordCount: 0,
+
+                totalAmount: 0,
+
+                latestDate: null,
+
+                earliestDate: null
+
+            });
+
+        }
+
+
+        const group = grouped.get(key);
+
+        group.recordCount++;
+
+        group.totalAmount += record.amount;
+
+
+        if (record.repairDate) {
+
+            if (
+                !group.latestDate ||
+                record.repairDate > group.latestDate
+            ) {
+                group.latestDate = record.repairDate;
+            }
+
+            if (
+                !group.earliestDate ||
+                record.repairDate < group.earliestDate
+            ) {
+                group.earliestDate = record.repairDate;
+            }
+
+        }
+
+    });
+
+
+    return Array.from(grouped.values()).sort(
+        (a, b) => b.totalAmount - a.totalAmount
+    );
+
+}
+
+
+console.log("✅ COMMON REPAIR REPORT ENGINE READY");
+
+// =====================================================
+// REPAIR REPORT #195 — REPAIR & MAINTENANCE SUMMARY
+// Uses Common Repair Data Engine
+// =====================================================
+
+async function renderRepairMaintenanceSummaryReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Repair Summary Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Repairs & Maintenance";
+    window.activeRepairReportNumber = 195;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+
+                <div>
+                    <h2>🔧 Repair & Maintenance Summary</h2>
+                    <p>Overall repair records and maintenance expenses</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRepairReports"
+                >
+                    ← Back to Repair Reports
+                </button>
+
+            </div>
+
+            <div id="repairReportContent">
+
+                <div class="property-report-loading">
+                    Loading repair summary...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById("backToRepairReports")?.addEventListener(
+        "click",
+        renderRepairsMaintenanceReportsDashboard
+    );
+
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON REPAIR DATA
+        // -------------------------------------------------
+
+        const data = await loadRepairReportData(true);
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (!content) return;
+
+
+        const totals = data.totals;
+
+
+        // -------------------------------------------------
+        // REPAIR TYPE-WISE GROUPING
+        // -------------------------------------------------
+
+        const typeGroups = groupRepairReportRecords(
+
+            data.records,
+
+            record => record.repairType,
+
+            record => record.repairType
+
+        );
+
+
+        // -------------------------------------------------
+        // CATEGORY EXPENSE PERCENTAGE
+        // -------------------------------------------------
+
+        function expensePercentage(amount) {
+
+            if (totals.totalExpense <= 0) {
+                return "—";
+            }
+
+            return propertyPercent(
+                (amount / totals.totalExpense) * 100
+            );
+
+        }
+
+
+        // -------------------------------------------------
+        // RECENT REPAIR RECORDS
+        // -------------------------------------------------
+
+        const recentRecords = [...data.records]
+
+            .sort((a, b) => {
+
+                const dateA = a.repairDate?.getTime() || 0;
+                const dateB = b.repairDate?.getTime() || 0;
+
+                return dateB - dateA;
+
+            })
+
+            .slice(0, 10);
+
+
+        // -------------------------------------------------
+        // RENDER SUMMARY
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Total Repair Records",
+                    totals.totalRecords
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Maintenance Expense",
+                    propertyMoney(totals.totalExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Vehicle Records",
+                    totals.vehicleRecords,
+                    propertyMoney(totals.vehicleExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Home / Property Records",
+                    totals.propertyRecords,
+                    propertyMoney(totals.propertyExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Other Maintenance Records",
+                    totals.otherRecords,
+                    propertyMoney(totals.otherExpense)
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+
+All figures are calculated from the Repairs collection.
+Vehicle includes Vehicle Service and Vehicle Repair.
+Home / Property includes Home Repair, Property Maintenance
+and Sewerage Line Chamber Repair.
+Other includes all remaining repair types.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Repair Type-wise Expense Analysis</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Repair / Maintenance Type",
+                        render: row => propertyEscapeHtml(row.label)
+                    },
+
+                    {
+                        label: "Total Records",
+                        render: row => row.recordCount
+                    },
+
+                    {
+                        label: "Total Expense",
+                        render: row => propertyMoney(row.totalAmount)
+                    },
+
+                    {
+                        label: "Expense Share",
+                        render: row => expensePercentage(
+                            row.totalAmount
+                        )
+                    },
+
+                    {
+                        label: "Average Expense",
+                        render: row => propertyMoney(
+                            row.recordCount > 0
+                                ? row.totalAmount / row.recordCount
+                                : 0
+                        )
+                    }
+
+                ], typeGroups, "No repair records found.")}
+
+            </section>
+
+
+            <section class="property-report-panel">
+
+                <h3>Recent Repair & Maintenance Records</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Date",
+                        render: row => propertyEscapeHtml(
+                            row.repairDateLabel
+                        )
+                    },
+
+                    {
+                        label: "Repair Type",
+                        render: row => propertyEscapeHtml(
+                            row.repairType
+                        )
+                    },
+
+                    {
+                        label: "Vehicle / Asset",
+                        render: row => propertyEscapeHtml(
+                            row.vehicle || "—"
+                        )
+                    },
+
+                    {
+                        label: "Vendor",
+                        render: row => propertyEscapeHtml(
+                            row.vendor || "—"
+                        )
+                    },
+
+                    {
+                        label: "Description",
+                        render: row => propertyEscapeHtml(
+                            row.description || "—"
+                        )
+                    },
+
+                    {
+                        label: "Amount",
+                        render: row => propertyMoney(row.amount)
+                    }
+
+                ], recentRecords, "No repair history available.")}
+
+                <p class="property-report-muted">
+                    Showing the latest 10 records, sorted by repair date.
+                </p>
+
+            </section>
+
+        `;
+
+
+        console.log(
+            "✅ REPAIR MAINTENANCE SUMMARY LOADED:",
+            totals
+        );
+
+    } catch (error) {
+
+        console.error(
+            "REPAIR MAINTENANCE SUMMARY ERROR:",
+            error
+        );
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div class="property-report-error">
+
+                    <h3>Repair Summary could not be loaded</h3>
+
+                    <p>${propertyEscapeHtml(
+                        error.message || "Unknown error"
+                    )}</p>
+
+                    <p>
+                        Please check Firebase permissions and browser console.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// REPAIR REPORT #196 — REPAIR HISTORY REGISTER
+// Uses Common Repair Data Engine
+// =====================================================
+
+async function renderRepairHistoryRegisterReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Repair History Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Repairs & Maintenance";
+    window.activeRepairReportNumber = 196;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>📋 Repair History Register</h2>
+                    <p>Complete repair and maintenance history</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRepairReports"
+                >
+                    ← Back to Repair Reports
+                </button>
+            </div>
+
+            <div id="repairReportContent">
+                <div class="property-report-loading">
+                    Loading complete repair history...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRepairReports")?.addEventListener(
+        "click",
+        renderRepairsMaintenanceReportsDashboard
+    );
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD FRESH COMMON REPAIR DATA
+        // -------------------------------------------------
+
+        const data = await loadRepairReportData(true);
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // SORT RECORDS — LATEST FIRST
+        // -------------------------------------------------
+
+        const records = [...data.records].sort((a, b) => {
+
+            const dateA = a.repairDate?.getTime() || 0;
+            const dateB = b.repairDate?.getTime() || 0;
+
+            return dateB - dateA;
+
+        });
+
+
+        const datedRecords = records.filter(
+            record => record.repairDate
+        );
+
+        const recordsWithoutDate = records.length - datedRecords.length;
+
+
+        // -------------------------------------------------
+        // RENDER COMPLETE HISTORY
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Total Repair Records",
+                    data.totals.totalRecords
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Maintenance Expense",
+                    propertyMoney(data.totals.totalExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Records with Date",
+                    datedRecords.length
+                )}
+
+                ${renderPropertyKpi(
+                    "Records without Date",
+                    recordsWithoutDate
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                This register displays all saved repair records from
+                the Repairs collection. Records are sorted by repair
+                date, latest first. Original repair types and descriptions
+                are preserved.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Complete Repair & Maintenance History</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Repair Date",
+                        render: row => propertyEscapeHtml(
+                            row.repairDateLabel
+                        )
+                    },
+
+                    {
+                        label: "Repair Type",
+                        render: row => propertyEscapeHtml(
+                            row.repairType
+                        )
+                    },
+
+                    {
+                        label: "Category",
+                        render: row => propertyEscapeHtml(
+                            row.category
+                        )
+                    },
+
+                    {
+                        label: "Vehicle / Asset",
+                        render: row => propertyEscapeHtml(
+                            row.vehicle || "—"
+                        )
+                    },
+
+                    {
+                        label: "Vendor / Service Centre",
+                        render: row => propertyEscapeHtml(
+                            row.vendor || "—"
+                        )
+                    },
+
+                    {
+                        label: "Description",
+                        render: row => propertyEscapeHtml(
+                            row.description || "—"
+                        )
+                    },
+
+                    {
+                        label: "Remarks",
+                        render: row => propertyEscapeHtml(
+                            row.remarks || "—"
+                        )
+                    },
+
+                    {
+                        label: "Amount",
+                        render: row => propertyMoney(row.amount)
+                    }
+
+                ], records, "No repair history records found.")}
+
+                <p class="property-report-muted">
+                    Showing all ${records.length} repair records.
+                    Total expense: ${propertyMoney(data.totals.totalExpense)}.
+                </p>
+
+            </section>
+
+        `;
+
+
+        console.log(
+            "✅ REPAIR HISTORY REGISTER LOADED:",
+            {
+                totalRecords: records.length,
+                totalExpense: data.totals.totalExpense,
+                recordsWithoutDate
+            }
+        );
+
+    } catch (error) {
+
+        console.error("REPAIR HISTORY REPORT ERROR:", error);
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Repair History could not be loaded</h3>
+                    <p>${propertyEscapeHtml(
+                        error.message || "Unknown error"
+                    )}</p>
+                    <p>Please check Firebase permissions and browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+// =====================================================
+// REPAIR REPORT #197 — REPAIR TYPE ANALYSIS
+// Uses Common Repair Data + Grouping Engine
+// =====================================================
+
+async function renderRepairTypeAnalysisReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Repair Type Analysis Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Repairs & Maintenance";
+    window.activeRepairReportNumber = 197;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+                <div>
+                    <h2>📊 Repair Type Analysis</h2>
+                    <p>Expenses by repair and maintenance category</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRepairReports"
+                >
+                    ← Back to Repair Reports
+                </button>
+            </div>
+
+            <div id="repairReportContent">
+                <div class="property-report-loading">
+                    Loading repair type analysis...
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.getElementById("backToRepairReports")?.addEventListener(
+        "click",
+        renderRepairsMaintenanceReportsDashboard
+    );
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD FRESH COMMON REPAIR DATA
+        // -------------------------------------------------
+
+        const data = await loadRepairReportData(true);
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // GROUP BY ORIGINAL REPAIR TYPE
+        // -------------------------------------------------
+
+        const typeGroups = groupRepairReportRecords(
+
+            data.records,
+
+            record => record.repairType,
+
+            record => record.repairType
+
+        );
+
+
+        // -------------------------------------------------
+        // ADD CATEGORY TO EACH GROUP
+        // -------------------------------------------------
+
+        const categoryByType = new Map();
+
+        data.records.forEach(record => {
+
+            categoryByType.set(
+                record.repairType,
+                record.category
+            );
+
+        });
+
+
+        const analysisRows = typeGroups.map(group => ({
+
+            ...group,
+
+            category: categoryByType.get(group.label) || "Other",
+
+            averageExpense: group.recordCount > 0
+                ? group.totalAmount / group.recordCount
+                : 0,
+
+            expenseShare: data.totals.totalExpense > 0
+                ? (group.totalAmount / data.totals.totalExpense) * 100
+                : 0
+
+        }));
+
+
+        // -------------------------------------------------
+        // CATEGORY SUMMARY
+        // -------------------------------------------------
+
+        const categoryGroups = groupRepairReportRecords(
+
+            data.records,
+
+            record => record.category,
+
+            record => record.category
+
+        );
+
+
+        const highestExpenseType = [...analysisRows].sort(
+            (a, b) => b.totalAmount - a.totalAmount
+        )[0];
+
+
+        // -------------------------------------------------
+        // RENDER REPORT
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Total Repair Types",
+                    analysisRows.length
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Repair Records",
+                    data.totals.totalRecords
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Maintenance Expense",
+                    propertyMoney(data.totals.totalExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Average Expense per Record",
+                    propertyMoney(
+                        data.totals.totalRecords > 0
+                            ? data.totals.totalExpense / data.totals.totalRecords
+                            : 0
+                    )
+                )}
+
+                ${renderPropertyKpi(
+                    "Highest Expense Type",
+                    highestExpenseType?.label || "—",
+                    highestExpenseType
+                        ? propertyMoney(highestExpenseType.totalAmount)
+                        : ""
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+                Analysis is grouped by the original Repair / Maintenance
+                Type saved in Firebase. Category classification follows
+                the common Repair Report Engine. Expense Share is calculated
+                against total maintenance expense.
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Repair Type-wise Expense Analysis</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Repair / Maintenance Type",
+                        render: row => propertyEscapeHtml(row.label)
+                    },
+
+                    {
+                        label: "Category",
+                        render: row => propertyEscapeHtml(row.category)
+                    },
+
+                    {
+                        label: "Total Records",
+                        render: row => row.recordCount
+                    },
+
+                    {
+                        label: "Total Expense",
+                        render: row => propertyMoney(row.totalAmount)
+                    },
+
+                    {
+                        label: "Average Expense",
+                        render: row => propertyMoney(row.averageExpense)
+                    },
+
+                    {
+                        label: "Expense Share",
+                        render: row => propertyPercent(row.expenseShare)
+                    }
+
+                ], analysisRows, "No repair type records found.")}
+
+            </section>
+
+
+            <section class="property-report-panel">
+
+                <h3>Category-wise Expense Summary</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Category",
+                        render: row => propertyEscapeHtml(row.label)
+                    },
+
+                    {
+                        label: "Total Records",
+                        render: row => row.recordCount
+                    },
+
+                    {
+                        label: "Total Expense",
+                        render: row => propertyMoney(row.totalAmount)
+                    },
+
+                    {
+                        label: "Expense Share",
+                        render: row => propertyPercent(
+                            data.totals.totalExpense > 0
+                                ? (row.totalAmount / data.totals.totalExpense) * 100
+                                : 0
+                        )
+                    }
+
+                ], categoryGroups, "No category records found.")}
+
+            </section>
+
+
+            <p class="property-report-muted">
+                Repair types and categories are sorted by highest expense first.
+            </p>
+
+        `;
+
+
+        console.log(
+            "✅ REPAIR TYPE ANALYSIS LOADED:",
+            {
+                totalTypes: analysisRows.length,
+                totalRecords: data.totals.totalRecords,
+                totalExpense: data.totals.totalExpense,
+                analysisRows,
+                categoryGroups
+            }
+        );
+
+    } catch (error) {
+
+        console.error("REPAIR TYPE ANALYSIS ERROR:", error);
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+                <div class="property-report-error">
+                    <h3>Repair Type Analysis could not be loaded</h3>
+                    <p>${propertyEscapeHtml(
+                        error.message || "Unknown error"
+                    )}</p>
+                    <p>Please check Firebase permissions and browser console.</p>
+                </div>
+            `;
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// REPAIR ADVANCED REPORT ENGINE — #198, #199, #200, #201
+// One Common Renderer for Four Reports
+// =====================================================
+
+async function renderRepairAdvancedReport(reportNumber) {
+
+    const configurations = {
+
+        198: {
+            title: "Monthly Maintenance Expense",
+            description: "Month-wise repair and maintenance costs",
+            dimension: "month"
+        },
+
+        199: {
+            title: "Annual Maintenance Expense",
+            description: "Year-wise repair and maintenance costs",
+            dimension: "year"
+        },
+
+        200: {
+            title: "Vendor-wise Expense",
+            description: "Repair expenses by vendor or service centre",
+            dimension: "vendor"
+        },
+
+        201: {
+            title: "Vehicle / Asset-wise Expense",
+            description: "Maintenance costs by vehicle or asset",
+            dimension: "asset"
+        }
+
+    };
+
+    const config = configurations[Number(reportNumber)];
+
+    if (!config) {
+        console.error("Advanced Repair Report Not Found:", reportNumber);
+        return;
+    }
+
+
+    // -------------------------------------------------
+    // COMMON REPORT PAGE
+    // -------------------------------------------------
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Repair Report Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Repairs & Maintenance";
+    window.activeRepairReportNumber = Number(reportNumber);
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+
+                <div>
+                    <h2>🔧 ${propertyEscapeHtml(config.title)}</h2>
+                    <p>${propertyEscapeHtml(config.description)}</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToRepairReports"
+                >
+                    ← Back to Repair Reports
+                </button>
+
+            </div>
+
+            <div id="repairReportContent">
+
+                <div class="property-report-loading">
+                    Loading repair report...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById("backToRepairReports")?.addEventListener(
+        "click",
+        renderRepairsMaintenanceReportsDashboard
+    );
+
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD FRESH COMMON REPAIR DATA
+        // -------------------------------------------------
+
+        const data = await loadRepairReportData(true);
+
+        const records = data.records;
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // COMMON GROUPING CONFIGURATION
+        // -------------------------------------------------
+
+        let groupingKey;
+        let groupingLabel;
+        let dimensionLabel;
+
+
+        // MONTHLY
+        if (config.dimension === "month") {
+
+            dimensionLabel = "Month";
+
+            groupingKey = record => record.monthKey;
+
+            groupingLabel = record =>
+                record.monthKey === "__unmapped__"
+                    ? "Date not specified"
+                    : repairReportMonthLabel(record.monthKey);
+
+        }
+
+
+        // ANNUAL
+        else if (config.dimension === "year") {
+
+            dimensionLabel = "Year";
+
+            groupingKey = record => record.yearKey;
+
+            groupingLabel = record =>
+                record.yearKey === "__unmapped__"
+                    ? "Date not specified"
+                    : record.yearKey;
+
+        }
+
+
+        // VENDOR
+        else if (config.dimension === "vendor") {
+
+            dimensionLabel = "Vendor / Service Centre";
+
+            groupingKey = record =>
+                String(record.vendor || "")
+                    .trim()
+                    .toLowerCase();
+
+            groupingLabel = record =>
+                record.vendor || "Vendor not specified";
+
+        }
+
+
+        // VEHICLE / ASSET
+        else if (config.dimension === "asset") {
+
+            dimensionLabel = "Vehicle / Asset";
+
+            groupingKey = record =>
+                String(record.vehicle || "")
+                    .trim()
+                    .toLowerCase();
+
+            groupingLabel = record =>
+                record.vehicle || "Vehicle / Asset not specified";
+
+        }
+
+
+        // -------------------------------------------------
+        // COMMON GROUPING ENGINE
+        // -------------------------------------------------
+
+        const groupedRecords = groupRepairReportRecords(
+
+            records,
+
+            groupingKey,
+
+            groupingLabel
+
+        );
+
+
+        // Monthly / Annual Reports: chronological order
+        if (
+            config.dimension === "month" ||
+            config.dimension === "year"
+        ) {
+
+            groupedRecords.sort((a, b) => {
+
+                if (a.key === "__unmapped__") return 1;
+                if (b.key === "__unmapped__") return -1;
+
+                return String(a.key).localeCompare(
+                    String(b.key)
+                );
+
+            });
+
+        }
+
+
+        // -------------------------------------------------
+        // PREPARE REPORT ROWS
+        // -------------------------------------------------
+
+        const reportRows = groupedRecords.map(group => ({
+
+            ...group,
+
+            averageExpense:
+                group.recordCount > 0
+                    ? group.totalAmount / group.recordCount
+                    : 0,
+
+            expenseShare:
+                data.totals.totalExpense > 0
+                    ? (
+                        group.totalAmount /
+                        data.totals.totalExpense
+                    ) * 100
+                    : 0
+
+        }));
+
+
+        // Highest expense group
+        const highestExpenseGroup = [...reportRows].sort(
+            (a, b) => b.totalAmount - a.totalAmount
+        )[0];
+
+
+        // Average expense per record
+        const averageExpense =
+            data.totals.totalRecords > 0
+                ? (
+                    data.totals.totalExpense /
+                    data.totals.totalRecords
+                )
+                : 0;
+
+
+        // -------------------------------------------------
+        // RENDER COMMON ADVANCED REPORT
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Total Groups",
+                    reportRows.length
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Repair Records",
+                    data.totals.totalRecords
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Maintenance Expense",
+                    propertyMoney(data.totals.totalExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Average Expense per Record",
+                    propertyMoney(averageExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Highest Expense",
+                    highestExpenseGroup
+                        ? propertyMoney(highestExpenseGroup.totalAmount)
+                        : "—",
+                    highestExpenseGroup
+                        ? highestExpenseGroup.label
+                        : ""
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+
+                This report uses the common Repairs collection
+                and shared expense aggregation engine.
+
+                All amounts are calculated using the recorded
+                repair amount. Records without a
+                ${propertyEscapeHtml(dimensionLabel.toLowerCase())}
+                are shown separately instead of being excluded.
+
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>
+                    ${propertyEscapeHtml(config.title)} Details
+                </h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: dimensionLabel,
+
+                        render: row => propertyEscapeHtml(
+                            row.label
+                        )
+                    },
+
+                    {
+                        label: "Repair Records",
+
+                        render: row => row.recordCount
+                    },
+
+                    {
+                        label: "Total Expense",
+
+                        render: row => propertyMoney(
+                            row.totalAmount
+                        )
+                    },
+
+                    {
+                        label: "Average Expense",
+
+                        render: row => propertyMoney(
+                            row.averageExpense
+                        )
+                    },
+
+                    {
+                        label: "Expense Share",
+
+                        render: row => propertyPercent(
+                            row.expenseShare
+                        )
+                    },
+
+                    {
+                        label: "First Repair Date",
+
+                        render: row => propertyEscapeHtml(
+                            repairReportDateLabel(row.earliestDate)
+                        )
+                    },
+
+                    {
+                        label: "Latest Repair Date",
+
+                        render: row => propertyEscapeHtml(
+                            repairReportDateLabel(row.latestDate)
+                        )
+                    }
+
+                ], reportRows, "No matching repair records found.")}
+
+                <p class="property-report-muted">
+
+                    Showing ${records.length} repair records
+                    across ${reportRows.length} groups.
+
+                    Total expense:
+                    ${propertyMoney(data.totals.totalExpense)}.
+
+                </p>
+
+            </section>
+
+        `;
+
+
+        console.log(
+            `✅ REPAIR REPORT #${reportNumber} LOADED`,
+            {
+                report: config.title,
+                totalRecords: data.totals.totalRecords,
+                totalExpense: data.totals.totalExpense,
+                groups: reportRows
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            `REPAIR REPORT #${reportNumber} ERROR:`,
+            error
+        );
+
+
+        const content = document.getElementById(
+            "repairReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div class="property-report-error">
+
+                    <h3>
+                        ${propertyEscapeHtml(config.title)}
+                        could not be loaded
+                    </h3>
+
+                    <p>
+                        ${propertyEscapeHtml(
+                            error.message || "Unknown error"
+                        )}
+                    </p>
+
+                    <p>
+                        Please check Firebase permissions
+                        and browser console.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// CONNECT ADVANCED REPAIR REPORT CARDS
+// #198, #199, #200, #201
+// Uses document capture to avoid duplicate click handling
+// =====================================================
+
+if (!window.repairAdvancedReportHandlerBound) {
+
+    window.repairAdvancedReportHandlerBound = true;
+
+    document.addEventListener("click", function(event) {
+
+        const card = event.target.closest?.(
+            "[data-repair-report]"
+        );
+
+        if (!card) return;
+
+        const reportNumber = Number(
+            card.dataset.repairReport
+        );
+
+        if (![198, 199, 200, 201].includes(reportNumber)) {
+            return;
+        }
+
+        // Prevent the older "not connected" fallback handler
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        console.log(
+            "🔧 ADVANCED REPAIR REPORT SELECTED:",
+            reportNumber
+        );
+
+        renderRepairAdvancedReport(reportNumber);
+
+    }, true);
+
+}
+
+
 const categoryCards = document.querySelectorAll(
     ".report-category-card"
 );
@@ -4782,6 +6823,19 @@ if (title === "Rental Properties") {
     console.log("🏘️ RENTAL REPORTS SELECTED");
 
     renderRentalReportsDashboard();
+
+    return;
+}
+
+// =====================================================
+// REPAIRS & MAINTENANCE REPORTS
+// =====================================================
+
+if (title === "Repairs & Maintenance") {
+
+    console.log("🔧 REPAIRS & MAINTENANCE REPORTS SELECTED");
+
+    renderRepairsMaintenanceReportsDashboard();
 
     return;
 }
