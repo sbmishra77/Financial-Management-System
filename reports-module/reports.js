@@ -6779,6 +6779,3199 @@ if (!window.repairAdvancedReportHandlerBound) {
 }
 
 
+// =====================================================
+// VEHICLE MANAGEMENT REPORTS — CATALOGUE
+// =====================================================
+
+const VEHICLE_REPORT_CATALOGUE = [
+
+    {
+        number: 202,
+        id: "vehicle-portfolio-summary",
+        name: "Vehicle Portfolio Summary",
+        description: "Total vehicles, ownership and portfolio value"
+    },
+
+    {
+        number: 203,
+        id: "vehicle-register",
+        name: "Vehicle Register",
+        description: "Complete vehicle master information"
+    },
+
+    {
+        number: 204,
+        id: "vehicle-operational-expenses",
+        name: "Operational Expense Register",
+        description: "Complete vehicle-related expense transactions"
+    },
+
+    {
+        number: 205,
+        id: "vehicle-wise-expense",
+        name: "Vehicle-wise Expense",
+        description: "Operational expenses by individual vehicle"
+    },
+
+    {
+        number: 206,
+        id: "vehicle-category-expense",
+        name: "Expense Category Analysis",
+        description: "Fuel, insurance, maintenance and other expenses"
+    },
+
+    {
+        number: 207,
+        id: "vehicle-fuel-expense",
+        name: "Fuel Expense Analysis",
+        description: "Vehicle fuel expenditure analysis"
+    },
+
+    {
+        number: 208,
+        id: "vehicle-insurance-renewal",
+        name: "Insurance & Renewal Tracker",
+        description: "Insurance policies, premiums and expiry dates"
+    },
+
+    {
+        number: 209,
+        id: "vehicle-document-expiry",
+        name: "RC & Compliance Expiry",
+        description: "RC validity and third-party insurance expiry"
+    },
+
+    {
+        number: 210,
+        id: "vehicle-purchase-valuation",
+        name: "Vehicle Purchase & Valuation",
+        description: "Purchase cost, current value and appreciation"
+    },
+
+    {
+        number: 211,
+        id: "vehicle-monthly-expense",
+        name: "Monthly Vehicle Expense Trend",
+        description: "Month-wise operational expense analysis"
+    }
+
+];
+
+
+// =====================================================
+// VEHICLE MANAGEMENT REPORTS DASHBOARD
+// =====================================================
+
+function renderVehicleReportsDashboard() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+
+        console.error(
+            "Vehicle Report Work Area Not Found"
+        );
+
+        return;
+    }
+
+    reportWorkArea.style.display = "block";
+
+    window.activeReportCategory = "Vehicle Management";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header">
+
+                <div>
+
+                    <h2>🚗 Vehicle Management Reports</h2>
+
+                    <p>
+                        Vehicle portfolio, operational expenses,
+                        insurance and compliance analytics
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="transaction-reports-grid">
+
+                ${VEHICLE_REPORT_CATALOGUE.map(report => `
+
+                    <div
+                        class="transaction-report-card"
+                        data-vehicle-report="${report.number}"
+                    >
+
+                        <div class="transaction-report-number">
+                            ${report.number}
+                        </div>
+
+                        <div class="transaction-report-content">
+
+                            <h3>
+                                ${propertyEscapeHtml(report.name)}
+                            </h3>
+
+                            <p>
+                                ${propertyEscapeHtml(report.description)}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    console.log(
+        "✅ VEHICLE REPORTS DASHBOARD RENDERED:",
+        reportWorkArea.querySelectorAll(
+            "[data-vehicle-report]"
+        ).length
+    );
+
+
+    // -------------------------------------------------
+// VEHICLE REPORT CARD CLICK HANDLER
+// -------------------------------------------------
+
+reportWorkArea.querySelectorAll(
+    "[data-vehicle-report]"
+).forEach(card => {
+
+    card.addEventListener("click", () => {
+
+        const reportNumber = Number(
+            card.dataset.vehicleReport
+        );
+
+        console.log(
+            "🚗 VEHICLE REPORT CARD CLICKED:",
+            reportNumber
+        );
+
+
+        // Vehicle Portfolio Summary — #202
+        if (reportNumber === 202) {
+
+            renderVehiclePortfolioSummaryReport();
+
+            return;
+        }
+
+
+        console.log(
+            "⏳ Vehicle Report not connected yet:",
+            reportNumber
+        );
+
+    });
+
+});
+
+}
+
+
+// =====================================================
+// COMMON VEHICLE REPORT DATA ENGINE
+// Used by Reports #202–211
+// =====================================================
+
+const VEHICLE_REPORT_EXPENSE_CATEGORIES = [
+
+    "Vehicle Fuel",
+    "Vehicle Insurance",
+    "Vehicle Maintenance",
+    "Vehicle Challan",
+    "Vehicle Other Expense"
+
+];
+
+let vehicleReportDataCache = null;
+
+
+// -----------------------------------------------------
+// COMMON NUMBER CONVERSION
+// -----------------------------------------------------
+
+function vehicleReportNumber(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+        return 0;
+    }
+
+    const cleaned = String(value)
+        .replace(/[₹,\s]/g, "")
+        .trim();
+
+    const number = Number(cleaned);
+
+    return Number.isFinite(number) ? number : 0;
+
+}
+
+
+// -----------------------------------------------------
+// COMMON DATE CONVERSION
+// Supports DD-MM-YYYY, YYYY-MM-DD and Firebase dates
+// -----------------------------------------------------
+
+function vehicleReportDate(value) {
+
+    if (!value) return null;
+
+    if (value instanceof Date) {
+        return isNaN(value.getTime()) ? null : value;
+    }
+
+    if (typeof value.toDate === "function") {
+        const date = value.toDate();
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    if (typeof value === "object" && value.seconds) {
+        return new Date(value.seconds * 1000);
+    }
+
+    const raw = String(value).trim();
+
+
+    // DD-MM-YYYY or DD/MM/YYYY
+    let match = raw.match(
+        /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/
+    );
+
+    if (match) {
+
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+
+        const date = new Date(year, month - 1, day);
+
+        if (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+        ) {
+            return date;
+        }
+
+        return null;
+
+    }
+
+
+    // YYYY-MM-DD
+    match = raw.match(
+        /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    );
+
+    if (match) {
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+
+        const date = new Date(year, month - 1, day);
+
+        if (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day
+        ) {
+            return date;
+        }
+
+        return null;
+
+    }
+
+
+    const parsed = new Date(raw);
+
+    return isNaN(parsed.getTime()) ? null : parsed;
+
+}
+
+
+// -----------------------------------------------------
+// COMMON DATE DISPLAY
+// -----------------------------------------------------
+
+function vehicleReportDateLabel(value) {
+
+    const date = vehicleReportDate(value);
+
+    if (!date) return "—";
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+
+}
+
+
+// -----------------------------------------------------
+// COMMON MONTH KEY
+// Example: 2026-11
+// -----------------------------------------------------
+
+function vehicleReportMonthKey(value) {
+
+    const date = vehicleReportDate(value);
+
+    if (!date) return "__unmapped__";
+
+    return (
+        date.getFullYear() +
+        "-" +
+        String(date.getMonth() + 1).padStart(2, "0")
+    );
+
+}
+
+
+// -----------------------------------------------------
+// COMMON MONTH LABEL
+// Example: 2026-11 → November 2026
+// -----------------------------------------------------
+
+function vehicleReportMonthLabel(value) {
+
+    if (!value || value === "__unmapped__") {
+        return "Date not specified";
+    }
+
+    const match = String(value).match(
+        /^(\d{4})-(\d{2})$/
+    );
+
+    if (!match) return String(value);
+
+    return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        1
+    ).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+    });
+
+}
+
+
+// -----------------------------------------------------
+// LOAD COMMON VEHICLE DATA
+// -----------------------------------------------------
+
+async function loadVehicleReportData(forceRefresh = false) {
+
+    const user = auth.currentUser || currentUser;
+
+    if (!user || !user.uid) {
+        throw new Error("No logged-in user found.");
+    }
+
+
+    // Reuse data for the same user
+    if (
+        !forceRefresh &&
+        vehicleReportDataCache &&
+        vehicleReportDataCache.uid === user.uid
+    ) {
+        return vehicleReportDataCache.promise;
+    }
+
+
+    const dataPromise = (async () => {
+
+        console.log("🚗 Loading Common Vehicle Report Data...");
+
+
+        // -------------------------------------------------
+        // LOAD VEHICLE MASTER FROM LOCAL STORAGE
+        // -------------------------------------------------
+
+        let vehicles = [];
+
+        try {
+
+            const storedVehicles = JSON.parse(
+                localStorage.getItem("financialERP_vehicles") || "[]"
+            );
+
+            vehicles = Array.isArray(storedVehicles)
+                ? storedVehicles
+                : [];
+
+        } catch (error) {
+
+            throw new Error(
+                "Vehicle Master data could not be read from localStorage."
+            );
+
+        }
+
+
+        // -------------------------------------------------
+        // VEHICLE LOOKUP BY ID
+        // -------------------------------------------------
+
+        const vehiclesById = new Map(
+
+            vehicles.map(vehicle => [
+                String(vehicle.id),
+                vehicle
+            ])
+
+        );
+
+        // -------------------------------------------------
+// NORMALIZED VEHICLE REGISTRATION LOOKUP
+// MP 09 BS 8798 = MP09BS8798
+// -------------------------------------------------
+
+function normalizeVehicleRegistration(value) {
+
+    return String(value || "")
+        .replace(/[^a-z0-9]/gi, "")
+        .toUpperCase();
+
+}
+
+const vehiclesByRegistration = new Map(
+
+    vehicles
+
+        .filter(vehicle => vehicle.registrationNumber)
+
+        .map(vehicle => [
+
+            normalizeVehicleRegistration(
+                vehicle.registrationNumber
+            ),
+
+            vehicle
+
+        ])
+
+);
+
+
+        // -------------------------------------------------
+        // LOAD FIRESTORE TRANSACTIONS
+        // -------------------------------------------------
+
+        const snapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "transactions"
+            )
+        );
+
+
+        // -------------------------------------------------
+        // FILTER & NORMALIZE VEHICLE EXPENSES
+        // -------------------------------------------------
+
+        const expenses = snapshot.docs
+
+            .map(docSnapshot => {
+
+                const source = docSnapshot.data();
+
+                return {
+                    ...source,
+                    id: docSnapshot.id
+                };
+
+            })
+
+            .filter(transaction => {
+
+                // Exclude soft-deleted records
+                if (transaction.deleted === true) {
+                    return false;
+                }
+
+                // Only actual expense transactions
+                if (
+                    String(transaction.type || "").toLowerCase() !== "expense"
+                ) {
+                    return false;
+                }
+
+                // Only five verified vehicle expense categories
+                return VEHICLE_REPORT_EXPENSE_CATEGORIES.includes(
+                    String(transaction.category || "").trim()
+                );
+
+            })
+
+            .map(transaction => {
+
+// -------------------------------------------------
+// MATCH VEHICLE BY ID FIRST, THEN REGISTRATION
+// -------------------------------------------------
+
+const vehicleId = String(
+    transaction.vehicleId || ""
+).trim();
+
+const transactionRegistrationNumber = String(
+    transaction.vehicleRegistrationNumber || ""
+).trim();
+
+const normalizedRegistration = normalizeVehicleRegistration(
+    transactionRegistrationNumber
+);
+
+
+const vehicleById = vehicleId
+    ? vehiclesById.get(vehicleId) || null
+    : null;
+
+
+const vehicleByRegistration = normalizedRegistration
+    ? vehiclesByRegistration.get(normalizedRegistration) || null
+    : null;
+
+
+const vehicle = vehicleById || vehicleByRegistration || null;
+
+
+const canonicalVehicleId = vehicle?.id
+    ? String(vehicle.id)
+    : (
+        vehicleId ||
+        (
+            normalizedRegistration
+                ? `registration::${normalizedRegistration}`
+                : ""
+        )
+    );
+
+
+                const date = vehicleReportDate(
+                    transaction.date
+                );
+
+
+                const amount = vehicleReportNumber(
+                    transaction.amount
+                );
+
+
+                const vehicleDisplayName = vehicle
+                    ? [
+                        vehicle.manufacturer,
+                        vehicle.model
+                    ].filter(Boolean).join(" ") ||
+                      vehicle.registrationNumber ||
+                      "Unnamed Vehicle"
+                    : transaction.vehicleName ||
+                      transaction.vehicleRegistrationNumber ||
+                      "Vehicle not linked";
+
+
+                return {
+
+                    ...transaction,
+
+                    vehicleId: canonicalVehicleId,
+
+vehicle,
+
+                    vehicleDisplayName,
+
+                    vehicleRegistrationNumber:
+    vehicle?.registrationNumber ||
+    transaction.vehicleRegistrationNumber ||
+    "",
+                    date,
+
+                    dateLabel: vehicleReportDateLabel(
+                        transaction.date
+                    ),
+
+                    monthKey: vehicleReportMonthKey(
+                        transaction.date
+                    ),
+
+                    yearKey: date
+                        ? String(date.getFullYear())
+                        : "__unmapped__",
+
+                    amount,
+
+                    category: String(
+                        transaction.category || ""
+                    ).trim()
+
+                };
+
+            });
+
+
+        // -------------------------------------------------
+        // VEHICLE EXPENSE TOTALS
+        // -------------------------------------------------
+
+        const totalExpense = expenses.reduce(
+            (sum, record) => sum + record.amount,
+            0
+        );
+
+
+        // -------------------------------------------------
+        // CATEGORY AGGREGATION
+        // -------------------------------------------------
+
+        const categoryTotals = {};
+
+        VEHICLE_REPORT_EXPENSE_CATEGORIES.forEach(
+            category => {
+
+                categoryTotals[category] = {
+
+                    category,
+
+                    recordCount: 0,
+
+                    totalAmount: 0
+
+                };
+
+            }
+        );
+
+
+        expenses.forEach(record => {
+
+            const group = categoryTotals[record.category];
+
+            group.recordCount++;
+
+            group.totalAmount += record.amount;
+
+        });
+
+
+        // -------------------------------------------------
+        // VEHICLE-WISE AGGREGATION
+        // -------------------------------------------------
+
+        const vehicleExpenseTotals = new Map();
+
+
+        expenses.forEach(record => {
+
+            const key = record.vehicleId || "__unlinked__";
+
+            if (!vehicleExpenseTotals.has(key)) {
+
+                vehicleExpenseTotals.set(key, {
+
+                    vehicleId: record.vehicleId,
+
+                    vehicle: record.vehicle,
+
+                    vehicleName: record.vehicleDisplayName,
+
+                    registrationNumber:
+                        record.vehicleRegistrationNumber,
+
+                    recordCount: 0,
+
+                    totalAmount: 0
+
+                });
+
+            }
+
+
+            const group = vehicleExpenseTotals.get(key);
+
+            group.recordCount++;
+
+            group.totalAmount += record.amount;
+
+        });
+
+
+        // -------------------------------------------------
+        // VEHICLE PORTFOLIO STATISTICS
+        // -------------------------------------------------
+
+        const purchaseValue = vehicles.reduce(
+            (sum, vehicle) =>
+                sum + vehicleReportNumber(vehicle.purchasePrice),
+            0
+        );
+
+
+        const currentValue = vehicles.reduce(
+            (sum, vehicle) =>
+                sum + vehicleReportNumber(vehicle.currentValue),
+            0
+        );
+
+
+        const vehicleTypes = {};
+
+        vehicles.forEach(vehicle => {
+
+            const type = vehicle.vehicleType || "Not specified";
+
+            vehicleTypes[type] =
+                (vehicleTypes[type] || 0) + 1;
+
+        });
+
+
+        // -------------------------------------------------
+        // FINAL COMMON DATASET
+        // -------------------------------------------------
+
+        return {
+
+            vehicles,
+
+            expenses,
+
+            categoryTotals: Object.values(categoryTotals),
+
+            vehicleExpenseTotals: Array.from(
+                vehicleExpenseTotals.values()
+            ),
+
+            totals: {
+
+                totalVehicles: vehicles.length,
+
+                totalExpenseRecords: expenses.length,
+
+                totalOperationalExpense: totalExpense,
+
+                totalPurchaseValue: purchaseValue,
+
+                totalCurrentValue: currentValue,
+
+                portfolioValueChange:
+                    currentValue - purchaseValue,
+
+                vehicleTypeCount:
+                    Object.keys(vehicleTypes).length,
+
+                linkedExpenseRecords:
+                    expenses.filter(
+                        record => !!record.vehicleId
+                    ).length,
+
+                unlinkedExpenseRecords:
+                    expenses.filter(
+                        record => !record.vehicleId
+                    ).length
+
+            },
+
+            vehicleTypes,
+
+            loadedAt: new Date()
+
+        };
+
+    })();
+
+
+    vehicleReportDataCache = {
+        uid: user.uid,
+        promise: dataPromise
+    };
+
+
+    try {
+
+        return await dataPromise;
+
+    } catch (error) {
+
+        vehicleReportDataCache = null;
+
+        throw error;
+
+    }
+
+}
+
+
+// -----------------------------------------------------
+// COMMON VEHICLE REPORT GROUPING ENGINE
+// -----------------------------------------------------
+
+function groupVehicleReportRecords(
+    records,
+    getGroupKey,
+    getGroupLabel
+) {
+
+    const grouped = new Map();
+
+
+    records.forEach(record => {
+
+        const rawKey = getGroupKey(record);
+
+        const key =
+            rawKey !== null &&
+            rawKey !== undefined &&
+            String(rawKey).trim() !== ""
+                ? String(rawKey)
+                : "__unmapped__";
+
+
+        if (!grouped.has(key)) {
+
+            grouped.set(key, {
+
+                key,
+
+                label: getGroupLabel(record) || "Not specified",
+
+                recordCount: 0,
+
+                totalAmount: 0,
+
+                earliestDate: null,
+
+                latestDate: null
+
+            });
+
+        }
+
+
+        const group = grouped.get(key);
+
+        group.recordCount++;
+
+        group.totalAmount += record.amount;
+
+
+        if (record.date) {
+
+            if (
+                !group.earliestDate ||
+                record.date < group.earliestDate
+            ) {
+                group.earliestDate = record.date;
+            }
+
+            if (
+                !group.latestDate ||
+                record.date > group.latestDate
+            ) {
+                group.latestDate = record.date;
+            }
+
+        }
+
+    });
+
+
+    return Array.from(grouped.values()).sort(
+        (a, b) => b.totalAmount - a.totalAmount
+    );
+
+}
+
+
+console.log("✅ COMMON VEHICLE REPORT ENGINE READY");
+
+
+// =====================================================
+// VEHICLE REPORT #202 — VEHICLE PORTFOLIO SUMMARY
+// Uses Common Vehicle Data Engine
+// =====================================================
+
+async function renderVehiclePortfolioSummaryReport() {
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Vehicle Portfolio Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Vehicle Management";
+    window.activeVehicleReportNumber = 202;
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+
+                <div>
+                    <h2>🚗 Vehicle Portfolio Summary</h2>
+                    <p>Vehicle ownership, valuation and operational expense overview</p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToVehicleReports"
+                >
+                    ← Back to Vehicle Reports
+                </button>
+
+            </div>
+
+            <div id="vehicleReportContent">
+
+                <div class="property-report-loading">
+                    Loading vehicle portfolio...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById("backToVehicleReports")?.addEventListener(
+        "click",
+        renderVehicleReportsDashboard
+    );
+
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD FRESH COMMON VEHICLE DATA
+        // -------------------------------------------------
+
+        const data = await loadVehicleReportData(true);
+
+        const content = document.getElementById(
+            "vehicleReportContent"
+        );
+
+        if (!content) return;
+
+
+        const totals = data.totals;
+
+
+        // -------------------------------------------------
+        // COMPARABLE PURCHASE / CURRENT VALUE
+        // -------------------------------------------------
+
+        const comparableVehicles = data.vehicles.filter(vehicle =>
+
+            vehicleReportNumber(vehicle.purchasePrice) > 0 &&
+            vehicleReportNumber(vehicle.currentValue) > 0
+
+        );
+
+
+        const comparablePurchaseValue = comparableVehicles.reduce(
+            (sum, vehicle) =>
+                sum + vehicleReportNumber(vehicle.purchasePrice),
+            0
+        );
+
+
+        const comparableCurrentValue = comparableVehicles.reduce(
+            (sum, vehicle) =>
+                sum + vehicleReportNumber(vehicle.currentValue),
+            0
+        );
+
+
+        const comparableValueChange =
+            comparableCurrentValue - comparablePurchaseValue;
+
+
+        const comparableValueChangePercent =
+            comparablePurchaseValue > 0
+                ? (
+                    comparableValueChange /
+                    comparablePurchaseValue
+                ) * 100
+                : null;
+
+
+        const missingPurchaseValue = data.vehicles.filter(
+            vehicle =>
+                vehicleReportNumber(vehicle.purchasePrice) <= 0
+        ).length;
+
+
+        const missingCurrentValue = data.vehicles.filter(
+            vehicle =>
+                vehicleReportNumber(vehicle.currentValue) <= 0
+        ).length;
+
+
+        // -------------------------------------------------
+        // VEHICLE TYPE SUMMARY
+        // -------------------------------------------------
+
+        const typeRows = Object.entries(
+            data.vehicleTypes
+        ).map(([type, count]) => ({
+
+            type,
+
+            count,
+
+            share: totals.totalVehicles > 0
+                ? (count / totals.totalVehicles) * 100
+                : 0
+
+        })).sort((a, b) => b.count - a.count);
+
+
+        // -------------------------------------------------
+        // CATEGORY EXPENSE SUMMARY
+        // -------------------------------------------------
+
+        const categoryRows = data.categoryTotals.map(category => ({
+
+            ...category,
+
+            share: totals.totalOperationalExpense > 0
+                ? (
+                    category.totalAmount /
+                    totals.totalOperationalExpense
+                ) * 100
+                : 0
+
+        })).sort((a, b) => b.totalAmount - a.totalAmount);
+
+
+        // -------------------------------------------------
+        // RECENT VEHICLE EXPENSES
+        // -------------------------------------------------
+
+        const recentExpenses = [...data.expenses]
+
+            .sort((a, b) => {
+
+                const dateA = a.date?.getTime() || 0;
+                const dateB = b.date?.getTime() || 0;
+
+                return dateB - dateA;
+
+            })
+
+            .slice(0, 10);
+
+
+        // -------------------------------------------------
+        // RENDER PORTFOLIO SUMMARY
+        // -------------------------------------------------
+
+        content.innerHTML = `
+
+            <div class="property-report-kpi-grid">
+
+                ${renderPropertyKpi(
+                    "Total Vehicles",
+                    totals.totalVehicles
+                )}
+
+                ${renderPropertyKpi(
+                    "Vehicle Types",
+                    totals.vehicleTypeCount
+                )}
+
+                ${renderPropertyKpi(
+                    "Operational Expense Records",
+                    totals.totalExpenseRecords
+                )}
+
+                ${renderPropertyKpi(
+                    "Total Operational Expense",
+                    propertyMoney(totals.totalOperationalExpense)
+                )}
+
+                ${renderPropertyKpi(
+                    "Recorded Purchase Value",
+                    propertyMoney(totals.totalPurchaseValue),
+                    `${totals.totalVehicles - missingPurchaseValue} vehicles with recorded purchase price`
+                )}
+
+                ${renderPropertyKpi(
+                    "Recorded Current Value",
+                    propertyMoney(totals.totalCurrentValue),
+                    `${totals.totalVehicles - missingCurrentValue} vehicles with recorded current value`
+                )}
+
+                ${renderPropertyKpi(
+                    "Comparable Value Change",
+                    comparableVehicles.length
+                        ? propertyMoney(comparableValueChange)
+                        : "—",
+                    comparableValueChangePercent === null
+                        ? "Both values required"
+                        : propertyPercent(comparableValueChangePercent)
+                )}
+
+                ${renderPropertyKpi(
+                    "Expenses Linked to Vehicles",
+                    totals.linkedExpenseRecords,
+                    `${totals.unlinkedExpenseRecords} expense records without a vehicle link`
+                )}
+
+            </div>
+
+
+            <p class="property-report-note">
+
+                Vehicle details are read from the local Vehicle Master
+                (financialERP_vehicles). Operational expenses are read
+                from Firestore transactions using the five verified
+                Vehicle Expense Categories. Soft-deleted transactions
+                are excluded.
+
+                Comparable Value Change includes only vehicles having
+                both purchase price and current value greater than zero.
+
+            </p>
+
+
+            <section class="property-report-panel">
+
+                <h3>Vehicle Type Distribution</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Vehicle Type",
+                        render: row => propertyEscapeHtml(row.type)
+                    },
+
+                    {
+                        label: "Total Vehicles",
+                        render: row => row.count
+                    },
+
+                    {
+                        label: "Portfolio Share",
+                        render: row => propertyPercent(row.share)
+                    }
+
+                ], typeRows, "No vehicles found in Vehicle Master.")}
+
+            </section>
+
+
+            <section class="property-report-panel">
+
+                <h3>Vehicle Operational Expense by Category</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Expense Category",
+                        render: row => propertyEscapeHtml(row.category)
+                    },
+
+                    {
+                        label: "Expense Records",
+                        render: row => row.recordCount
+                    },
+
+                    {
+                        label: "Total Expense",
+                        render: row => propertyMoney(row.totalAmount)
+                    },
+
+                    {
+                        label: "Expense Share",
+                        render: row => propertyPercent(row.share)
+                    }
+
+                ], categoryRows, "No vehicle expense records found.")}
+
+            </section>
+
+
+            <section class="property-report-panel">
+
+                <h3>Vehicle Portfolio Register</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Registration Number",
+                        render: row => propertyEscapeHtml(
+                            row.registrationNumber || "—"
+                        )
+                    },
+
+                    {
+                        label: "Vehicle",
+                        render: row => propertyEscapeHtml(
+                            [
+                                row.manufacturer,
+                                row.model
+                            ].filter(Boolean).join(" ") || "—"
+                        )
+                    },
+
+                    {
+                        label: "Vehicle Type",
+                        render: row => propertyEscapeHtml(
+                            row.vehicleType || "—"
+                        )
+                    },
+
+                    {
+                        label: "Fuel Type",
+                        render: row => propertyEscapeHtml(
+                            row.fuelType || "—"
+                        )
+                    },
+
+                    {
+                        label: "Purchase Date",
+                        render: row => propertyEscapeHtml(
+                            vehicleReportDateLabel(row.purchaseDate)
+                        )
+                    },
+
+                    {
+                        label: "Purchase Price",
+                        render: row => propertyMoney(
+                            vehicleReportNumber(row.purchasePrice)
+                        )
+                    },
+
+                    {
+                        label: "Current Value",
+                        render: row => propertyMoney(
+                            vehicleReportNumber(row.currentValue)
+                        )
+                    }
+
+                ], data.vehicles, "No vehicles available.")}
+
+            </section>
+
+
+            <section class="property-report-panel">
+
+                <h3>Recent Vehicle Expenses</h3>
+
+                ${renderPropertyReportTable([
+
+                    {
+                        label: "Date",
+                        render: row => propertyEscapeHtml(row.dateLabel)
+                    },
+
+                    {
+                        label: "Category",
+                        render: row => propertyEscapeHtml(row.category)
+                    },
+
+                    {
+                        label: "Vehicle",
+                        render: row => propertyEscapeHtml(
+                            row.vehicleDisplayName
+                        )
+                    },
+
+                    {
+                        label: "Registration Number",
+                        render: row => propertyEscapeHtml(
+                            row.vehicleRegistrationNumber || "—"
+                        )
+                    },
+
+                    {
+                        label: "Party / Merchant",
+                        render: row => propertyEscapeHtml(
+                            row.partyName || "—"
+                        )
+                    },
+
+                    {
+                        label: "Amount",
+                        render: row => propertyMoney(row.amount)
+                    }
+
+                ], recentExpenses, "No vehicle expenses found.")}
+
+                <p class="property-report-muted">
+                    Showing the latest ${recentExpenses.length}
+                    vehicle expense records, sorted by transaction date.
+                </p>
+
+            </section>
+
+        `;
+
+
+        console.log(
+            "✅ VEHICLE PORTFOLIO SUMMARY LOADED:",
+            {
+                vehicles: totals.totalVehicles,
+                totalExpenseRecords: totals.totalExpenseRecords,
+                totalOperationalExpense: totals.totalOperationalExpense,
+                purchaseValue: totals.totalPurchaseValue,
+                currentValue: totals.totalCurrentValue,
+                linkedExpenseRecords: totals.linkedExpenseRecords,
+                unlinkedExpenseRecords: totals.unlinkedExpenseRecords
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "VEHICLE PORTFOLIO SUMMARY ERROR:",
+            error
+        );
+
+
+        const content = document.getElementById(
+            "vehicleReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div class="property-report-error">
+
+                    <h3>Vehicle Portfolio Summary could not be loaded</h3>
+
+                    <p>
+                        ${propertyEscapeHtml(
+                            error.message || "Unknown error"
+                        )}
+                    </p>
+
+                    <p>
+                        Please check local Vehicle Master data,
+                        Firebase permissions and browser console.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// VEHICLE ADVANCED REPORT ENGINE
+// Reports #203–211
+// One Common Renderer
+// =====================================================
+
+async function renderVehicleAdvancedReport(reportNumber) {
+
+    const configurations = {
+
+        203: {
+            title: "Vehicle Register",
+            description: "Complete vehicle master information"
+        },
+
+        204: {
+            title: "Operational Expense Register",
+            description: "Complete vehicle-related expense transactions"
+        },
+
+        205: {
+            title: "Vehicle-wise Expense",
+            description: "Operational expenses by individual vehicle"
+        },
+
+        206: {
+            title: "Expense Category Analysis",
+            description: "Fuel, insurance, maintenance and other expenses"
+        },
+
+        207: {
+            title: "Fuel Expense Analysis",
+            description: "Vehicle fuel expenditure analysis"
+        },
+
+        208: {
+            title: "Insurance & Renewal Tracker",
+            description: "Insurance policies, premiums and expiry dates"
+        },
+
+        209: {
+            title: "RC & Compliance Expiry",
+            description: "RC validity and third-party insurance expiry"
+        },
+
+        210: {
+            title: "Vehicle Purchase & Valuation",
+            description: "Purchase cost, current value and appreciation"
+        },
+
+        211: {
+            title: "Monthly Vehicle Expense Trend",
+            description: "Month-wise operational expense analysis"
+        }
+
+    };
+
+
+    const config = configurations[Number(reportNumber)];
+
+    if (!config) {
+        console.error("Vehicle Advanced Report Not Found:", reportNumber);
+        return;
+    }
+
+
+    // -------------------------------------------------
+    // COMMON REPORT PAGE
+    // -------------------------------------------------
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) {
+        console.error("Vehicle Report Work Area Not Found");
+        return;
+    }
+
+    window.activeReportCategory = "Vehicle Management";
+    window.activeVehicleReportNumber = Number(reportNumber);
+
+    reportWorkArea.style.display = "block";
+
+    reportWorkArea.innerHTML = `
+
+        <div class="transaction-reports-container property-report-container">
+
+            <div class="transaction-reports-header property-report-header">
+
+                <div>
+                    <h2>🚗 ${propertyEscapeHtml(config.title)}</h2>
+
+                    <p>
+                        ${propertyEscapeHtml(config.description)}
+                    </p>
+                </div>
+
+                <button
+                    type="button"
+                    class="back-to-dashboard-button"
+                    id="backToVehicleReports"
+                >
+                    ← Back to Vehicle Reports
+                </button>
+
+            </div>
+
+            <div id="vehicleReportContent">
+
+                <div class="property-report-loading">
+                    Loading vehicle report...
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.getElementById("backToVehicleReports")?.addEventListener(
+        "click",
+        renderVehicleReportsDashboard
+    );
+
+
+    try {
+
+        // -------------------------------------------------
+        // LOAD COMMON VEHICLE DATA
+        // -------------------------------------------------
+
+        const data = await loadVehicleReportData(true);
+
+        const vehicles = data.vehicles;
+        const expenses = data.expenses;
+
+        const totals = data.totals;
+const unlinkedCount = totals.unlinkedExpenseRecords;
+        const content = document.getElementById(
+            "vehicleReportContent"
+        );
+
+        if (!content) return;
+
+
+        // -------------------------------------------------
+        // COMMON HELPER FUNCTIONS
+        // -------------------------------------------------
+
+        function formatDate(value) {
+
+            return propertyEscapeHtml(
+                vehicleReportDateLabel(value)
+            );
+
+        }
+
+
+        function daysFromToday(value) {
+
+            const date = vehicleReportDate(value);
+
+            if (!date) return null;
+
+            const target = new Date(date);
+            target.setHours(0, 0, 0, 0);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            return Math.floor(
+                (target.getTime() - today.getTime()) /
+                86400000
+            );
+
+        }
+
+
+        function expiryStatus(value) {
+
+            const days = daysFromToday(value);
+
+            if (days === null) {
+                return "Not recorded";
+            }
+
+            if (days < 0) {
+                return "Expired";
+            }
+
+            if (days === 0) {
+                return "Expires Today";
+            }
+
+            if (days <= 30) {
+                return "Within 30 Days";
+            }
+
+            if (days <= 60) {
+                return "31–60 Days";
+            }
+
+            if (days <= 90) {
+                return "61–90 Days";
+            }
+
+            return "Valid";
+        }
+
+
+        function countExpired(records, field) {
+
+            return records.filter(vehicle => {
+
+                const days = daysFromToday(vehicle[field]);
+
+                return days !== null && days < 0;
+
+            }).length;
+
+        }
+
+
+        function countExpiringWithin30(records, field) {
+
+            return records.filter(vehicle => {
+
+                const days = daysFromToday(vehicle[field]);
+
+                return days !== null && days >= 0 && days <= 30;
+
+            }).length;
+
+        }
+
+
+        function vehicleName(vehicle) {
+
+            return [
+
+                vehicle.manufacturer,
+
+                vehicle.model
+
+            ].filter(Boolean).join(" ") ||
+                vehicle.registrationNumber ||
+                "Unnamed Vehicle";
+
+        }
+
+
+        function money(value) {
+
+            return propertyMoney(
+                vehicleReportNumber(value)
+            );
+
+        }
+
+
+        // =================================================
+        // REPORT #203 — VEHICLE REGISTER
+        // =================================================
+
+        if (Number(reportNumber) === 203) {
+
+            const registeredVehicles = [...vehicles].sort(
+                (a, b) => String(a.registrationNumber || "")
+                    .localeCompare(String(b.registrationNumber || ""))
+            );
+
+
+            const missingRC = registeredVehicles.filter(
+                vehicle => !vehicle.rcValidTill
+            ).length;
+
+            const missingInsurance = registeredVehicles.filter(
+                vehicle =>
+                    !vehicle.insuranceExpiryDate &&
+                    !vehicle.thirdPartyExpiry
+            ).length;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Total Vehicles",
+                        vehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Vehicle Types",
+                        totals.vehicleTypeCount
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Missing RC Validity",
+                        missingRC
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Missing Insurance Dates",
+                        missingInsurance
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    This register is generated from the local Vehicle Master.
+                    It displays vehicle details available in the current browser.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Complete Vehicle Register</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.registrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Manufacturer / Model",
+                            render: row => propertyEscapeHtml(
+                                vehicleName(row)
+                            )
+                        },
+
+                        {
+                            label: "Vehicle Type",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleType || "—"
+                            )
+                        },
+
+                        {
+                            label: "Colour",
+                            render: row => propertyEscapeHtml(
+                                row.colour || "—"
+                            )
+                        },
+
+                        {
+                            label: "Fuel Type",
+                            render: row => propertyEscapeHtml(
+                                row.fuelType || "—"
+                            )
+                        },
+
+                        {
+                            label: "Owner",
+                            render: row => propertyEscapeHtml(
+                                row.ownerName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Ownership",
+                            render: row => propertyEscapeHtml(
+                                propertyLabel(row.ownership)
+                            )
+                        },
+
+                        {
+                            label: "Purchase Date",
+                            render: row => formatDate(row.purchaseDate)
+                        },
+
+                        {
+                            label: "Purchase Price",
+                            render: row => money(row.purchasePrice)
+                        },
+
+                        {
+                            label: "Current Value",
+                            render: row => money(row.currentValue)
+                        },
+
+                        {
+                            label: "RC Valid Till",
+                            render: row => formatDate(row.rcValidTill)
+                        },
+
+                        {
+                            label: "Insurance Valid Till",
+                            render: row => formatDate(
+                                row.insuranceExpiryDate ||
+                                row.thirdPartyExpiry
+                            )
+                        },
+
+                        {
+                            label: "Service Due",
+                            render: row => formatDate(row.serviceDueDate)
+                        }
+
+                    ], registeredVehicles, "No vehicles found in Vehicle Master.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #204 — OPERATIONAL EXPENSE REGISTER
+        // =================================================
+
+        else if (Number(reportNumber) === 204) {
+
+            const sortedExpenses = [...expenses].sort((a, b) =>
+                (b.date?.getTime() || 0) -
+                (a.date?.getTime() || 0)
+            );
+
+
+            const linkedCount = totals.linkedExpenseRecords;
+
+            const unlinkedCount = totals.unlinkedExpenseRecords;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Total Expense Records",
+                        expenses.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Operational Expense",
+                        money(totals.totalOperationalExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Vehicle-linked Records",
+                        linkedCount
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Unlinked Records",
+                        unlinkedCount
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Only expense transactions belonging to the five verified
+                    Vehicle Expense Categories are included. Soft-deleted
+                    transactions are excluded. Repair records stored separately
+                    in the Repairs collection are not added again.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Complete Vehicle Expense Register</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Date",
+                            render: row => formatDate(row.date)
+                        },
+
+                        {
+                            label: "Category",
+                            render: row => propertyEscapeHtml(row.category)
+                        },
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleDisplayName
+                            )
+                        },
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleRegistrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Party / Merchant",
+                            render: row => propertyEscapeHtml(
+                                row.partyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Payment Mode",
+                            render: row => propertyEscapeHtml(
+                                propertyLabel(row.paymentMethod)
+                            )
+                        },
+
+                        {
+                            label: "Notes",
+                            render: row => propertyEscapeHtml(
+                                row.notes || "—"
+                            )
+                        },
+
+                        {
+                            label: "Amount",
+                            render: row => money(row.amount)
+                        }
+
+                    ], sortedExpenses, "No vehicle operational expenses found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #205 — VEHICLE-WISE EXPENSE
+        // =================================================
+
+        else if (Number(reportNumber) === 205) {
+
+            const vehicleGroups = groupVehicleReportRecords(
+
+                expenses,
+
+                record =>
+                    record.vehicleId ||
+                    (
+                        record.vehicleRegistrationNumber
+                            ? "registration::" + record.vehicleRegistrationNumber
+                            : record.vehicleDisplayName !== "Vehicle not linked"
+                                ? "name::" + record.vehicleDisplayName.toLowerCase()
+                                : "__unlinked__"
+                    ),
+
+                record => {
+
+                    if (
+                        record.vehicleDisplayName === "Vehicle not linked" &&
+                        !record.vehicleRegistrationNumber
+                    ) {
+                        return "Vehicle not linked";
+                    }
+
+                    return record.vehicleRegistrationNumber
+                        ? `${record.vehicleDisplayName} (${record.vehicleRegistrationNumber})`
+                        : record.vehicleDisplayName;
+
+                }
+
+            );
+
+
+            const linkedGroups = vehicleGroups.filter(
+                group => group.key !== "__unlinked__"
+            );
+
+            const unlinkedGroups = vehicleGroups.filter(
+                group => group.key === "__unlinked__"
+            );
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Vehicle / Asset Groups",
+                        vehicleGroups.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Expense Records",
+                        expenses.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Operational Expense",
+                        money(totals.totalOperationalExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Unlinked Expense Records",
+                        unlinkedCount
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Expenses are grouped using vehicleId wherever available.
+                    Stored vehicle name and registration number are used as
+                    fallback identifiers. Unlinked expenses remain separate.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Vehicle-wise Operational Expense</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Vehicle / Asset",
+                            render: row => propertyEscapeHtml(row.label)
+                        },
+
+                        {
+                            label: "Expense Records",
+                            render: row => row.recordCount
+                        },
+
+                        {
+                            label: "Total Expense",
+                            render: row => money(row.totalAmount)
+                        },
+
+                        {
+                            label: "Average Expense",
+                            render: row => money(
+                                row.recordCount > 0
+                                    ? row.totalAmount / row.recordCount
+                                    : 0
+                            )
+                        },
+
+                        {
+                            label: "First Expense Date",
+                            render: row => formatDate(row.earliestDate)
+                        },
+
+                        {
+                            label: "Latest Expense Date",
+                            render: row => formatDate(row.latestDate)
+                        }
+
+                    ], vehicleGroups, "No vehicle expense groups found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #206 — EXPENSE CATEGORY ANALYSIS
+        // =================================================
+
+        else if (Number(reportNumber) === 206) {
+
+            const categoryRows = data.categoryTotals.map(category => ({
+
+                ...category,
+
+                averageExpense:
+                    category.recordCount > 0
+                        ? category.totalAmount / category.recordCount
+                        : 0,
+
+                expenseShare:
+                    totals.totalOperationalExpense > 0
+                        ? (
+                            category.totalAmount /
+                            totals.totalOperationalExpense
+                        ) * 100
+                        : 0
+
+            })).sort((a, b) =>
+                b.totalAmount - a.totalAmount
+            );
+
+
+            const highestCategory = categoryRows[0];
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Expense Categories",
+                        categoryRows.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Expense Records",
+                        expenses.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Operational Expense",
+                        money(totals.totalOperationalExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Highest Expense Category",
+                        highestCategory?.category || "—",
+                        highestCategory
+                            ? money(highestCategory.totalAmount)
+                            : ""
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    All five configured Vehicle Expense Categories are shown,
+                    including categories with no transactions. Category totals
+                    exclude deleted transactions.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Vehicle Expense Category Analysis</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Expense Category",
+                            render: row => propertyEscapeHtml(row.category)
+                        },
+
+                        {
+                            label: "Expense Records",
+                            render: row => row.recordCount
+                        },
+
+                        {
+                            label: "Total Expense",
+                            render: row => money(row.totalAmount)
+                        },
+
+                        {
+                            label: "Average Expense",
+                            render: row => money(row.averageExpense)
+                        },
+
+                        {
+                            label: "Expense Share",
+                            render: row => propertyPercent(row.expenseShare)
+                        }
+
+                    ], categoryRows, "No expense category data found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #207 — FUEL EXPENSE ANALYSIS
+        // =================================================
+
+        else if (Number(reportNumber) === 207) {
+
+            const fuelRecords = expenses
+
+                .filter(record => record.category === "Vehicle Fuel")
+
+                .sort((a, b) =>
+                    (b.date?.getTime() || 0) -
+                    (a.date?.getTime() || 0)
+                );
+
+
+            const totalFuelExpense = fuelRecords.reduce(
+                (sum, record) => sum + record.amount,
+                0
+            );
+
+
+            const linkedFuelRecords = fuelRecords.filter(
+                record => !!record.vehicleId
+            ).length;
+
+
+            const fuelVehicleGroups = groupVehicleReportRecords(
+
+                fuelRecords,
+
+                record =>
+                    record.vehicleId ||
+                    record.vehicleRegistrationNumber ||
+                    record.vehicleDisplayName ||
+                    "__unlinked__",
+
+                record => record.vehicleRegistrationNumber
+                    ? `${record.vehicleDisplayName} (${record.vehicleRegistrationNumber})`
+                    : record.vehicleDisplayName
+
+            );
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Fuel Expense Records",
+                        fuelRecords.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Fuel Expense",
+                        money(totalFuelExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Average Fuel Expense",
+                        money(
+                            fuelRecords.length > 0
+                                ? totalFuelExpense / fuelRecords.length
+                                : 0
+                        )
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Vehicle-linked Fuel Records",
+                        linkedFuelRecords
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    This report includes only Vehicle Fuel transactions.
+                    Fuel quantity, litres, odometer readings and mileage are
+                    not stored in the verified transaction fields, so no
+                    mileage or per-litre calculations are inferred.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Fuel Expense by Vehicle</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(row.label)
+                        },
+
+                        {
+                            label: "Fuel Records",
+                            render: row => row.recordCount
+                        },
+
+                        {
+                            label: "Total Fuel Expense",
+                            render: row => money(row.totalAmount)
+                        },
+
+                        {
+                            label: "Average per Fill-up",
+                            render: row => money(
+                                row.recordCount > 0
+                                    ? row.totalAmount / row.recordCount
+                                    : 0
+                            )
+                        }
+
+                    ], fuelVehicleGroups, "No fuel transactions found.")}
+
+                </section>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Fuel Transaction Register</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Date",
+                            render: row => formatDate(row.date)
+                        },
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleDisplayName
+                            )
+                        },
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleRegistrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Party / Merchant",
+                            render: row => propertyEscapeHtml(
+                                row.partyName || "—"
+                            )
+                        },
+
+                        {
+                            label: "Notes",
+                            render: row => propertyEscapeHtml(
+                                row.notes || "—"
+                            )
+                        },
+
+                        {
+                            label: "Amount",
+                            render: row => money(row.amount)
+                        }
+
+                    ], fuelRecords, "No fuel transactions found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #208 — INSURANCE & RENEWAL TRACKER
+        // =================================================
+
+        else if (Number(reportNumber) === 208) {
+
+            const insuranceVehicles = vehicles.map(vehicle => {
+
+                const expiryDate = vehicleReportDate(
+                    vehicle.insuranceExpiryDate
+                );
+
+                const days = expiryDate
+                    ? daysFromToday(expiryDate)
+                    : null;
+
+                return {
+
+                    ...vehicle,
+
+                    insuranceExpiryParsed: expiryDate,
+
+                    insuranceStatus: expiryStatus(
+                        vehicle.insuranceExpiryDate
+                    ),
+
+                    insuranceDaysRemaining: days
+
+                };
+
+            }).sort((a, b) => {
+
+                const dateA = a.insuranceExpiryParsed?.getTime() || Infinity;
+                const dateB = b.insuranceExpiryParsed?.getTime() || Infinity;
+
+                return dateA - dateB;
+
+            });
+
+
+            const policiesRecorded = insuranceVehicles.filter(
+                vehicle => !!vehicle.insuranceExpiryDate
+            ).length;
+
+
+            const expiredPolicies = countExpired(
+                vehicles,
+                "insuranceExpiryDate"
+            );
+
+
+            const expiringSoon = countExpiringWithin30(
+                vehicles,
+                "insuranceExpiryDate"
+            );
+
+
+            const premiumTotal = vehicles.reduce(
+                (sum, vehicle) =>
+                    sum + vehicleReportNumber(vehicle.insurancePremium),
+                0
+            );
+
+
+            const missingInsurance = vehicles.length - policiesRecorded;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Total Vehicles",
+                        vehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Insurance Dates Recorded",
+                        policiesRecorded
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expired Policies",
+                        expiredPolicies
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expiring Within 30 Days",
+                        expiringSoon
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Recorded Annual Premium",
+                        money(premiumTotal)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Insurance Expiry Missing",
+                        missingInsurance
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Insurance expiry is evaluated using insuranceExpiryDate.
+                    Third-party expiry is displayed separately. Premium totals
+                    include only the insurancePremium values saved in Vehicle
+                    Master; they are not added to operational expense totals.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Vehicle Insurance Register</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(vehicleName(row))
+                        },
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.registrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Insurance Company",
+                            render: row => propertyEscapeHtml(
+                                row.insuranceCompany || "—"
+                            )
+                        },
+
+                        {
+                            label: "Policy Number",
+                            render: row => propertyEscapeHtml(
+                                row.insurancePolicyNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Insurance Type",
+                            render: row => propertyEscapeHtml(
+                                propertyLabel(row.insuranceType)
+                            )
+                        },
+
+                        {
+                            label: "Start Date",
+                            render: row => formatDate(row.insuranceStartDate)
+                        },
+
+                        {
+                            label: "Insurance Expiry",
+                            render: row => formatDate(row.insuranceExpiryDate)
+                        },
+
+                        {
+                            label: "Third-party Expiry",
+                            render: row => formatDate(row.thirdPartyExpiry)
+                        },
+
+                        {
+                            label: "Premium",
+                            render: row => money(row.insurancePremium)
+                        },
+
+                        {
+                            label: "IDV",
+                            render: row => money(row.insuranceIdv)
+                        },
+
+                        {
+                            label: "Renewal Status",
+                            render: row => propertyEscapeHtml(row.insuranceStatus)
+                        }
+
+                    ], insuranceVehicles, "No vehicles found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #209 — RC & COMPLIANCE EXPIRY
+        // =================================================
+
+        else if (Number(reportNumber) === 209) {
+
+            const rcExpired = countExpired(
+                vehicles,
+                "rcValidTill"
+            );
+
+            const rcExpiring = countExpiringWithin30(
+                vehicles,
+                "rcValidTill"
+            );
+
+            const thirdPartyExpired = countExpired(
+                vehicles,
+                "thirdPartyExpiry"
+            );
+
+            const thirdPartyExpiring = countExpiringWithin30(
+                vehicles,
+                "thirdPartyExpiry"
+            );
+
+            const serviceOverdue = countExpired(
+                vehicles,
+                "serviceDueDate"
+            );
+
+
+            const complianceRows = vehicles.map(vehicle => ({
+
+                ...vehicle,
+
+                rcStatus: expiryStatus(vehicle.rcValidTill),
+
+                thirdPartyStatus: expiryStatus(
+                    vehicle.thirdPartyExpiry
+                ),
+
+                serviceStatus: expiryStatus(
+                    vehicle.serviceDueDate
+                )
+
+            })).sort((a, b) => {
+
+                const dateA = vehicleReportDate(a.rcValidTill)?.getTime() || Infinity;
+                const dateB = vehicleReportDate(b.rcValidTill)?.getTime() || Infinity;
+
+                return dateA - dateB;
+
+            });
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Total Vehicles",
+                        vehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expired RC",
+                        rcExpired
+                    )}
+
+                    ${renderPropertyKpi(
+                        "RC Expiring Within 30 Days",
+                        rcExpiring
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Expired Third-party Insurance",
+                        thirdPartyExpired
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Third-party Expiring Within 30 Days",
+                        thirdPartyExpiring
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Service Due / Overdue",
+                        serviceOverdue
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    RC and third-party expiry are evaluated independently.
+                    Service Due Date is shown as a maintenance reminder,
+                    not as a statutory compliance expiry. Missing dates
+                    are shown separately in the register.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>RC & Compliance Register</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(vehicleName(row))
+                        },
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.registrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Registration Authority",
+                            render: row => propertyEscapeHtml(
+                                row.registrationAuthority || "—"
+                            )
+                        },
+
+                        {
+                            label: "RC Valid Till",
+                            render: row => formatDate(row.rcValidTill)
+                        },
+
+                        {
+                            label: "RC Status",
+                            render: row => propertyEscapeHtml(row.rcStatus)
+                        },
+
+                        {
+                            label: "Third-party Expiry",
+                            render: row => formatDate(row.thirdPartyExpiry)
+                        },
+
+                        {
+                            label: "Third-party Status",
+                            render: row => propertyEscapeHtml(row.thirdPartyStatus)
+                        },
+
+                        {
+                            label: "Service Due",
+                            render: row => formatDate(row.serviceDueDate)
+                        },
+
+                        {
+                            label: "Service Status",
+                            render: row => propertyEscapeHtml(row.serviceStatus)
+                        }
+
+                    ], complianceRows, "No vehicle compliance records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #210 — VEHICLE PURCHASE & VALUATION
+        // =================================================
+
+        else if (Number(reportNumber) === 210) {
+
+            const purchaseVehicles = vehicles.filter(
+                vehicle =>
+                    vehicleReportNumber(vehicle.purchasePrice) > 0
+            );
+
+            const currentValueVehicles = vehicles.filter(
+                vehicle =>
+                    vehicleReportNumber(vehicle.currentValue) > 0
+            );
+
+            const comparableVehicles = vehicles.filter(vehicle =>
+
+                vehicleReportNumber(vehicle.purchasePrice) > 0 &&
+                vehicleReportNumber(vehicle.currentValue) > 0
+
+            );
+
+
+            const purchaseTotal = purchaseVehicles.reduce(
+                (sum, vehicle) =>
+                    sum + vehicleReportNumber(vehicle.purchasePrice),
+                0
+            );
+
+
+            const currentTotal = currentValueVehicles.reduce(
+                (sum, vehicle) =>
+                    sum + vehicleReportNumber(vehicle.currentValue),
+                0
+            );
+
+
+            const comparablePurchase = comparableVehicles.reduce(
+                (sum, vehicle) =>
+                    sum + vehicleReportNumber(vehicle.purchasePrice),
+                0
+            );
+
+
+            const comparableCurrent = comparableVehicles.reduce(
+                (sum, vehicle) =>
+                    sum + vehicleReportNumber(vehicle.currentValue),
+                0
+            );
+
+
+            const appreciation = comparableCurrent - comparablePurchase;
+
+            const appreciationPercent = comparablePurchase > 0
+                ? (appreciation / comparablePurchase) * 100
+                : null;
+
+
+            const purchaseRows = [...vehicles].sort((a, b) =>
+
+                vehicleReportNumber(b.purchasePrice) -
+                vehicleReportNumber(a.purchasePrice)
+
+            );
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Total Vehicles",
+                        vehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Vehicles with Purchase Value",
+                        purchaseVehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Recorded Purchase Value",
+                        money(purchaseTotal)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Recorded Current Value",
+                        money(currentTotal)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Comparable Vehicles",
+                        comparableVehicles.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Value Appreciation / Depreciation",
+                        comparableVehicles.length
+                            ? money(appreciation)
+                            : "—",
+                        appreciationPercent === null
+                            ? "Both values required"
+                            : propertyPercent(appreciationPercent)
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Valuation comparison includes only vehicles having
+                    both purchasePrice and currentValue greater than zero.
+                    This is a recorded value change, not a sale profit or
+                    total investment return. Operational costs, financing,
+                    insurance and resale proceeds are excluded.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Vehicle Purchase & Valuation Details</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Vehicle",
+                            render: row => propertyEscapeHtml(vehicleName(row))
+                        },
+
+                        {
+                            label: "Registration Number",
+                            render: row => propertyEscapeHtml(
+                                row.registrationNumber || "—"
+                            )
+                        },
+
+                        {
+                            label: "Vehicle Type",
+                            render: row => propertyEscapeHtml(
+                                row.vehicleType || "—"
+                            )
+                        },
+
+                        {
+                            label: "Purchase Date",
+                            render: row => formatDate(row.purchaseDate)
+                        },
+
+                        {
+                            label: "Purchase Price",
+                            render: row => money(row.purchasePrice)
+                        },
+
+                        {
+                            label: "Current Value",
+                            render: row => money(row.currentValue)
+                        },
+
+                        {
+                            label: "Value Change",
+                            render: row => {
+
+                                const purchase = vehicleReportNumber(
+                                    row.purchasePrice
+                                );
+
+                                const current = vehicleReportNumber(
+                                    row.currentValue
+                                );
+
+                                if (purchase <= 0 || current <= 0) {
+                                    return "—";
+                                }
+
+                                const change = current - purchase;
+
+                                return money(change);
+
+                            }
+                        }
+
+                    ], purchaseRows, "No vehicle purchase records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        // =================================================
+        // REPORT #211 — MONTHLY VEHICLE EXPENSE TREND
+        // =================================================
+
+        else if (Number(reportNumber) === 211) {
+
+            const monthlyGroups = groupVehicleReportRecords(
+
+                expenses,
+
+                record => record.monthKey,
+
+                record => vehicleReportMonthLabel(record.monthKey)
+
+            );
+
+
+            monthlyGroups.sort((a, b) => {
+
+                if (a.key === "__unmapped__") return 1;
+                if (b.key === "__unmapped__") return -1;
+
+                return String(a.key).localeCompare(String(b.key));
+
+            });
+
+
+            const monthlyRows = monthlyGroups.map(group => {
+
+                const monthRecords = expenses.filter(record =>
+                    record.monthKey === group.key
+                );
+
+
+                const categoryAmounts = {};
+
+                VEHICLE_REPORT_EXPENSE_CATEGORIES.forEach(category => {
+                    categoryAmounts[category] = 0;
+                });
+
+
+                monthRecords.forEach(record => {
+
+                    categoryAmounts[record.category] =
+                        (categoryAmounts[record.category] || 0) +
+                        record.amount;
+
+                });
+
+
+                return {
+
+                    ...group,
+
+                    averageExpense: group.recordCount > 0
+                        ? group.totalAmount / group.recordCount
+                        : 0,
+
+                    fuelExpense: categoryAmounts["Vehicle Fuel"],
+
+                    insuranceExpense: categoryAmounts["Vehicle Insurance"],
+
+                    maintenanceExpense: categoryAmounts["Vehicle Maintenance"],
+
+                    challanExpense: categoryAmounts["Vehicle Challan"],
+
+                    otherExpense: categoryAmounts["Vehicle Other Expense"]
+
+                };
+
+            });
+
+
+            const highestMonth = [...monthlyRows].sort(
+                (a, b) => b.totalAmount - a.totalAmount
+            )[0];
+
+
+            const averageMonthlyExpense = monthlyRows.length > 0
+                ? totals.totalOperationalExpense / monthlyRows.length
+                : 0;
+
+
+            content.innerHTML = `
+
+                <div class="property-report-kpi-grid">
+
+                    ${renderPropertyKpi(
+                        "Months with Expense Records",
+                        monthlyRows.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Expense Records",
+                        expenses.length
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Total Operational Expense",
+                        money(totals.totalOperationalExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Average Expense per Month",
+                        money(averageMonthlyExpense)
+                    )}
+
+                    ${renderPropertyKpi(
+                        "Highest Expense Month",
+                        highestMonth?.label || "—",
+                        highestMonth
+                            ? money(highestMonth.totalAmount)
+                            : ""
+                    )}
+
+                </div>
+
+
+                <p class="property-report-note">
+                    Monthly expenses are grouped using the transaction date.
+                    Records with missing or invalid dates are retained in
+                    a separate Date not specified group.
+                </p>
+
+
+                <section class="property-report-panel">
+
+                    <h3>Monthly Vehicle Expense Trend</h3>
+
+                    ${renderPropertyReportTable([
+
+                        {
+                            label: "Month",
+                            render: row => propertyEscapeHtml(row.label)
+                        },
+
+                        {
+                            label: "Expense Records",
+                            render: row => row.recordCount
+                        },
+
+                        {
+                            label: "Fuel",
+                            render: row => money(row.fuelExpense)
+                        },
+
+                        {
+                            label: "Insurance",
+                            render: row => money(row.insuranceExpense)
+                        },
+
+                        {
+                            label: "Maintenance",
+                            render: row => money(row.maintenanceExpense)
+                        },
+
+                        {
+                            label: "Challan",
+                            render: row => money(row.challanExpense)
+                        },
+
+                        {
+                            label: "Other",
+                            render: row => money(row.otherExpense)
+                        },
+
+                        {
+                            label: "Total Expense",
+                            render: row => money(row.totalAmount)
+                        },
+
+                        {
+                            label: "Average per Record",
+                            render: row => money(row.averageExpense)
+                        }
+
+                    ], monthlyRows, "No monthly vehicle expense records found.")}
+
+                </section>
+
+            `;
+
+        }
+
+
+        console.log(
+            `✅ VEHICLE REPORT #${reportNumber} LOADED`,
+            {
+                report: config.title,
+                vehicles: vehicles.length,
+                expenseRecords: expenses.length,
+                totalExpense: totals.totalOperationalExpense
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            `VEHICLE REPORT #${reportNumber} ERROR:`,
+            error
+        );
+
+
+        const content = document.getElementById(
+            "vehicleReportContent"
+        );
+
+        if (content) {
+
+            content.innerHTML = `
+
+                <div class="property-report-error">
+
+                    <h3>
+                        ${propertyEscapeHtml(config.title)}
+                        could not be loaded
+                    </h3>
+
+                    <p>
+                        ${propertyEscapeHtml(
+                            error.message || "Unknown error"
+                        )}
+                    </p>
+
+                    <p>
+                        Please check Vehicle Master data,
+                        Firebase permissions and browser console.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// CONNECT VEHICLE REPORT CARDS
+// #203–211
+// =====================================================
+
+if (!window.vehicleAdvancedReportHandlerBound) {
+
+    window.vehicleAdvancedReportHandlerBound = true;
+
+    document.addEventListener("click", function(event) {
+
+        const card = event.target.closest?.(
+            "[data-vehicle-report]"
+        );
+
+        if (!card) return;
+
+        const reportNumber = Number(
+            card.dataset.vehicleReport
+        );
+
+        if (
+            ![
+                203, 204, 205, 206, 207,
+                208, 209, 210, 211
+            ].includes(reportNumber)
+        ) {
+            return;
+        }
+
+
+        // Stop the older card test handler
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+
+        console.log(
+            "🚗 ADVANCED VEHICLE REPORT SELECTED:",
+            reportNumber
+        );
+
+
+        renderVehicleAdvancedReport(reportNumber);
+
+    }, true);
+
+}
+
+
+
 const categoryCards = document.querySelectorAll(
     ".report-category-card"
 );
@@ -6836,6 +10029,19 @@ if (title === "Repairs & Maintenance") {
     console.log("🔧 REPAIRS & MAINTENANCE REPORTS SELECTED");
 
     renderRepairsMaintenanceReportsDashboard();
+
+    return;
+}
+
+// =====================================================
+// VEHICLE MANAGEMENT REPORTS
+// =====================================================
+
+if (title === "Vehicle Management") {
+
+    console.log("🚗 VEHICLE MANAGEMENT REPORTS SELECTED");
+
+    renderVehicleReportsDashboard();
 
     return;
 }
@@ -8666,6 +11872,1588 @@ if (title === "Fixed Deposits") {
     return;
 }
 
+// =====================================================
+// LOANS & BORROWINGS REPORTS
+// =====================================================
+
+if (title === "Loans & Borrowings") {
+
+    console.log("💰 LOANS & BORROWINGS REPORTS SELECTED");
+
+    hideReportModuleStartPage();
+
+    if (reportWorkArea) {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>💰 Loans & Borrowings Reports</h2>
+
+                        <p>
+                            Loan portfolio, EMI, repayment
+                            and interest analysis
+                        </p>
+                    </div>
+                </div>
+
+                
+<div
+    id="loanReportsDashboard"
+    class="transaction-reports-grid"
+    style="margin-top:20px;"
+>
+    ${[
+        [212, "Loan Portfolio Summary", "Complete overview of loans, repayments and outstanding balances", "📊"],
+        [213, "Loan Account Register", "View all loan accounts and their details", "📒"],
+        [214, "Loan Disbursement Register", "Track loan amounts and disbursement dates", "💰"],
+        [215, "Outstanding Balance Report", "Review current outstanding loan balances", "🏦"],
+        [216, "EMI Schedule Report", "View scheduled EMIs and payment details", "📅"],
+        [217, "Repayment History Report", "Review all recorded loan repayments", "📋"],
+        [218, "Principal vs Interest Analysis", "Analyze principal and interest components", "📈"],
+        [219, "Monthly Loan Repayment Trend", "Analyze month-wise repayment patterns", "📊"],
+        [220, "Interest Rate Change History", "Track changes in loan interest rates", "📉"],
+        [221, "Prepayment & Part-payment Analysis", "Review additional loan repayments", "💸"],
+        [222, "Loan Maturity & Closure Tracker", "Track loan maturity and closure status", "✅"]
+    ].map(([number, name, description, icon]) => `
+        <div
+            class="transaction-report-card"
+            data-loan-report="${number}"
+            style="cursor:pointer;"
+        >
+            <div class="transaction-report-number">
+                ${number}
+            </div>
+
+            <div class="transaction-report-content">
+                <h3>${icon} ${name}</h3>
+                <p>${description}</p>
+            </div>
+        </div>
+    `).join("")}
+</div>
+
+
+            </div>
+        `;
+
+        
+// =====================================================
+// LOAN REPORTS — COMMON REPORT ENGINE
+// Reports #212–222
+// READ-ONLY: Uses existing Firestore loan data
+// =====================================================
+
+const loanDashboardHTML = reportWorkArea.innerHTML;
+
+const loanReportDefinitions = {
+    212: {
+        name: "Loan Portfolio Summary",
+        description: "Overall loan portfolio and repayment position"
+    },
+    213: {
+        name: "Loan Account Register",
+        description: "Complete register of loan accounts"
+    },
+    214: {
+        name: "Loan Disbursement Register",
+        description: "Loan start dates and original amounts"
+    },
+    215: {
+        name: "Outstanding Balance Report",
+        description: "Current outstanding loan balances"
+    },
+    216: {
+        name: "EMI Schedule Report",
+        description: "Upcoming EMI dates and scheduled amounts"
+    },
+    217: {
+        name: "Repayment History Report",
+        description: "Recorded loan repayment history"
+    },
+    218: {
+        name: "Principal vs Interest Analysis",
+        description: "Principal and interest paid analysis"
+    },
+    219: {
+        name: "Monthly Loan Repayment Trend",
+        description: "Month-wise repayment analysis"
+    },
+    220: {
+        name: "Interest Rate Change History",
+        description: "Historical loan interest rates"
+    },
+    221: {
+        name: "Prepayment & Part-payment Analysis",
+        description: "Additional principal repayment analysis"
+    },
+    222: {
+        name: "Loan Maturity & Closure Tracker",
+        description: "Estimated maturity and closure status"
+    }
+};
+
+
+// =====================================================
+// FORMAT HELPERS
+// =====================================================
+
+function loanReportEscape(value) {
+
+    return String(value ?? "—").replace(
+        /[&<>"']/g,
+        character => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[character]
+    );
+
+}
+
+
+function loanReportMoney(value) {
+
+    const number = Number(value || 0);
+
+    return "₹" + number.toLocaleString(
+        "en-IN",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    );
+
+}
+
+
+function loanReportDateISO(value) {
+
+    if (!value) return "";
+
+    if (typeof value === "string") {
+        return value.length >= 10
+            ? value.substring(0, 10)
+            : "";
+    }
+
+    const date = value?.toDate
+        ? value.toDate()
+        : value instanceof Date
+            ? value
+            : null;
+
+    if (!date || isNaN(date.getTime())) return "";
+
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0")
+    ].join("-");
+
+}
+
+
+function loanReportDate(value) {
+
+    const iso = loanReportDateISO(value);
+
+    if (!iso) return "Not recorded";
+
+    const parts = iso.split("-");
+
+    if (parts.length !== 3) return iso;
+
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+
+}
+
+
+function loanReportName(loan) {
+
+    return loan.loanName ||
+        loan.loanType ||
+        "Unnamed Loan";
+
+}
+
+
+function loanReportStatus(loan) {
+
+    return String(loan.status || "Not recorded")
+        .replace(/_/g, " ")
+        .toUpperCase();
+
+}
+
+
+function loanReportMonthLabel(key) {
+
+    if (!key || key.length < 7) {
+        return "Date not specified";
+    }
+
+    const parts = key.split("-");
+
+    const date = new Date(
+        Number(parts[0]),
+        Number(parts[1]) - 1,
+        1
+    );
+
+    return date.toLocaleDateString(
+        "en-IN",
+        {
+            month: "long",
+            year: "numeric"
+        }
+    );
+
+}
+
+
+// =====================================================
+// COMMON HTML TABLE
+// =====================================================
+
+function loanReportBuildTable(headers, rows) {
+
+    return `
+        <div style="width:100%;overflow-x:auto;">
+
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                font-size:12px;
+                background:#ffffff;
+                min-width:700px;
+            ">
+
+                <thead>
+                    <tr>
+                        ${headers.map(header => `
+                            <th style="
+                                padding:11px 9px;
+                                background:#1e3a6d;
+                                color:white;
+                                text-align:left;
+                                border:1px solid #dbe3ef;
+                                white-space:nowrap;
+                            ">
+                                ${loanReportEscape(header)}
+                            </th>
+                        `).join("")}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${
+                        rows.length
+                            ? rows.map(row => `
+                                <tr>
+                                    ${row.map(cell => `
+                                        <td style="
+                                            padding:10px 9px;
+                                            border:1px solid #e2e8f0;
+                                            color:#26364d;
+                                            white-space:nowrap;
+                                        ">
+                                            ${loanReportEscape(cell)}
+                                        </td>
+                                    `).join("")}
+                                </tr>
+                            `).join("")
+                            : `
+                                <tr>
+                                    <td colspan="${headers.length}"
+                                        style="
+                                            padding:22px;
+                                            text-align:center;
+                                            color:#64748b;
+                                        ">
+                                        No matching records found.
+                                    </td>
+                                </tr>
+                            `
+                    }
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+
+}
+
+
+// =====================================================
+// LOAD EXISTING LOAN DATA
+// =====================================================
+
+async function loadLoanReportData() {
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        throw new Error("Please login first.");
+    }
+
+    const loansRef = collection(
+        db,
+        "users",
+        user.uid,
+        "loans"
+    );
+
+    const repaymentsRef = collection(
+        db,
+        "users",
+        user.uid,
+        "loanRepayments"
+    );
+
+    const [
+        loanSnapshot,
+        repaymentSnapshot
+    ] = await Promise.all([
+        getDocs(loansRef),
+        getDocs(repaymentsRef)
+    ]);
+
+
+    const loans = loanSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    })).filter(loan =>
+        loan.test !== true &&
+        loan.deleted !== true
+    );
+
+
+    const repayments = repaymentSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    })).filter(repayment => {
+
+        const status = String(
+            repayment.status || "completed"
+        ).toLowerCase();
+
+        return (
+            repayment.test !== true &&
+            !["deleted", "cancelled", "void", "failed"]
+                .includes(status)
+        );
+
+    });
+
+
+    const loanMap = new Map(
+        loans.map(loan => [loan.id, loan])
+    );
+
+
+    const linkedRepayments = repayments.filter(
+        repayment => loanMap.has(repayment.loanId)
+    );
+
+
+    return {
+        loans,
+        repayments,
+        linkedRepayments,
+        loanMap
+    };
+
+}
+
+
+// =====================================================
+// EMI DATE GENERATOR
+// =====================================================
+
+function loanReportUpcomingEMIs(loan) {
+
+    const remaining = Math.max(
+        0,
+        Number(loan.remainingTenure || 0)
+    );
+
+    const emi = Number(loan.emi || 0);
+    const emiDay = Number(loan.emiDay || 0);
+
+    if (
+        !remaining ||
+        !emi ||
+        emiDay < 1 ||
+        emiDay > 31
+    ) {
+        return [];
+    }
+
+    if (
+        String(loan.status || "").toLowerCase() !== "active"
+    ) {
+        return [];
+    }
+
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    const result = [];
+
+    let offset = 0;
+
+    while (
+        result.length < Math.min(remaining, 12) &&
+        offset < 36
+    ) {
+
+        const base = new Date(
+            today.getFullYear(),
+            today.getMonth() + offset,
+            1
+        );
+
+        const lastDay = new Date(
+            base.getFullYear(),
+            base.getMonth() + 1,
+            0
+        ).getDate();
+
+        const dueDate = new Date(
+            base.getFullYear(),
+            base.getMonth(),
+            Math.min(emiDay, lastDay)
+        );
+
+        if (dueDate >= today) {
+
+            const iso = loanReportDateISO(dueDate);
+
+            result.push({
+                date: iso,
+                emi,
+                loanName: loanReportName(loan),
+                balance: Number(
+                    loan.outstandingBalance || 0
+                ),
+                installment:
+                    Math.max(
+                        1,
+                        Number(loan.originalTenure || 0) -
+                        remaining +
+                        result.length +
+                        1
+                    )
+            });
+
+        }
+
+        offset++;
+
+    }
+
+    return result;
+
+}
+
+
+// =====================================================
+// ESTIMATED MATURITY DATE
+// =====================================================
+
+function loanReportMaturityDate(loan) {
+
+    const start = loanReportDateISO(
+        loan.startDate
+    );
+
+    const tenure = Number(
+        loan.originalTenure || 0
+    );
+
+    if (!start || !tenure) return "";
+
+    const parts = start.split("-").map(Number);
+
+    if (parts.length !== 3) return "";
+
+    const [year, month, day] = parts;
+
+    const totalMonths =
+        year * 12 +
+        (month - 1) +
+        tenure;
+
+    const targetYear = Math.floor(
+        totalMonths / 12
+    );
+
+    const targetMonth =
+        totalMonths % 12;
+
+    const lastDay = new Date(
+        targetYear,
+        targetMonth + 1,
+        0
+    ).getDate();
+
+    const result = new Date(
+        targetYear,
+        targetMonth,
+        Math.min(day, lastDay)
+    );
+
+    return loanReportDateISO(result);
+
+}
+
+
+// =====================================================
+// PREPAYMENT CLASSIFICATION
+// =====================================================
+
+const LOAN_PREPAYMENT_TYPES = [
+    "principal_prepayment",
+    "part_prepayment",
+    "extra_principal"
+];
+
+
+// =====================================================
+// BUILD ALL 11 REPORTS
+// =====================================================
+
+function buildLoanReport(number, data) {
+
+    const loans = data.loans;
+    const repayments = data.linkedRepayments;
+
+    const totalPrincipalPaid = repayments.reduce(
+        (sum, item) =>
+            sum + Number(item.principalAmount || 0),
+        0
+    );
+
+    const totalInterestPaid = repayments.reduce(
+        (sum, item) =>
+            sum + Number(item.interestAmount || 0),
+        0
+    );
+
+    const totalPrepayment = repayments.reduce(
+        (sum, item) => {
+
+            const type = String(
+                item.repaymentType || ""
+            ).toLowerCase();
+
+            if (!LOAN_PREPAYMENT_TYPES.includes(type)) {
+                return sum;
+            }
+
+            return sum + Number(
+                item.prepaymentAmount ??
+                item.amount ??
+                0
+            );
+
+        },
+        0
+    );
+
+
+    const activeLoans = loans.filter(
+        loan =>
+            String(loan.status || "").toLowerCase() === "active"
+    );
+
+    const closedLoans = loans.filter(
+        loan =>
+            String(loan.status || "").toLowerCase() === "closed"
+    );
+
+
+    const totalOriginalAmount = loans.reduce(
+        (sum, loan) =>
+            sum + Number(loan.originalAmount || 0),
+        0
+    );
+
+    const totalOutstanding = loans.reduce(
+        (sum, loan) =>
+            sum + Number(loan.outstandingBalance || 0),
+        0
+    );
+
+    const monthlyEMI = activeLoans.reduce(
+        (sum, loan) =>
+            sum + Number(loan.emi || 0),
+        0
+    );
+
+
+    let headers = [];
+    let rows = [];
+    let stats = [];
+    let note = "";
+
+    const title =
+        loanReportDefinitions[number].name;
+
+    const subtitle =
+        loanReportDefinitions[number].description;
+
+
+    // =================================================
+    // #212 LOAN PORTFOLIO SUMMARY
+    // =================================================
+
+    if (number === 212) {
+
+
+stats = [
+    ["Total Loan Accounts", loans.length],
+    ["Active Loans", activeLoans.length],
+    ["Closed Loans", closedLoans.length],
+
+    ["Original Loan Amount",
+        loanReportMoney(totalOriginalAmount)],
+
+    ["Active Loan Outstanding",
+        loanReportMoney(
+            activeLoans.reduce(
+                (sum, loan) =>
+                    sum + Number(loan.outstandingBalance || 0),
+                0
+            )
+        )
+    ],
+
+    ["Closed Loan Balance",
+        loanReportMoney(
+            closedLoans.reduce(
+                (sum, loan) =>
+                    sum + Number(loan.outstandingBalance || 0),
+                0
+            )
+        )
+    ],
+
+    ["Total Recorded Outstanding",
+        loanReportMoney(totalOutstanding)],
+
+    ["Monthly EMI",
+        loanReportMoney(monthlyEMI)],
+
+    ["Principal Paid",
+        loanReportMoney(totalPrincipalPaid)],
+
+    ["Interest Paid",
+        loanReportMoney(totalInterestPaid)],
+
+    ["Extra Principal Paid",
+        loanReportMoney(totalPrepayment)]
+];
+
+        headers = [
+            "Loan Name",
+            "Loan Type",
+            "Status",
+            "Original Amount",
+            "Outstanding",
+            "Monthly EMI",
+            "Interest Rate",
+            "Remaining Tenure"
+        ];
+
+        rows = loans.map(loan => [
+            loanReportName(loan),
+            loan.loanType,
+            loanReportStatus(loan),
+            loanReportMoney(loan.originalAmount),
+            loanReportMoney(loan.outstandingBalance),
+            loanReportMoney(loan.emi),
+            Number(loan.interestRate || 0).toFixed(2) + "%",
+            Number(loan.remainingTenure || 0) + " Months"
+        ]);
+
+    }
+
+
+    // =================================================
+    // #213 LOAN ACCOUNT REGISTER
+    // =================================================
+
+    else if (number === 213) {
+
+        headers = [
+            "Loan Name",
+            "Loan Type",
+            "Lender",
+            "Loan Account Number",
+            "Original Amount",
+            "Outstanding",
+            "Start Date",
+            "Status"
+        ];
+
+        rows = loans.map(loan => [
+            loanReportName(loan),
+            loan.loanType,
+            loan.lender,
+            loan.accountNumber,
+            loanReportMoney(loan.originalAmount),
+            loanReportMoney(loan.outstandingBalance),
+            loanReportDate(loan.startDate),
+            loanReportStatus(loan)
+        ]);
+
+    }
+
+
+    // =================================================
+    // #214 LOAN DISBURSEMENT REGISTER
+    // =================================================
+
+    else if (number === 214) {
+
+        headers = [
+            "Loan Name",
+            "Loan Type",
+            "Lender",
+            "Loan Start Date",
+            "Original Amount",
+            "Loan Account Number",
+            "Status"
+        ];
+
+        rows = loans.map(loan => [
+            loanReportName(loan),
+            loan.loanType,
+            loan.lender,
+            loanReportDate(loan.startDate),
+            loanReportMoney(loan.originalAmount),
+            loan.accountNumber,
+            loanReportStatus(loan)
+        ]);
+
+        note =
+            "The current Loan Master stores startDate. " +
+            "A separate disbursementDate field is not recorded. " +
+            "The date shown is the saved Loan Start Date.";
+
+    }
+
+
+    // =================================================
+    // #215 OUTSTANDING BALANCE REPORT
+    // =================================================
+
+    else if (number === 215) {
+
+        headers = [
+            "Loan Name",
+            "Loan Type",
+            "Original Amount",
+            "Current Outstanding",
+            "Monthly EMI",
+            "Interest Rate",
+            "Remaining Tenure",
+            "Status"
+        ];
+
+        rows = loans.map(loan => [
+            loanReportName(loan),
+            loan.loanType,
+            loanReportMoney(loan.originalAmount),
+            loanReportMoney(loan.outstandingBalance),
+            loanReportMoney(loan.emi),
+            Number(loan.interestRate || 0).toFixed(2) + "%",
+            Number(loan.remainingTenure || 0) + " Months",
+            loanReportStatus(loan)
+        ]);
+
+        stats = [
+            ["Total Outstanding", loanReportMoney(totalOutstanding)],
+            ["Active Loans", activeLoans.length],
+            ["Monthly EMI Commitment", loanReportMoney(monthlyEMI)]
+        ];
+
+    }
+
+
+    // =================================================
+    // #216 EMI SCHEDULE REPORT
+    // =================================================
+
+    else if (number === 216) {
+
+        headers = [
+            "Loan Name",
+            "Installment No.",
+            "EMI Date",
+            "Scheduled EMI",
+            "Current Outstanding"
+        ];
+
+        rows = [];
+
+        loans.forEach(loan => {
+
+            loanReportUpcomingEMIs(loan).forEach(item => {
+
+                rows.push([
+                    item.loanName,
+                    item.installment,
+                    loanReportDate(item.date),
+                    loanReportMoney(item.emi),
+                    loanReportMoney(item.balance)
+                ]);
+
+            });
+
+        });
+
+        // Sort EMI schedule by actual chronological date
+
+const parseEMIDate = (value) => {
+
+    const [day, month, year] =
+        String(value).split("-").map(Number);
+
+    return new Date(
+        year,
+        month - 1,
+        day
+    ).getTime();
+
+};
+
+rows.sort((a, b) =>
+    parseEMIDate(a[2]) - parseEMIDate(b[2])
+);
+
+        note =
+            "This is an indicative upcoming EMI calendar based on " +
+            "the saved EMI amount, EMI day and remaining tenure. " +
+            "It is not a forecast of future principal and interest.";
+
+    }
+
+
+    // =================================================
+    // #217 REPAYMENT HISTORY REPORT
+    // =================================================
+
+    else if (number === 217) {
+
+        headers = [
+            "Payment Date",
+            "Loan Name",
+            "Repayment Type",
+            "Amount",
+            "Principal",
+            "Interest",
+            "Rate Applied",
+            "Paid By",
+            "Payment Account",
+            "Outstanding After"
+        ];
+
+        rows = [...data.repayments]
+            .sort((a, b) =>
+                String(b.paymentDate || "")
+                    .localeCompare(String(a.paymentDate || ""))
+            )
+            .map(item => [
+
+                loanReportDate(item.paymentDate),
+
+                item.loanName ||
+                    data.loanMap.get(item.loanId)?.loanName ||
+                    item.loanType,
+
+                item.repaymentType,
+
+                loanReportMoney(item.amount),
+
+                loanReportMoney(item.principalAmount),
+
+                loanReportMoney(item.interestAmount),
+
+                item.rateApplied
+                    ? Number(item.rateApplied).toFixed(2) + "%"
+                    : "Not recorded",
+
+                item.paidByName || item.paidBy,
+
+                item.paymentAccountName || item.paymentAccount,
+
+                loanReportMoney(item.outstandingAfter)
+
+            ]);
+
+        stats = [
+            ["Repayment Records", data.repayments.length],
+            ["Total Repayment Amount", loanReportMoney(
+                data.repayments.reduce(
+                    (sum, item) =>
+                        sum + Number(item.amount || 0),
+                    0
+                )
+            )]
+        ];
+
+    }
+
+
+    // =================================================
+    // #218 PRINCIPAL VS INTEREST ANALYSIS
+    // =================================================
+
+    else if (number === 218) {
+
+        headers = [
+            "Loan Name",
+            "Repayment Records",
+            "Principal Paid",
+            "Interest Paid",
+            "Total Paid"
+        ];
+
+        rows = loans.map(loan => {
+
+            const records = repayments.filter(
+                item => item.loanId === loan.id
+            );
+
+            const principal = records.reduce(
+                (sum, item) =>
+                    sum + Number(item.principalAmount || 0),
+                0
+            );
+
+            const interest = records.reduce(
+                (sum, item) =>
+                    sum + Number(item.interestAmount || 0),
+                0
+            );
+
+            return [
+                loanReportName(loan),
+                records.length,
+                loanReportMoney(principal),
+                loanReportMoney(interest),
+                loanReportMoney(principal + interest)
+            ];
+
+        });
+
+        stats = [
+            ["Principal Paid", loanReportMoney(totalPrincipalPaid)],
+            ["Interest Paid", loanReportMoney(totalInterestPaid)],
+            ["Total Principal + Interest", loanReportMoney(
+                totalPrincipalPaid + totalInterestPaid
+            )]
+        ];
+
+    }
+
+
+    // =================================================
+    // #219 MONTHLY LOAN REPAYMENT TREND
+    // =================================================
+
+    else if (number === 219) {
+
+        const monthlyMap = {};
+
+        repayments.forEach(item => {
+
+            const date = loanReportDateISO(
+                item.paymentDate
+            );
+
+            const key = date
+                ? date.substring(0, 7)
+                : "date-not-recorded";
+
+            if (!monthlyMap[key]) {
+
+                monthlyMap[key] = {
+                    records: 0,
+                    amount: 0,
+                    principal: 0,
+                    interest: 0
+                };
+
+            }
+
+            monthlyMap[key].records++;
+
+            monthlyMap[key].amount +=
+                Number(item.amount || 0);
+
+            monthlyMap[key].principal +=
+                Number(item.principalAmount || 0);
+
+            monthlyMap[key].interest +=
+                Number(item.interestAmount || 0);
+
+        });
+
+
+        headers = [
+            "Month",
+            "Repayment Records",
+            "Total Repayment",
+            "Principal",
+            "Interest"
+        ];
+
+        rows = Object.entries(monthlyMap)
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([key, value]) => [
+                key === "date-not-recorded"
+                    ? "Date not recorded"
+                    : loanReportMonthLabel(key),
+                value.records,
+                loanReportMoney(value.amount),
+                loanReportMoney(value.principal),
+                loanReportMoney(value.interest)
+            ]);
+
+    }
+
+
+    // =================================================
+    // #220 INTEREST RATE CHANGE HISTORY
+    // =================================================
+
+    else if (number === 220) {
+
+        headers = [
+            "Loan Name",
+            "Interest Rate",
+            "Effective From",
+            "Record Type"
+        ];
+
+        loans.forEach(loan => {
+
+            let history = Array.isArray(loan.roiHistory)
+                ? [...loan.roiHistory]
+                : [];
+
+            if (
+                history.length === 0 &&
+                Number(loan.interestRate || 0) > 0
+            ) {
+
+                history = [{
+                    rate: Number(loan.interestRate),
+                    effectiveFrom:
+                        loan.roiEffectiveFrom ||
+                        loan.startDate ||
+                        ""
+                }];
+
+            }
+
+            history.sort((a, b) =>
+                String(a.effectiveFrom || "")
+                    .localeCompare(String(b.effectiveFrom || ""))
+            );
+
+            history.forEach((item, index) => {
+
+                rows.push([
+                    loanReportName(loan),
+                    Number(item.rate || 0).toFixed(2) + "%",
+                    loanReportDate(item.effectiveFrom),
+                    index === history.length - 1
+                        ? "Latest Saved Rate"
+                        : "Historical Rate"
+                ]);
+
+            });
+
+        });
+
+        note =
+            "Rate history is read from the saved roiHistory array. " +
+            "Where no history exists, the current interestRate is shown " +
+            "with roiEffectiveFrom or startDate as the available date.";
+
+    }
+
+
+    // =================================================
+    // #221 PREPAYMENT & PART-PAYMENT ANALYSIS
+    // =================================================
+
+    else if (number === 221) {
+
+        const prepayments = data.repayments.filter(item =>
+            LOAN_PREPAYMENT_TYPES.includes(
+                String(item.repaymentType || "").toLowerCase()
+            )
+        );
+
+        headers = [
+            "Payment Date",
+            "Loan Name",
+            "Repayment Type",
+            "Payment Amount",
+            "Prepayment Amount",
+            "Outstanding Before",
+            "Outstanding After"
+        ];
+
+        rows = prepayments.map(item => [
+
+            loanReportDate(item.paymentDate),
+
+            item.loanName ||
+                data.loanMap.get(item.loanId)?.loanName ||
+                item.loanType,
+
+            item.repaymentType,
+
+            loanReportMoney(item.amount),
+
+            loanReportMoney(
+                item.prepaymentAmount ?? item.amount
+            ),
+
+            loanReportMoney(item.outstandingBefore),
+
+            loanReportMoney(item.outstandingAfter)
+
+        ]);
+
+        stats = [
+            ["Prepayment Records", prepayments.length],
+            ["Total Additional Principal", loanReportMoney(
+                prepayments.reduce(
+                    (sum, item) =>
+                        sum + Number(
+                            item.prepaymentAmount ?? item.amount ?? 0
+                        ),
+                    0
+                )
+            )]
+        ];
+
+    }
+
+
+    // =================================================
+    // #222 LOAN MATURITY & CLOSURE TRACKER
+    // =================================================
+
+    else if (number === 222) {
+
+        headers = [
+            "Loan Name",
+            "Loan Type",
+            "Start Date",
+            "Original Tenure",
+            "Estimated Maturity",
+            "Outstanding Balance",
+            "Closure Date",
+            "Status"
+        ];
+
+        rows = loans.map(loan => {
+
+            const maturityISO =
+                loanReportMaturityDate(loan);
+
+            const isClosed =
+                String(loan.status || "").toLowerCase() === "closed";
+
+            let trackingStatus = loanReportStatus(loan);
+
+            if (isClosed) {
+
+                trackingStatus = "CLOSED";
+
+            } else if (maturityISO) {
+
+                const maturityDate = new Date(
+                    maturityISO + "T00:00:00"
+                );
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                trackingStatus =
+                    maturityDate < today
+                        ? "ESTIMATED MATURITY DATE PASSED"
+                        : "ACTIVE";
+
+            }
+
+            return [
+                loanReportName(loan),
+                loan.loanType,
+                loanReportDate(loan.startDate),
+                Number(loan.originalTenure || 0) + " Months",
+                maturityISO
+                    ? loanReportDate(maturityISO)
+                    : "Not recorded",
+                loanReportMoney(loan.outstandingBalance),
+                loan.closedAt
+                    ? loanReportDate(loan.closedAt)
+                    : "Not recorded",
+                trackingStatus
+            ];
+
+        });
+
+        note =
+            "Maturity is estimated from startDate plus originalTenure. " +
+            "It is not a contractual maturity date unless those saved " +
+            "master fields accurately reflect the loan agreement.";
+
+    }
+
+
+    return {
+        title,
+        subtitle,
+        stats,
+        headers,
+        rows,
+        note
+    };
+
+}
+
+
+// =====================================================
+// OPEN SELECTED LOAN REPORT
+// =====================================================
+
+async function openLoanReport(number) {
+
+    const definition =
+        loanReportDefinitions[number];
+
+    if (!definition) return;
+
+
+    window.activeTransactionReport = {
+        number,
+        name: definition.name
+    };
+
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header">
+                <div>
+                    <h2>${loanReportEscape(definition.name)}</h2>
+                    <p>Loading report data...</p>
+                </div>
+            </div>
+
+            <div style="
+                padding:35px;
+                text-align:center;
+                color:#64748b;
+            ">
+                Loading loan records...
+            </div>
+
+        </div>
+    `;
+
+
+    try {
+
+        const data = await loadLoanReportData();
+
+        const report = buildLoanReport(
+            number,
+            data
+        );
+
+
+        const statsHTML = report.stats.length
+            ? `
+                <div style="
+                    display:grid;
+                    grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+                    gap:10px;
+                    margin:15px 0;
+                ">
+                    ${report.stats.map(([label, value]) => `
+                        <div style="
+                            padding:14px;
+                            background:#ffffff;
+                            border:1px solid #dbe3ef;
+                            border-radius:10px;
+                            box-shadow:0 2px 5px rgba(0,0,0,0.04);
+                        ">
+                            <div style="
+                                font-size:11px;
+                                color:#64748b;
+                                margin-bottom:7px;
+                            ">
+                                ${loanReportEscape(label)}
+                            </div>
+
+                            <div style="
+                                font-size:17px;
+                                font-weight:750;
+                                color:#173665;
+                            ">
+                                ${loanReportEscape(value)}
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            `
+            : "";
+
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header"
+                     style="
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                        gap:15px;
+                        flex-wrap:wrap;
+                     ">
+
+                    <div>
+                        <h2> ${loanReportEscape(report.title)}</h2>
+
+                        <p>
+                            ${loanReportEscape(report.subtitle)}
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        id="backToLoanReportsDashboard"
+                        style="
+                            padding:9px 15px;
+                            border:1px solid #cbd5e1;
+                            background:#ffffff;
+                            color:#173665;
+                            border-radius:7px;
+                            cursor:pointer;
+                            font-weight:650;
+                        "
+                    >
+                        ← Back to Loan Reports
+                    </button>
+
+                </div>
+
+
+                ${statsHTML}
+
+
+                ${
+                    report.note
+                        ? `
+                            <div style="
+                                margin:12px 0;
+                                padding:12px 15px;
+                                background:#f1f5f9;
+                                border-left:3px solid #64748b;
+                                border-radius:5px;
+                                color:#475569;
+                                font-size:12px;
+                                line-height:1.6;
+                            ">
+                                ${loanReportEscape(report.note)}
+                            </div>
+                        `
+                        : ""
+                }
+
+
+                <div style="
+                    padding:15px;
+                    margin-top:12px;
+                    background:white;
+                    border:1px solid #dbe3ef;
+                    border-radius:10px;
+                ">
+
+                    <h3 style="
+                        margin:0 0 14px;
+                        color:#173665;
+                        font-size:15px;
+                    ">
+                        ${loanReportEscape(report.title)}
+                    </h3>
+
+                    ${loanReportBuildTable(
+                        report.headers,
+                        report.rows
+                    )}
+
+                </div>
+
+            </div>
+        `;
+
+
+        const backButton = document.getElementById(
+            "backToLoanReportsDashboard"
+        );
+
+        if (backButton) {
+
+            backButton.addEventListener(
+                "click",
+                showLoanReportsDashboard
+            );
+
+        }
+
+
+        reportWorkArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "LOAN REPORT ENGINE ERROR:",
+            error
+        );
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <h2>${loanReportEscape(definition.name)}</h2>
+                </div>
+
+                <div style="
+                    margin:20px;
+                    padding:18px;
+                    background:#fff1f2;
+                    border:1px solid #fecdd3;
+                    color:#9f1239;
+                    border-radius:8px;
+                ">
+                    Unable to load this loan report.
+
+                    <p>
+                        ${loanReportEscape(error.message)}
+                    </p>
+
+                    <button
+                        type="button"
+                        id="backToLoanReportsDashboard"
+                    >
+                        ← Back to Loan Reports
+                    </button>
+                </div>
+
+            </div>
+        `;
+
+        document.getElementById(
+            "backToLoanReportsDashboard"
+        )?.addEventListener(
+            "click",
+            showLoanReportsDashboard
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// CONNECT LOAN REPORT CARDS
+// =====================================================
+
+function bindLoanReportCards() {
+
+    reportWorkArea
+        .querySelectorAll("[data-loan-report]")
+        .forEach(card => {
+
+            card.addEventListener(
+                "click",
+                function () {
+
+                    const number = Number(
+                        card.dataset.loanReport
+                    );
+
+                    openLoanReport(number);
+
+                }
+            );
+
+        });
+
+}
+
+
+// =====================================================
+// RETURN TO LOAN REPORT DASHBOARD
+// =====================================================
+
+function showLoanReportsDashboard() {
+
+    window.activeTransactionReport = {
+        number: 0,
+        name: "Loans & Borrowings Reports"
+    };
+
+    reportWorkArea.innerHTML =
+        loanDashboardHTML;
+
+    bindLoanReportCards();
+
+    reportWorkArea.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+}
+
+
+// =====================================================
+// INITIALIZE LOAN REPORT CARDS
+// =====================================================
+
+bindLoanReportCards();
+
+
+        reportWorkArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+    return;
+}
 
 if (title === "Accounts") {
 
@@ -13723,24 +18511,33 @@ else if (report?.number === 23) {
 
 
 
+// =================================================
+// DYNAMIC REPORT TITLE
+// Reads the actual heading from the opened report
+// =================================================
+
 let fallbackReportName = "";
 
 const reportHeading =
     reportContainer.querySelector(
-        "#fixedDepositReportContent h2"
+        ".transaction-reports-header h2, #fixedDepositReportContent h2, h2"
     );
 
 if (reportHeading) {
-    fallbackReportName =
-        reportHeading.textContent
-            .trim()
-            .replace(/^#\d+\s*/, "");
+
+    fallbackReportName = reportHeading.textContent
+        .trim()
+        .replace(/^#\d+\s*/, "")
+        .replace(/^[^A-Za-z0-9]+/, "")
+        .trim();
+
 }
 
 const isFixedDepositReport =
     !!reportContainer.querySelector(
         "#fixedDepositReportContent"
     );
+
 
 const finalReportTitle = fallbackReportName
     ? `Financial Report - ${fallbackReportName}`
@@ -13749,7 +18546,6 @@ const finalReportTitle = fallbackReportName
         : report
             ? `Financial Report - ${report.name} — ${reportPeriod}`
             : "Financial Report";
-
 
 if (
     userName &&
@@ -13898,21 +18694,21 @@ if (
                LINE 2
                ----------------------------------------- */
 
-            .universal-report-user {
+.universal-report-user {
 
-                font-size:11px;
+    font-size:25px;
 
-                font-weight:700;
+    font-weight:800;
 
-                letter-spacing:0.4px;
+    letter-spacing:0.7px;
 
-                color:#334155;
+    color:#334155;
 
-                line-height:1.3;
+    line-height:1.3;
 
-                margin-bottom:3px;
+    margin-bottom:5px;
 
-            }
+}
 
 
             /* -----------------------------------------
