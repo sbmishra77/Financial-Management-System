@@ -13431,6 +13431,2343 @@ rows = Object.entries(monthly)
 
 
 // =====================================================
+// INSURANCE REPORTS — COMMON REPORT ENGINE
+// Reports #232–240
+// READ-ONLY: users/{uid}/insurance
+// =====================================================
+
+if (
+    title === "Insurance" ||
+    title === "Insurance Management"
+) {
+
+    console.log("🛡️ INSURANCE REPORT ENGINE STARTED");
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) return;
+
+    // -------------------------------------------------
+    // REPORT DEFINITIONS
+    // -------------------------------------------------
+
+    const insuranceReportDefinitions = {
+
+        232: {
+            name: "Insurance Portfolio Summary",
+            description: "Complete insurance portfolio overview"
+        },
+
+        233: {
+            name: "Insurance Policy Register",
+            description: "Complete register of insurance policies"
+        },
+
+        234: {
+            name: "Insurance Type-wise Analysis",
+            description: "Policy and premium analysis by insurance type"
+        },
+
+        235: {
+            name: "Insurance Company-wise Analysis",
+            description: "Company-wise policy and premium analysis"
+        },
+
+        236: {
+            name: "Premium Frequency Analysis",
+            description: "Premium analysis by payment frequency"
+        },
+
+        237: {
+            name: "Renewal Due Tracker",
+            description: "Upcoming and overdue policy renewals"
+        },
+
+        238: {
+            name: "Policy Maturity Tracker",
+            description: "Upcoming and completed policy maturities"
+        },
+
+        239: {
+            name: "Sum Assured Analysis",
+            description: "Insurance coverage and sum assured analysis"
+        },
+
+        240: {
+            name: "Active vs Inactive Policies",
+            description: "Compare active and inactive insurance policies"
+        }
+
+    };
+
+
+    // -------------------------------------------------
+    // COMMON HELPERS
+    // -------------------------------------------------
+
+    const insEscape = value => {
+
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            })[char]
+        );
+
+    };
+
+
+    const insMoney = value => {
+
+        return "₹" + Number(value || 0).toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+
+    };
+
+
+    const insNumber = value => {
+
+        const number = Number(value);
+
+        return Number.isFinite(number) ? number : 0;
+
+    };
+
+
+    const insDateValue = value => {
+
+        if (!value) return null;
+
+        if (typeof value === "object" && value.seconds) {
+            const date = new Date(value.seconds * 1000);
+
+            return new Date(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+            );
+        }
+
+        const raw = String(value).trim();
+
+        let match = raw.match(
+            /^(\d{4})-(\d{1,2})-(\d{1,2})/
+        );
+
+        if (match) {
+            const date = new Date(
+                Number(match[1]),
+                Number(match[2]) - 1,
+                Number(match[3])
+            );
+
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        match = raw.match(
+            /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/
+        );
+
+        if (match) {
+            const date = new Date(
+                Number(match[3]),
+                Number(match[2]) - 1,
+                Number(match[1])
+            );
+
+            return isNaN(date.getTime()) ? null : date;
+        }
+
+        return null;
+
+    };
+
+
+    const insDate = value => {
+
+        const date = insDateValue(value);
+
+        return date
+            ? date.toLocaleDateString("en-IN")
+            : "Not entered";
+
+    };
+
+
+    const insToday = () => {
+
+        const now = new Date();
+
+        return new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+        );
+
+    };
+
+
+    const insDaysRemaining = value => {
+
+        const date = insDateValue(value);
+
+        if (!date) return null;
+
+        return Math.round(
+            (date.getTime() - insToday().getTime()) /
+            86400000
+        );
+
+    };
+
+
+    const insStatus = policy => {
+
+        return String(policy.status || "active")
+            .trim()
+            .toLowerCase();
+
+    };
+
+
+    const insGroup = (rows, field) => {
+
+        const groups = {};
+
+        rows.forEach(policy => {
+
+            const key = String(
+                policy[field] || "Not Specified"
+            ).trim();
+
+            if (!groups[key]) {
+                groups[key] = {
+                    count: 0,
+                    premium: 0,
+                    sumAssured: 0
+                };
+            }
+
+            groups[key].count++;
+
+            groups[key].premium +=
+                insNumber(policy.premium);
+
+            groups[key].sumAssured +=
+                insNumber(policy.sumAssured);
+
+        });
+
+        return Object.entries(groups)
+            .sort((a, b) => b[1].count - a[1].count);
+
+    };
+
+
+    // -------------------------------------------------
+    // LOAD INSURANCE DATA FROM FIRESTORE
+    // -------------------------------------------------
+
+    async function loadInsuranceReportData() {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("User is not logged in.");
+        }
+
+        const snapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                user.uid,
+                "insurance"
+            )
+        );
+
+        return snapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        }));
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON KPI CARD
+    // -------------------------------------------------
+
+    function insKpi(label, value, detail = "") {
+
+        return `
+            <div style="
+                background:white;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                padding:18px;
+                min-width:180px;
+                flex:1;
+            ">
+                <div style="
+                    color:#64748b;
+                    font-size:13px;
+                ">
+                    ${insEscape(label)}
+                </div>
+
+                <h2 style="
+                    color:#173b73;
+                    margin:10px 0 5px;
+                    font-size:23px;
+                ">
+                    ${value}
+                </h2>
+
+                <div style="
+                    color:#64748b;
+                    font-size:12px;
+                ">
+                    ${insEscape(detail)}
+                </div>
+            </div>
+        `;
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON TABLE ENGINE
+    // -------------------------------------------------
+
+    function insTable(headers, rows) {
+
+        return `
+            <div style="
+                overflow-x:auto;
+                background:white;
+                border:1px solid #e2e8f0;
+                border-radius:10px;
+            ">
+                <table class="report-export-table" style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:700px;
+                ">
+                    <thead>
+                        <tr>
+                            ${headers.map(header => `
+                                <th style="
+                                    padding:13px;
+                                    text-align:left;
+                                    background:#f1f5f9;
+                                    color:#173b73;
+                                    border-bottom:1px solid #e2e8f0;
+                                ">
+                                    ${insEscape(header)}
+                                </th>
+                            `).join("")}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        ${rows.length ? rows.map(row => `
+                            <tr>
+                                ${row.map(cell => `
+                                    <td style="
+                                        padding:12px;
+                                        border-bottom:1px solid #edf2f7;
+                                    ">
+                                        ${cell}
+                                    </td>
+                                `).join("")}
+                            </tr>
+                        `).join("") : `
+                            <tr>
+                                <td colspan="${headers.length}"
+                                    style="padding:25px;text-align:center;color:#64748b;">
+                                    No matching insurance records found.
+                                </td>
+                            </tr>
+                        `}
+
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON POLICY REGISTER ROWS
+    // -------------------------------------------------
+
+    function insPolicyRows(rows) {
+
+        return rows.map(policy => [
+
+            insEscape(policy.policyName || "-"),
+
+            insEscape(policy.company || "-"),
+
+            insEscape(policy.policyNumber || "-"),
+
+            insEscape(policy.type || "-"),
+
+            insMoney(policy.premium),
+
+            insEscape(policy.frequency || "-"),
+
+            insMoney(policy.sumAssured),
+
+            insDate(policy.startDate),
+
+            insDate(policy.renewalDate),
+
+            insDate(policy.maturityDate),
+
+            insEscape(policy.status || "active")
+
+        ]);
+
+    }
+
+
+    const insPolicyHeaders = [
+        "Policy Name",
+        "Company",
+        "Policy Number",
+        "Type",
+        "Premium",
+        "Frequency",
+        "Sum Assured",
+        "Start Date",
+        "Renewal Date",
+        "Maturity Date",
+        "Status"
+    ];
+
+
+    // -------------------------------------------------
+    // REPORT CALCULATION ENGINE
+    // -------------------------------------------------
+
+    function buildInsuranceReport(number, policies) {
+
+        const totalPremium = policies.reduce(
+            (sum, p) => sum + insNumber(p.premium),
+            0
+        );
+
+        const totalSumAssured = policies.reduce(
+            (sum, p) => sum + insNumber(p.sumAssured),
+            0
+        );
+
+        const active = policies.filter(
+            p => insStatus(p) === "active"
+        );
+
+        const inactive = policies.filter(
+            p => insStatus(p) !== "active"
+        );
+
+        const today = insToday();
+
+
+        // REPORT 232 — PORTFOLIO SUMMARY
+
+        if (number === 232) {
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Active Policies", active.length],
+                    ["Inactive Policies", inactive.length],
+                    ["Total Premium", insMoney(totalPremium)],
+                    ["Total Sum Assured", insMoney(totalSumAssured)]
+                ],
+
+                headers: insPolicyHeaders,
+
+                rows: insPolicyRows(policies)
+
+            };
+
+        }
+
+
+        // REPORT 233 — POLICY REGISTER
+
+        if (number === 233) {
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Total Companies", new Set(
+                        policies.map(p => p.company).filter(Boolean)
+                    ).size],
+                    ["Total Premium", insMoney(totalPremium)],
+                    ["Total Coverage", insMoney(totalSumAssured)]
+                ],
+
+                headers: insPolicyHeaders,
+
+                rows: insPolicyRows(policies)
+
+            };
+
+        }
+
+
+        // REPORT 234 — TYPE-WISE ANALYSIS
+
+        if (number === 234) {
+
+            const groups = insGroup(policies, "type");
+
+            return {
+
+                summaries: [
+                    ["Insurance Types", groups.length],
+                    ["Total Policies", policies.length],
+                    ["Total Premium", insMoney(totalPremium)]
+                ],
+
+                headers: [
+                    "Insurance Type",
+                    "Policy Count",
+                    "Total Premium",
+                    "Total Sum Assured"
+                ],
+
+                rows: groups.map(([name, data]) => [
+                    insEscape(name),
+                    data.count,
+                    insMoney(data.premium),
+                    insMoney(data.sumAssured)
+                ])
+
+            };
+
+        }
+
+
+        // REPORT 235 — COMPANY-WISE ANALYSIS
+
+        if (number === 235) {
+
+            const groups = insGroup(policies, "company");
+
+            return {
+
+                summaries: [
+                    ["Insurance Companies", groups.length],
+                    ["Total Policies", policies.length],
+                    ["Total Premium", insMoney(totalPremium)]
+                ],
+
+                headers: [
+                    "Insurance Company",
+                    "Policy Count",
+                    "Total Premium",
+                    "Total Sum Assured"
+                ],
+
+                rows: groups.map(([name, data]) => [
+                    insEscape(name),
+                    data.count,
+                    insMoney(data.premium),
+                    insMoney(data.sumAssured)
+                ])
+
+            };
+
+        }
+
+
+        // REPORT 236 — PREMIUM FREQUENCY
+
+        if (number === 236) {
+
+            const groups = insGroup(policies, "frequency");
+
+            return {
+
+                summaries: [
+                    ["Payment Frequencies", groups.length],
+                    ["Total Policies", policies.length],
+                    ["Recorded Premium Total", insMoney(totalPremium)]
+                ],
+
+                headers: [
+                    "Premium Frequency",
+                    "Policy Count",
+                    "Recorded Premium Total",
+                    "Sum Assured"
+                ],
+
+                rows: groups.map(([name, data]) => [
+                    insEscape(name),
+                    data.count,
+                    insMoney(data.premium),
+                    insMoney(data.sumAssured)
+                ])
+
+            };
+
+        }
+
+
+        // REPORT 237 — RENEWAL TRACKER
+
+        if (number === 237) {
+
+            const renewalPolicies = [...policies]
+                .filter(p => !!p.renewalDate)
+                .sort((a, b) => {
+
+                    return (
+                        (insDateValue(a.renewalDate)?.getTime() || 0) -
+                        (insDateValue(b.renewalDate)?.getTime() || 0)
+                    );
+
+                });
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Renewal Dates Recorded", renewalPolicies.length],
+                    ["Overdue Renewals", renewalPolicies.filter(
+                        p => insDaysRemaining(p.renewalDate) < 0
+                    ).length],
+                    ["Due Within 30 Days", renewalPolicies.filter(p => {
+                        const days = insDaysRemaining(p.renewalDate);
+                        return days >= 0 && days <= 30;
+                    }).length]
+                ],
+
+                headers: [
+                    "Policy",
+                    "Company",
+                    "Policy Number",
+                    "Renewal Date",
+                    "Days Remaining",
+                    "Renewal Status"
+                ],
+
+                rows: renewalPolicies.map(p => {
+
+                    const days = insDaysRemaining(p.renewalDate);
+
+                    return [
+                        insEscape(p.policyName || "-"),
+                        insEscape(p.company || "-"),
+                        insEscape(p.policyNumber || "-"),
+                        insDate(p.renewalDate),
+                        days === null ? "-" : days,
+                        days === null
+                            ? "Date unavailable"
+                            : days < 0
+                                ? "Overdue"
+                                : days === 0
+                                    ? "Due Today"
+                                    : days <= 30
+                                        ? "Due Soon"
+                                        : "Upcoming"
+                    ];
+
+                })
+
+            };
+
+        }
+
+
+        // REPORT 238 — MATURITY TRACKER
+
+        if (number === 238) {
+
+            const maturityPolicies = [...policies]
+                .filter(p => !!p.maturityDate)
+                .sort((a, b) => {
+
+                    return (
+                        (insDateValue(a.maturityDate)?.getTime() || 0) -
+                        (insDateValue(b.maturityDate)?.getTime() || 0)
+                    );
+
+                });
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Maturity Dates Recorded", maturityPolicies.length],
+                    ["Matured Policies", maturityPolicies.filter(
+                        p => insDaysRemaining(p.maturityDate) < 0
+                    ).length],
+                    ["Maturing Within 365 Days", maturityPolicies.filter(p => {
+                        const days = insDaysRemaining(p.maturityDate);
+                        return days >= 0 && days <= 365;
+                    }).length]
+                ],
+
+                headers: [
+                    "Policy",
+                    "Company",
+                    "Policy Number",
+                    "Maturity Date",
+                    "Days Remaining",
+                    "Sum Assured"
+                ],
+
+                rows: maturityPolicies.map(p => {
+
+                    const days = insDaysRemaining(p.maturityDate);
+
+                    return [
+                        insEscape(p.policyName || "-"),
+                        insEscape(p.company || "-"),
+                        insEscape(p.policyNumber || "-"),
+                        insDate(p.maturityDate),
+                        days === null ? "-" : days,
+                        insMoney(p.sumAssured)
+                    ];
+
+                })
+
+            };
+
+        }
+
+
+        // REPORT 239 — SUM ASSURED ANALYSIS
+
+        if (number === 239) {
+
+            const bands = {
+                "Below ₹5 Lakh": 0,
+                "₹5–10 Lakh": 0,
+                "₹10–25 Lakh": 0,
+                "₹25–50 Lakh": 0,
+                "₹50 Lakh–1 Crore": 0,
+                "Above ₹1 Crore": 0
+            };
+
+            policies.forEach(p => {
+
+                const amount = insNumber(p.sumAssured);
+
+                if (amount < 500000) {
+                    bands["Below ₹5 Lakh"]++;
+                } else if (amount < 1000000) {
+                    bands["₹5–10 Lakh"]++;
+                } else if (amount < 2500000) {
+                    bands["₹10–25 Lakh"]++;
+                } else if (amount < 5000000) {
+                    bands["₹25–50 Lakh"]++;
+                } else if (amount < 10000000) {
+                    bands["₹50 Lakh–1 Crore"]++;
+                } else {
+                    bands["Above ₹1 Crore"]++;
+                }
+
+            });
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Total Sum Assured", insMoney(totalSumAssured)],
+                    ["Average Sum Assured", insMoney(
+                        policies.length
+                            ? totalSumAssured / policies.length
+                            : 0
+                    )]
+                ],
+
+                headers: [
+                    "Coverage Range",
+                    "Policy Count"
+                ],
+
+                rows: Object.entries(bands).map(([name, count]) => [
+                    insEscape(name),
+                    count
+                ])
+
+            };
+
+        }
+
+
+        // REPORT 240 — ACTIVE VS INACTIVE
+
+        if (number === 240) {
+
+            return {
+
+                summaries: [
+                    ["Total Policies", policies.length],
+                    ["Active Policies", active.length],
+                    ["Inactive Policies", inactive.length],
+                    ["Active Coverage", insMoney(
+                        active.reduce((s, p) => s + insNumber(p.sumAssured), 0)
+                    )],
+                    ["Inactive Coverage", insMoney(
+                        inactive.reduce((s, p) => s + insNumber(p.sumAssured), 0)
+                    )]
+                ],
+
+                headers: [
+                    "Policy",
+                    "Company",
+                    "Policy Number",
+                    "Insurance Type",
+                    "Premium",
+                    "Sum Assured",
+                    "Status"
+                ],
+
+                rows: policies.map(p => [
+                    insEscape(p.policyName || "-"),
+                    insEscape(p.company || "-"),
+                    insEscape(p.policyNumber || "-"),
+                    insEscape(p.type || "-"),
+                    insMoney(p.premium),
+                    insMoney(p.sumAssured),
+                    insEscape(p.status || "active")
+                ])
+
+            };
+
+        }
+
+        throw new Error("Invalid Insurance Report Number: " + number);
+
+    }
+
+
+    // -------------------------------------------------
+    // OPEN INDIVIDUAL INSURANCE REPORT
+    // -------------------------------------------------
+
+    async function openInsuranceReport(number) {
+
+        const definition =
+            insuranceReportDefinitions[number];
+
+        if (!definition) return;
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+                        <h2>🛡️ ${insEscape(definition.name)}</h2>
+                        <p>${insEscape(definition.description)}</p>
+                    </div>
+
+                </div>
+
+                <div id="insuranceReportContent"
+                    style="margin-top:20px;">
+                    Loading insurance data...
+                </div>
+
+                <button
+                    id="insuranceBackToDashboard"
+                    type="button"
+                    style="
+                        margin-top:20px;
+                        padding:12px 20px;
+                        border:1px solid #cbd5e1;
+                        border-radius:9px;
+                        background:white;
+                        color:#173b73;
+                        font-weight:600;
+                        cursor:pointer;
+                    "
+                >
+                    ← Back to Insurance Reports
+                </button>
+
+            </div>
+
+        `;
+
+        try {
+
+            const policies = await loadInsuranceReportData();
+
+            const report = buildInsuranceReport(
+                number,
+                policies
+            );
+
+            const summaryHTML = report.summaries.map(
+                item => insKpi(item[0], item[1])
+            ).join("");
+
+            const content = document.getElementById(
+                "insuranceReportContent"
+            );
+
+            if (!content) return;
+
+            content.innerHTML = `
+
+                <div style="
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:14px;
+                    margin-bottom:22px;
+                ">
+                    ${summaryHTML}
+                </div>
+
+                <div style="
+                    background:white;
+                    border:1px solid #e2e8f0;
+                    border-radius:12px;
+                    padding:18px;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        flex-wrap:wrap;
+                        gap:12px;
+                        margin-bottom:18px;
+                    ">
+
+                        <h3 style="color:#173b73;margin:0;">
+                            ${insEscape(definition.name)}
+                        </h3>
+
+                        <input
+                            id="insuranceReportSearch"
+                            type="search"
+                            placeholder="Search report..."
+                            style="
+                                padding:10px 13px;
+                                border:1px solid #cbd5e1;
+                                border-radius:8px;
+                                min-width:220px;
+                            "
+                        >
+
+                    </div>
+
+                    <div id="insuranceReportTable">
+                        ${insTable(report.headers, report.rows)}
+                    </div>
+
+                    <p style="
+                        color:#64748b;
+                        font-size:12px;
+                        margin-top:14px;
+                    ">
+                        Records: ${report.rows.length}
+                    </p>
+
+                </div>
+
+            `;
+
+
+            // COMMON REPORT SEARCH
+
+            const searchInput = document.getElementById(
+                "insuranceReportSearch"
+            );
+
+            if (searchInput) {
+
+                searchInput.addEventListener("input", function () {
+
+                    const query = this.value.toLowerCase().trim();
+
+                    const filteredRows = report.rows.filter(row =>
+                        row.some(cell =>
+                            String(cell).toLowerCase().includes(query)
+                        )
+                    );
+
+                    const table = document.getElementById(
+                        "insuranceReportTable"
+                    );
+
+                    if (table) {
+                        table.innerHTML = insTable(
+                            report.headers,
+                            filteredRows
+                        );
+                    }
+
+                });
+
+            }
+
+
+            reportWorkArea.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        } catch (error) {
+
+            console.error(
+                "INSURANCE REPORT ERROR:",
+                error
+            );
+
+            const content = document.getElementById(
+                "insuranceReportContent"
+            );
+
+            if (content) {
+
+                content.innerHTML = `
+                    <div style="
+                        padding:22px;
+                        border:1px solid #fecaca;
+                        background:#fff7f7;
+                        border-radius:10px;
+                        color:#991b1b;
+                    ">
+                        <strong>
+                            Unable to load Insurance Report.
+                        </strong>
+
+                        <p>${insEscape(error.message)}</p>
+                    </div>
+                `;
+
+            }
+
+        }
+
+    }
+
+
+    // -------------------------------------------------
+    // INSURANCE DASHBOARD
+    // -------------------------------------------------
+
+    function renderInsuranceDashboard() {
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+                        <h2>🛡️ Insurance Reports</h2>
+
+                        <p>
+                            Insurance portfolio, policies,
+                            premiums, renewals and coverage analysis
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="transaction-reports-grid"
+                    style="margin-top:20px;">
+
+                    ${Object.entries(
+                        insuranceReportDefinitions
+                    ).map(([number, report]) => `
+
+                        <div
+                            class="transaction-report-card"
+                            data-insurance-report="${number}"
+                            style="cursor:pointer;"
+                        >
+
+                            <div class="transaction-report-number">
+                                ${number}
+                            </div>
+
+                            <div class="transaction-report-content">
+
+                                <h3>
+                                    🛡️ ${insEscape(report.name)}
+                                </h3>
+
+                                <p>
+                                    ${insEscape(report.description)}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    `).join("")}
+
+                </div>
+
+            </div>
+
+        `;
+
+        reportWorkArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON EVENT DELEGATION
+    // -------------------------------------------------
+
+    window.__insuranceReportEngine = {
+
+        openReport: openInsuranceReport,
+
+        renderDashboard: renderInsuranceDashboard
+
+    };
+
+
+    if (
+        reportWorkArea.dataset.insuranceEngineBound !== "true"
+    ) {
+
+        reportWorkArea.addEventListener(
+            "click",
+            function (event) {
+
+                const card = event.target.closest(
+                    "[data-insurance-report]"
+                );
+
+                if (
+                    card &&
+                    reportWorkArea.contains(card)
+                ) {
+
+                    const number = Number(
+                        card.dataset.insuranceReport
+                    );
+
+                    window.__insuranceReportEngine
+                        ?.openReport(number);
+
+                    return;
+
+                }
+
+
+                if (
+                    event.target.closest(
+                        "#insuranceBackToDashboard"
+                    )
+                ) {
+
+                    window.__insuranceReportEngine
+                        ?.renderDashboard();
+
+                }
+
+            }
+        );
+
+        reportWorkArea.dataset.insuranceEngineBound = "true";
+
+    }
+
+
+    // INITIAL DASHBOARD
+
+    renderInsuranceDashboard();
+
+    return;
+
+}
+
+
+// =====================================================
+// PARTIES & MERCHANTS REPORTS — COMMON REPORT ENGINE
+// Reports #241–249
+// Sources: users/{uid}/transactionParties + users/{uid}/transactions
+// Read-only reporting. Does not modify source records.
+// =====================================================
+
+if (title === "Parties & Merchants") {
+
+    console.log("👥 PARTIES & MERCHANTS REPORT ENGINE STARTED");
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) return;
+
+    // -------------------------------------------------
+    // REPORT DEFINITIONS
+    // -------------------------------------------------
+
+    const partyReportDefinitions = [
+        [241, "Party Portfolio Summary", "Overview of registered parties and linked transactions"],
+        [242, "Party Master Register", "Complete register of saved customers, vendors and merchants"],
+        [243, "Party Type-wise Analysis", "Party count and transaction value by saved party type"],
+        [244, "Party-wise Transaction Summary", "Transaction count and amount for each party"],
+        [245, "Party-wise Income Analysis", "Income transactions grouped by party or source"],
+        [246, "Party-wise Expense Analysis", "Expense transactions grouped by merchant or payee"],
+        [247, "Top Parties by Transaction Value", "Parties ranked by total recorded transaction amount"],
+        [248, "Party Transaction Register", "Detailed transaction register with party information"],
+        [249, "Unregistered & Free-text Party Analysis", "Transactions using free-text parties or no linked Party Master record"]
+    ];
+
+    // -------------------------------------------------
+    // COMMON HELPERS
+    // -------------------------------------------------
+
+    const partyEscape = value => String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const partyMoney = value => "₹ " + Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    const partyDate = value => {
+        if (!value) return "—";
+
+        if (typeof value === "object" && value.seconds) {
+            value = new Date(value.seconds * 1000);
+        } else if (value && typeof value.toDate === "function") {
+            value = value.toDate();
+        }
+
+        const date = value instanceof Date ? value : new Date(String(value));
+
+        return Number.isNaN(date.getTime())
+            ? partyEscape(value)
+            : date.toLocaleDateString("en-IN");
+    };
+
+    const partyLabel = value => {
+        const text = String(value || "Not specified").trim();
+
+        return text
+            .replace(/[_-]+/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+    };
+
+    // -------------------------------------------------
+    // LOAD PARTY MASTER + TRANSACTION DATA
+    // -------------------------------------------------
+
+    let partyReportCache = null;
+
+    async function loadPartyReportData(forceRefresh = false) {
+
+        const user = auth.currentUser || currentUser;
+
+        if (!user) {
+            throw new Error("Please login first.");
+        }
+
+        if (!forceRefresh && partyReportCache?.uid === user.uid) {
+            return partyReportCache.data;
+        }
+
+        const [partySnapshot, transactionSnapshot] = await Promise.all([
+
+            getDocs(collection(db, "users", user.uid, "parties")),
+
+            getDocs(
+                collection(db, "users", user.uid, "transactions")
+            )
+
+        ]);
+
+        const parties = partySnapshot.docs.map(docSnap => ({
+            id: docSnap.id,
+            ...docSnap.data()
+        }));
+
+        const transactions = transactionSnapshot.docs
+            .map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data()
+            }))
+            .filter(row => row.deleted !== true);
+
+        const data = {
+            parties,
+            transactions
+        };
+
+        partyReportCache = {
+            uid: user.uid,
+            data
+        };
+
+        console.log("👥 Party report data loaded:", {
+            parties: parties.length,
+            transactions: transactions.length
+        });
+
+        return data;
+    }
+
+    // -------------------------------------------------
+    // LINK TRANSACTIONS WITH PARTY MASTER
+    // -------------------------------------------------
+
+    function getPartyTransactionName(transaction, partyMap) {
+
+        const id = transaction.partyId
+            ? String(transaction.partyId)
+            : "";
+
+        const linkedParty = id
+            ? partyMap.get(id)
+            : null;
+
+        return linkedParty?.name ||
+            transaction.partyName ||
+            transaction.party ||
+            "Unspecified";
+    }
+
+    function partyRowsForReport(data) {
+
+        const partyMap = new Map(
+            data.parties.map(p => [String(p.id), p])
+        );
+
+        return data.transactions.map(transaction => ({
+            ...transaction,
+
+            reportPartyName: getPartyTransactionName(
+                transaction,
+                partyMap
+            ),
+
+            reportPartyId: transaction.partyId
+                ? String(transaction.partyId)
+                : "",
+
+            reportAmount: Number(transaction.amount || 0)
+        }));
+    }
+
+    // -------------------------------------------------
+    // COMMON TABLE RENDERER
+    // -------------------------------------------------
+
+    function partyTable(columns, rows, emptyText = "No matching records found.") {
+
+        return `
+            <div class="party-report-table-wrap">
+
+                <table class="party-report-table">
+
+                    <thead>
+                        <tr>
+                            ${columns.map(c => `<th>${c.label}</th>`).join("")}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        ${rows.length ? rows.map(row => `
+                            <tr>
+                                ${columns.map(c =>
+                                    `<td>${c.render
+                                        ? c.render(row)
+                                        : partyEscape(row[c.key] ?? "—")
+                                    }</td>`
+                                ).join("")}
+                            </tr>
+                        `).join("") : `
+
+                            <tr>
+                                <td colspan="${columns.length}" class="party-report-empty">
+                                    ${partyEscape(emptyText)}
+                                </td>
+                            </tr>
+
+                        `}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+        `;
+    }
+
+    // -------------------------------------------------
+    // COMMON KPI CARDS
+    // -------------------------------------------------
+
+    function partyKpis(items) {
+
+        return `
+            <div class="party-report-kpis">
+
+                ${items.map(item => `
+
+                    <div class="party-report-kpi">
+
+                        <span>${partyEscape(item.label)}</span>
+
+                        <strong>${item.value}</strong>
+
+                        ${item.detail
+                            ? `<small>${partyEscape(item.detail)}</small>`
+                            : ""
+                        }
+
+                    </div>
+
+                `).join("")}
+
+            </div>
+        `;
+    }
+
+    // -------------------------------------------------
+    // PARTY-WISE GROUPING
+    // -------------------------------------------------
+
+    function groupPartyTransactions(rows, predicate = () => true) {
+
+        const groups = new Map();
+
+        rows.filter(predicate).forEach(row => {
+
+            const key = String(
+                row.reportPartyName || "Unspecified"
+            ).trim() || "Unspecified";
+
+            if (!groups.has(key)) {
+
+                groups.set(key, {
+                    name: key,
+                    count: 0,
+                    total: 0
+                });
+
+            }
+
+            const group = groups.get(key);
+
+            group.count++;
+            group.total += row.reportAmount;
+
+        });
+
+        return [...groups.values()].sort(
+            (a, b) => b.total - a.total
+        );
+    }
+
+    // =================================================
+    // PARTIES & MERCHANTS DASHBOARD
+    // =================================================
+
+    function renderPartyDashboard() {
+
+        window.activeReportCategory = "Parties & Merchants";
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container party-report-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+
+                        <h2>👥 Parties &amp; Merchants Reports</h2>
+
+                        <p>
+                            Customers, vendors, merchants, tenants
+                            and transaction-party analytics
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="transaction-reports-grid">
+
+                    ${partyReportDefinitions.map(([number, name, description]) => `
+
+                        <div
+                            class="transaction-report-card"
+                            data-party-report="${number}"
+                            style="cursor:pointer;"
+                        >
+
+                            <div class="transaction-report-number">
+                                ${number}
+                            </div>
+
+                            <div class="transaction-report-content">
+
+                                <h3>${partyEscape(name)}</h3>
+
+                                <p>${partyEscape(description)}</p>
+
+                            </div>
+
+                        </div>
+
+                    `).join("")}
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+    // =================================================
+    // OPEN INDIVIDUAL PARTY REPORT
+    // =================================================
+
+    async function openPartyReport(number) {
+
+        const definition = partyReportDefinitions.find(
+            item => item[0] === number
+        );
+
+        if (!definition) return;
+
+        const [, name, description] = definition;
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container party-report-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+
+                        <h2>${number} · ${partyEscape(name)}</h2>
+
+                        <p>${partyEscape(description)}</p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="back-to-dashboard-button"
+                        id="partyReportBack"
+                    >
+                        ← Back to Parties &amp; Merchants
+                    </button>
+
+                </div>
+
+                <div id="partyReportResult">
+
+                    <div class="party-report-loading">
+                        Loading party and transaction data...
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+        const result = document.getElementById("partyReportResult");
+
+        try {
+
+            const data = await loadPartyReportData();
+
+            const partyMap = new Map(
+                data.parties.map(p => [String(p.id), p])
+            );
+
+            const txRows = partyRowsForReport(data);
+
+            const registered = data.parties;
+
+            let html = "";
+
+            // -----------------------------------------
+            // #241 PARTY PORTFOLIO SUMMARY
+            // -----------------------------------------
+
+            if (number === 241) {
+
+                const totalValue = txRows.reduce(
+                    (sum, row) => sum + row.reportAmount,
+                    0
+                );
+
+                const linkedCount = txRows.filter(
+                    row => row.reportPartyId &&
+                        partyMap.has(row.reportPartyId)
+                ).length;
+
+                html = partyKpis([
+
+                    {
+                        label: "Registered Parties",
+                        value: registered.length
+                    },
+
+                    {
+                        label: "Transactions",
+                        value: txRows.length
+                    },
+
+                    {
+                        label: "Linked Transactions",
+                        value: linkedCount
+                    },
+
+                    {
+                        label: "Recorded Transaction Value",
+                        value: partyMoney(totalValue)
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Party Type",
+                        render: p => partyEscape(partyLabel(p.type))
+                    },
+
+                    {
+                        label: "Party Count",
+                        render: p => p.count
+                    },
+
+                    {
+                        label: "Transaction Count",
+                        render: p => p.transactions
+                    },
+
+                    {
+                        label: "Transaction Value",
+                        render: p => partyMoney(p.total)
+                    }
+
+                ], (() => {
+
+                    const groups = new Map();
+
+                    registered.forEach(p => {
+
+                        const key = String(p.type || "Not specified");
+
+                        if (!groups.has(key)) {
+
+                            groups.set(key, {
+                                type: key,
+                                count: 0,
+                                transactions: 0,
+                                total: 0
+                            });
+
+                        }
+
+                        groups.get(key).count++;
+
+                    });
+
+                    txRows.forEach(t => {
+
+                        const p = t.reportPartyId
+                            ? partyMap.get(t.reportPartyId)
+                            : null;
+
+                        const key = String(
+                            p?.type || "Unregistered / free-text"
+                        );
+
+                        if (!groups.has(key)) {
+
+                            groups.set(key, {
+                                type: key,
+                                count: 0,
+                                transactions: 0,
+                                total: 0
+                            });
+
+                        }
+
+                        groups.get(key).transactions++;
+                        groups.get(key).total += t.reportAmount;
+
+                    });
+
+                    return [...groups.values()];
+
+                })());
+
+            }
+
+            // -----------------------------------------
+            // #242 PARTY MASTER REGISTER
+            // -----------------------------------------
+
+            if (number === 242) {
+
+                html = partyKpis([
+
+                    {
+                        label: "Total Registered Parties",
+                        value: registered.length
+                    },
+
+                    {
+                        label: "Party Types",
+                        value: new Set(
+                            registered.map(p => p.type).filter(Boolean)
+                        ).size
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Party Name",
+                        render: p => `<strong>${partyEscape(p.name || "Unnamed party")}</strong>`
+                    },
+
+                    {
+                        label: "Type",
+                        render: p => partyEscape(partyLabel(p.type))
+                    },
+
+                    {
+                        label: "Notes",
+                        render: p => partyEscape(p.notes || "—")
+                    },
+
+                    {
+                        label: "Party ID",
+                        render: p => `<small>${partyEscape(p.id)}</small>`
+                    }
+
+                ], registered);
+
+            }
+
+
+            // -----------------------------------------
+            // #243 PARTY TYPE-WISE ANALYSIS
+            // -----------------------------------------
+
+            if (number === 243) {
+
+                const groups = new Map();
+
+                // Create groups from registered Party Master records
+                registered.forEach(p => {
+
+                    const key = String(p.type || "Not specified");
+
+                    if (!groups.has(key)) {
+
+                        groups.set(key, {
+                            type: key,
+                            count: 0,
+                            transactions: 0,
+                            total: 0
+                        });
+
+                    }
+
+                    groups.get(key).count++;
+
+                });
+
+                // Add only transactions linked to registered parties
+                txRows.forEach(t => {
+
+                    const party = t.reportPartyId
+                        ? partyMap.get(t.reportPartyId)
+                        : null;
+
+                    // Ignore free-text and unregistered transactions
+                    if (!party) return;
+
+                    const key = String(party.type || "Not specified");
+
+                    if (!groups.has(key)) {
+
+                        groups.set(key, {
+                            type: key,
+                            count: 0,
+                            transactions: 0,
+                            total: 0
+                        });
+
+                    }
+
+                    const group = groups.get(key);
+
+                    group.transactions++;
+                    group.total += t.reportAmount;
+
+                });
+
+                const groupRows = [...groups.values()].sort(
+                    (a, b) => b.count - a.count
+                );
+
+                html = partyKpis([
+
+                    {
+                        label: "Party Types",
+                        value: groups.size
+                    },
+
+                    {
+                        label: "Registered Parties",
+                        value: registered.length
+                    },
+
+                    {
+                        label: "Linked Transactions",
+                        value: groupRows.reduce(
+                            (sum, row) => sum + row.transactions,
+                            0
+                        )
+                    },
+
+                    {
+                        label: "Linked Transaction Value",
+                        value: partyMoney(
+                            groupRows.reduce(
+                                (sum, row) => sum + row.total,
+                                0
+                            )
+                        )
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Party Type",
+                        render: p => partyEscape(partyLabel(p.type))
+                    },
+
+                    {
+                        label: "Party Count",
+                        render: p => p.count
+                    },
+
+                    {
+                        label: "Transaction Count",
+                        render: p => p.transactions
+                    },
+
+                    {
+                        label: "Transaction Value",
+                        render: p => `<strong>${partyMoney(p.total)}</strong>`
+                    }
+
+                ], groupRows);
+
+            }
+
+            // -----------------------------------------
+            // #244 PARTY-WISE TRANSACTION SUMMARY
+            // #247 TOP PARTIES BY TRANSACTION VALUE
+            // -----------------------------------------
+
+            if (number === 244 || number === 247) {
+
+                let groups = groupPartyTransactions(txRows);
+
+                if (number === 247) {
+                    groups = groups.slice(0, 10);
+                }
+
+                html = partyKpis([
+
+                    {
+                        label: "Parties / Names",
+                        value: groups.length
+                    },
+
+                    {
+                        label: "Transactions",
+                        value: txRows.length
+                    },
+
+                    {
+                        label: "Total Transaction Value",
+                        value: partyMoney(
+                            txRows.reduce(
+                                (sum, r) => sum + r.reportAmount,
+                                0
+                            )
+                        )
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Party / Source",
+                        render: r => partyEscape(r.name)
+                    },
+
+                    {
+                        label: "Transactions",
+                        render: r => r.count
+                    },
+
+                    {
+                        label: "Total Amount",
+                        render: r => `<strong>${partyMoney(r.total)}</strong>`
+                    }
+
+                ], groups);
+
+            }
+
+            // -----------------------------------------
+            // #245 INCOME ANALYSIS
+            // #246 EXPENSE ANALYSIS
+            // -----------------------------------------
+
+            if (number === 245 || number === 246) {
+
+                const targetType = number === 245
+                    ? "income"
+                    : "expense";
+
+                const filtered = txRows.filter(
+                    row => String(row.type || "").toLowerCase() === targetType
+                );
+
+                const groups = groupPartyTransactions(filtered);
+
+                html = partyKpis([
+
+                    {
+                        label: number === 245
+                            ? "Income Transactions"
+                            : "Expense Transactions",
+                        value: filtered.length
+                    },
+
+                    {
+                        label: "Party / Source Names",
+                        value: groups.length
+                    },
+
+                    {
+                        label: "Total Amount",
+                        value: partyMoney(
+                            filtered.reduce(
+                                (sum, r) => sum + r.reportAmount,
+                                0
+                            )
+                        )
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Party / Source",
+                        render: r => partyEscape(r.name)
+                    },
+
+                    {
+                        label: "Transactions",
+                        render: r => r.count
+                    },
+
+                    {
+                        label: "Total Amount",
+                        render: r => `<strong>${partyMoney(r.total)}</strong>`
+                    }
+
+                ], groups, `No ${targetType} transactions found.`);
+
+            }
+
+            // -----------------------------------------
+            // #248 PARTY TRANSACTION REGISTER
+            // -----------------------------------------
+
+            if (number === 248) {
+
+                const ordered = [...txRows].sort(
+                    (a, b) => String(b.date || "").localeCompare(String(a.date || ""))
+                );
+
+                html = partyKpis([
+
+                    {
+                        label: "Transaction Records",
+                        value: ordered.length
+                    },
+
+                    {
+                        label: "Unique Party Names",
+                        value: new Set(
+                            ordered.map(r => r.reportPartyName)
+                        ).size
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Date",
+                        render: r => partyDate(r.date)
+                    },
+
+                    {
+                        label: "Type",
+                        render: r => partyEscape(partyLabel(r.type))
+                    },
+
+                    {
+                        label: "Party / Source",
+                        render: r => partyEscape(r.reportPartyName)
+                    },
+
+                    {
+                        label: "Category",
+                        render: r => partyEscape(r.category || "—")
+                    },
+
+                    {
+                        label: "Amount",
+                        render: r => partyMoney(r.reportAmount)
+                    },
+
+                    {
+                        label: "Party Link",
+                        render: r =>
+                            r.reportPartyId && partyMap.has(r.reportPartyId)
+                                ? "Registered"
+                                : "Free-text / Unlinked"
+                    }
+
+                ], ordered);
+
+            }
+
+            // -----------------------------------------
+            // #249 UNREGISTERED & FREE-TEXT ANALYSIS
+            // -----------------------------------------
+
+            if (number === 249) {
+
+                const unlinked = txRows.filter(
+                    row => !row.reportPartyId ||
+                        !partyMap.has(row.reportPartyId)
+                );
+
+                const freeText = unlinked.filter(
+                    row => String(row.partyName || row.party || "").trim()
+                );
+
+                const missing = unlinked.filter(
+                    row => !String(row.partyName || row.party || "").trim()
+                );
+
+                html = partyKpis([
+
+                    {
+                        label: "Unlinked Transactions",
+                        value: unlinked.length
+                    },
+
+                    {
+                        label: "Free-text Party Entries",
+                        value: freeText.length
+                    },
+
+                    {
+                        label: "No Party Entered",
+                        value: missing.length
+                    }
+
+                ]) + partyTable([
+
+                    {
+                        label: "Date",
+                        render: r => partyDate(r.date)
+                    },
+
+                    {
+                        label: "Type",
+                        render: r => partyEscape(partyLabel(r.type))
+                    },
+
+                    {
+                        label: "Party Name",
+                        render: r => partyEscape(
+                            r.partyName || r.party || "Not entered"
+                        )
+                    },
+
+                    {
+                        label: "Amount",
+                        render: r => partyMoney(r.reportAmount)
+                    },
+
+                    {
+                        label: "Reason",
+                        render: r =>
+                            r.reportPartyId
+                                ? "Party ID not found in Party Master"
+                                : (r.partyName || r.party
+                                    ? "No Party Master ID saved"
+                                    : "Party not entered")
+                    }
+
+                ], unlinked);
+
+            }
+
+            result.innerHTML = html + `
+
+                <p class="party-report-note">
+
+                    Reports use the Party Master and Transaction Ledger
+                    records currently saved in Firestore.
+
+                    Transaction values are summed as recorded; they are
+                    not netted across income, expenses or transfers.
+
+                </p>
+
+            `;
+
+        } catch (error) {
+
+            console.error("PARTIES & MERCHANTS REPORT ERROR:", error);
+
+            result.innerHTML = `
+
+                <div class="party-report-error">
+
+                    <h3>Unable to load this report</h3>
+
+                    <p>${partyEscape(error.message || "Unknown error")}</p>
+
+                    <p>
+                        Check Firebase permissions and the browser console.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+    // =================================================
+    // PARTY REPORT STYLES
+    // =================================================
+
+    if (!document.getElementById("partyReportsEngineStyles")) {
+
+        const style = document.createElement("style");
+
+        style.id = "partyReportsEngineStyles";
+
+        style.textContent = `
+
+            .party-report-container {
+                color:#172033;
+            }
+
+            .party-report-kpis {
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                gap:13px;
+                margin:18px 0;
+            }
+
+            .party-report-kpi {
+                background:#fff;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                padding:16px;
+            }
+
+            .party-report-kpi span {
+                display:block;
+                color:#64748b;
+                font-size:12px;
+                margin-bottom:8px;
+            }
+
+            .party-report-kpi strong {
+                display:block;
+                color:#173b70;
+                font-size:22px;
+                overflow-wrap:anywhere;
+            }
+
+            .party-report-kpi small {
+                display:block;
+                color:#64748b;
+                margin-top:6px;
+            }
+
+            .party-report-table-wrap {
+                overflow:auto;
+                border:1px solid #e2e8f0;
+                border-radius:10px;
+                margin:16px 0;
+            }
+
+            .party-report-table {
+                width:100%;
+                min-width:650px;
+                border-collapse:collapse;
+                background:#fff;
+                font-size:13px;
+            }
+
+            .party-report-table th {
+                background:#173b70;
+                color:#fff;
+                padding:11px 12px;
+                text-align:left;
+                white-space:nowrap;
+            }
+
+            .party-report-table td {
+                padding:10px 12px;
+                border-bottom:1px solid #e8edf4;
+                color:#334155;
+                vertical-align:top;
+            }
+
+            .party-report-table tbody tr:last-child td {
+                border-bottom:0;
+            }
+
+            .party-report-empty {
+                text-align:center;
+                color:#64748b !important;
+                padding:24px !important;
+            }
+
+            .party-report-note {
+                padding:12px 14px;
+                background:#f8fafc;
+                border-left:3px solid #94a3b8;
+                color:#475569;
+                font-size:12px;
+                line-height:1.6;
+                margin:14px 0;
+            }
+
+            .party-report-loading,
+            .party-report-error {
+                padding:24px;
+                background:#fff;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+                margin:16px 0;
+                color:#475569;
+            }
+
+            .party-report-error h3 {
+                color:#b91c1c;
+                margin-top:0;
+            }
+
+        `;
+
+        document.head.appendChild(style);
+
+    }
+
+    // =================================================
+    // PARTY REPORT CLICK HANDLER
+    // =================================================
+
+    if (!reportWorkArea.dataset.partyReportsEngineBound) {
+
+        reportWorkArea.addEventListener("click", event => {
+
+            const card = event.target.closest("[data-party-report]");
+
+            if (card) {
+
+                openPartyReport(
+                    Number(card.dataset.partyReport)
+                );
+
+                return;
+
+            }
+
+            if (event.target.closest("#partyReportBack")) {
+
+                renderPartyDashboard();
+
+            }
+
+        });
+
+        reportWorkArea.dataset.partyReportsEngineBound = "true";
+
+    }
+
+    // -------------------------------------------------
+    // GLOBAL ENGINE REFERENCE
+    // -------------------------------------------------
+
+    window.__partyMerchantReportEngine = {
+
+        renderDashboard: renderPartyDashboard,
+
+        openReport: openPartyReport,
+
+        refresh: () => {
+            partyReportCache = null;
+            return loadPartyReportData(true);
+        }
+
+    };
+
+    // INITIAL DASHBOARD
+
+    renderPartyDashboard();
+
+    return;
+
+}
+
+// =====================================================
 // LOANS & BORROWINGS REPORTS
 // =====================================================
 
