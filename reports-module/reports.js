@@ -11872,6 +11872,1564 @@ if (title === "Fixed Deposits") {
     return;
 }
 
+
+
+// =====================================================
+// CREDIT CARD REPORTS — COMMON REPORT ENGINE
+// Reports #223–231
+// Dashboard + Navigation + Data + Calculations + Table
+// =====================================================
+
+if (title === "Credit Cards") {
+
+    console.log("💳 CREDIT CARD REPORT ENGINE STARTED");
+
+    hideReportModuleStartPage();
+
+    if (!reportWorkArea) return;
+
+    // -------------------------------------------------
+    // REPORT DEFINITIONS
+    // -------------------------------------------------
+
+    const creditCardReportDefinitions = {
+
+        223: {
+            name: "Credit Card Portfolio Summary",
+            description: "Complete overview of your credit card portfolio"
+        },
+
+        224: {
+            name: "Card-wise Outstanding Balance",
+            description: "Outstanding balance of each credit card"
+        },
+
+        225: {
+            name: "Credit Card Purchase Register",
+            description: "All purchases made through credit cards"
+        },
+
+        226: {
+            name: "Card-wise Spending Analysis",
+            description: "Spending analysis for each credit card"
+        },
+
+        227: {
+            name: "Monthly Credit Card Spending Trend",
+            description: "Monthly credit card purchase trend"
+        },
+
+        228: {
+            name: "Credit Card Bill Payment Register",
+            description: "Recorded credit card bill payments"
+        },
+
+        229: {
+            name: "Credit Card Cashback Register",
+            description: "Recorded cashback transactions"
+        },
+
+        230: {
+            name: "Credit Card Bill Discount Register",
+            description: "Recorded credit card bill discounts"
+        },
+
+        231: {
+            name: "Merchant-wise Credit Card Spending",
+            description: "Credit card spending by merchant"
+        }
+
+    };
+
+
+    // -------------------------------------------------
+    // COMMON HELPERS
+    // -------------------------------------------------
+
+    const ccMoney = value => {
+
+        return "₹" + Number(value || 0).toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+
+    };
+
+
+    const ccEscape = value => {
+
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            char => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            })[char]
+        );
+
+    };
+
+
+    const ccDate = value => {
+
+        if (!value) return "-";
+
+        if (typeof value === "object" && value.seconds) {
+            value = new Date(value.seconds * 1000);
+        }
+
+        const date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return String(value);
+        }
+
+        return date.toLocaleDateString("en-IN");
+
+    };
+
+
+    const ccDateSort = value => {
+
+        if (!value) return 0;
+
+        if (typeof value === "object" && value.seconds) {
+            return value.seconds * 1000;
+        }
+
+        const date = new Date(value);
+
+        if (!isNaN(date.getTime())) {
+            return date.getTime();
+        }
+
+        const match = String(value).match(
+            /^(\d{2})-(\d{2})-(\d{4})$/
+        );
+
+        if (match) {
+            return new Date(
+                `${match[3]}-${match[2]}-${match[1]}`
+            ).getTime();
+        }
+
+        return 0;
+
+    };
+
+
+    // -------------------------------------------------
+    // LOAD FIRESTORE DATA
+    // -------------------------------------------------
+
+    async function loadCreditCardReportData() {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("User is not logged in.");
+        }
+
+        const [
+            accountSnapshot,
+            transactionSnapshot
+        ] = await Promise.all([
+
+            getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "accounts"
+                )
+            ),
+
+            getDocs(
+                collection(
+                    db,
+                    "users",
+                    user.uid,
+                    "transactions"
+                )
+            )
+
+        ]);
+
+
+        const accounts = [];
+
+        accountSnapshot.forEach(docSnap => {
+
+            const data = docSnap.data();
+
+            if (
+                String(data.type || "").toLowerCase() ===
+                "credit_card"
+            ) {
+
+                accounts.push({
+
+                    id: docSnap.id,
+
+                    name: data.name || "Unnamed Credit Card",
+
+                    balance: Number(data.balance || 0),
+
+                    type: data.type
+
+                });
+
+            }
+
+        });
+
+
+        const transactions = [];
+
+        transactionSnapshot.forEach(docSnap => {
+
+            const data = docSnap.data();
+
+            if (data.deleted === true) return;
+
+            transactions.push({
+
+                id: docSnap.id,
+
+                ...data,
+
+                amount: Number(data.amount || 0)
+
+            });
+
+        });
+
+
+        return {
+            accounts,
+            transactions
+        };
+
+    }
+
+
+    // -------------------------------------------------
+    // REPORT DATA CLASSIFICATION
+    // -------------------------------------------------
+
+    function prepareCreditCardData(data) {
+
+        const accounts = data.accounts;
+
+        const transactions = data.transactions;
+
+        const accountMap = new Map(
+            accounts.map(account => [
+                account.id,
+                account
+            ])
+        );
+
+
+        // Credit card purchases:
+        // Expense + fromAccountId = Credit Card ID
+
+        const purchases = transactions.filter(tx => {
+
+            return (
+
+                String(tx.type || "").toLowerCase() === "expense" &&
+
+                accountMap.has(tx.fromAccountId)
+
+            );
+
+        }).map(tx => ({
+
+            ...tx,
+
+            cardId: tx.fromAccountId,
+
+            cardName: accountMap.get(
+                tx.fromAccountId
+            ).name
+
+        }));
+
+
+        // Bill payments:
+        // 1. Transfers to a credit card account
+        // 2. Known card-specific payment categories
+
+        const billPayments = transactions.filter(tx => {
+
+            const type = String(
+                tx.type || ""
+            ).toLowerCase();
+
+            const category = String(
+                tx.category || ""
+            );
+
+            if (
+                type === "transfer" &&
+                accountMap.has(tx.toAccountId)
+            ) {
+                return true;
+            }
+
+            if (
+                category === "Credit Card Bill ICICI Amazon" ||
+                category === "Credit Card Bill Kotak"
+            ) {
+                return true;
+            }
+
+            return false;
+
+        }).map(tx => {
+
+            let cardId = null;
+
+            if (accountMap.has(tx.toAccountId)) {
+
+                cardId = tx.toAccountId;
+
+            } else {
+
+                const category = String(
+                    tx.category || ""
+                );
+
+                const matchedCard = accounts.find(card => {
+
+                    const name = String(
+                        card.name || ""
+                    ).toLowerCase();
+
+                    if (
+                        category === "Credit Card Bill ICICI Amazon" &&
+                        name.includes("icici amazon")
+                    ) {
+                        return true;
+                    }
+
+                    if (
+                        category === "Credit Card Bill Kotak" &&
+                        name.includes("kotak")
+                    ) {
+                        return true;
+                    }
+
+                    return false;
+
+                });
+
+                cardId = matchedCard?.id || null;
+
+            }
+
+            return {
+
+                ...tx,
+
+                cardId,
+
+                cardName: cardId
+                    ? accountMap.get(cardId)?.name
+                    : "Unlinked Credit Card Payment"
+
+            };
+
+        });
+
+
+        // Cashback transactions
+
+
+        // ---------------------------------------------
+        // CREDIT CARD CASHBACK ONLY
+        // Wallet Cashback and UPI Cashback excluded
+        // ---------------------------------------------
+
+        const cashback = transactions.filter(tx => {
+
+            return String(
+                tx.category || ""
+            ).trim().toLowerCase() === "credit card cashback";
+
+        }).map(tx => ({
+
+            ...tx,
+
+            cardId: accountMap.has(tx.toAccountId)
+                ? tx.toAccountId
+                : null,
+
+            cardName: accountMap.has(tx.toAccountId)
+                ? accountMap.get(tx.toAccountId).name
+                : "Unlinked Credit Card Cashback"
+
+        }));
+
+
+        // Credit card bill discounts
+
+        const discounts = transactions.filter(tx => {
+
+            return (
+
+                String(tx.category || "") ===
+                    "Credit Card Bill Discount" ||
+
+                String(tx.behavior || "") ===
+                    "credit_card_bill_discount"
+
+            );
+
+        });
+
+
+        const totalPurchases = purchases.reduce(
+            (sum, tx) => sum + tx.amount,
+            0
+        );
+
+        const totalPayments = billPayments.reduce(
+            (sum, tx) => sum + tx.amount,
+            0
+        );
+
+        const totalCashback = cashback.reduce(
+            (sum, tx) => sum + tx.amount,
+            0
+        );
+
+        const totalDiscounts = discounts.reduce(
+            (sum, tx) => sum + tx.amount,
+            0
+        );
+
+        const totalOutstanding = accounts.reduce(
+            (sum, card) => sum + card.balance,
+            0
+        );
+
+
+        return {
+
+            accounts,
+
+            transactions,
+
+            purchases,
+
+            billPayments,
+
+            cashback,
+
+            discounts,
+
+            totalPurchases,
+
+            totalPayments,
+
+            totalCashback,
+
+            totalDiscounts,
+
+            totalOutstanding
+
+        };
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON SUMMARY CARD
+    // -------------------------------------------------
+
+    function ccSummaryCard(label, value) {
+
+        return `
+
+            <div style="
+                background:#ffffff;
+                border:1px solid #dce4f0;
+                border-radius:12px;
+                padding:18px;
+                min-width:180px;
+                flex:1;
+            ">
+
+                <div style="
+                    color:#64748b;
+                    font-size:13px;
+                    margin-bottom:9px;
+                ">
+                    ${ccEscape(label)}
+                </div>
+
+                <div style="
+                    color:#173b73;
+                    font-size:22px;
+                    font-weight:700;
+                ">
+                    ${ccEscape(value)}
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON TABLE RENDERER
+    // -------------------------------------------------
+
+    function ccTable(headers, rows) {
+
+        if (!rows.length) {
+
+            return `
+
+                <div style="
+                    padding:35px;
+                    text-align:center;
+                    color:#64748b;
+                ">
+                    No records found for this report.
+                </div>
+
+            `;
+
+        }
+
+        return `
+
+            <div style="
+                overflow-x:auto;
+                background:white;
+                border:1px solid #e2e8f0;
+                border-radius:12px;
+            ">
+
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:750px;
+                ">
+
+                    <thead>
+
+                        <tr>
+
+                            ${headers.map(header => `
+
+                                <th style="
+                                    padding:13px;
+                                    background:#f1f5f9;
+                                    text-align:left;
+                                    font-size:13px;
+                                    color:#334155;
+                                    border-bottom:1px solid #dbe3ee;
+                                ">
+                                    ${ccEscape(header)}
+                                </th>
+
+                            `).join("")}
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${rows.map(row => `
+
+                            <tr>
+
+                                ${row.map(cell => `
+
+                                    <td style="
+                                        padding:12px 13px;
+                                        border-bottom:1px solid #edf1f6;
+                                        font-size:13px;
+                                        color:#334155;
+                                    ">
+                                        ${ccEscape(cell)}
+                                    </td>
+
+                                `).join("")}
+
+                            </tr>
+
+                        `).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON REPORT BUILDER
+    // -------------------------------------------------
+
+    function buildCreditCardReport(reportNumber, data) {
+
+        const definition =
+            creditCardReportDefinitions[reportNumber];
+
+        const {
+            accounts,
+            purchases,
+            billPayments,
+            cashback,
+            discounts
+        } = data;
+
+
+        let headers = [];
+
+        let rows = [];
+
+        let summaries = [];
+
+
+        // ---------------------------------------------
+        // #223 PORTFOLIO SUMMARY
+        // ---------------------------------------------
+
+        if (reportNumber === 223) {
+
+            summaries = [
+
+                ["Total Credit Cards", accounts.length],
+
+                ["Total Outstanding", ccMoney(data.totalOutstanding)],
+
+                ["Total Purchases", ccMoney(data.totalPurchases)],
+
+                ["Total Bill Payments", ccMoney(data.totalPayments)],
+
+                ["Total Cashback", ccMoney(data.totalCashback)],
+
+                ["Total Bill Discounts", ccMoney(data.totalDiscounts)]
+
+            ];
+
+
+            headers = [
+                "Credit Card",
+                "Current Outstanding"
+            ];
+
+            rows = accounts.map(card => [
+
+                card.name,
+
+                ccMoney(card.balance)
+
+            ]);
+
+        }
+
+
+        // ---------------------------------------------
+        // #224 OUTSTANDING BALANCE
+        // ---------------------------------------------
+
+        else if (reportNumber === 224) {
+
+            summaries = [
+
+                ["Total Cards", accounts.length],
+
+                ["Total Outstanding", ccMoney(data.totalOutstanding)]
+
+            ];
+
+            headers = [
+                "Credit Card",
+                "Outstanding Balance"
+            ];
+
+            rows = accounts.map(card => [
+
+                card.name,
+
+                ccMoney(card.balance)
+
+            ]);
+
+        }
+
+
+        // ---------------------------------------------
+        // #225 PURCHASE REGISTER
+        // ---------------------------------------------
+
+        else if (reportNumber === 225) {
+
+            summaries = [
+
+                ["Total Purchases", purchases.length],
+
+                ["Purchase Amount", ccMoney(data.totalPurchases)]
+
+            ];
+
+            headers = [
+                "Date",
+                "Credit Card",
+                "Merchant / Party",
+                "Category",
+                "Amount"
+            ];
+
+            rows = purchases.map(tx => [
+
+                ccDate(tx.date),
+
+                tx.cardName,
+
+                tx.partyName || tx.notes || "-",
+
+                tx.category || "-",
+
+                ccMoney(tx.amount)
+
+            ]);
+
+        }
+
+
+        // ---------------------------------------------
+        // #226 CARD-WISE SPENDING
+        // ---------------------------------------------
+
+        else if (reportNumber === 226) {
+
+            summaries = [
+
+                ["Total Purchase Amount", ccMoney(data.totalPurchases)]
+
+            ];
+
+            headers = [
+                "Credit Card",
+                "Number of Purchases",
+                "Total Spending"
+            ];
+
+            rows = accounts.map(card => {
+
+                const cardPurchases = purchases.filter(
+                    tx => tx.cardId === card.id
+                );
+
+                const total = cardPurchases.reduce(
+                    (sum, tx) => sum + tx.amount,
+                    0
+                );
+
+                return [
+
+                    card.name,
+
+                    cardPurchases.length,
+
+                    ccMoney(total)
+
+                ];
+
+            });
+
+        }
+
+
+        // ---------------------------------------------
+        // #227 MONTHLY SPENDING TREND
+        // ---------------------------------------------
+
+        else if (reportNumber === 227) {
+
+            const monthly = {};
+
+            purchases.forEach(tx => {
+
+                const date = new Date(
+                    ccDateSort(tx.date)
+                );
+
+                if (isNaN(date.getTime())) return;
+
+                const key =
+                    date.getFullYear() + "-" +
+                    String(date.getMonth() + 1).padStart(2, "0");
+
+                if (!monthly[key]) {
+
+                    monthly[key] = {
+                        count: 0,
+                        amount: 0
+                    };
+
+                }
+
+                monthly[key].count++;
+
+                monthly[key].amount += tx.amount;
+
+            });
+
+
+            summaries = [
+
+                ["Total Months", Object.keys(monthly).length],
+
+                ["Total Spending", ccMoney(data.totalPurchases)]
+
+            ];
+
+            headers = [
+                "Month",
+                "Number of Purchases",
+                "Total Spending"
+            ];
+
+            
+rows = Object.entries(monthly)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([month, value]) => {
+
+        const [year, monthNumber] = month.split("-");
+
+        const monthName = new Date(
+            Number(year),
+            Number(monthNumber) - 1,
+            1
+        ).toLocaleDateString("en-IN", {
+            month: "long",
+            year: "numeric"
+        });
+
+        return [
+
+            monthName,
+
+            value.count,
+
+            ccMoney(value.amount)
+
+        ];
+
+    });
+
+
+        }
+
+
+        // ---------------------------------------------
+        // #228 BILL PAYMENT REGISTER
+        // ---------------------------------------------
+
+        else if (reportNumber === 228) {
+
+            summaries = [
+
+                ["Total Payments", billPayments.length],
+
+                ["Total Payment Amount", ccMoney(data.totalPayments)]
+
+            ];
+
+            headers = [
+                "Date",
+                "Credit Card",
+                "Category",
+                "Party / Description",
+                "Amount"
+            ];
+
+            rows = billPayments.map(tx => [
+
+                ccDate(tx.date),
+
+                tx.cardName,
+
+                tx.category || "-",
+
+                tx.partyName || tx.notes || "-",
+
+                ccMoney(tx.amount)
+
+            ]);
+
+
+            // ---------------------------------------------
+            // BILL PAYMENT RECONCILIATION DIAGNOSTIC
+            // ---------------------------------------------
+
+            const paymentAuditTotal = billPayments.reduce(
+                (sum, tx) => sum + Number(tx.amount || 0),
+                0
+            );
+
+            console.table(
+                billPayments.map(tx => ({
+                    date: tx.date,
+                    category: tx.category,
+                    description: tx.partyName || tx.notes || "-",
+                    amount: Number(tx.amount || 0),
+                    transactionId: tx.id
+                }))
+            );
+
+            console.log("BILL PAYMENT RECONCILIATION:", {
+                transactionCount: billPayments.length,
+                calculatedTotal: paymentAuditTotal,
+                displayedSummaryTotal: data.totalPayments,
+                difference: paymentAuditTotal - data.totalPayments
+            });
+
+
+        }
+
+
+        // ---------------------------------------------
+        // #229 CASHBACK REGISTER
+        // ---------------------------------------------
+
+        else if (reportNumber === 229) {
+
+            summaries = [
+
+                ["Total Cashback Entries", cashback.length],
+
+                ["Total Cashback", ccMoney(data.totalCashback)]
+
+            ];
+
+            headers = [
+                "Date",
+                "Credit Card",
+                "Category",
+                "Description",
+                "Amount"
+            ];
+
+            rows = cashback.map(tx => [
+
+                ccDate(tx.date),
+
+                tx.cardName,
+
+                tx.category || "-",
+
+                tx.partyName || tx.notes || "-",
+
+                ccMoney(tx.amount)
+
+            ]);
+
+        }
+
+
+        // ---------------------------------------------
+        // #230 BILL DISCOUNT REGISTER
+        // ---------------------------------------------
+
+        else if (reportNumber === 230) {
+
+            summaries = [
+
+                ["Total Discount Entries", discounts.length],
+
+                ["Total Discount Amount", ccMoney(data.totalDiscounts)]
+
+            ];
+
+            headers = [
+                "Date",
+                "Category",
+                "Description",
+                "Amount"
+            ];
+
+            rows = discounts.map(tx => [
+
+                ccDate(tx.date),
+
+                tx.category || "-",
+
+                tx.partyName || tx.notes || "-",
+
+                ccMoney(tx.amount)
+
+            ]);
+
+        }
+
+
+        // ---------------------------------------------
+        // #231 MERCHANT-WISE SPENDING
+        // ---------------------------------------------
+
+        else if (reportNumber === 231) {
+
+            const merchantMap = {};
+
+            purchases.forEach(tx => {
+
+                const merchant =
+                    tx.partyName ||
+                    tx.notes ||
+                    "Unknown Merchant";
+
+                if (!merchantMap[merchant]) {
+
+                    merchantMap[merchant] = {
+                        count: 0,
+                        amount: 0
+                    };
+
+                }
+
+                merchantMap[merchant].count++;
+
+                merchantMap[merchant].amount += tx.amount;
+
+            });
+
+
+            summaries = [
+
+                ["Total Merchants", Object.keys(merchantMap).length],
+
+                ["Total Spending", ccMoney(data.totalPurchases)]
+
+            ];
+
+            headers = [
+                "Merchant",
+                "Number of Purchases",
+                "Total Spending"
+            ];
+
+            rows = Object.entries(merchantMap)
+                .sort((a, b) => b[1].amount - a[1].amount)
+                .map(([merchant, value]) => [
+
+                    merchant,
+
+                    value.count,
+
+                    ccMoney(value.amount)
+
+                ]);
+
+        }
+
+
+        // Newest transactions first for register reports
+
+        if ([225, 228, 229, 230].includes(reportNumber)) {
+
+            const source = {
+
+                225: purchases,
+
+                228: billPayments,
+
+                229: cashback,
+
+                230: discounts
+
+            }[reportNumber];
+
+            const sorted = [...source].sort(
+                (a, b) =>
+                    ccDateSort(b.date) - ccDateSort(a.date)
+            );
+
+            rows = sorted.map(tx => {
+
+                if (reportNumber === 225) {
+
+                    return [
+                        ccDate(tx.date),
+                        tx.cardName,
+                        tx.partyName || tx.notes || "-",
+                        tx.category || "-",
+                        ccMoney(tx.amount)
+                    ];
+
+                }
+
+                if (reportNumber === 228) {
+
+                    return [
+                        ccDate(tx.date),
+                        tx.cardName || "Unlinked",
+                        tx.category || "-",
+                        tx.partyName || tx.notes || "-",
+                        ccMoney(tx.amount)
+                    ];
+
+                }
+
+                if (reportNumber === 229) {
+
+                    return [
+                        ccDate(tx.date),
+                        tx.cardName || "Unlinked",
+                        tx.category || "-",
+                        tx.partyName || tx.notes || "-",
+                        ccMoney(tx.amount)
+                    ];
+
+                }
+
+                return [
+                    ccDate(tx.date),
+                    tx.category || "-",
+                    tx.partyName || tx.notes || "-",
+                    ccMoney(tx.amount)
+                ];
+
+            });
+
+        }
+
+
+        return {
+
+            definition,
+
+            summaries,
+
+            headers,
+
+            rows
+
+        };
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON REPORT SCREEN
+    // -------------------------------------------------
+
+    async function openCreditCardReport(reportNumber) {
+
+        const definition =
+            creditCardReportDefinitions[reportNumber];
+
+        if (!definition) return;
+
+        window.activeReportCategory = "Credit Cards";
+
+        window.activeTransactionReport = {
+
+            number: reportNumber,
+
+            name: definition.name
+
+        };
+
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container">
+
+                <div style="
+                    background:#ffffff;
+                    border:1px solid #dce4f0;
+                    border-radius:14px;
+                    padding:22px;
+                    margin-bottom:20px;
+                ">
+
+                    <h2 style="color:#173b73;margin:0 0 8px;">
+                        💳 ${ccEscape(definition.name)}
+                    </h2>
+
+                    <p style="color:#64748b;margin:0;">
+                        Credit Card Report #${reportNumber}
+                    </p>
+
+                </div>
+
+                <div id="ccReportContent"
+                    style="padding:10px 0;">
+                    Loading report data...
+                </div>
+
+                <button
+                    id="ccBackToDashboard"
+                    type="button"
+                    style="
+                        margin-top:18px;
+                        padding:12px 20px;
+                        border:1px solid #cbd5e1;
+                        border-radius:9px;
+                        background:white;
+                        color:#173b73;
+                        font-weight:600;
+                        cursor:pointer;
+                    "
+                >
+                    ← Back to Credit Card Reports
+                </button>
+
+            </div>
+
+        `;
+
+
+        try {
+
+            const rawData =
+                await loadCreditCardReportData();
+
+            const data =
+                prepareCreditCardData(rawData);
+
+            const report =
+                buildCreditCardReport(reportNumber, data);
+
+
+            const summaryHTML = report.summaries.map(
+                item => ccSummaryCard(item[0], item[1])
+            ).join("");
+
+
+            const content =
+                document.getElementById("ccReportContent");
+
+            if (!content) return;
+
+
+            content.innerHTML = `
+
+                <div style="
+                    display:flex;
+                    flex-wrap:wrap;
+                    gap:14px;
+                    margin-bottom:22px;
+                ">
+                    ${summaryHTML}
+                </div>
+
+
+                <div style="
+                    background:white;
+                    border:1px solid #e2e8f0;
+                    border-radius:12px;
+                    padding:18px;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        flex-wrap:wrap;
+                        gap:12px;
+                        margin-bottom:18px;
+                    ">
+
+                        <h3 style="
+                            color:#173b73;
+                            margin:0;
+                        ">
+                            ${ccEscape(definition.name)}
+                        </h3>
+
+                        <input
+                            id="ccReportSearch"
+                            type="search"
+                            placeholder="Search this report..."
+                            style="
+                                padding:10px 13px;
+                                border:1px solid #cbd5e1;
+                                border-radius:8px;
+                                min-width:220px;
+                            "
+                        >
+
+                    </div>
+
+                    <div id="ccReportTable">
+                        ${ccTable(report.headers, report.rows)}
+                    </div>
+
+                    <p style="
+                        color:#64748b;
+                        font-size:12px;
+                        margin-top:14px;
+                    ">
+                        Records: ${report.rows.length}
+                    </p>
+
+                </div>
+
+            `;
+
+
+            // Common search for all report tables
+
+            const searchInput =
+                document.getElementById("ccReportSearch");
+
+            if (searchInput) {
+
+                searchInput.addEventListener(
+                    "input",
+                    function () {
+
+                        const query =
+                            this.value.toLowerCase().trim();
+
+                        const filteredRows =
+                            report.rows.filter(row =>
+
+                                row.some(cell =>
+
+                                    String(cell)
+                                        .toLowerCase()
+                                        .includes(query)
+
+                                )
+
+                            );
+
+
+                        const table =
+                            document.getElementById("ccReportTable");
+
+                        if (table) {
+
+                            table.innerHTML = ccTable(
+                                report.headers,
+                                filteredRows
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            reportWorkArea.scrollIntoView({
+
+                behavior: "smooth",
+
+                block: "start"
+
+            });
+
+
+        } catch (error) {
+
+            console.error(
+                "CREDIT CARD REPORT ERROR:",
+                error
+            );
+
+            const content =
+                document.getElementById("ccReportContent");
+
+            if (content) {
+
+                content.innerHTML = `
+
+                    <div style="
+                        padding:22px;
+                        border:1px solid #fecaca;
+                        background:#fff7f7;
+                        border-radius:10px;
+                        color:#991b1b;
+                    ">
+
+                        <strong>
+                            Unable to load Credit Card Report.
+                        </strong>
+
+                        <p>
+                            ${ccEscape(error.message)}
+                        </p>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON DASHBOARD
+    // -------------------------------------------------
+
+    function renderCreditCardDashboard() {
+
+        reportWorkArea.innerHTML = `
+
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+
+                    <div>
+
+                        <h2>💳 Credit Card Reports</h2>
+
+                        <p>
+                            Credit card portfolio, spending,
+                            outstanding balances, bill payments
+                            and cashback analysis
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="transaction-reports-grid"
+                    style="margin-top:20px;">
+
+                    ${Object.entries(
+                        creditCardReportDefinitions
+                    ).map(([number, report]) => `
+
+                        <div
+                            class="transaction-report-card"
+                            data-credit-card-report="${number}"
+                            style="cursor:pointer;"
+                        >
+
+                            <div class="transaction-report-number">
+                                ${number}
+                            </div>
+
+                            <div class="transaction-report-content">
+
+                                <h3>
+                                    💳 ${ccEscape(report.name)}
+                                </h3>
+
+                                <p>
+                                    ${ccEscape(report.description)}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    `).join("")}
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        reportWorkArea.scrollIntoView({
+
+            behavior: "smooth",
+
+            block: "start"
+
+        });
+
+    }
+
+
+    // -------------------------------------------------
+    // COMMON CLICK HANDLER
+    // Only one listener for this report area
+    // -------------------------------------------------
+
+    window.__creditCardReportEngine = {
+
+        openReport: openCreditCardReport,
+
+        renderDashboard: renderCreditCardDashboard
+
+    };
+
+
+    if (
+        reportWorkArea.dataset.creditCardEngineBound !== "true"
+    ) {
+
+        reportWorkArea.addEventListener(
+            "click",
+            function (event) {
+
+                const card = event.target.closest(
+                    "[data-credit-card-report]"
+                );
+
+                if (card && reportWorkArea.contains(card)) {
+
+                    const number = Number(
+                        card.dataset.creditCardReport
+                    );
+
+                    window.__creditCardReportEngine
+                        ?.openReport(number);
+
+                    return;
+
+                }
+
+
+                if (
+                    event.target.closest("#ccBackToDashboard")
+                ) {
+
+                    window.__creditCardReportEngine
+                        ?.renderDashboard();
+
+                }
+
+            }
+        );
+
+
+        reportWorkArea.dataset.creditCardEngineBound = "true";
+
+    }
+
+
+    // Initial dashboard
+
+    renderCreditCardDashboard();
+
+}
+
+
 // =====================================================
 // LOANS & BORROWINGS REPORTS
 // =====================================================
