@@ -17,7 +17,12 @@ import {
 
 import {
     collection,
-    getDocs
+    getDocs,
+    addDoc,
+    doc,
+    updateDoc,
+    deleteDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 // =========================================================
@@ -9991,6 +9996,2453 @@ categoryCards.forEach(card => {
 if (backToReportsDashboardButton) {
     backToReportsDashboardButton.style.display = "inline-block";
 }
+
+
+// =====================================================
+// INCOME TAX / ITR — PERSONAL TAX PROFILE SETUP
+// =====================================================
+
+if (
+    title === "Income Tax / ITR Reports" ||
+    title === "Income Tax / ITR" ||
+    title.includes("Income Tax")
+) {
+
+    console.log("💰 INCOME TAX / ITR SELECTED");
+
+    hideReportModuleStartPage();
+
+    const taxEscape = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    async function renderTaxProfileSetup() {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <h2>Income Tax / ITR Reports</h2>
+                    <p>Please login first to manage your tax profiles.</p>
+                </div>
+            `;
+            return;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>💰 Income Tax / ITR</h2>
+                        <p>Manage your personal income tax profiles</p>
+                    </div>
+                </div>
+
+                <div style="
+                    background:#ffffff;
+                    border:1px solid #dbe3ee;
+                    border-radius:12px;
+                    padding:22px;
+                    margin-top:20px;
+                ">
+
+                    <h3 style="margin-top:0;">Personal Tax Profile Setup</h3>
+
+                    <p style="color:#64748b;font-size:13px;">
+                        Create a tax profile to organise your financial year
+                        and income tax information.
+                    </p>
+
+                    <form id="taxProfileForm">
+
+                        <div style="
+                            display:grid;
+                            grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+                            gap:18px;
+                            margin-top:20px;
+                        ">
+
+                            <label>
+                                <div>Profile Name *</div>
+                                <input
+                                    type="text"
+                                    id="taxProfileName"
+                                    placeholder="e.g. My Personal Tax Profile"
+                                    required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;"
+                                >
+                            </label>
+
+                            <label>
+                                <div>Taxpayer Type</div>
+                                <input
+                                    type="text"
+                                    value="Individual"
+                                    disabled
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;"
+                                >
+                            </label>
+
+                            <label>
+                                <div>Financial Year *</div>
+                                <select
+                                    id="taxFinancialYear"
+                                    required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;"
+                                >
+                                    <option value="2025-26">FY 2025-26</option>
+                                    <option value="2026-27" selected>FY 2026-27</option>
+                                    <option value="2027-28">FY 2027-28</option>
+                                </select>
+                            </label>
+
+                            <label>
+                                <div>Tax Regime *</div>
+                                <select
+                                    id="taxRegime"
+                                    required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;"
+                                >
+                                    <option value="new">New Tax Regime</option>
+                                    <option value="old">Old Tax Regime</option>
+                                </select>
+                            </label>
+
+                        </div>
+
+                        <div id="taxProfileMessage"
+                            style="margin-top:15px;font-size:14px;">
+                        </div>
+
+                        <button
+                            type="submit"
+                            id="saveTaxProfileBtn"
+                            style="
+                                margin-top:20px;
+                                padding:11px 22px;
+                                background:#173b70;
+                                color:white;
+                                border:0;
+                                border-radius:8px;
+                                cursor:pointer;
+                                font-weight:600;
+                            "
+                        >
+                            Save Tax Profile
+                        </button>
+
+                    </form>
+                </div>
+
+                <div style="margin-top:30px;">
+                    <h3>Saved Tax Profiles</h3>
+                    <div id="savedTaxProfiles">
+                        <p style="color:#64748b;">Loading profiles...</p>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        const profilesContainer =
+            document.getElementById("savedTaxProfiles");
+
+        try {
+
+            const snapshot = await getDocs(
+                collection(db, "users", user.uid, "taxProfiles")
+            );
+
+            if (snapshot.empty) {
+                profilesContainer.innerHTML = `
+                    <div style="
+                        padding:20px;
+                        background:#f8fafc;
+                        border:1px dashed #cbd5e1;
+                        border-radius:10px;
+                        color:#64748b;
+                    ">
+                        No tax profiles created yet.
+                    </div>
+                `;
+            } else {
+
+
+profilesContainer.innerHTML = snapshot.docs.map(profileDoc => {
+
+    const profile = profileDoc.data();
+    const profileId = profileDoc.id;
+
+    return `
+        <div style="
+            padding:18px;
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            margin-top:12px;
+        ">
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                flex-wrap:wrap;
+                gap:12px;
+            ">
+
+                <div>
+                    <h4 style="margin:0 0 8px;">
+                        ${taxEscape(profile.profileName)}
+                    </h4>
+
+                    <div style="color:#64748b;font-size:13px;">
+                        ${taxEscape(profile.taxpayerType)} |
+                        FY ${taxEscape(profile.financialYear)} |
+                        AY ${taxEscape(profile.assessmentYear)}
+                    </div>
+
+                    <div style="margin-top:7px;font-size:13px;">
+                        ${profile.taxRegime === "old"
+                            ? "Old Tax Regime"
+                            : "New Tax Regime"}
+                    </div>
+                </div>
+
+                <div style="
+                    display:flex;
+                    gap:8px;
+                    flex-wrap:wrap;
+                ">
+
+                    <button
+                        type="button"
+                        data-tax-open="${taxEscape(profileId)}"
+                        style="padding:8px 13px;border:1px solid #173b70;border-radius:7px;background:white;color:#173b70;cursor:pointer;">
+                        Open
+                    </button>
+
+                    <button
+                        type="button"
+                        data-tax-edit="${taxEscape(profileId)}"
+                        style="padding:8px 13px;border:0;border-radius:7px;background:#173b70;color:white;cursor:pointer;">
+                        Edit
+                    </button>
+
+                    <button
+                        type="button"
+                        data-tax-delete="${taxEscape(profileId)}"
+                        style="padding:8px 13px;border:1px solid #dc2626;border-radius:7px;background:white;color:#dc2626;cursor:pointer;">
+                        Delete
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    `;
+
+}).join("");
+
+// OPEN PROFILE
+profilesContainer.querySelectorAll("[data-tax-open]")
+    .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const profileDoc = snapshot.docs.find(
+                item => item.id === button.dataset.taxOpen
+            );
+
+            if (!profileDoc) return;
+
+            const profile = profileDoc.data();
+
+            
+reportWorkArea.innerHTML = `
+    <div class="transaction-reports-container">
+
+        <div class="transaction-reports-header">
+            <div>
+                <h2>💰 ${taxEscape(profile.profileName)}</h2>
+                <p>Personal Income Tax Dashboard</p>
+            </div>
+        </div>
+
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:12px;
+            padding:20px;
+            margin-top:20px;
+        ">
+
+            <h3>Tax Profile Details</h3>
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:18px;
+                margin-top:15px;
+            ">
+
+                <div>
+                    <small style="color:#64748b;">Taxpayer Type</small>
+                    <h4>${taxEscape(profile.taxpayerType)}</h4>
+                </div>
+
+                <div>
+                    <small style="color:#64748b;">Financial Year</small>
+                    <h4>FY ${taxEscape(profile.financialYear)}</h4>
+                </div>
+
+                <div>
+                    <small style="color:#64748b;">Assessment Year</small>
+                    <h4>AY ${taxEscape(profile.assessmentYear)}</h4>
+                </div>
+
+                <div>
+                    <small style="color:#64748b;">Tax Regime</small>
+                    <h4>${profile.taxRegime === "old"
+                        ? "Old Tax Regime"
+                        : "New Tax Regime"}</h4>
+                </div>
+
+            </div>
+        </div>
+
+        <div style="
+            margin-top:25px;
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:12px;
+            padding:20px;
+        ">
+
+            <h3>Income Sources</h3>
+
+            <p style="color:#64748b;">
+                Manage income details associated with this Tax Profile.
+            </p>
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+                gap:15px;
+                margin-top:20px;
+            ">
+
+                <div style="
+                    padding:18px;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                ">
+                    <h3>💼 Salary Income</h3>
+                    <p style="color:#64748b;font-size:13px;">
+                        Record employer and salary details.
+                    </p>
+
+                    <button
+                        type="button"
+                        id="openSalaryIncome"
+                        style="padding:10px 16px;background:#173b70;color:white;border:0;border-radius:7px;cursor:pointer;">
+                        Manage Salary
+                    </button>
+                </div>
+
+                <div style="
+                    padding:18px;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                ">
+                    <h3>🏦 Interest Income</h3>
+                    <p style="color:#64748b;font-size:13px;">
+                        FD and Savings Account Interest.
+                    </p>
+                    <button type="button" disabled
+                        style="padding:10px 16px;border:0;border-radius:7px;background:#e2e8f0;color:#64748b;">
+                        Coming Soon
+                    </button>
+                </div>
+
+                <div style="
+                    padding:18px;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                ">
+                    <h3>📊 Other Income</h3>
+                    <p style="color:#64748b;font-size:13px;">
+                        Record other taxable income.
+                    </p>
+                    <button type="button" disabled
+                        style="padding:10px 16px;border:0;border-radius:7px;background:#e2e8f0;color:#64748b;">
+                        Coming Soon
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <button
+            type="button"
+            id="backToTaxProfiles"
+            style="margin-top:22px;padding:10px 17px;border:1px solid #cbd5e1;border-radius:8px;background:white;cursor:pointer;">
+            ← Back to Tax Profiles
+        </button>
+
+    </div>
+`;
+
+document.getElementById("backToTaxProfiles")
+    ?.addEventListener("click", renderTaxProfileSetup);
+
+
+
+document.getElementById("openSalaryIncome")
+    ?.addEventListener("click", () => {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>💼 Salary Income</h2>
+                        <p>FY ${taxEscape(profile.financialYear)} |
+                           AY ${taxEscape(profile.assessmentYear)}</p>
+                    </div>
+                </div>
+
+                <form id="salaryIncomeForm">
+
+                    <!-- EMPLOYER DETAILS -->
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:22px;margin-top:20px;">
+
+                        <h3>Employer Details</h3>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px;">
+
+                            <label>
+                                Employer / Company Name *
+                                <input id="salaryEmployerName" required
+                                    placeholder="Enter company name"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Employer TAN
+                                <input id="salaryEmployerTAN" maxlength="10"
+                                    placeholder="Enter employer TAN"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;text-transform:uppercase;">
+                            </label>
+
+                            <label>
+                                Salary Start Month *
+                                <select id="salaryStartMonth" required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                                    <option value="">Select Month</option>
+                                    ${["April","May","June","July","August","September","October","November","December","January","February","March"].map(m => `<option value="${m}">${m}</option>`).join("")}
+                                </select>
+                            </label>
+
+                            <label>
+                                Salary End Month *
+                                <select id="salaryEndMonth" required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                                    <option value="">Select Month</option>
+                                    ${["April","May","June","July","August","September","October","November","December","January","February","March"].map(m => `<option value="${m}">${m}</option>`).join("")}
+                                </select>
+                            </label>
+
+                        </div>
+                    </div>
+
+                    <!-- SALARY EARNINGS -->
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:22px;margin-top:20px;">
+
+                        <h3>Salary Earnings</h3>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px;">
+
+                            <label>
+                                Gross Salary (₹) *
+                                <input type="number" id="salaryGross" min="0" step="0.01" required placeholder="Enter gross salary"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Exempt Allowances (₹)
+                                <input type="number" id="salaryExempt" min="0" step="0.01" value="0"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                        </div>
+
+                        <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                            Exempt Allowances are recorded separately for tax reporting.
+                            They are not deducted again from Gross Salary.
+                        </p>
+                    </div>
+
+                    <!-- SALARY DEDUCTIONS -->
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:22px;margin-top:20px;">
+
+                        <h3>Salary Deductions</h3>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px;">
+
+                            <label>
+                                Employee PF (₹)
+                                <input type="number" id="salaryPF" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Professional Tax (₹)
+                                <input type="number" id="salaryProfessionalTax" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                TDS Deducted (₹)
+                                <input type="number" id="salaryTDS" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Employee ESI (₹)
+                                <input type="number" id="salaryESI" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Employee NPS (₹)
+                                <input type="number" id="salaryNPS" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Loan / Advance Recovery (₹)
+                                <input type="number" id="salaryLoanRecovery" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+    GIS Deduction (₹)
+    <input type="number"
+        id="salaryGIS"
+        min="0"
+        step="0.01"
+        value="0"
+        class="salary-deduction"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+                            <label>
+                                Other Deductions (₹)
+                                <input type="number" id="salaryOtherDeductions" min="0" step="0.01" value="0" class="salary-deduction"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                        </div>
+
+                        <div style="margin-top:22px;padding:18px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:10px;">
+
+                            <div style="display:flex;justify-content:space-between;gap:12px;">
+                                <strong>Total Deductions</strong>
+                                <strong id="salaryTotalDeductions">₹0.00</strong>
+                            </div>
+
+                            <div style="display:flex;justify-content:space-between;gap:12px;margin-top:14px;color:#047857;">
+                                <strong>Calculated Net Salary</strong>
+                                <strong id="salaryCalculatedNet" style="font-size:20px;">₹0.00</strong>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ACTUAL BANK CREDIT -->
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:22px;margin-top:20px;">
+
+                        <h3>Actual Bank Credit</h3>
+
+                        <p style="color:#64748b;font-size:13px;">
+                            Record the actual amount credited to your bank account or match an existing transaction.
+                        </p>
+
+                        <div style="margin-top:18px;">
+                            <label>
+                                How would you like to record Bank Credit?
+                                <select id="salaryBankCreditMode"
+                                    style="width:100%;max-width:450px;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                                    <option value="manual">Manual Bank Credit Entry</option>
+                                    <option value="transaction">Match Existing Transaction</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div id="salaryManualCreditSection" style="margin-top:16px;">
+
+                            <label style="display:block;max-width:450px;">
+                                Actual Bank Credit (₹)
+                                <input type="number" id="salaryActualBankCredit" min="0" step="0.01" placeholder="Enter actual credited amount"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                        </div>
+
+
+<div id="salaryTransactionSection" style="display:none;margin-top:16px;">
+
+    <label style="display:block;max-width:600px;">
+        Select Existing Salary Transaction
+
+        <select id="salaryExistingTransaction"
+            style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+
+            <option value="">Loading salary transactions...</option>
+
+        </select>
+    </label>
+
+    <div id="salarySelectedTransactionDetails"
+        style="margin-top:12px;color:#64748b;font-size:13px;">
+    </div>
+
+</div>
+
+                        <div style="margin-top:18px;padding:15px;background:#eff6ff;border-radius:9px;">
+
+                            <div style="display:flex;justify-content:space-between;gap:12px;">
+                                <strong>Bank Credit Difference</strong>
+                                <strong id="salaryBankDifference">Not entered</strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div id="salaryFormMessage" style="margin-top:16px;font-size:14px;"></div>
+
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+
+                        <button type="submit"
+                            style="padding:12px 22px;background:#173b70;color:white;border:0;border-radius:8px;cursor:pointer;">
+                            Save Salary Details
+                        </button>
+
+                        <button type="button" id="cancelSalaryForm"
+                            style="padding:12px 22px;background:white;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+                <button type="button" id="backToTaxDashboard"
+                    style="margin-top:20px;padding:10px 17px;background:white;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
+                    ← Back to Tax Profile
+                </button>
+
+
+<div style="
+    background:white;
+    border:1px solid #dbe3ee;
+    border-radius:12px;
+    padding:20px;
+    margin-top:22px;
+">
+
+    <h3>📋 Saved Salary Records</h3>
+
+    <p style="color:#64748b;font-size:13px;">
+        Salary records saved under this Tax Profile.
+    </p>
+
+    <div id="savedSalaryRecords">
+        <p style="color:#64748b;">Loading salary records...</p>
+    </div>
+
+</div>
+
+            </div>
+        `;
+
+        const salaryMoney = value =>
+            "₹" + Number(value || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const salaryGrossInput =
+            document.getElementById("salaryGross");
+
+        const salaryDeductionInputs =
+            document.querySelectorAll(".salary-deduction");
+
+        const salaryCreditInput =
+            document.getElementById("salaryActualBankCredit");
+
+        function calculateSalaryPreview() {
+
+            const gross = Number(salaryGrossInput.value || 0);
+
+            const deductions = [...salaryDeductionInputs]
+                .reduce((sum, input) => sum + Number(input.value || 0), 0);
+
+            const net = gross - deductions;
+
+            document.getElementById("salaryTotalDeductions")
+                .textContent = salaryMoney(deductions);
+
+            document.getElementById("salaryCalculatedNet")
+                .textContent = salaryMoney(net);
+
+            updateSalaryBankDifference();
+
+            return { gross, deductions, net };
+        }
+
+
+function updateSalaryBankDifference() {
+
+    const mode =
+        document.getElementById("salaryBankCreditMode").value;
+
+    const differenceElement =
+        document.getElementById("salaryBankDifference");
+
+    const gross = Number(salaryGrossInput.value || 0);
+
+    const deductions = [...salaryDeductionInputs]
+        .reduce((sum, input) => sum + Number(input.value || 0), 0);
+
+    const calculatedNet = gross - deductions;
+
+    let actualCredit = null;
+
+    if (mode === "manual") {
+
+        if (salaryCreditInput.value === "") {
+            differenceElement.textContent = "Not entered";
+            differenceElement.style.color = "#64748b";
+            return;
+        }
+
+        actualCredit = Number(salaryCreditInput.value);
+
+    } else {
+
+        const selected = availableSalaryTransactions.find(
+            tx => tx.id === salaryTransactionSelect.value
+        );
+
+        if (!selected) {
+            differenceElement.textContent = "Not selected";
+            differenceElement.style.color = "#64748b";
+            return;
+        }
+
+        actualCredit = Number(selected.amount || 0);
+    }
+
+    const difference = actualCredit - calculatedNet;
+
+    differenceElement.textContent = salaryMoney(difference);
+
+    differenceElement.style.color =
+        difference === 0 ? "#047857" : "#b91c1c";
+}
+
+        salaryGrossInput.addEventListener("input", calculateSalaryPreview);
+
+        salaryDeductionInputs.forEach(input => {
+            input.addEventListener("input", calculateSalaryPreview);
+        });
+
+        salaryCreditInput.addEventListener("input", updateSalaryBankDifference);
+
+        document.getElementById("salaryBankCreditMode")
+            .addEventListener("change", event => {
+
+                const manual =
+                    event.target.value === "manual";
+
+                document.getElementById("salaryManualCreditSection")
+                    .style.display = manual ? "block" : "none";
+
+                document.getElementById("salaryTransactionSection")
+                    .style.display = manual ? "none" : "block";
+
+                updateSalaryBankDifference();
+            });
+
+
+const salaryTransactionSelect =
+    document.getElementById("salaryExistingTransaction");
+
+const salaryTransactionDetails =
+    document.getElementById("salarySelectedTransactionDetails");
+
+let availableSalaryTransactions = [];
+
+async function loadExistingSalaryTransactions() {
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+        salaryTransactionSelect.innerHTML =
+            `<option value="">Please login first</option>`;
+        return;
+    }
+
+    try {
+
+        const snapshot = await getDocs(
+            collection(db, "users", currentUser.uid, "transactions")
+        );
+
+        availableSalaryTransactions = snapshot.docs
+            .map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data()
+            }))
+            .filter(tx =>
+                tx.deleted !== true &&
+                String(tx.type || "").toLowerCase() === "income" &&
+                String(tx.category || "").trim().toLowerCase() === "salary" &&
+                Number(tx.amount || 0) > 0
+            );
+
+        if (!availableSalaryTransactions.length) {
+
+            salaryTransactionSelect.innerHTML =
+                `<option value="">No Salary transactions found</option>`;
+
+            return;
+        }
+
+        salaryTransactionSelect.innerHTML = `
+            <option value="">Select Salary Transaction</option>
+
+            ${availableSalaryTransactions.map(tx => {
+
+                const label = [
+                    tx.date || "Date unavailable",
+                    tx.partyName || tx.notes || tx.description || "Salary",
+                    "₹" + Number(tx.amount).toLocaleString("en-IN")
+                ].join(" | ");
+
+                return `
+                    <option value="${taxEscape(tx.id)}">
+                        ${taxEscape(label)}
+                    </option>
+                `;
+
+            }).join("")}
+        `;
+
+    } catch (error) {
+
+        console.error("SALARY TRANSACTION LOAD ERROR:", error);
+
+        salaryTransactionSelect.innerHTML =
+            `<option value="">Unable to load transactions</option>`;
+    }
+}
+
+
+salaryTransactionSelect.addEventListener("change", () => {
+
+    const selectedTransaction =
+        availableSalaryTransactions.find(
+            tx => tx.id === salaryTransactionSelect.value
+        );
+
+    if (!selectedTransaction) {
+        salaryTransactionDetails.textContent = "";
+        updateSalaryBankDifference();
+        return;
+    }
+
+    const transactionAmount =
+        Number(selectedTransaction.amount || 0);
+
+    const calculatedNet =
+        Number(salaryGrossInput.value || 0) -
+        [...salaryDeductionInputs].reduce(
+            (sum, input) => sum + Number(input.value || 0),
+            0
+        );
+
+    const difference = transactionAmount - calculatedNet;
+
+    salaryTransactionDetails.innerHTML = `
+        <div style="padding:14px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:8px;">
+            <div>Transaction Amount:
+                <strong>${salaryMoney(transactionAmount)}</strong>
+            </div>
+            <div style="margin-top:7px;">
+                Calculated Net Salary:
+                <strong>${salaryMoney(calculatedNet)}</strong>
+            </div>
+            <div style="margin-top:7px;">
+                Difference:
+                <strong>${salaryMoney(difference)}</strong>
+            </div>
+        </div>
+    `;
+
+    updateSalaryBankDifference();
+
+});
+
+
+loadExistingSalaryTransactions();
+
+// Track the Salary Record currently being edited
+let editingSalaryRecordId = null;
+
+document.getElementById("salaryIncomeForm")
+    .addEventListener("submit", async event => {
+
+        event.preventDefault();
+
+        const message =
+            document.getElementById("salaryFormMessage");
+
+        const saveButton =
+            event.currentTarget.querySelector('button[type="submit"]');
+
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Please login before saving salary details.
+                </span>
+            `;
+            return;
+        }
+
+        const gross = Number(
+            document.getElementById("salaryGross").value
+        );
+
+        const exempt = Number(
+            document.getElementById("salaryExempt").value || 0
+        );
+
+        const pf = Number(
+            document.getElementById("salaryPF").value || 0
+        );
+
+        const professionalTax = Number(
+            document.getElementById("salaryProfessionalTax").value || 0
+        );
+
+        const tds = Number(
+            document.getElementById("salaryTDS").value || 0
+        );
+
+        const esi = Number(
+            document.getElementById("salaryESI").value || 0
+        );
+
+        const nps = Number(
+            document.getElementById("salaryNPS").value || 0
+        );
+
+        const loanRecovery = Number(
+            document.getElementById("salaryLoanRecovery").value || 0
+        );
+
+        const gis = Number(
+            document.getElementById("salaryGIS").value || 0
+        );
+
+        const otherDeductions = Number(
+            document.getElementById("salaryOtherDeductions").value || 0
+        );
+
+        const deductionValues = [
+            pf, professionalTax, tds, esi,
+            nps, loanRecovery, gis, otherDeductions
+        ];
+
+        if (
+            !Number.isFinite(gross) ||
+            gross <= 0 ||
+            !Number.isFinite(exempt) ||
+            exempt < 0 ||
+            deductionValues.some(value =>
+                !Number.isFinite(value) || value < 0
+            )
+        ) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Please enter valid salary and deduction amounts.
+                </span>
+            `;
+            return;
+        }
+
+        const totalDeductions =
+            deductionValues.reduce((sum, value) => sum + value, 0);
+
+        const netSalary = gross - totalDeductions;
+
+        if (totalDeductions > gross) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Total deductions cannot exceed Gross Salary.
+                </span>
+            `;
+            return;
+        }
+
+        const employerName =
+            document.getElementById("salaryEmployerName").value.trim();
+
+        const employerTAN =
+            document.getElementById("salaryEmployerTAN").value.trim().toUpperCase();
+
+        const startMonth =
+            document.getElementById("salaryStartMonth").value;
+
+        const endMonth =
+            document.getElementById("salaryEndMonth").value;
+
+        if (!employerName || !startMonth || !endMonth) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Please complete Employer Name and Salary Period.
+                </span>
+            `;
+            return;
+        }
+
+        // BANK CREDIT DETAILS
+        const bankCreditMode =
+            document.getElementById("salaryBankCreditMode").value;
+
+        let actualBankCredit = null;
+        let matchingDifference = null;
+        let matchingStatus = "not-entered";
+        let matchedTransactionDetails = null;
+
+        if (bankCreditMode === "manual") {
+
+            const creditValue = salaryCreditInput.value;
+
+            if (creditValue !== "") {
+
+                actualBankCredit = Number(creditValue);
+
+                if (
+                    !Number.isFinite(actualBankCredit) ||
+                    actualBankCredit < 0
+                ) {
+                    message.innerHTML = `
+                        <span style="color:#b91c1c;">
+                            Please enter a valid Bank Credit amount.
+                        </span>
+                    `;
+                    return;
+                }
+
+                matchingDifference = actualBankCredit - netSalary;
+
+                matchingStatus =
+                    matchingDifference === 0 ? "matched" : "difference";
+            }
+
+        } else {
+
+            const selectedTransaction =
+                availableSalaryTransactions.find(
+                    tx => tx.id === salaryTransactionSelect.value
+                );
+
+            if (!selectedTransaction) {
+                message.innerHTML = `
+                    <span style="color:#b91c1c;">
+                        Please select an existing Salary Transaction.
+                    </span>
+                `;
+                return;
+            }
+
+            actualBankCredit = Number(selectedTransaction.amount || 0);
+
+            matchingDifference = actualBankCredit - netSalary;
+
+            matchingStatus =
+                matchingDifference === 0 ? "matched" : "difference";
+
+            // Save a simple snapshot only. No transaction ID/link.
+            matchedTransactionDetails = {
+                date: selectedTransaction.date || "",
+                description:
+                    selectedTransaction.partyName ||
+                    selectedTransaction.notes ||
+                    selectedTransaction.description ||
+                    "Salary",
+                amount: actualBankCredit,
+                account:
+                    selectedTransaction.accountName ||
+                    selectedTransaction.account ||
+                    ""
+            };
+        }
+
+        // SALARY RECORD
+        const salaryRecord = {
+
+            profileName: profile.profileName,
+            financialYear: profile.financialYear,
+            assessmentYear: profile.assessmentYear,
+            taxRegime: profile.taxRegime,
+
+            employerName,
+            employerTAN,
+
+            salaryStartMonth: startMonth,
+            salaryEndMonth: endMonth,
+
+            grossSalary: gross,
+            exemptAllowances: exempt,
+
+            deductions: {
+                employeePF: pf,
+                professionalTax,
+                tds,
+                employeeESI: esi,
+                employeeNPS: nps,
+                loanAdvanceRecovery: loanRecovery,
+                gis,
+                otherDeductions
+            },
+
+            totalDeductions,
+            netSalary,
+
+            bankCreditMode,
+            actualBankCredit,
+            matchingDifference,
+            matchingStatus,
+            matchedTransactionDetails,
+
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+
+        saveButton.disabled = true;
+        saveButton.textContent = "Saving...";
+
+        try {
+
+            if (editingSalaryRecordId) {
+
+    const { createdAt, ...updateData } = salaryRecord;
+
+    await updateDoc(
+        doc(
+            db,
+            "users",
+            currentUser.uid,
+            "taxProfiles",
+            profileDoc.id,
+            "salaryIncome",
+            editingSalaryRecordId
+        ),
+        updateData
+    );
+
+    editingSalaryRecordId = null;
+
+} else {
+
+    await addDoc(
+        collection(
+            db,
+            "users",
+            currentUser.uid,
+            "taxProfiles",
+            profileDoc.id,
+            "salaryIncome"
+        ),
+        salaryRecord
+    );
+
+}
+
+            message.innerHTML = `
+                <div style="
+                    padding:12px;
+                    background:#ecfdf5;
+                    border:1px solid #a7f3d0;
+                    border-radius:8px;
+                    color:#047857;
+                ">
+                    <strong>Salary Details Saved / Updated Successfully!</strong>
+                    <div style="margin-top:5px;">
+                        Gross Salary: ${salaryMoney(gross)}
+                    </div>
+                    <div>
+                        Net Salary: ${salaryMoney(netSalary)}
+                    </div>
+                    <div>
+                        Bank Credit: ${
+                            actualBankCredit === null
+                                ? "Not entered"
+                                : salaryMoney(actualBankCredit)
+                        }
+                    </div>
+                    <div>
+                        Matching Difference: ${
+                            matchingDifference === null
+                                ? "Not available"
+                                : salaryMoney(matchingDifference)
+                        }
+                    </div>
+                </div>
+            `;
+await loadSavedSalaryRecords();
+
+            saveButton.disabled = false;
+saveButton.textContent = "Save Salary Details";
+
+        } catch (error) {
+
+            console.error("SALARY SAVE ERROR:", error);
+
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Unable to save Salary Details: ${taxEscape(error.message)}
+                </span>
+            `;
+
+            saveButton.disabled = false;
+            saveButton.textContent = "Save Salary Details";
+        }
+    });
+
+
+        document.getElementById("backToTaxDashboard")
+            ?.addEventListener("click", () => {
+                renderTaxProfileSetup();
+            });
+
+        document.getElementById("cancelSalaryForm")
+            ?.addEventListener("click", () => {
+                renderTaxProfileSetup();
+            });
+
+
+// =====================================================
+// LOAD SAVED SALARY RECORDS
+// =====================================================
+
+async function loadSavedSalaryRecords() {
+
+    const container =
+        document.getElementById("savedSalaryRecords");
+
+    const currentUser = auth.currentUser;
+
+    if (!container || !currentUser) return;
+
+    container.innerHTML = `
+        <p style="color:#64748b;">Loading salary records...</p>
+    `;
+
+    try {
+
+        const salarySnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "taxProfiles",
+                profileDoc.id,
+                "salaryIncome"
+            )
+        );
+
+        if (salarySnapshot.empty) {
+
+            container.innerHTML = `
+                <div style="
+                    padding:18px;
+                    background:#f8fafc;
+                    border:1px dashed #cbd5e1;
+                    border-radius:9px;
+                    color:#64748b;
+                ">
+                    No salary records saved yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        const money = amount =>
+            "₹" + Number(amount || 0).toLocaleString("en-IN", {
+                minimumFractionDigits:2,
+                maximumFractionDigits:2
+            });
+
+        const records = salarySnapshot.docs
+            .map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+        records.sort((a, b) => {
+            const aTime = a.createdAt?.seconds || 0;
+            const bTime = b.createdAt?.seconds || 0;
+            return bTime - aTime;
+        });
+
+        container.innerHTML = records.map(record => {
+
+            const matchingColor =
+                record.matchingStatus === "matched"
+                    ? "#047857"
+                    : record.matchingStatus === "difference"
+                        ? "#b91c1c"
+                        : "#64748b";
+
+            const matchingText =
+                record.matchingStatus === "matched"
+                    ? "Matched"
+                    : record.matchingStatus === "difference"
+                        ? "Difference Found"
+                        : "Not Matched";
+
+            return `
+                <div style="
+                    padding:17px;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                    margin-top:12px;
+                    background:#ffffff;
+                ">
+
+                    <div style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        flex-wrap:wrap;
+                        gap:10px;
+                    ">
+
+                        <div>
+                            <h4 style="margin:0 0 7px;">
+                                ${taxEscape(record.employerName)}
+                            </h4>
+
+                            <div style="font-size:12px;color:#64748b;">
+                                ${taxEscape(record.salaryStartMonth)}
+                                to
+                                ${taxEscape(record.salaryEndMonth)}
+                                |
+                                FY ${taxEscape(record.financialYear)}
+                            </div>
+                        </div>
+
+                        <div style="
+                            color:${matchingColor};
+                            font-weight:600;
+                            font-size:13px;
+                        ">
+                            ${matchingText}
+                        </div>
+
+                        
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+
+    <button
+        type="button"
+        class="salary-edit-button"
+        data-id="${taxEscape(record.id)}"
+        style="padding:7px 13px;background:#173b70;color:white;border:0;border-radius:6px;cursor:pointer;">
+        ✏️ Edit
+    </button>
+
+    <button
+        type="button"
+        class="salary-delete-button"
+        data-id="${taxEscape(record.id)}"
+        style="padding:7px 13px;background:white;color:#dc2626;border:1px solid #dc2626;border-radius:6px;cursor:pointer;">
+        Delete
+    </button>
+
+</div>
+
+                    </div>
+
+                    <div style="
+                        display:grid;
+                        grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+                        gap:14px;
+                        margin-top:18px;
+                    ">
+
+                        <div>
+                            <small style="color:#64748b;">Gross Salary</small>
+                            <div style="font-weight:600;">
+                                ${money(record.grossSalary)}
+                            </div>
+                        </div>
+
+                        <div>
+                            <small style="color:#64748b;">Total Deductions</small>
+                            <div style="font-weight:600;">
+                                ${money(record.totalDeductions)}
+                            </div>
+                        </div>
+
+                        <div>
+                            <small style="color:#64748b;">Net Salary</small>
+                            <div style="font-weight:600;color:#047857;">
+                                ${money(record.netSalary)}
+                            </div>
+                        </div>
+
+                        <div>
+                            <small style="color:#64748b;">Actual Bank Credit</small>
+                            <div style="font-weight:600;">
+                                ${record.actualBankCredit === null
+                                    ? "Not entered"
+                                    : money(record.actualBankCredit)}
+                            </div>
+                        </div>
+
+                        <div>
+                            <small style="color:#64748b;">Difference</small>
+                            <div style="font-weight:600;color:${matchingColor};">
+                                ${record.matchingDifference === null
+                                    ? "Not available"
+                                    : money(record.matchingDifference)}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        }).join("");
+
+        // =====================================================
+// SALARY RECORD EDIT BUTTON
+// =====================================================
+
+container.querySelectorAll(".salary-edit-button")
+    .forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const record = records.find(
+                item => item.id === button.dataset.id
+            );
+
+            if (!record) return;
+
+            const deductions = record.deductions || {};
+
+            editingSalaryRecordId = record.id;
+
+            // Employer Details
+            document.getElementById("salaryEmployerName").value =
+                record.employerName || "";
+
+            document.getElementById("salaryEmployerTAN").value =
+                record.employerTAN || "";
+
+            document.getElementById("salaryStartMonth").value =
+                record.salaryStartMonth || "";
+
+            document.getElementById("salaryEndMonth").value =
+                record.salaryEndMonth || "";
+
+            // Salary Earnings
+            document.getElementById("salaryGross").value =
+                record.grossSalary ?? 0;
+
+            document.getElementById("salaryExempt").value =
+                record.exemptAllowances ?? 0;
+
+            // Salary Deductions
+            document.getElementById("salaryPF").value =
+                deductions.employeePF ?? 0;
+
+            document.getElementById("salaryProfessionalTax").value =
+                deductions.professionalTax ?? 0;
+
+            document.getElementById("salaryTDS").value =
+                deductions.tds ?? 0;
+
+            document.getElementById("salaryESI").value =
+                deductions.employeeESI ?? 0;
+
+            document.getElementById("salaryNPS").value =
+                deductions.employeeNPS ?? 0;
+
+            document.getElementById("salaryLoanRecovery").value =
+                deductions.loanAdvanceRecovery ?? 0;
+
+            document.getElementById("salaryGIS").value =
+                deductions.gis ?? 0;
+
+            document.getElementById("salaryOtherDeductions").value =
+                deductions.otherDeductions ?? 0;
+
+            // Bank Credit
+            // Keep the saved amount as a manual snapshot.
+            // No Transaction ID or live link is created.
+
+            document.getElementById("salaryBankCreditMode").value =
+                "manual";
+
+            document.getElementById("salaryBankCreditMode")
+                .dispatchEvent(new Event("change"));
+
+            document.getElementById("salaryActualBankCredit").value =
+                record.actualBankCredit ?? "";
+
+            // Refresh calculated values
+            document.getElementById("salaryGross")
+                .dispatchEvent(new Event("input"));
+
+            document.getElementById("salaryActualBankCredit")
+                .dispatchEvent(new Event("input"));
+
+            // Change button text
+            const saveButton =
+                document.querySelector(
+                    '#salaryIncomeForm button[type="submit"]'
+                );
+
+            if (saveButton) {
+                saveButton.textContent = "Update Salary Details";
+            }
+
+            document.getElementById("salaryFormMessage").innerHTML = `
+                <span style="color:#1d4ed8;font-weight:600;">
+                    Editing existing salary record.
+                    Make your changes and click Update Salary Details.
+                </span>
+            `;
+
+            document.getElementById("salaryIncomeForm")
+                .scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+        });
+
+    });
+
+
+// =====================================================
+// SALARY RECORD DELETE BUTTON
+// =====================================================
+
+container.querySelectorAll(".salary-delete-button")
+    .forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            const recordId = button.dataset.id;
+
+            const confirmed = confirm(
+                "Are you sure you want to delete this Salary Record?\n\nThis action cannot be undone."
+            );
+
+            if (!confirmed) return;
+
+            const currentUser = auth.currentUser;
+
+            if (!currentUser) {
+                alert("Please login first.");
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Deleting...";
+
+            try {
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "users",
+                        currentUser.uid,
+                        "taxProfiles",
+                        profileDoc.id,
+                        "salaryIncome",
+                        recordId
+                    )
+                );
+
+                if (editingSalaryRecordId === recordId) {
+                    editingSalaryRecordId = null;
+                }
+
+                alert("Salary Record deleted successfully.");
+
+                await loadSavedSalaryRecords();
+
+            } catch (error) {
+
+                console.error("SALARY DELETE ERROR:", error);
+
+                alert(
+                    "Unable to delete Salary Record: " + error.message
+                );
+
+                button.disabled = false;
+                button.textContent = "Delete";
+
+            }
+
+        });
+
+    });
+
+    } catch (error) {
+
+        console.error("SAVED SALARY RECORDS ERROR:", error);
+
+        container.innerHTML = `
+            <p style="color:#b91c1c;">
+                Unable to load salary records:
+                ${taxEscape(error.message)}
+            </p>
+        `;
+    }
+}
+
+loadSavedSalaryRecords();
+
+    });
+
+
+        });
+    });
+
+
+// EDIT PROFILE
+profilesContainer.querySelectorAll("[data-tax-edit]")
+    .forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            const profileId = button.dataset.taxEdit;
+
+            const profileDoc = snapshot.docs.find(
+                item => item.id === profileId
+            );
+
+            if (!profileDoc) return;
+
+            const profile = profileDoc.data();
+
+            const newName = prompt(
+                "Enter Profile Name:",
+                profile.profileName
+            );
+
+            if (newName === null) return;
+
+            if (!newName.trim()) {
+                alert("Profile Name cannot be empty.");
+                return;
+            }
+
+            const newFY = prompt(
+                "Enter Financial Year (YYYY-YY):",
+                profile.financialYear
+            );
+
+            if (newFY === null) return;
+
+            if (!/^\d{4}-\d{2}$/.test(newFY.trim())) {
+                alert("Please enter a valid Financial Year, e.g. 2026-27.");
+                return;
+            }
+
+            const newRegime = prompt(
+                "Enter Tax Regime: new or old",
+                profile.taxRegime
+            );
+
+            if (newRegime === null) return;
+
+            const regime = newRegime.trim().toLowerCase();
+
+            if (!["new", "old"].includes(regime)) {
+                alert("Please enter either new or old.");
+                return;
+            }
+
+            const startYear = Number(newFY.substring(0, 4));
+
+            const assessmentYear =
+                `${startYear + 1}-${String(startYear + 2).slice(-2)}`;
+
+            try {
+
+                await updateDoc(
+                    doc(db, "users", user.uid, "taxProfiles", profileId),
+                    {
+                        profileName: newName.trim(),
+                        financialYear: newFY.trim(),
+                        assessmentYear,
+                        taxRegime: regime,
+                        updatedAt: serverTimestamp()
+                    }
+                );
+
+                alert("Tax Profile updated successfully!");
+
+                await renderTaxProfileSetup();
+
+            } catch (error) {
+
+                console.error("TAX PROFILE UPDATE ERROR:", error);
+
+                alert("Unable to update profile: " + error.message);
+            }
+        });
+    });
+
+
+// DELETE PROFILE
+profilesContainer.querySelectorAll("[data-tax-delete]")
+    .forEach(button => {
+
+        button.addEventListener("click", async () => {
+
+            const profileId = button.dataset.taxDelete;
+
+            const confirmed = confirm(
+                "Are you sure you want to delete this Tax Profile?\n\nThis action cannot be undone."
+            );
+
+            if (!confirmed) return;
+
+            try {
+
+                await deleteDoc(
+                    doc(db, "users", user.uid, "taxProfiles", profileId)
+                );
+
+                alert("Tax Profile deleted successfully!");
+
+                await renderTaxProfileSetup();
+
+            } catch (error) {
+
+                console.error("TAX PROFILE DELETE ERROR:", error);
+
+                alert("Unable to delete profile: " + error.message);
+            }
+        });
+    });
+
+            }
+
+        } catch (error) {
+
+            console.error("TAX PROFILE LOAD ERROR:", error);
+
+            profilesContainer.innerHTML = `
+                <p style="color:#b91c1c;">
+                    Unable to load saved profiles: ${taxEscape(error.message)}
+                </p>
+            `;
+        }
+
+        document.getElementById("taxProfileForm")
+            .addEventListener("submit", async event => {
+
+                event.preventDefault();
+
+                const profileName =
+                    document.getElementById("taxProfileName").value.trim();
+
+                const financialYear =
+                    document.getElementById("taxFinancialYear").value;
+
+                const taxRegime =
+                    document.getElementById("taxRegime").value;
+
+                const message =
+                    document.getElementById("taxProfileMessage");
+
+                const saveButton =
+                    document.getElementById("saveTaxProfileBtn");
+
+                if (!profileName) {
+                    message.innerHTML = `
+                        <span style="color:#b91c1c;">
+                            Please enter a profile name.
+                        </span>
+                    `;
+                    return;
+                }
+
+                const startYear = Number(financialYear.substring(0, 4));
+
+                const assessmentYear =
+                    `${startYear + 1}-${String(startYear + 2).slice(-2)}`;
+
+                saveButton.disabled = true;
+                saveButton.textContent = "Saving...";
+
+                try {
+
+                    await addDoc(
+                        collection(db, "users", user.uid, "taxProfiles"),
+                        {
+                            profileName,
+                            taxpayerType: "Individual",
+                            country: "India",
+                            financialYear,
+                            assessmentYear,
+                            taxRegime,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        }
+                    );
+
+                    message.innerHTML = `
+                        <span style="color:#047857;font-weight:600;">
+                            Tax profile saved successfully!
+                        </span>
+                    `;
+
+                    await renderTaxProfileSetup();
+
+                } catch (error) {
+
+                    console.error("TAX PROFILE SAVE ERROR:", error);
+
+                    message.innerHTML = `
+                        <span style="color:#b91c1c;">
+                            Unable to save profile: ${taxEscape(error.message)}
+                        </span>
+                    `;
+
+                    saveButton.disabled = false;
+                    saveButton.textContent = "Save Tax Profile";
+                }
+            });
+    }
+
+    renderTaxProfileSetup();
+
+    return;
+}
+
+// =====================================================
+// END INCOME TAX / ITR
+// =====================================================
+
+// =====================================================
+// DATE & PERIOD REPORTS — DASHBOARD + REPORT ENGINE
+// REPORTS #250 TO #258
+// =====================================================
+
+if (
+    title === "Date & Period Reports" ||
+    title === "Date & Period" ||
+    title === "Date & Period Analysis"
+) {
+
+    console.log("📅 DATE & PERIOD REPORTS SELECTED");
+
+    hideReportModuleStartPage();
+
+    const datePeriodReports = [
+        { number: 250, name: "Daily Financial Summary", icon: "📅", desc: "Daily income, expenses and net result" },
+        { number: 251, name: "Weekly Financial Analysis", icon: "📆", desc: "Week-wise financial performance" },
+        { number: 252, name: "Monthly Financial Analysis", icon: "🗓️", desc: "Month-wise financial performance" },
+        { number: 253, name: "Quarterly Financial Analysis", icon: "📊", desc: "Quarter-wise financial performance" },
+        { number: 254, name: "Financial Year Analysis", icon: "📈", desc: "April to March financial year analysis" },
+        { number: 255, name: "Custom Date Range Report", icon: "🔎", desc: "Analyse transactions for selected dates" },
+        { number: 256, name: "Period Comparison Report", icon: "⚖️", desc: "Compare two selected date ranges" },
+        { number: 257, name: "Income vs Expense Trend", icon: "📉", desc: "Track income and expense trends over time" },
+        { number: 258, name: "Transaction Frequency Analysis", icon: "🔢", desc: "Analyse transaction activity by period" }
+    ];
+
+    const escapeDP = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const moneyDP = value =>
+        "₹ " + Number(value || 0).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    function parseDPDate(value) {
+
+        if (!value) return null;
+
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? null : new Date(
+                value.getFullYear(),
+                value.getMonth(),
+                value.getDate()
+            );
+        }
+
+        if (typeof value === "object" && value.seconds) {
+            const d = new Date(value.seconds * 1000);
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
+
+        const str = String(value).trim();
+        let match;
+
+        match = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+        if (match) {
+            return new Date(
+                Number(match[1]),
+                Number(match[2]) - 1,
+                Number(match[3])
+            );
+        }
+
+        match = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+
+        if (match) {
+            return new Date(
+                Number(match[3]),
+                Number(match[2]) - 1,
+                Number(match[1])
+            );
+        }
+
+        return null;
+    }
+
+    const dateKeyDP = date =>
+        date
+            ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+            : "";
+
+    const dateLabelDP = date =>
+        date
+            ? date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            })
+            : "Invalid date";
+
+    function getWeekStartDP(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+        d.setHours(0, 0, 0, 0);
+        return d;
+    }
+
+    function getPeriodKeyDP(date, mode) {
+
+        const y = date.getFullYear();
+        const m = date.getMonth();
+
+        if (mode === "day") return dateKeyDP(date);
+
+        if (mode === "week") {
+            return dateKeyDP(getWeekStartDP(date));
+        }
+
+        if (mode === "month") {
+            return `${y}-${String(m + 1).padStart(2, "0")}`;
+        }
+
+        if (mode === "quarter") {
+            const quarter = Math.floor(m / 3) + 1;
+            return `${y}-Q${quarter}`;
+        }
+
+        if (mode === "fy") {
+            const startYear = m >= 3 ? y : y - 1;
+            return `${startYear}-${startYear + 1}`;
+        }
+
+        return "";
+    }
+
+    function getPeriodLabelDP(key, mode) {
+
+        if (mode === "day") {
+            const d = parseDPDate(key);
+            return dateLabelDP(d);
+        }
+
+        if (mode === "week") {
+            const d = parseDPDate(key);
+            const end = new Date(d);
+            end.setDate(end.getDate() + 6);
+            return `${dateLabelDP(d)} – ${dateLabelDP(end)}`;
+        }
+
+        if (mode === "month") {
+            const [y, m] = key.split("-");
+            return new Date(Number(y), Number(m) - 1, 1)
+                .toLocaleDateString("en-IN", {
+                    month: "long",
+                    year: "numeric"
+                });
+        }
+
+        if (mode === "quarter") return key.replace("-", " ");
+
+        if (mode === "fy") return `FY ${key}`;
+
+        return key;
+    }
+
+    function aggregateDP(rows, mode) {
+
+        const groups = {};
+
+        rows.forEach(row => {
+
+            if (!row.reportDate) return;
+
+            const key = getPeriodKeyDP(row.reportDate, mode);
+
+            if (!groups[key]) {
+                groups[key] = {
+                    key,
+                    income: 0,
+                    expense: 0,
+                    count: 0
+                };
+            }
+
+            if (row.type === "income") {
+                groups[key].income += row.amount;
+            } else {
+                groups[key].expense += row.amount;
+            }
+
+            groups[key].count++;
+        });
+
+        return Object.values(groups)
+            .sort((a, b) => a.key.localeCompare(b.key))
+            .map(row => ({
+                ...row,
+                net: row.income - row.expense,
+                label: getPeriodLabelDP(row.key, mode)
+            }));
+    }
+
+    function kpisDP(rows) {
+
+        const income = rows.reduce((s, r) => s + r.income, 0);
+        const expense = rows.reduce((s, r) => s + r.expense, 0);
+        const count = rows.reduce((s, r) => s + r.count, 0);
+
+        return `
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+                gap:14px;
+                margin:20px 0;
+            ">
+                <div style="padding:18px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;">
+                    <div>Total Income</div>
+                    <h3 style="color:#047857;">${moneyDP(income)}</h3>
+                </div>
+
+                <div style="padding:18px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;">
+                    <div>Total Expenses</div>
+                    <h3 style="color:#b91c1c;">${moneyDP(expense)}</h3>
+                </div>
+
+                <div style="padding:18px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;">
+                    <div>Net Result</div>
+                    <h3 style="color:#1d4ed8;">${moneyDP(income - expense)}</h3>
+                </div>
+
+                <div style="padding:18px;border-radius:12px;background:#f8fafc;border:1px solid #cbd5e1;">
+                    <div>Transactions</div>
+                    <h3>${count}</h3>
+                </div>
+            </div>
+        `;
+    }
+
+    function tableDP(rows, firstColumn = "Period") {
+
+        if (!rows.length) {
+            return `
+                <div style="padding:30px;text-align:center;color:#64748b;">
+                    No transactions found for this period.
+                </div>
+            `;
+        }
+
+        return `
+            <div style="overflow-x:auto;margin-top:20px;">
+                <table style="width:100%;border-collapse:collapse;background:white;">
+                    <thead>
+                        <tr style="background:#173b70;color:white;">
+                            <th style="padding:12px;text-align:left;">${firstColumn}</th>
+                            <th style="padding:12px;text-align:right;">Income</th>
+                            <th style="padding:12px;text-align:right;">Expense</th>
+                            <th style="padding:12px;text-align:right;">Net</th>
+                            <th style="padding:12px;text-align:center;">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map(row => `
+                            <tr style="border-bottom:1px solid #e5e7eb;">
+                                <td style="padding:11px;">${escapeDP(row.label)}</td>
+                                <td style="padding:11px;text-align:right;color:#047857;">${moneyDP(row.income)}</td>
+                                <td style="padding:11px;text-align:right;color:#b91c1c;">${moneyDP(row.expense)}</td>
+                                <td style="padding:11px;text-align:right;font-weight:600;">${moneyDP(row.net)}</td>
+                                <td style="padding:11px;text-align:center;">${row.count}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    async function loadDatePeriodTransactionsDP() {
+
+        const user = auth.currentUser;
+
+        if (!user) {
+            throw new Error("Please login first.");
+        }
+
+        const snapshot = await getDocs(
+            collection(db, "users", user.uid, "transactions")
+        );
+
+        return snapshot.docs
+            .map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }))
+            .filter(tx =>
+                tx.deleted !== true &&
+                (tx.type === "income" || tx.type === "expense") &&
+                tx.behavior !== "money_out_non_expense" &&
+                Number(tx.amount || 0) > 0
+            )
+            .map(tx => ({
+                ...tx,
+                amount: Number(tx.amount || 0),
+                reportDate: parseDPDate(tx.date)
+            }))
+            .filter(tx => tx.reportDate);
+    }
+
+    function renderDatePeriodReportView(number, rows) {
+
+        const definitions = {
+            250: ["Daily Financial Summary", "day"],
+            251: ["Weekly Financial Analysis", "week"],
+            252: ["Monthly Financial Analysis", "month"],
+            253: ["Quarterly Financial Analysis", "quarter"],
+            254: ["Financial Year Analysis", "fy"],
+            257: ["Income vs Expense Trend", "month"],
+            258: ["Transaction Frequency Analysis", "month"]
+        };
+
+        let html = "";
+        let titleText = "";
+
+        if (definitions[number]) {
+
+            titleText = definitions[number][0];
+
+            const mode = definitions[number][1];
+            const grouped = aggregateDP(rows, mode);
+
+            if (number === 258) {
+                html = `
+                    <h3>Transaction Activity</h3>
+                    ${tableDP(grouped)}
+                    <p style="color:#64748b;margin-top:15px;">
+                        Frequency is based on the number of recorded income and expense transactions.
+                    </p>
+                `;
+            } else {
+                html = tableDP(grouped);
+            }
+
+            if (number === 257) {
+                html += `
+                    <p style="color:#64748b;margin-top:15px;">
+                        Trend values are grouped month-wise. Net Result = Income minus Expense.
+                    </p>
+                `;
+            }
+        }
+
+        if (number === 255 || number === 256) {
+
+            titleText = number === 255
+                ? "Custom Date Range Report"
+                : "Period Comparison Report";
+
+            html = `
+                <div style="padding:18px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:12px;margin:20px 0;">
+
+                    <h3>${number === 255 ? "Select Date Range" : "Select Two Periods"}</h3>
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-top:15px;">
+
+                        <label>
+                            <div>Start Date ${number === 256 ? "(Period 1)" : ""}</div>
+                            <input type="date" id="dpStart1" style="width:100%;padding:10px;margin-top:5px;">
+                        </label>
+
+                        <label>
+                            <div>End Date ${number === 256 ? "(Period 1)" : ""}</div>
+                            <input type="date" id="dpEnd1" style="width:100%;padding:10px;margin-top:5px;">
+                        </label>
+
+                        ${number === 256 ? `
+                            <label>
+                                <div>Start Date (Period 2)</div>
+                                <input type="date" id="dpStart2" style="width:100%;padding:10px;margin-top:5px;">
+                            </label>
+
+                            <label>
+                                <div>End Date (Period 2)</div>
+                                <input type="date" id="dpEnd2" style="width:100%;padding:10px;margin-top:5px;">
+                            </label>
+                        ` : ""}
+                    </div>
+
+                    <button id="dpApplyRange" style="margin-top:18px;padding:11px 20px;background:#173b70;color:white;border:0;border-radius:8px;cursor:pointer;">
+                        Generate Report
+                    </button>
+
+                    <div id="dpRangeResult"></div>
+                </div>
+            `;
+        }
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>📅 ${escapeDP(titleText)}</h2>
+                        <p>Date and period based financial analysis</p>
+                    </div>
+                </div>
+
+                <button id="dpBackDashboard" style="padding:9px 15px;border:1px solid #cbd5e1;border-radius:8px;background:white;cursor:pointer;">
+                    ← Back to Date & Period Reports
+                </button>
+
+                ${number !== 255 && number !== 256 ? kpisDP(aggregateDP(rows, definitions[number]?.[1] || "month")) : ""}
+
+                ${html}
+
+                <p style="color:#64748b;margin-top:18px;font-size:12px;">
+                    Source: Transaction Ledger. Soft-deleted records and non-expense money-out records are excluded.
+                </p>
+
+            </div>
+        `;
+
+        document.getElementById("dpBackDashboard")
+            ?.addEventListener("click", renderDatePeriodDashboardDP);
+
+        if (number === 255 || number === 256) {
+
+            document.getElementById("dpApplyRange")
+                ?.addEventListener("click", () => {
+
+                    const start1 = document.getElementById("dpStart1").value;
+                    const end1 = document.getElementById("dpEnd1").value;
+
+                    const result = document.getElementById("dpRangeResult");
+
+                    if (!start1 || !end1 || start1 > end1) {
+                        result.innerHTML = `<p style="color:#b91c1c;">Please select a valid start and end date.</p>`;
+                        return;
+                    }
+
+                    const filtered1 = rows.filter(row => {
+                        const key = dateKeyDP(row.reportDate);
+                        return key >= start1 && key <= end1;
+                    });
+
+                    const periodRows1 = aggregateDP(filtered1, "day");
+
+                    if (number === 255) {
+                        result.innerHTML = `
+                            ${kpisDP(periodRows1)}
+                            ${tableDP(periodRows1, "Date")}
+                        `;
+                        return;
+                    }
+
+                    const start2 = document.getElementById("dpStart2").value;
+                    const end2 = document.getElementById("dpEnd2").value;
+
+                    if (!start2 || !end2 || start2 > end2) {
+                        result.innerHTML = `<p style="color:#b91c1c;">Please select valid dates for Period 2.</p>`;
+                        return;
+                    }
+
+                    const filtered2 = rows.filter(row => {
+                        const key = dateKeyDP(row.reportDate);
+                        return key >= start2 && key <= end2;
+                    });
+
+                    const p1 = {
+                        label: `${start1} to ${end1}`,
+                        income: filtered1.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0),
+                        expense: filtered1.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0),
+                        count: filtered1.length
+                    };
+
+                    p1.net = p1.income - p1.expense;
+
+                    const p2 = {
+                        label: `${start2} to ${end2}`,
+                        income: filtered2.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0),
+                        expense: filtered2.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0),
+                        count: filtered2.length
+                    };
+
+                    p2.net = p2.income - p2.expense;
+
+                    result.innerHTML = `
+                        <h3 style="margin-top:20px;">Period Comparison</h3>
+                        ${tableDP([p1, p2], "Period")}
+                    `;
+                });
+        }
+    }
+
+    async function openDatePeriodReportDP(number) {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>Loading report...</h2>
+                <p>Please wait while financial data is loaded.</p>
+            </div>
+        `;
+
+        try {
+
+            const rows = await loadDatePeriodTransactionsDP();
+
+            renderDatePeriodReportView(number, rows);
+
+        } catch (error) {
+
+            console.error("DATE & PERIOD REPORT ERROR:", error);
+
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <h2>Unable to load report</h2>
+                    <p>${escapeDP(error.message)}</p>
+                    <button onclick="location.reload()">Refresh Page</button>
+                </div>
+            `;
+        }
+    }
+
+    function renderDatePeriodDashboardDP() {
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>📅 Date & Period Reports</h2>
+                        <p>Daily, weekly, monthly, quarterly and financial year analysis</p>
+                    </div>
+
+                    <div class="transaction-report-count">
+                        ${datePeriodReports.length}
+                    </div>
+                </div>
+
+                <div class="transaction-reports-grid" style="margin-top:20px;">
+
+                    ${datePeriodReports.map(report => `
+                        <div class="transaction-report-card"
+                             data-date-period-report="${report.number}"
+                             style="cursor:pointer;">
+
+                            <div class="transaction-report-number">
+                                ${report.number}
+                            </div>
+
+                            <div class="transaction-report-content">
+                                <h3>${report.icon} ${escapeDP(report.name)}</h3>
+                                <p>${escapeDP(report.desc)}</p>
+                            </div>
+
+                        </div>
+                    `).join("")}
+
+                </div>
+
+            </div>
+        `;
+
+        reportWorkArea
+            .querySelectorAll("[data-date-period-report]")
+            .forEach(card => {
+
+                card.addEventListener("click", () => {
+
+                    const number = Number(
+                        card.dataset.datePeriodReport
+                    );
+
+                    openDatePeriodReportDP(number);
+                });
+            });
+    }
+
+    renderDatePeriodDashboardDP();
+
+    return;
+}
+
+// =====================================================
+// END DATE & PERIOD REPORTS
+// =====================================================
 
         if (title === "Transactions") {
 
@@ -22995,6 +25447,7 @@ if (existingToolbar) {
 
     }
 
+
 // =====================================================
 // BACK TO REPORTS
 // =====================================================
@@ -23004,41 +25457,70 @@ const backReportsButton =
         '[data-report-action="back-reports"]'
     );
 
-    
-    // Hide toolbar Back button on the main Investments Reports list
-    
+
+// -----------------------------------------------------
+// HIDE BACK BUTTON ON MAIN REPORT LISTS
+// -----------------------------------------------------
+
 const isReportList =
     !!reportContainer.querySelector(
         "#investmentReportsGrid, #fixedDepositReportsGrid, .transaction-reports-grid"
     );
 
 if (backReportsButton) {
+
     backReportsButton.style.display =
         isReportList ? "none" : "";
+
 }
 
 
+// -----------------------------------------------------
+// BACK TO CORRECT REPORT CATEGORY DASHBOARD
+// -----------------------------------------------------
+
 if (backReportsButton) {
+
     backReportsButton.addEventListener(
         "click",
         function () {
 
             const category =
                 window.activeReportCategory || "Transactions";
-                if (category === "Properties") {
-    renderPropertyReportsDashboard();
-    return;
-}
 
-        // Fixed Deposits Reports: return to Fixed Deposits Reports
-            if (
-                document.getElementById("fixedDepositReportContent")
-            ) {
-                renderFixedDepositReports();
+
+            // -----------------------------------------
+            // PROPERTIES REPORTS
+            // -----------------------------------------
+
+            if (category === "Properties") {
+
+                renderPropertyReportsDashboard();
                 return;
+
             }
 
-            // Investment Reports: return to Investments Reports
+
+            // -----------------------------------------
+            // FIXED DEPOSIT REPORTS
+            // -----------------------------------------
+
+            if (
+                document.getElementById(
+                    "fixedDepositReportContent"
+                )
+            ) {
+
+                renderFixedDepositReports();
+                return;
+
+            }
+
+
+            // -----------------------------------------
+            // INVESTMENT REPORTS
+            // -----------------------------------------
+
             if (
                 document.getElementById("investmentSummaryContent") ||
                 document.getElementById("investmentWiseDetailsContent") ||
@@ -23046,81 +25528,83 @@ if (backReportsButton) {
                 document.getElementById("investmentDateWiseContent") ||
                 document.getElementById("investmentStandardReportContent")
             ) {
+
                 renderInvestmentReports();
                 return;
+
             }
 
 
-            if (category === "Income & Expenses") {
-                const incomeExpenseCard =
-                    Array.from(
-                        document.querySelectorAll(
-                            ".report-category-card"
-                        )
-                    ).find(
-                        card =>
-                            getReportCategoryKey(card) ===
-                            "Income & Expenses"
-                    );
+            // -----------------------------------------
+            // FIND ORIGINAL CATEGORY CARD
+            // -----------------------------------------
 
-                if (incomeExpenseCard) {
-                    incomeExpenseCard.click();
-                }
+            const categoryCard =
+                Array.from(
+                    document.querySelectorAll(
+                        ".report-category-card"
+                    )
+                ).find(
+                    card => {
 
+                        return (
+                            getReportCategoryKey(card).trim().toLowerCase() ===
+                            String(category).trim().toLowerCase()
+                        );
+
+                    }
+                );
+
+
+            // -----------------------------------------
+            // OPEN THE SAME CATEGORY DASHBOARD
+            // -----------------------------------------
+
+            if (categoryCard) {
+
+                categoryCard.click();
                 return;
+
             }
 
-            if (category === "Accounts") {
-                const accountsCard =
-                    Array.from(
-                        document.querySelectorAll(
-                            ".report-category-card"
-                        )
-                    ).find(
-                        card =>
-                            getReportCategoryKey(card) === "Accounts"
-                    );
 
-                if (accountsCard) {
-                    accountsCard.click();
-                }
-
-                return;
-            }
+            // -----------------------------------------
+            // DEFAULT FALLBACK
+            // -----------------------------------------
 
             renderTransactionReports();
+
         }
     );
+
 }
 
-    // =================================================
-    // CLOSE
-    // =================================================
+
+
+    // =====================================================
+    // CLOSE — RETURN TO CURRENT REPORT CATEGORY
+    // =====================================================
 
     const closeButton =
         toolbar.querySelector(
             '[data-report-action="close"]'
         );
 
-if (closeButton) {
-
-    closeButton.addEventListener(
-        "click",
-        function () {
-
-            renderTransactionReports();
-
-        }
-    );
-
-}
     if (closeButton) {
 
         closeButton.addEventListener(
             "click",
             function () {
 
-                renderTransactionReports();
+                if (backReportsButton) {
+
+                    backReportsButton.click();
+
+                } else {
+
+                    renderTransactionReports();
+
+                }
 
             }
         );
@@ -23128,41 +25612,41 @@ if (closeButton) {
     }
 
 
-    // =================================================
-    // PRINT
-    // =================================================
+// =====================================================
+// PRINT
+// =====================================================
 
-    const printButton =
-        toolbar.querySelector(
-            '[data-report-action="print"]'
-        );
-
-
-    if (printButton) {
-
-        printButton.addEventListener(
-    "click",
-    function () {
-
-        printCurrentReport();
-
-    }
-);
-
-    }
+const printButton =
+    toolbar.querySelector(
+        '[data-report-action="print"]'
+    );
 
 
-    // =================================================
-    // PDF
-    // =================================================
+if (printButton) {
 
-    const pdfButton =
-        toolbar.querySelector(
-            '[data-report-action="pdf"]'
-        );
+    printButton.addEventListener(
+        "click",
+        function () {
+
+            printCurrentReport();
+
+        }
+    );
+
+}
 
 
-    if (pdfButton) {
+// =====================================================
+// PDF
+// =====================================================
+
+const pdfButton =
+    toolbar.querySelector(
+        '[data-report-action="pdf"]'
+    );
+
+
+if (pdfButton) {
 
     pdfButton.addEventListener(
         "click",
@@ -23176,17 +25660,17 @@ if (closeButton) {
 }
 
 
-    // =================================================
-    // EXCEL
-    // =================================================
+// =====================================================
+// EXCEL
+// =====================================================
 
-    const excelButton =
-        toolbar.querySelector(
-            '[data-report-action="excel"]'
-        );
+const excelButton =
+    toolbar.querySelector(
+        '[data-report-action="excel"]'
+    );
 
 
-    if (excelButton) {
+if (excelButton) {
 
     excelButton.addEventListener(
         "click",
@@ -34723,39 +37207,32 @@ if (report.number === 39) {
     // GET CURRENT USER DETAILS
     // =====================================================
 
-    function getCurrentUserDetails() {
+function getCurrentUserDetails() {
 
-        if (!currentUser) {
+    const user = auth.currentUser || currentUser;
 
-            return {
-
-                name: "User",
-                email: "Not Available",
-                uid: "Not Available"
-
-            };
-
-        }
-
-
+    if (!user) {
         return {
-
-            name:
-                currentUser.displayName ||
-                currentUser.email ||
-                "User",
-
-            email:
-                currentUser.email ||
-                "Not Available",
-
-            uid:
-                currentUser.uid ||
-                "Not Available"
-
+            name: "User",
+            email: "Not Available",
+            uid: "Not Available"
         };
-
     }
+
+    return {
+        name:
+            user.displayName ||
+            user.email?.split("@")[0] ||
+            "User",
+
+        email:
+            user.email || "Not Available",
+
+        uid:
+            user.uid || "Not Available"
+    };
+
+}
 
 // =====================================================
 // REPORT DATE FORMATTER
