@@ -10021,6 +10021,14 @@ if (
             "'": "&#39;"
         })[ch]);
 
+
+        // =====================================================
+// TAX PROFILE DASHBOARD STATE
+// =====================================================
+
+let selectedTaxProfileId = null;
+let showTaxProfileListOnly = false;
+
     async function renderTaxProfileSetup() {
 
         const user = auth.currentUser;
@@ -10152,14 +10160,15 @@ if (
         `;
 
         const profilesContainer =
-            document.getElementById("savedTaxProfiles");
+    document.getElementById("savedTaxProfiles");
 
-        try {
+let snapshot;
 
-            const snapshot = await getDocs(
-                collection(db, "users", user.uid, "taxProfiles")
-            );
+try {
 
+    snapshot = await getDocs(
+        collection(db, "users", user.uid, "taxProfiles")
+    );
             if (snapshot.empty) {
                 profilesContainer.innerHTML = `
                     <div style="
@@ -10264,16 +10273,19 @@ profilesContainer.querySelectorAll("[data-tax-open]")
             const profile = profileDoc.data();
 
             
+
+
 reportWorkArea.innerHTML = `
     <div class="transaction-reports-container">
 
         <div class="transaction-reports-header">
             <div>
-                <h2>💰 ${taxEscape(profile.profileName)}</h2>
+                <h2>💰 Income Tax / ITR</h2>
                 <p>Personal Income Tax Dashboard</p>
             </div>
         </div>
 
+        <!-- TAX PROFILE SELECTOR -->
         <div style="
             background:white;
             border:1px solid #dbe3ee;
@@ -10282,13 +10294,42 @@ reportWorkArea.innerHTML = `
             margin-top:20px;
         ">
 
-            <h3>Tax Profile Details</h3>
+            <label for="taxDashboardProfile"
+                style="display:block;font-weight:600;margin-bottom:9px;">
+                Select Tax Profile
+            </label>
+
+            <select id="taxDashboardProfile"
+                style="
+                    width:100%;
+                    max-width:500px;
+                    padding:12px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                    background:#f8fafc;
+                    font-size:14px;
+                ">
+
+                ${snapshot.docs.map(item => {
+                    const itemProfile = item.data();
+
+                    return `
+                        <option
+                            value="${taxEscape(item.id)}"
+                            ${item.id === button.dataset.taxOpen ? "selected" : ""}>
+                            ${taxEscape(itemProfile.profileName)}
+                            | FY ${taxEscape(itemProfile.financialYear)}
+                        </option>
+                    `;
+                }).join("")}
+
+            </select>
 
             <div style="
                 display:grid;
-                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-                gap:18px;
-                margin-top:15px;
+                grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+                gap:15px;
+                margin-top:20px;
             ">
 
                 <div>
@@ -10316,91 +10357,1746 @@ reportWorkArea.innerHTML = `
             </div>
         </div>
 
-        <div style="
-            margin-top:25px;
-            background:white;
-            border:1px solid #dbe3ee;
-            border-radius:12px;
-            padding:20px;
-        ">
+        <!-- CONSOLIDATED INCOME SUMMARY -->
+<div id="itrConsolidatedSummary"
+    style="
+        margin-top:25px;
+        padding:22px;
+        background:#ffffff;
+        border:1px solid #dbe3ee;
+        border-radius:12px;
+    ">
 
-            <h3>Income Sources</h3>
+    <h3 style="margin-top:0;">📊 Consolidated Income Summary</h3>
+
+    <p style="color:#64748b;font-size:13px;">
+        Automatically calculated from Salary, FD Interest and Other Income records.
+    </p>
+
+    <div id="itrSummaryContent" style="margin-top:15px;">
+        <p style="color:#64748b;">Calculating your income summary...</p>
+    </div>
+
+</div>
+
+        <!-- THREE INCOME REPORT CARDS -->
+        <div style="margin-top:25px;">
+
+
+            <h3>Income Reports</h3>
 
             <p style="color:#64748b;">
-                Manage income details associated with this Tax Profile.
+                Manage income details for the selected Financial Year.
             </p>
 
             <div style="
                 display:grid;
                 grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-                gap:15px;
-                margin-top:20px;
+                gap:16px;
+                margin-top:16px;
             ">
 
+                <!-- SALARY INCOME -->
                 <div style="
-                    padding:18px;
+                    background:white;
                     border:1px solid #dbe3ee;
-                    border-radius:10px;
+                    border-radius:12px;
+                    padding:20px;
                 ">
+
                     <h3>💼 Salary Income</h3>
+
                     <p style="color:#64748b;font-size:13px;">
-                        Record employer and salary details.
+                        Salary details, employer information and tax deductions.
                     </p>
 
-                    <button
-                        type="button"
-                        id="openSalaryIncome"
+                    <button type="button" id="openSalaryIncome"
                         style="padding:10px 16px;background:#173b70;color:white;border:0;border-radius:7px;cursor:pointer;">
                         Manage Salary
                     </button>
+
                 </div>
 
+                <!-- INTEREST INCOME -->
                 <div style="
-                    padding:18px;
+                    background:white;
                     border:1px solid #dbe3ee;
-                    border-radius:10px;
+                    border-radius:12px;
+                    padding:20px;
                 ">
+
                     <h3>🏦 Interest Income</h3>
+
                     <p style="color:#64748b;font-size:13px;">
-                        FD and Savings Account Interest.
+                        Automatically generated FD interest and TDS report.
                     </p>
-                    <button type="button" disabled
-                        style="padding:10px 16px;border:0;border-radius:7px;background:#e2e8f0;color:#64748b;">
-                        Coming Soon
+
+                    <button type="button" id="openInterestIncome"
+                        style="padding:10px 16px;background:#173b70;color:white;border:0;border-radius:7px;cursor:pointer;">
+                        View Interest Report
                     </button>
+
                 </div>
 
+                <!-- OTHER INCOME -->
                 <div style="
-                    padding:18px;
+                    background:white;
                     border:1px solid #dbe3ee;
-                    border-radius:10px;
+                    border-radius:12px;
+                    padding:20px;
                 ">
+
                     <h3>📊 Other Income</h3>
+
                     <p style="color:#64748b;font-size:13px;">
-                        Record other taxable income.
+                        Other taxable income and additional income sources.
                     </p>
-                    <button type="button" disabled
-                        style="padding:10px 16px;border:0;border-radius:7px;background:#e2e8f0;color:#64748b;">
-                        Coming Soon
-                    </button>
+
+                    
+<button type="button" id="openOtherIncome"
+    style="padding:10px 16px;background:#173b70;color:white;border:0;border-radius:7px;cursor:pointer;">
+    Manage Other Income
+</button>
+
+
                 </div>
 
             </div>
         </div>
 
-        <button
-            type="button"
-            id="backToTaxProfiles"
-            style="margin-top:22px;padding:10px 17px;border:1px solid #cbd5e1;border-radius:8px;background:white;cursor:pointer;">
-            ← Back to Tax Profiles
-        </button>
+        <div style="margin-top:22px;">
+            <button type="button" id="manageTaxProfiles"
+                style="
+                    padding:10px 17px;
+                    border:1px solid #cbd5e1;
+                    border-radius:8px;
+                    background:white;
+                    cursor:pointer;
+                ">
+                ⚙ Manage Tax Profiles
+            </button>
+        </div>
 
     </div>
 `;
 
-document.getElementById("backToTaxProfiles")
-    ?.addEventListener("click", renderTaxProfileSetup);
+// =====================================================
+// CONSOLIDATED INCOME SUMMARY
+// =====================================================
 
+async function loadITRConsolidatedSummary() {
+
+    const summaryContainer =
+        document.getElementById("itrSummaryContent");
+
+    const currentUser = auth.currentUser;
+
+    if (!summaryContainer || !currentUser) return;
+
+    const money = value =>
+        "₹" + Number(value || 0).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    summaryContainer.innerHTML =
+        `<p style="color:#64748b;">Loading income records...</p>`;
+
+    try {
+
+        const userRef = doc(db, "users", currentUser.uid);
+
+const profileDocRef = doc(
+    db,
+    "users",
+    currentUser.uid,
+    "taxProfiles",
+    profileDoc.id
+);
+
+        const [
+            salarySnapshot,
+            otherIncomeSnapshot,
+            transactionSnapshot,
+            tdsSnapshot,
+            fdSnapshot
+        ] = await Promise.all([
+
+getDocs(collection(profileDocRef, "salaryIncome")),
+
+getDocs(collection(profileDocRef, "otherIncome")),
+
+            getDocs(collection(userRef, "transactions")),
+
+            getDocs(collection(userRef, "tdsReceivables")),
+
+            getDocs(collection(userRef, "fixedDeposits"))
+
+        ]);
+
+        const selectedFY =
+            String(profile.financialYear || "").trim();
+
+        const fyStartMatch = selectedFY.match(/(\d{4})/);
+
+        if (!fyStartMatch) {
+            throw new Error("Invalid Financial Year in Tax Profile.");
+        }
+
+        const fyStartYear = Number(fyStartMatch[1]);
+
+        // ---------------------------------------------
+        // 1. SALARY INCOME
+        // ---------------------------------------------
+
+        let grossSalary = 0;
+        let exemptAllowances = 0;
+        let salaryTDS = 0;
+
+        salarySnapshot.forEach(item => {
+
+            const record = item.data() || {};
+
+            if (String(record.financialYear || "") !== selectedFY) {
+                return;
+            }
+
+            grossSalary += Number(record.grossSalary || 0);
+
+            exemptAllowances +=
+                Number(record.exemptAllowances || 0);
+
+            salaryTDS +=
+                Number(record.deductions?.tds || 0);
+
+        });
+
+        // Standard Deduction is applied ONCE for the FY
+        const standardDeduction =
+            profile.taxRegime === "old" ? 50000 : 75000;
+
+        const taxableSalary = Math.max(
+            0,
+            grossSalary -
+            exemptAllowances -
+            standardDeduction
+        );
+
+
+        // ---------------------------------------------
+        // 2. FD INTEREST INCOME
+        // ---------------------------------------------
+
+        const tdsByFD = new Map();
+
+        tdsSnapshot.forEach(item => {
+
+            const record = item.data() || {};
+
+            const key = record.fdId || item.id;
+
+            tdsByFD.set(String(key), record);
+
+        });
+
+        const fdById = new Map();
+
+        fdSnapshot.forEach(item => {
+
+            fdById.set(item.id, item.data() || {});
+
+        });
+
+        let grossInterestIncome = 0;
+        let interestTDS = 0;
+
+        transactionSnapshot.forEach(item => {
+
+            const transaction = item.data() || {};
+
+            if (
+                transaction.type !== "income" ||
+                String(transaction.category || "").toLowerCase() !== "interest" ||
+                transaction.linkedModule !== "fixedDeposit" ||
+                transaction.behavior !== "gross_interest_before_tds" ||
+                !transaction.linkedRecordId
+            ) {
+                return;
+            }
+
+            const fdId = String(transaction.linkedRecordId);
+
+            const tdsRecord = tdsByFD.get(fdId) || {};
+            const fdRecord = fdById.get(fdId) || {};
+
+            const settlementDate =
+                transaction.date ||
+                tdsRecord.settlementDate ||
+                fdRecord.settlementDate;
+
+            let dateObject = null;
+
+            if (settlementDate?.toDate) {
+                dateObject = settlementDate.toDate();
+            } else if (settlementDate instanceof Date) {
+                dateObject = settlementDate;
+            } else if (settlementDate) {
+                const parsed = new Date(settlementDate);
+
+                if (!Number.isNaN(parsed.getTime())) {
+                    dateObject = parsed;
+                }
+            }
+
+            if (!dateObject) return;
+
+            const rowFYStart =
+                dateObject.getMonth() >= 3
+                    ? dateObject.getFullYear()
+                    : dateObject.getFullYear() - 1;
+
+            if (rowFYStart !== fyStartYear) return;
+
+            const grossInterest = Number(
+                transaction.amount ??
+                tdsRecord.grossInterest ??
+                fdRecord.settlementGrossInterest ??
+                0
+            );
+
+            const tdsAmount = Number(
+                tdsRecord.tdsAmount ??
+                fdRecord.settlementTDS ??
+                0
+            );
+
+            grossInterestIncome += grossInterest;
+            interestTDS += tdsAmount;
+
+        });
+
+
+        // ---------------------------------------------
+        // 3. OTHER INCOME
+        // ---------------------------------------------
+
+        let taxableOtherIncome = 0;
+let otherIncomeTDS = 0;
+let capitalGainsIncome = 0;
+
+        otherIncomeSnapshot.forEach(item => {
+
+            const record = item.data() || {};
+
+            const incomeDate = record.incomeDate;
+
+            if (!incomeDate) return;
+
+            const dateObject = new Date(incomeDate);
+
+            if (Number.isNaN(dateObject.getTime())) return;
+
+            const rowFYStart =
+                dateObject.getMonth() >= 3
+                    ? dateObject.getFullYear()
+                    : dateObject.getFullYear() - 1;
+
+            if (rowFYStart !== fyStartYear) return;
+
+const recordTaxableAmount =
+    Number(record.taxableAmount || 0);
+
+taxableOtherIncome += recordTaxableAmount;
+
+if (
+    String(record.category || "")
+        .toLowerCase()
+        .includes("capital gain")
+) {
+    capitalGainsIncome += recordTaxableAmount;
+}
+            otherIncomeTDS +=
+                Number(record.tdsAmount || 0);
+
+        });
+
+
+        // ---------------------------------------------
+        // 4. FINAL CALCULATION
+        // ---------------------------------------------
+
+        const totalTaxableIncome =
+            taxableSalary +
+            grossInterestIncome +
+            taxableOtherIncome;
+
+        const totalTDS =
+            salaryTDS +
+            interestTDS +
+            otherIncomeTDS;
+
+
+// ---------------------------------------------
+// 5. TAX COMPUTATION — FY 2026-27 NEW REGIME
+// ---------------------------------------------
+
+let taxComputationHtml = "";
+
+if (
+    profile.taxRegime === "new" &&
+    selectedFY === "2026-27"
+) {
+
+    // Capital gains excluded from normal slab calculation
+    const normalRateIncome = Math.max(
+        0,
+        totalTaxableIncome - capitalGainsIncome
+    );
+
+    // New Regime slab rates for FY 2026-27
+    const newRegimeSlabs = [
+        { limit: 400000, rate: 0.00 },
+        { limit: 800000, rate: 0.05 },
+        { limit: 1200000, rate: 0.10 },
+        { limit: 1600000, rate: 0.15 },
+        { limit: 2000000, rate: 0.20 },
+        { limit: 2400000, rate: 0.25 },
+        { limit: Infinity, rate: 0.30 }
+    ];
+
+    let remainingIncome = normalRateIncome;
+    let previousLimit = 0;
+    let slabTax = 0;
+
+    newRegimeSlabs.forEach(slab => {
+
+        if (remainingIncome <= 0) return;
+
+        const taxableInSlab = Math.min(
+            remainingIncome,
+            slab.limit - previousLimit
+        );
+
+        slabTax += taxableInSlab * slab.rate;
+
+        remainingIncome -= taxableInSlab;
+        previousLimit = slab.limit;
+
+    });
+
+// Rebate eligibility
+// User-confirmed residential status: Resident
+const isResidentIndividual =
+    String(profile.residentialStatus || "resident")
+        .trim()
+        .toLowerCase() === "resident" &&
+    String(profile.taxpayerType || "")
+        .trim()
+        .toLowerCase() === "individual";
+    let rebate = 0;
+
+    if (isResidentIndividual && capitalGainsIncome === 0) {
+
+        if (totalTaxableIncome <= 1200000) {
+
+            rebate = Math.min(slabTax, 60000);
+
+        } else {
+
+            const marginalReliefLimit =
+                totalTaxableIncome - 1200000;
+
+            rebate = Math.min(
+                slabTax,
+                Math.max(
+                    0,
+                    slabTax - marginalReliefLimit
+                )
+            );
+
+        }
+    }
+
+    const taxAfterRebate = Math.max(
+        0,
+        slabTax - rebate
+    );
+
+    const cess = taxAfterRebate * 0.04;
+
+    const taxBeforeTDS =
+        taxAfterRebate + cess;
+
+    const taxAfterTDS =
+        taxBeforeTDS - totalTDS;
+
+    const hasCapitalGains =
+        capitalGainsIncome > 0;
+
+    const surchargeMayApply =
+        totalTaxableIncome > 5000000;
+
+    const canShowFinalBalance =
+        !hasCapitalGains && !surchargeMayApply;
+
+    const taxBalanceHtml = canShowFinalBalance
+        ? (
+            taxAfterTDS > 0
+                ? `<strong style="color:#b91c1c;">
+                    Estimated Tax Payable: ${money(taxAfterTDS)}
+                   </strong>`
+                : `<strong style="color:#047857;">
+                    Estimated Refund: ${money(Math.abs(taxAfterTDS))}
+                   </strong>`
+          )
+        : `<strong style="color:#92400e;">
+            Final payable / refund pending additional tax details
+           </strong>`;
+
+    const computationWarnings = [];
+
+    if (!isResidentIndividual) {
+        computationWarnings.push(
+            "Section 156 rebate has not been applied because the Tax Profile does not confirm Resident status."
+        );
+    }
+
+    if (hasCapitalGains) {
+        computationWarnings.push(
+            `Capital Gains of ${money(capitalGainsIncome)} are excluded from normal slab tax. Their applicable special-rate tax must be added separately.`
+        );
+    }
+
+    if (surchargeMayApply) {
+        computationWarnings.push(
+            "Income exceeds ₹50 lakh. Surcharge and marginal relief have not been computed."
+        );
+    }
+
+    taxComputationHtml = `
+        <section style="
+            margin-top:18px;
+            padding:20px;
+            background:#ffffff;
+            border:1px solid #cbd5e1;
+            border-radius:10px;
+        ">
+
+            <h3 style="margin:0 0 6px;color:#173b70;">
+                🧮 Estimated Tax Computation
+            </h3>
+
+            <p style="margin:0 0 16px;color:#64748b;font-size:12px;">
+                FY 2026-27 · New Tax Regime
+            </p>
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+                gap:12px;
+            ">
+
+                <div style="padding:13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                    <small>Income taxed at slab rates</small>
+                    <h3>${money(normalRateIncome)}</h3>
+                </div>
+
+                <div style="padding:13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                    <small>Tax before rebate</small>
+                    <h3>${money(slabTax)}</h3>
+                </div>
+
+                <div style="padding:13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                    <small>Section 156 rebate</small>
+                    <h3>${money(rebate)}</h3>
+                </div>
+
+                <div style="padding:13px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                    <small>Health & Education Cess (4%)</small>
+                    <h3>${money(cess)}</h3>
+                </div>
+
+            </div>
+
+            <div style="
+                margin-top:14px;
+                padding:15px;
+                background:#eff6ff;
+                border:1px solid #bfdbfe;
+                border-radius:8px;
+            ">
+
+                <div style="color:#1e40af;font-size:12px;">
+                    TAX AFTER CESS, BEFORE TDS
+                </div>
+
+                <h2 style="margin:6px 0;color:#173b70;">
+                    ${money(taxBeforeTDS)}
+                </h2>
+
+                <div style="font-size:13px;color:#475569;">
+                    Less: TDS Credit ${money(totalTDS)}
+                </div>
+
+                <div style="margin-top:10px;">
+                    ${taxBalanceHtml}
+                </div>
+
+            </div>
+
+            ${computationWarnings.length ? `
+                <div style="
+                    margin-top:13px;
+                    padding:12px;
+                    background:#fff7ed;
+                    border:1px solid #fed7aa;
+                    border-radius:8px;
+                    color:#9a3412;
+                    font-size:12px;
+                ">
+                    <strong>Important checks:</strong>
+                    <ul>
+                        ${computationWarnings.map(message =>
+                            `<li>${taxEscape(message)}</li>`
+                        ).join("")}
+                    </ul>
+                </div>
+            ` : ""}
+
+            <p style="
+                margin:12px 0 0;
+                color:#64748b;
+                font-size:11px;
+            ">
+                This is an estimate based on currently recorded income
+                and TDS. It does not replace a complete ITR computation.
+            </p>
+
+        </section>
+    `;
+
+} else {
+
+    taxComputationHtml = `
+        <section style="
+            margin-top:18px;
+            padding:18px;
+            background:#fff7ed;
+            border:1px solid #fed7aa;
+            border-radius:9px;
+            color:#9a3412;
+        ">
+            <h3>Tax computation not available for this profile yet</h3>
+            <p>
+                Current computation supports FY 2026-27
+                under the New Tax Regime.
+                Selected profile: FY ${taxEscape(selectedFY)}
+                / ${taxEscape(profile.taxRegime)}.
+            </p>
+        </section>
+    `;
+}
+
+        // ---------------------------------------------
+        // 5. DISPLAY SUMMARY
+        // ---------------------------------------------
+
+        summaryContainer.innerHTML = `
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                gap:14px;
+            ">
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Gross Salary
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(grossSalary)}
+                    </h3>
+                </div>
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Exempt Allowances
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(exemptAllowances)}
+                    </h3>
+                </div>
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Standard Deduction
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(standardDeduction)}
+                    </h3>
+                    <small style="color:#64748b;">
+                        ${profile.taxRegime === "old" ? "Old" : "New"} Regime
+                    </small>
+                </div>
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Taxable Salary
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(taxableSalary)}
+                    </h3>
+                </div>
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Gross FD Interest
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(grossInterestIncome)}
+                    </h3>
+                </div>
+
+                <div style="
+                    padding:16px;
+                    background:#f8fafc;
+                    border:1px solid #dbe3ee;
+                    border-radius:9px;
+                ">
+                    <div style="color:#64748b;font-size:13px;">
+                        Taxable Other Income
+                    </div>
+                    <h3 style="margin:8px 0 0;">
+                        ${money(taxableOtherIncome)}
+                    </h3>
+                </div>
+
+            </div>
+
+            <div style="
+                margin-top:18px;
+                padding:20px;
+                background:#eff6ff;
+                border:1px solid #bfdbfe;
+                border-radius:10px;
+            ">
+
+                <div style="font-size:14px;color:#1e40af;">
+                    TOTAL TAXABLE INCOME
+                </div>
+
+                <h2 style="
+                    margin:8px 0;
+                    color:#173b70;
+                    font-size:28px;
+                ">
+                    ${money(totalTaxableIncome)}
+                </h2>
+
+                <small style="color:#475569;">
+                    FY ${taxEscape(profile.financialYear)} |
+                    ${profile.taxRegime === "old" ? "Old" : "New"} Tax Regime
+                </small>
+
+            </div>
+
+            <div style="
+                margin-top:15px;
+                padding:17px;
+                background:#f8fafc;
+                border:1px solid #dbe3ee;
+                border-radius:9px;
+            ">
+
+                <div style="color:#64748b;font-size:13px;">
+                    Total TDS Credit
+                </div>
+
+                <h3 style="margin:7px 0;color:#b45309;">
+                    ${money(totalTDS)}
+                </h3>
+
+                <small style="color:#64748b;">
+                    Salary TDS + FD Interest TDS + Other Income TDS
+                </small>
+
+            </div>
+
+            ${taxComputationHtml}
+
+            <p style="
+                margin-top:14px;
+                font-size:12px;
+                color:#64748b;
+            ">
+                Note: This is an income summary, not the final tax payable.
+                Capital gains special tax rates, deductions, rebates and
+                other tax adjustments are not calculated here.
+                FD interest currently includes only qualifying FD settlement
+                transactions recorded in the system.
+            </p>
+
+        `;
+
+        console.log("ITR CONSOLIDATED SUMMARY:", {
+            financialYear: selectedFY,
+            taxRegime: profile.taxRegime,
+            grossSalary,
+            exemptAllowances,
+            standardDeduction,
+            taxableSalary,
+            grossInterestIncome,
+            taxableOtherIncome,
+            totalTaxableIncome,
+            totalTDS
+        });
+
+    } catch (error) {
+
+        console.error("ITR CONSOLIDATED SUMMARY ERROR:", error);
+
+        summaryContainer.innerHTML = `
+            <div style="
+                padding:14px;
+                background:#fff7ed;
+                border:1px solid #fed7aa;
+                border-radius:8px;
+                color:#9a3412;
+            ">
+                Unable to calculate income summary:
+                ${taxEscape(error.message)}
+            </div>
+        `;
+
+    }
+
+}
+
+loadITRConsolidatedSummary();
+
+// CHANGE TAX PROFILE
+document.getElementById("taxDashboardProfile")
+    ?.addEventListener("change", event => {
+
+        selectedTaxProfileId = event.target.value;
+
+        renderTaxProfileSetup();
+
+    });
+
+
+// MANAGE TAX PROFILES
+document.getElementById("manageTaxProfiles")
+    ?.addEventListener("click", () => {
+
+        showTaxProfileListOnly = true;
+
+        renderTaxProfileSetup();
+
+    });
+
+// =====================================================
+// INTEREST INCOME MODULE
+// Read-only report generated from existing FD Settlement records
+// Sources: transactions + tdsReceivables + fixedDeposits
+// No manual entry / no Firestore write from this report
+// =====================================================
+
+document.getElementById("openInterestIncome")
+    ?.addEventListener("click", async () => {
+
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            alert("Please login first.");
+            return;
+        }
+
+        const formatTaxAmount = (value) => new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value) || 0);
+
+        const getSettlementDate = (value) => {
+            if (!value) return null;
+            if (value && typeof value.toDate === "function") return value.toDate();
+            if (value instanceof Date) return value;
+
+            if (typeof value === "string") {
+                const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    return new Date(
+                        Number(match[1]),
+                        Number(match[2]) - 1,
+                        Number(match[3])
+                    );
+                }
+            }
+
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime()) ? null : parsed;
+        };
+
+        const displaySettlementDate = (value) => {
+            const date = getSettlementDate(value);
+
+            return date ? date.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }) : "—";
+        };
+
+        const selectedFY = String(profile.financialYear || "").trim();
+        const fyMatch = selectedFY.match(/(\d{4})/);
+        const fyStartYear = fyMatch ? Number(fyMatch[1]) : null;
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header"
+                    style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+
+                    <div>
+                        <h2>🏦 FD Interest Income Report</h2>
+                        <p>
+                            Automatically generated from FD Maturity Settlement |
+                            FY ${taxEscape(profile.financialYear)} |
+                            AY ${taxEscape(profile.assessmentYear)}
+                        </p>
+                    </div>
+
+                    <button type="button" id="refreshFDInterestReport"
+                        style="padding:9px 14px;border:1px solid #173b70;border-radius:7px;background:white;color:#173b70;cursor:pointer;">
+                        ↻ Refresh
+                    </button>
+                </div>
+
+                <div id="fdInterestReportMessage"
+                    style="margin:15px 0;color:#64748b;">
+                    Loading FD settlement records...
+                </div>
+
+                <div id="fdInterestReportContent"></div>
+
+                <button type="button" id="backToInterestDashboard"
+                    style="margin-top:22px;padding:10px 17px;border:1px solid #cbd5e1;border-radius:8px;background:white;cursor:pointer;">
+                    ← Back to Tax Profile
+                </button>
+
+            </div>
+        `;
+
+        const loadFDInterestReport = async () => {
+
+            const messageEl = document.getElementById("fdInterestReportMessage");
+            const contentEl = document.getElementById("fdInterestReportContent");
+
+            if (!messageEl || !contentEl) return;
+
+            messageEl.textContent = "Loading FD settlement records...";
+            contentEl.innerHTML = "";
+
+            try {
+
+                const userRef = doc(db, "users", currentUser.uid);
+
+                const [
+                    transactionSnapshot,
+                    tdsSnapshot,
+                    fdSnapshot
+                ] = await Promise.all([
+
+                    getDocs(collection(userRef, "transactions")),
+                    getDocs(collection(userRef, "tdsReceivables")),
+                    getDocs(collection(userRef, "fixedDeposits"))
+
+                ]);
+
+                // Map TDS records using FD ID
+                const tdsByFD = new Map();
+
+                tdsSnapshot.forEach((item) => {
+                    const record = item.data() || {};
+                    const key = record.fdId || item.id;
+
+                    tdsByFD.set(String(key), record);
+                });
+
+                // Map FD master records
+                const fdById = new Map();
+
+                fdSnapshot.forEach((item) => {
+                    fdById.set(item.id, item.data() || {});
+                });
+
+                const rows = [];
+
+                transactionSnapshot.forEach((item) => {
+
+                    const transaction = item.data() || {};
+
+                    // Only consider FD gross interest transactions
+                    if (
+                        transaction.type !== "income" ||
+                        String(transaction.category || "").toLowerCase() !== "interest" ||
+                        transaction.linkedModule !== "fixedDeposit" ||
+                        transaction.behavior !== "gross_interest_before_tds" ||
+                        !transaction.linkedRecordId
+                    ) {
+                        return;
+                    }
+
+                    const fdId = String(transaction.linkedRecordId);
+
+                    const tdsRecord = tdsByFD.get(fdId) || {};
+                    const fdRecord = fdById.get(fdId) || {};
+
+                    const settlementDate =
+                        transaction.date ||
+                        tdsRecord.settlementDate ||
+                        fdRecord.settlementDate;
+
+                    const dateObject = getSettlementDate(settlementDate);
+
+                    if (!dateObject) return;
+
+                    // Indian Financial Year: April to March
+                    if (fyStartYear !== null) {
+
+                        const rowFYStart = dateObject.getMonth() >= 3
+                            ? dateObject.getFullYear()
+                            : dateObject.getFullYear() - 1;
+
+                        if (rowFYStart !== fyStartYear) return;
+                    }
+
+                    const grossInterest = Number(
+                        transaction.amount ??
+                        tdsRecord.grossInterest ??
+                        fdRecord.settlementGrossInterest ??
+                        0
+                    );
+
+                    const tdsAmount = Number(
+                        tdsRecord.tdsAmount ??
+                        fdRecord.settlementTDS ??
+                        0
+                    );
+
+                    rows.push({
+
+                        id: item.id,
+                        date: settlementDate,
+                        dateObject,
+
+                        bank:
+                            tdsRecord.bankName ||
+                            fdRecord.bank ||
+                            transaction.partyName ||
+                            "—",
+
+                        fdName:
+                            fdRecord.name ||
+                            tdsRecord.fdName ||
+                            transaction.investmentName ||
+                            transaction.partyName ||
+                            "Fixed Deposit",
+
+                        grossInterest,
+                        tdsAmount,
+                        netInterest: grossInterest - tdsAmount
+
+                    });
+
+                });
+
+                // Latest settlement first
+                rows.sort((a, b) => b.dateObject - a.dateObject);
+
+                const totalGross = rows.reduce(
+                    (sum, row) => sum + row.grossInterest, 0
+                );
+
+                const totalTDS = rows.reduce(
+                    (sum, row) => sum + row.tdsAmount, 0
+                );
+
+                const totalNet = totalGross - totalTDS;
+
+                messageEl.textContent = rows.length
+                    ? `${rows.length} FD settlement record(s) found for FY ${selectedFY}.`
+                    : `No FD maturity interest settlements found for FY ${selectedFY}.`;
+
+                contentEl.innerHTML = `
+
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-top:16px;">
+
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:16px;">
+                            <div style="font-size:13px;color:#64748b;">Gross Interest</div>
+                            <h3 style="margin:8px 0 0;color:#173b70;">
+                                ${formatTaxAmount(totalGross)}
+                            </h3>
+                        </div>
+
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:16px;">
+                            <div style="font-size:13px;color:#64748b;">TDS Deducted</div>
+                            <h3 style="margin:8px 0 0;color:#b45309;">
+                                ${formatTaxAmount(totalTDS)}
+                            </h3>
+                        </div>
+
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:16px;">
+                            <div style="font-size:13px;color:#64748b;">Net Interest</div>
+                            <h3 style="margin:8px 0 0;color:#15803d;">
+                                ${formatTaxAmount(totalNet)}
+                            </h3>
+                        </div>
+
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:16px;">
+                            <div style="font-size:13px;color:#64748b;">Settled FDs</div>
+                            <h3 style="margin:8px 0 0;">
+                                ${rows.length}
+                            </h3>
+                        </div>
+
+                    </div>
+
+                    <div style="margin-top:20px;background:white;border:1px solid #dbe3ee;border-radius:10px;overflow:auto;">
+
+                        <div style="padding:16px 18px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;">FD Settlement Details</h3>
+                            <p style="margin:5px 0 0;color:#64748b;font-size:12px;">
+                                Read-only report. Values are fetched from existing FD Settlement records.
+                            </p>
+                        </div>
+
+                        <table style="width:100%;border-collapse:collapse;min-width:850px;font-size:13px;">
+
+                            <thead style="background:#f8fafc;">
+                                <tr>
+                                    <th style="padding:12px;text-align:left;">Settlement Date</th>
+                                    <th style="padding:12px;text-align:left;">Bank</th>
+                                    <th style="padding:12px;text-align:left;">FD Name / Reference</th>
+                                    <th style="padding:12px;text-align:right;">Gross Interest</th>
+                                    <th style="padding:12px;text-align:right;">TDS Deducted</th>
+                                    <th style="padding:12px;text-align:right;">Net Interest</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                ${rows.length ? rows.map(row => `
+
+                                    <tr style="border-top:1px solid #e2e8f0;">
+
+                                        <td style="padding:12px;white-space:nowrap;">
+                                            ${taxEscape(displaySettlementDate(row.date))}
+                                        </td>
+
+                                        <td style="padding:12px;">
+                                            ${taxEscape(row.bank)}
+                                        </td>
+
+                                        <td style="padding:12px;">
+                                            ${taxEscape(row.fdName)}
+                                        </td>
+
+                                        <td style="padding:12px;text-align:right;white-space:nowrap;">
+                                            ${formatTaxAmount(row.grossInterest)}
+                                        </td>
+
+                                        <td style="padding:12px;text-align:right;white-space:nowrap;">
+                                            ${formatTaxAmount(row.tdsAmount)}
+                                        </td>
+
+                                        <td style="padding:12px;text-align:right;white-space:nowrap;font-weight:600;">
+                                            ${formatTaxAmount(row.netInterest)}
+                                        </td>
+
+                                    </tr>
+
+                                `).join("") : `
+
+                                    <tr>
+                                        <td colspan="6" style="padding:25px;text-align:center;color:#64748b;">
+                                            No FD interest records available for this financial year.
+                                        </td>
+                                    </tr>
+
+                                `}
+
+                            </tbody>
+
+                            ${rows.length ? `
+
+                                <tfoot style="background:#f8fafc;font-weight:700;">
+                                    <tr>
+                                        <td colspan="3" style="padding:13px;text-align:right;">
+                                            Total
+                                        </td>
+
+                                        <td style="padding:13px;text-align:right;white-space:nowrap;">
+                                            ${formatTaxAmount(totalGross)}
+                                        </td>
+
+                                        <td style="padding:13px;text-align:right;white-space:nowrap;">
+                                            ${formatTaxAmount(totalTDS)}
+                                        </td>
+
+                                        <td style="padding:13px;text-align:right;white-space:nowrap;">
+                                            ${formatTaxAmount(totalNet)}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+
+                            ` : ""}
+
+                        </table>
+                    </div>
+                `;
+
+            } catch (error) {
+
+                console.error("FD Interest Income report error:", error);
+
+                messageEl.textContent = "Unable to load FD settlement records.";
+
+                contentEl.innerHTML = `
+                    <div style="padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;">
+                        ${taxEscape(error.message || "Please check Firebase permissions and try again.")}
+                    </div>
+                `;
+            }
+        };
+
+        document.getElementById("refreshFDInterestReport")
+            ?.addEventListener("click", loadFDInterestReport);
+
+        document.getElementById("backToInterestDashboard")
+            ?.addEventListener("click", renderTaxProfileSetup);
+
+        await loadFDInterestReport();
+
+    });
+
+
+// =====================================================
+// OTHER INCOME MODULE
+// Add / Edit / Delete / Saved Records
+// Firestore: taxProfiles/{profileId}/otherIncome
+// =====================================================
+
+document.getElementById("openOtherIncome")
+    ?.addEventListener("click", async () => {
+
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+            alert("Please login first.");
+            return;
+        }
+
+        let editingOtherIncomeId = null;
+
+        const otherIncomeCollection = collection(
+            db,
+            "users",
+            currentUser.uid,
+            "taxProfiles",
+            profileDoc.id,
+            "otherIncome"
+        );
+
+        const money = value =>
+            "₹" + Number(value || 0).toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const categories = [
+            "Rental Income",
+            "Dividend Income",
+            "Capital Gains",
+            "Business / Professional Income",
+            "Family Pension",
+            "Gifts / Other Sources",
+            "Any Other Income"
+        ];
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+
+                <div class="transaction-reports-header">
+                    <div>
+                        <h2>📊 Other Income</h2>
+                        <p>
+                            FY ${taxEscape(profile.financialYear)} |
+                            AY ${taxEscape(profile.assessmentYear)}
+                        </p>
+                    </div>
+                </div>
+
+                <form id="otherIncomeForm">
+
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:22px;margin-top:20px;">
+
+                        <h3>Income Details</h3>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px;">
+
+                            <label>
+                                Income Date *
+                                <input type="date" id="otherIncomeDate"
+                                    value="${today}" required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Income Category *
+                                <select id="otherIncomeCategory" required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                                    <option value="">Select Category</option>
+                                    ${categories.map(item =>
+                                        `<option value="${taxEscape(item)}">${taxEscape(item)}</option>`
+                                    ).join("")}
+                                </select>
+                            </label>
+
+                            <label>
+                                Payer / Income Source *
+                                <input type="text" id="otherIncomeSource"
+                                    placeholder="Enter payer or source" required
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Description
+                                <input type="text" id="otherIncomeDescription"
+                                    placeholder="Enter details"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Gross Income (₹) *
+                                <input type="number" id="otherIncomeGross"
+                                    min="0.01" step="0.01" required
+                                    placeholder="Enter gross income"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                TDS Deducted (₹)
+                                <input type="number" id="otherIncomeTDS"
+                                    min="0" step="0.01" value="0"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                            <label>
+                                Taxable Income (₹) *
+                                <input type="number" id="otherIncomeTaxable"
+                                    min="0" step="0.01" required
+                                    placeholder="Enter taxable amount"
+                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+                            </label>
+
+                        </div>
+
+                        <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                            Enter the taxable amount separately. TDS is tax already deducted, not a reduction in taxable income.
+                        </p>
+
+                    </div>
+
+                    <div id="otherIncomeMessage" style="margin-top:15px;"></div>
+
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;">
+
+                        <button type="submit" id="saveOtherIncomeBtn"
+                            style="padding:12px 22px;background:#173b70;color:white;border:0;border-radius:8px;cursor:pointer;">
+                            Save Income Details
+                        </button>
+
+                        <button type="button" id="cancelOtherIncome"
+                            style="padding:12px 22px;background:white;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </form>
+
+                <button type="button" id="backToOtherIncomeDashboard"
+                    style="margin-top:20px;padding:10px 17px;background:white;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
+                    ← Back to Tax Profile
+                </button>
+
+                <div style="background:white;border:1px solid #dbe3ee;border-radius:12px;padding:20px;margin-top:22px;">
+
+                    <h3>📋 Saved Other Income Records</h3>
+
+                    <div id="savedOtherIncomeRecords">
+                        <p style="color:#64748b;">Loading records...</p>
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        const form = document.getElementById("otherIncomeForm");
+        const message = document.getElementById("otherIncomeMessage");
+        const saveButton = document.getElementById("saveOtherIncomeBtn");
+        const recordsContainer = document.getElementById("savedOtherIncomeRecords");
+
+        async function loadOtherIncomeRecords() {
+
+            recordsContainer.innerHTML =
+                `<p style="color:#64748b;">Loading records...</p>`;
+
+            try {
+
+                const snapshot = await getDocs(otherIncomeCollection);
+
+                if (snapshot.empty) {
+                    recordsContainer.innerHTML = `
+                        <div style="padding:18px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:9px;color:#64748b;">
+                            No Other Income records saved yet.
+                        </div>
+                    `;
+                    return;
+                }
+
+                const records = snapshot.docs.map(item => ({
+                    id: item.id,
+                    ...item.data()
+                }));
+
+                records.sort((a, b) =>
+                    String(b.incomeDate || "").localeCompare(String(a.incomeDate || ""))
+                );
+
+                recordsContainer.innerHTML = records.map(record => `
+                    <div style="padding:16px;border:1px solid #dbe3ee;border-radius:10px;margin-top:12px;">
+
+                        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+
+                            <div>
+                                <strong>${taxEscape(record.category || "")}</strong>
+                                <div style="font-size:12px;color:#64748b;margin-top:5px;">
+                                    ${taxEscape(record.incomeDate || "")} |
+                                    ${taxEscape(record.source || "")}
+                                </div>
+                            </div>
+
+                            <div style="display:flex;gap:8px;">
+                                <button type="button" class="other-income-edit"
+                                    data-id="${taxEscape(record.id)}"
+                                    style="padding:7px 12px;background:#173b70;color:white;border:0;border-radius:6px;cursor:pointer;">
+                                    Edit
+                                </button>
+
+                                <button type="button" class="other-income-delete"
+                                    data-id="${taxEscape(record.id)}"
+                                    style="padding:7px 12px;background:white;color:#dc2626;border:1px solid #dc2626;border-radius:6px;cursor:pointer;">
+                                    Delete
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-top:15px;">
+
+                            <div>
+                                <small style="color:#64748b;">Gross Income</small>
+                                <div><strong>${money(record.grossAmount)}</strong></div>
+                            </div>
+
+                            <div>
+                                <small style="color:#64748b;">TDS</small>
+                                <div><strong>${money(record.tdsAmount)}</strong></div>
+                            </div>
+
+                            <div>
+                                <small style="color:#64748b;">Taxable Income</small>
+                                <div style="color:#047857;"><strong>${money(record.taxableAmount)}</strong></div>
+                            </div>
+
+                        </div>
+
+                        ${record.description ? `
+                            <p style="font-size:13px;color:#64748b;margin-top:12px;">
+                                ${taxEscape(record.description)}
+                            </p>
+                        ` : ""}
+
+                    </div>
+                `).join("");
+
+                recordsContainer.querySelectorAll(".other-income-edit")
+                    .forEach(button => {
+
+                        button.addEventListener("click", () => {
+
+                            const record = records.find(
+                                item => item.id === button.dataset.id
+                            );
+
+                            if (!record) return;
+
+                            editingOtherIncomeId = record.id;
+
+                            document.getElementById("otherIncomeDate").value =
+                                record.incomeDate || "";
+
+                            document.getElementById("otherIncomeCategory").value =
+                                record.category || "";
+
+                            document.getElementById("otherIncomeSource").value =
+                                record.source || "";
+
+                            document.getElementById("otherIncomeDescription").value =
+                                record.description || "";
+
+                            document.getElementById("otherIncomeGross").value =
+                                record.grossAmount ?? "";
+
+                            document.getElementById("otherIncomeTDS").value =
+                                record.tdsAmount ?? 0;
+
+                            document.getElementById("otherIncomeTaxable").value =
+                                record.taxableAmount ?? "";
+
+                            saveButton.textContent = "Update Income Details";
+
+                            message.innerHTML = `
+                                <span style="color:#1d4ed8;font-weight:600;">
+                                    Editing existing income record.
+                                </span>
+                            `;
+
+                            form.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start"
+                            });
+
+                        });
+
+                    });
+
+                recordsContainer.querySelectorAll(".other-income-delete")
+                    .forEach(button => {
+
+                        button.addEventListener("click", async () => {
+
+                            if (!confirm("Delete this Other Income record? This action cannot be undone.")) {
+                                return;
+                            }
+
+                            button.disabled = true;
+                            button.textContent = "Deleting...";
+
+                            try {
+
+                                await deleteDoc(
+                                    doc(otherIncomeCollection, button.dataset.id)
+                                );
+
+                                if (editingOtherIncomeId === button.dataset.id) {
+                                    resetOtherIncomeForm();
+                                }
+
+                                await loadOtherIncomeRecords();
+
+                            } catch (error) {
+
+                                console.error("OTHER INCOME DELETE ERROR:", error);
+
+                                alert("Unable to delete record: " + error.message);
+
+                                button.disabled = false;
+                                button.textContent = "Delete";
+                            }
+
+                        });
+
+                    });
+
+            } catch (error) {
+
+                console.error("OTHER INCOME LOAD ERROR:", error);
+
+                recordsContainer.innerHTML = `
+                    <p style="color:#b91c1c;">
+                        Unable to load records: ${taxEscape(error.message)}
+                    </p>
+                `;
+            }
+        }
+
+        function resetOtherIncomeForm() {
+
+            form.reset();
+
+            document.getElementById("otherIncomeDate").value = today;
+            document.getElementById("otherIncomeTDS").value = 0;
+
+            editingOtherIncomeId = null;
+
+            saveButton.disabled = false;
+            saveButton.textContent = "Save Income Details";
+
+            message.innerHTML = "";
+        }
+
+        form.addEventListener("submit", async event => {
+
+            event.preventDefault();
+
+            const incomeDate =
+                document.getElementById("otherIncomeDate").value;
+
+            const category =
+                document.getElementById("otherIncomeCategory").value;
+
+            const source =
+                document.getElementById("otherIncomeSource").value.trim();
+
+            const description =
+                document.getElementById("otherIncomeDescription").value.trim();
+
+            const grossAmount =
+                Number(document.getElementById("otherIncomeGross").value);
+
+            const tdsAmount =
+                Number(document.getElementById("otherIncomeTDS").value || 0);
+
+            const taxableAmount =
+                Number(document.getElementById("otherIncomeTaxable").value);
+
+            if (
+                !incomeDate || !category || !source ||
+                !Number.isFinite(grossAmount) || grossAmount <= 0 ||
+                !Number.isFinite(tdsAmount) || tdsAmount < 0 ||
+                !Number.isFinite(taxableAmount) || taxableAmount < 0 ||
+                taxableAmount > grossAmount
+            ) {
+                message.innerHTML = `
+                    <span style="color:#b91c1c;">
+                        Please enter valid details. Taxable Income cannot exceed Gross Income.
+                    </span>
+                `;
+                return;
+            }
+
+            const record = {
+                profileName: profile.profileName,
+                financialYear: profile.financialYear,
+                assessmentYear: profile.assessmentYear,
+                taxRegime: profile.taxRegime,
+
+                incomeDate,
+                category,
+                source,
+                description,
+
+                grossAmount,
+                tdsAmount,
+                taxableAmount,
+
+                updatedAt: serverTimestamp()
+            };
+
+            saveButton.disabled = true;
+            saveButton.textContent = "Saving...";
+
+            try {
+
+                if (editingOtherIncomeId) {
+
+                    await updateDoc(
+                        doc(otherIncomeCollection, editingOtherIncomeId),
+                        record
+                    );
+
+                } else {
+
+                    await addDoc(otherIncomeCollection, {
+                        ...record,
+                        createdAt: serverTimestamp()
+                    });
+
+                }
+
+                message.innerHTML = `
+                    <div style="padding:12px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;color:#047857;">
+                        <strong>Other Income ${editingOtherIncomeId ? "updated" : "saved"} successfully!</strong>
+                        <div style="margin-top:5px;">
+                            Taxable Income: ${money(taxableAmount)}
+                        </div>
+                    </div>
+                `;
+
+                resetOtherIncomeForm();
+                await loadOtherIncomeRecords();
+
+            } catch (error) {
+
+                console.error("OTHER INCOME SAVE ERROR:", error);
+
+                message.innerHTML = `
+                    <span style="color:#b91c1c;">
+                        Unable to save record: ${taxEscape(error.message)}
+                    </span>
+                `;
+
+            } finally {
+
+                saveButton.disabled = false;
+
+                if (!editingOtherIncomeId) {
+                    saveButton.textContent = "Save Income Details";
+                }
+            }
+
+        });
+
+        document.getElementById("cancelOtherIncome")
+            .addEventListener("click", resetOtherIncomeForm);
+
+        document.getElementById("backToOtherIncomeDashboard")
+            .addEventListener("click", renderTaxProfileSetup);
+
+        await loadOtherIncomeRecords();
+
+    });
 
 
 document.getElementById("openSalaryIncome")
@@ -10736,6 +12432,19 @@ function updateSalaryBankDifference() {
 
         actualCredit = Number(salaryCreditInput.value);
 
+} else {
+
+    if (salaryTransactionSelect.value === "__saved_snapshot__") {
+
+        if (!editingSalaryTransactionSnapshot) {
+            differenceElement.textContent = "Not selected";
+            differenceElement.style.color = "#64748b";
+            return;
+        }
+
+        actualCredit =
+            Number(editingSalaryTransactionSnapshot.amount || 0);
+
     } else {
 
         const selected = availableSalaryTransactions.find(
@@ -10750,7 +12459,7 @@ function updateSalaryBankDifference() {
 
         actualCredit = Number(selected.amount || 0);
     }
-
+}
     const difference = actualCredit - calculatedNet;
 
     differenceElement.textContent = salaryMoney(difference);
@@ -10907,6 +12616,7 @@ loadExistingSalaryTransactions();
 
 // Track the Salary Record currently being edited
 let editingSalaryRecordId = null;
+let editingSalaryTransactionSnapshot = null;
 
 document.getElementById("salaryIncomeForm")
     .addEventListener("submit", async event => {
@@ -11027,79 +12737,104 @@ document.getElementById("salaryIncomeForm")
             return;
         }
 
-        // BANK CREDIT DETAILS
-        const bankCreditMode =
-            document.getElementById("salaryBankCreditMode").value;
 
-        let actualBankCredit = null;
-        let matchingDifference = null;
-        let matchingStatus = "not-entered";
-        let matchedTransactionDetails = null;
+// BANK CREDIT DETAILS
 
-        if (bankCreditMode === "manual") {
+const bankCreditMode =
+    document.getElementById("salaryBankCreditMode").value;
 
-            const creditValue = salaryCreditInput.value;
+let actualBankCredit = null;
+let matchingDifference = null;
+let matchingStatus = "not-entered";
+let matchedTransactionDetails = null;
 
-            if (creditValue !== "") {
+if (bankCreditMode === "manual") {
 
-                actualBankCredit = Number(creditValue);
+    const creditValue = salaryCreditInput.value;
 
-                if (
-                    !Number.isFinite(actualBankCredit) ||
-                    actualBankCredit < 0
-                ) {
-                    message.innerHTML = `
-                        <span style="color:#b91c1c;">
-                            Please enter a valid Bank Credit amount.
-                        </span>
-                    `;
-                    return;
-                }
+    if (creditValue !== "") {
 
-                matchingDifference = actualBankCredit - netSalary;
+        actualBankCredit = Number(creditValue);
 
-                matchingStatus =
-                    matchingDifference === 0 ? "matched" : "difference";
-            }
-
-        } else {
-
-            const selectedTransaction =
-                availableSalaryTransactions.find(
-                    tx => tx.id === salaryTransactionSelect.value
-                );
-
-            if (!selectedTransaction) {
-                message.innerHTML = `
-                    <span style="color:#b91c1c;">
-                        Please select an existing Salary Transaction.
-                    </span>
-                `;
-                return;
-            }
-
-            actualBankCredit = Number(selectedTransaction.amount || 0);
-
-            matchingDifference = actualBankCredit - netSalary;
-
-            matchingStatus =
-                matchingDifference === 0 ? "matched" : "difference";
-
-            // Save a simple snapshot only. No transaction ID/link.
-            matchedTransactionDetails = {
-                date: selectedTransaction.date || "",
-                description:
-                    selectedTransaction.partyName ||
-                    selectedTransaction.notes ||
-                    selectedTransaction.description ||
-                    "Salary",
-                amount: actualBankCredit,
-                account:
-                    selectedTransaction.accountName ||
-                    selectedTransaction.account ||
-                    ""
-            };
+        if (
+            !Number.isFinite(actualBankCredit) ||
+            actualBankCredit < 0
+        ) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Please enter a valid Bank Credit amount.
+                </span>
+            `;
+            return;
         }
+
+        matchingDifference = actualBankCredit - netSalary;
+
+        matchingStatus =
+            matchingDifference === 0 ? "matched" : "difference";
+    }
+
+} else {
+
+    const selectedValue = salaryTransactionSelect.value;
+
+    if (selectedValue === "__saved_snapshot__") {
+
+        if (!editingSalaryTransactionSnapshot) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Saved transaction details are unavailable. Please select a transaction again.
+                </span>
+            `;
+            return;
+        }
+
+        matchedTransactionDetails =
+            editingSalaryTransactionSnapshot;
+
+        actualBankCredit =
+            Number(matchedTransactionDetails.amount || 0);
+
+    } else {
+
+        const selectedTransaction =
+            availableSalaryTransactions.find(
+                tx => tx.id === selectedValue
+            );
+
+        if (!selectedTransaction) {
+            message.innerHTML = `
+                <span style="color:#b91c1c;">
+                    Please select an existing Salary Transaction.
+                </span>
+            `;
+            return;
+        }
+
+        actualBankCredit =
+            Number(selectedTransaction.amount || 0);
+
+        matchedTransactionDetails = {
+            date: selectedTransaction.date || "",
+            description:
+                selectedTransaction.partyName ||
+                selectedTransaction.notes ||
+                selectedTransaction.description ||
+                "Salary",
+            amount: actualBankCredit,
+            account:
+                selectedTransaction.accountName ||
+                selectedTransaction.account ||
+                ""
+        };
+
+    }
+
+    matchingDifference = actualBankCredit - netSalary;
+
+    matchingStatus =
+        matchingDifference === 0 ? "matched" : "difference";
+}
 
         // SALARY RECORD
         const salaryRecord = {
@@ -11505,18 +13240,99 @@ container.querySelectorAll(".salary-edit-button")
             document.getElementById("salaryOtherDeductions").value =
                 deductions.otherDeductions ?? 0;
 
-            // Bank Credit
-            // Keep the saved amount as a manual snapshot.
-            // No Transaction ID or live link is created.
 
-            document.getElementById("salaryBankCreditMode").value =
-                "manual";
+// Bank Credit — Restore Previously Saved Mode
 
-            document.getElementById("salaryBankCreditMode")
-                .dispatchEvent(new Event("change"));
+const bankCreditMode =
+    document.getElementById("salaryBankCreditMode");
 
-            document.getElementById("salaryActualBankCredit").value =
-                record.actualBankCredit ?? "";
+const manualCreditInput =
+    document.getElementById("salaryActualBankCredit");
+
+const transactionSelect =
+    document.getElementById("salaryExistingTransaction");
+
+const transactionDetails =
+    document.getElementById("salarySelectedTransactionDetails");
+
+const savedMode =
+    record.bankCreditMode || "manual";
+
+// Restore saved mode
+bankCreditMode.value = savedMode;
+
+// Show the correct section
+bankCreditMode.dispatchEvent(new Event("change"));
+
+// Restore Manual Entry
+if (savedMode === "manual") {
+
+    manualCreditInput.value =
+        record.actualBankCredit ?? "";
+
+    transactionSelect.value = "";
+    transactionDetails.textContent = "";
+
+}
+
+// Restore Transaction Matching Snapshot
+else if (savedMode === "transaction") {
+
+    manualCreditInput.value = "";
+
+    const snapshot = record.matchedTransactionDetails;
+
+    editingSalaryTransactionSnapshot = snapshot || null;
+
+    if (snapshot) {
+
+        const snapshotLabel = [
+            snapshot.date || "Date unavailable",
+            snapshot.description || "Salary",
+            "₹" + Number(snapshot.amount || 0).toLocaleString("en-IN")
+        ].join(" | ");
+
+        const savedOption = document.createElement("option");
+
+        savedOption.value = "__saved_snapshot__";
+        savedOption.textContent =
+            "Previously Matched (Saved Snapshot): " + snapshotLabel;
+
+        transactionSelect.appendChild(savedOption);
+
+        transactionSelect.value = "__saved_snapshot__";
+
+        transactionDetails.innerHTML = `
+            <div style="padding:14px;background:#f8fafc;border:1px solid #dbe3ee;border-radius:8px;">
+                <strong>Previously Matched Transaction</strong>
+                <div style="margin-top:7px;">
+                    Date: ${taxEscape(snapshot.date || "—")}
+                </div>
+                <div>
+                    Description: ${taxEscape(snapshot.description || "Salary")}
+                </div>
+                <div>
+                    Account: ${taxEscape(snapshot.account || "—")}
+                </div>
+                <div>
+                    Amount: ${salaryMoney(snapshot.amount)}
+                </div>
+                <small style="color:#64748b;">
+                    Saved snapshot only — not a live transaction link.
+                </small>
+            </div>
+        `;
+
+    } else {
+
+        transactionSelect.value = "";
+        transactionDetails.textContent =
+            "Previous transaction snapshot is unavailable. Please select a transaction again.";
+    }
+
+}
+
+updateSalaryBankDifference();
 
             // Refresh calculated values
             document.getElementById("salaryGross")
@@ -11815,15 +13631,16 @@ profilesContainer.querySelectorAll("[data-tax-delete]")
                     await addDoc(
                         collection(db, "users", user.uid, "taxProfiles"),
                         {
-                            profileName,
-                            taxpayerType: "Individual",
-                            country: "India",
-                            financialYear,
-                            assessmentYear,
-                            taxRegime,
-                            createdAt: serverTimestamp(),
-                            updatedAt: serverTimestamp()
-                        }
+    profileName,
+    taxpayerType: "Individual",
+    residentialStatus: "resident",
+    country: "India",
+    financialYear,
+    assessmentYear,
+    taxRegime,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+}
                     );
 
                     message.innerHTML = `
@@ -11848,6 +13665,36 @@ profilesContainer.querySelectorAll("[data-tax-delete]")
                     saveButton.textContent = "Save Tax Profile";
                 }
             });
+
+
+        // =====================================================
+        // AUTOMATICALLY OPEN SELECTED TAX PROFILE DASHBOARD
+        // =====================================================
+
+        if (showTaxProfileListOnly) {
+
+            showTaxProfileListOnly = false;
+
+        } else if (snapshot.docs.length) {
+
+            const selectedExists = snapshot.docs.some(
+                item => item.id === selectedTaxProfileId
+            );
+
+            if (!selectedExists) {
+                selectedTaxProfileId = snapshot.docs[0].id;
+            }
+
+            const selectedOpenButton = Array.from(
+                profilesContainer.querySelectorAll("[data-tax-open]")
+            ).find(
+                item => item.dataset.taxOpen === selectedTaxProfileId
+            );
+
+            selectedOpenButton?.click();
+
+        }
+
     }
 
     renderTaxProfileSetup();
