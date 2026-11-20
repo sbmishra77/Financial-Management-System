@@ -20,6 +20,7 @@ import {
     getDocs,
     addDoc,
     doc,
+    setDoc,
     updateDoc,
     deleteDoc,
     serverTimestamp
@@ -10209,6 +10210,9 @@ profilesContainer.innerHTML = snapshot.docs.map(profileDoc => {
                 <div>
                     <h4 style="margin:0 0 8px;">
                         ${taxEscape(profile.profileName)}
+<span style="font-size:11px;color:#64748b;font-weight:normal;">
+    (ID: ${taxEscape(profileId.slice(-4))})
+</span>
                     </h4>
 
                     <div style="color:#64748b;font-size:13px;">
@@ -10318,7 +10322,8 @@ reportWorkArea.innerHTML = `
                             value="${taxEscape(item.id)}"
                             ${item.id === button.dataset.taxOpen ? "selected" : ""}>
                             ${taxEscape(itemProfile.profileName)}
-                            | FY ${taxEscape(itemProfile.financialYear)}
+| FY ${taxEscape(itemProfile.financialYear)}
+| ID: ${taxEscape(item.id.slice(-4))}
                         </option>
                     `;
                 }).join("")}
@@ -10561,6 +10566,17 @@ getDocs(collection(profileDocRef, "otherIncome")),
                 return;
             }
 
+            console.log("ITR SALARY DEBUG:", {
+                profileId: profileDoc.id,
+profileName: profile.profileName,
+    selectedFY,
+    recordId: item.id,
+    recordData: record,
+    grossSalary: record.grossSalary,
+    startMonth: record.salaryStartMonth,
+    endMonth: record.salaryEndMonth
+});
+
             grossSalary += Number(record.grossSalary || 0);
 
             exemptAllowances +=
@@ -10575,12 +10591,12 @@ getDocs(collection(profileDocRef, "otherIncome")),
         const standardDeduction =
             profile.taxRegime === "old" ? 50000 : 75000;
 
-        const taxableSalary = Math.max(
-            0,
-            grossSalary -
-            exemptAllowances -
-            standardDeduction
-        );
+        
+const taxableSalary = Math.max(
+    0,
+    grossSalary - standardDeduction
+);
+
 
 
         // ---------------------------------------------
@@ -11164,6 +11180,8 @@ const isResidentIndividual =
         `;
 
         console.log("ITR CONSOLIDATED SUMMARY:", {
+            profileId: profileDoc.id,
+            profileName: profile.profileName,
             financialYear: selectedFY,
             taxRegime: profile.taxRegime,
             grossSalary,
@@ -12164,6 +12182,43 @@ document.getElementById("openSalaryIncome")
 
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:18px;">
 
+<label>
+    Basic Salary (₹) *
+    <input type="number" id="salaryBasic" min="0" step="0.01"
+        required placeholder="Enter Basic Salary"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+<label>
+    DA Rate (%)
+    <input type="number" id="salaryDARate" min="0" step="0.01"
+        value="0" placeholder="Enter DA percentage"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+
+<label>
+    HRA Rate (%)
+    <input type="number" id="salaryHRARate" min="0" step="0.01"
+        value="10"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+<label>
+    HRA Amount (₹)
+    <input type="number" id="salaryHRAAmount" min="0" step="0.01"
+        value="0"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+
+<label>
+    DA Amount (₹)
+    <input type="number" id="salaryDAAmount" min="0" step="0.01"
+        value="0"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
                             <label>
                                 Gross Salary (₹) *
                                 <input type="number" id="salaryGross" min="0" step="0.01" required placeholder="Enter gross salary"
@@ -12215,11 +12270,20 @@ document.getElementById("openSalaryIncome")
                                     style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
                             </label>
 
-                            <label>
-                                Employee NPS (₹)
-                                <input type="number" id="salaryNPS" min="0" step="0.01" value="0" class="salary-deduction"
-                                    style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
-                            </label>
+                            
+<label>
+    Employee NPS – 10% (₹)
+    <input type="number" id="salaryNPS" min="0" step="0.01"
+        value="0" class="salary-deduction"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
+
+<label>
+    Employer NPS – 14% (₹)
+    <input type="number" id="salaryEmployerNPS" min="0" step="0.01"
+        value="0"
+        style="width:100%;padding:11px;margin-top:7px;border:1px solid #cbd5e1;border-radius:8px;">
+</label>
 
                             <label>
                                 Loan / Advance Recovery (₹)
@@ -12380,6 +12444,62 @@ document.getElementById("openSalaryIncome")
 
         const salaryDeductionInputs =
             document.querySelectorAll(".salary-deduction");
+
+
+const salaryBasicInput = document.getElementById("salaryBasic");
+const salaryDARateInput = document.getElementById("salaryDARate");
+const salaryDAAmountInput = document.getElementById("salaryDAAmount");
+const salaryNPSInput = document.getElementById("salaryNPS");
+const salaryEmployerNPSInput = document.getElementById("salaryEmployerNPS");
+
+function calculateNPSFromBasicDA() {
+
+    const basic = Number(salaryBasicInput.value || 0);
+    const daRate = Number(salaryDARateInput.value || 0);
+
+    // DA amount calculation
+    salaryDAAmountInput.value =
+        (basic * daRate / 100).toFixed(2);
+
+    const da = Number(salaryDAAmountInput.value || 0);
+    const basicDA = basic + da;
+
+    // HRA calculation
+const hraRate = Number(
+    document.getElementById("salaryHRARate").value || 0
+);
+
+document.getElementById("salaryHRAAmount").value =
+    (basic * hraRate / 100).toFixed(2);
+
+    // Employee contribution: 10%
+    salaryNPSInput.value =
+        (basicDA * 0.10).toFixed(2);
+
+    // Employer contribution: 14%
+    salaryEmployerNPSInput.value =
+        (basicDA * 0.14).toFixed(2);
+
+    calculateSalaryPreview();
+}
+
+salaryBasicInput.addEventListener("input", calculateNPSFromBasicDA);
+salaryDARateInput.addEventListener("input", calculateNPSFromBasicDA);
+document.getElementById("salaryHRARate")
+    .addEventListener("input", calculateNPSFromBasicDA);
+salaryDAAmountInput.addEventListener("input", () => {
+
+    const basicDA =
+        Number(salaryBasicInput.value || 0) +
+        Number(salaryDAAmountInput.value || 0);
+
+    salaryNPSInput.value = (basicDA * 0.10).toFixed(2);
+    salaryEmployerNPSInput.value = (basicDA * 0.14).toFixed(2);
+
+    calculateSalaryPreview();
+});
+
+salaryNPSInput.addEventListener("input", calculateSalaryPreview);
 
         const salaryCreditInput =
             document.getElementById("salaryActualBankCredit");
@@ -12618,6 +12738,225 @@ loadExistingSalaryTransactions();
 let editingSalaryRecordId = null;
 let editingSalaryTransactionSnapshot = null;
 
+
+// =====================================================
+// SYNC SALARY NPS TO ALL INVESTMENTS
+// =====================================================
+
+async function syncSalaryNPSInvestments(salaryRecordId, salaryRecord, userId) {
+
+    try {
+
+        const investmentCollection = collection(
+            db,
+            "users",
+            userId,
+            "investments"
+        );
+
+        const employeeNPS = Number(
+            salaryRecord.deductions?.employeeNPS || 0
+        );
+
+        const employerNPS = Number(
+            salaryRecord.employerNPS || 0
+        );
+
+        const investmentDate =
+            `${salaryRecord.salaryEndMonth || salaryRecord.salaryStartMonth || ""} (${salaryRecord.financialYear})`;
+
+        const syncOneNPS = async (type, amount, name) => {
+
+            const investmentId =
+                `salary_${salaryRecordId}_${type}_nps`;
+
+            const investmentRef = doc(
+                investmentCollection,
+                investmentId
+            );
+
+            if (amount > 0) {
+
+                await setDoc(investmentRef, {
+
+                    category: "NPS - National Pension Scheme",
+                    name: name,
+                    amount: amount,
+                    currentValue: amount,
+                    investmentDate: investmentDate,
+
+                    notes: `Auto-synced from Salary Record | ${salaryRecord.employerName || ""} | ${salaryRecord.financialYear}`,
+
+                    sourceType: "salaryNPS",
+                    salaryRecordId: salaryRecordId,
+                    npsType: type,
+                    isAutoSynced: true,
+
+                    updatedAt: serverTimestamp()
+
+                }, { merge: true });
+
+            } else {
+
+                await deleteDoc(investmentRef);
+
+            }
+
+        };
+
+        await Promise.all([
+
+            syncOneNPS(
+                "employee",
+                employeeNPS,
+                "NPS - Employee Contribution"
+            ),
+
+            syncOneNPS(
+                "employer",
+                employerNPS,
+                "NPS - Employer Contribution"
+            )
+
+        ]);
+
+        console.log("Salary NPS synced:", salaryRecordId);
+
+        return true;
+
+    } catch (error) {
+
+        console.error("Salary NPS Sync Error:", error);
+
+        alert(
+            "Salary saved, but NPS Investment sync failed. Please check console."
+        );
+
+        return false;
+
+    }
+
+}
+
+
+
+// =====================================================
+// PREFILL NEW SALARY ENTRY FROM PREVIOUS SAVED RECORD
+// =====================================================
+
+async function prefillSalaryFromPreviousRecord() {
+
+    // Never prefill while editing an existing salary record
+    if (editingSalaryRecordId) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    try {
+
+        const salarySnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "taxProfiles",
+                profileDoc.id,
+                "salaryIncome"
+            )
+        );
+
+        if (salarySnapshot.empty) return;
+
+        const records = salarySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Pick the most recently saved salary record
+        records.sort((a, b) => {
+            const getTime = record =>
+                record.createdAt?.toMillis?.() ||
+                (record.createdAt?.seconds * 1000) ||
+                record.updatedAt?.toMillis?.() ||
+                (record.updatedAt?.seconds * 1000) ||
+                0;
+
+            return getTime(b) - getTime(a);
+        });
+
+        const previous = records[0];
+        const deductions = previous.deductions || {};
+
+        // Helper to safely fill form fields
+        const setField = (id, value) => {
+            const field = document.getElementById(id);
+            if (field) field.value = value ?? "";
+        };
+
+        // Employer Details
+        setField("salaryEmployerName", previous.employerName);
+        setField("salaryEmployerTAN", previous.employerTAN);
+
+        // Salary Earnings
+        setField("salaryGross", previous.grossSalary);
+        setField("salaryExempt", previous.exemptAllowances);
+        setField("salaryBasic", previous.basicSalary);
+        setField("salaryDARate", previous.daRate);
+        setField("salaryDAAmount", previous.daAmount);
+        setField("salaryHRARate", previous.hraRate);
+        setField("salaryHRAAmount", previous.hraAmount);
+
+        // Salary Deductions
+        setField("salaryPF", deductions.employeePF);
+        setField("salaryProfessionalTax", deductions.professionalTax);
+        setField("salaryTDS", deductions.tds);
+        setField("salaryESI", deductions.employeeESI);
+        setField("salaryNPS", deductions.employeeNPS);
+        setField("salaryLoanRecovery", deductions.loanAdvanceRecovery);
+        setField("salaryGIS", deductions.gis);
+        setField("salaryOtherDeductions", deductions.otherDeductions);
+
+        // Employer NPS
+        setField("salaryEmployerNPS", previous.employerNPS);
+
+        // Do not carry forward Salary Month or Bank Credit
+        setField("salaryStartMonth", "");
+        setField("salaryEndMonth", "");
+        setField("salaryActualBankCredit", "");
+
+        setField("salaryBankCreditMode", "manual");
+        setField("salaryExistingTransaction", "");
+
+        const transactionDetails =
+            document.getElementById("salarySelectedTransactionDetails");
+
+        if (transactionDetails) {
+            transactionDetails.textContent = "";
+        }
+
+        editingSalaryTransactionSnapshot = null;
+
+        document.getElementById("salaryBankCreditMode")
+            .dispatchEvent(new Event("change"));
+
+        // Refresh preview without recalculating saved NPS values
+        calculateSalaryPreview();
+
+        document.getElementById("salaryFormMessage").innerHTML = `
+            <span style="color:#15803d;">
+                Previous salary details prefilled. Please review and update
+                this month's values before saving.
+            </span>
+        `;
+
+    } catch (error) {
+        console.error("Salary prefill error:", error);
+    }
+}
+
+// Automatically prefill when the salary form is opened
+prefillSalaryFromPreviousRecord();
+
 document.getElementById("salaryIncomeForm")
     .addEventListener("submit", async event => {
 
@@ -12639,6 +12978,31 @@ document.getElementById("salaryIncomeForm")
             `;
             return;
         }
+
+
+const basicSalary = Number(
+    document.getElementById("salaryBasic").value || 0
+);
+
+const hraRate = Number(
+    document.getElementById("salaryHRARate").value || 0
+);
+
+const hraAmount = Number(
+    document.getElementById("salaryHRAAmount").value || 0
+);
+
+const daRate = Number(
+    document.getElementById("salaryDARate").value || 0
+);
+
+const daAmount = Number(
+    document.getElementById("salaryDAAmount").value || 0
+);
+
+const employerNPS = Number(
+    document.getElementById("salaryEmployerNPS").value || 0
+);
 
         const gross = Number(
             document.getElementById("salaryGross").value
@@ -12851,6 +13215,14 @@ if (bankCreditMode === "manual") {
             salaryEndMonth: endMonth,
 
             grossSalary: gross,
+
+basicSalary,
+daRate,
+daAmount,
+employerNPS,
+hraRate,
+hraAmount,
+
             exemptAllowances: exempt,
 
             deductions: {
@@ -12882,7 +13254,10 @@ if (bankCreditMode === "manual") {
 
         try {
 
-            if (editingSalaryRecordId) {
+
+let savedSalaryRecordId = editingSalaryRecordId;
+
+if (editingSalaryRecordId) {
 
     const { createdAt, ...updateData } = salaryRecord;
 
@@ -12899,11 +13274,9 @@ if (bankCreditMode === "manual") {
         updateData
     );
 
-    editingSalaryRecordId = null;
-
 } else {
 
-    await addDoc(
+    const newSalaryDoc = await addDoc(
         collection(
             db,
             "users",
@@ -12915,7 +13288,19 @@ if (bankCreditMode === "manual") {
         salaryRecord
     );
 
+    savedSalaryRecordId = newSalaryDoc.id;
+
 }
+
+// Sync both NPS contributions to All Investments
+await syncSalaryNPSInvestments(
+    savedSalaryRecordId,
+    salaryRecord,
+    currentUser.uid
+);
+
+editingSalaryRecordId = null;
+
 
             message.innerHTML = `
                 <div style="
@@ -13038,6 +13423,63 @@ async function loadSavedSalaryRecords() {
                 id: item.id,
                 ...item.data()
             }));
+
+
+        // ==========================================
+        // BACKFILL OLD SALARY NPS INTO INVESTMENTS
+        // ==========================================
+
+        const investmentSnapshot = await getDocs(
+            collection(
+                db,
+                "users",
+                currentUser.uid,
+                "investments"
+            )
+        );
+
+        const existingNPSRecords = new Set();
+
+        investmentSnapshot.forEach(investmentDoc => {
+
+            const investment = investmentDoc.data();
+
+            if (
+                investment.sourceType === "salaryNPS" &&
+                investment.salaryRecordId
+            ) {
+                existingNPSRecords.add(
+                    `${investment.salaryRecordId}_${investment.npsType}`
+                );
+            }
+
+        });
+
+        for (const record of records) {
+
+            const employeeKey = `${record.id}_employee`;
+            const employerKey = `${record.id}_employer`;
+
+            const employeeExists =
+                existingNPSRecords.has(employeeKey);
+
+            const employerExists =
+                existingNPSRecords.has(employerKey);
+
+            // Sync only records where at least one NPS entry is missing
+            if (!employeeExists || !employerExists) {
+
+                await syncSalaryNPSInvestments(
+                    record.id,
+                    record,
+                    currentUser.uid
+                );
+
+            }
+
+        }
+
+        console.log("Old Salary NPS backfill completed.");
 
         records.sort((a, b) => {
             const aTime = a.createdAt?.seconds || 0;
@@ -13209,6 +13651,25 @@ container.querySelectorAll(".salary-edit-button")
                 record.salaryEndMonth || "";
 
             // Salary Earnings
+
+document.getElementById("salaryBasic").value =
+    record.basicSalary ?? "";
+
+document.getElementById("salaryDARate").value =
+    record.daRate ?? 0;
+
+document.getElementById("salaryDAAmount").value =
+    record.daAmount ?? 0;
+
+    document.getElementById("salaryHRARate").value =
+    record.hraRate ?? 10;
+
+document.getElementById("salaryHRAAmount").value =
+    record.hraAmount ?? 0;
+
+document.getElementById("salaryEmployerNPS").value =
+    record.employerNPS ?? 0;
+
             document.getElementById("salaryGross").value =
                 record.grossSalary ?? 0;
 
@@ -13230,6 +13691,9 @@ container.querySelectorAll(".salary-edit-button")
 
             document.getElementById("salaryNPS").value =
                 deductions.employeeNPS ?? 0;
+
+                document.getElementById("salaryDAAmount")
+    .dispatchEvent(new Event("input"));
 
             document.getElementById("salaryLoanRecovery").value =
                 deductions.loanAdvanceRecovery ?? 0;
@@ -13398,6 +13862,30 @@ container.querySelectorAll(".salary-delete-button")
 
             try {
 
+                // Remove linked auto-synced NPS investments
+await Promise.all([
+
+    deleteDoc(
+        doc(
+            db,
+            "users",
+            currentUser.uid,
+            "investments",
+            `salary_${recordId}_employee_nps`
+        )
+    ),
+
+    deleteDoc(
+        doc(
+            db,
+            "users",
+            currentUser.uid,
+            "investments",
+            `salary_${recordId}_employer_nps`
+        )
+    )
+
+]);
                 await deleteDoc(
                     doc(
                         db,
@@ -13622,6 +14110,30 @@ profilesContainer.querySelectorAll("[data-tax-delete]")
 
                 const assessmentYear =
                     `${startYear + 1}-${String(startYear + 2).slice(-2)}`;
+
+
+const normalizedName = profileName.trim().toLowerCase();
+
+const duplicateProfile = snapshot.docs.find(item => {
+    const existing = item.data();
+
+    return (
+        String(existing.profileName || "").trim().toLowerCase() === normalizedName &&
+        String(existing.financialYear || "") === financialYear &&
+        String(existing.taxRegime || "") === taxRegime
+    );
+});
+
+if (duplicateProfile) {
+    message.innerHTML = `
+        <span style="color:#b91c1c;font-weight:600;">
+            A Tax Profile with the same name, Financial Year
+            and Tax Regime already exists.
+            Please open or edit the existing profile.
+        </span>
+    `;
+    return;
+}
 
                 saveButton.disabled = true;
                 saveButton.textContent = "Saving...";
