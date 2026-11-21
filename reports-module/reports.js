@@ -10000,6 +10000,525 @@ if (backToReportsDashboardButton) {
 
 
 // =====================================================
+// TDS REPORTS
+// 1. TDS Summary
+// 2. FD-wise TDS Details
+// 3. Bank-wise TDS Summary
+// Source: transactions + tdsReceivables + fixedDeposits
+// =====================================================
+
+if (title === "TDS") {
+
+    hideReportModuleStartPage();
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>TDS Reports</h2>
+                <p>Please login first to view TDS reports.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const escapeTDS = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const formatTDSAmount = value =>
+        new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+
+    const parseTDSDate = value => {
+
+        if (!value) return null;
+
+        if (value?.toDate && typeof value.toDate === "function") {
+            return value.toDate();
+        }
+
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? null : value;
+        }
+
+        const parsed = new Date(value);
+
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const displayTDSDate = value => {
+
+        const date = parseTDSDate(value);
+
+        return date
+            ? date.toLocaleDateString("en-IN")
+            : "—";
+    };
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header">
+                <div>
+                    <h2>📑 TDS Reports</h2>
+                    <p>Review TDS deducted on FD settlements</p>
+                </div>
+
+                <button type="button" id="refreshTDSReports">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div style="
+                display:flex;
+                flex-wrap:wrap;
+                gap:10px;
+                margin:20px 0;
+            ">
+                <button type="button" data-tds-view="summary">
+                    TDS Summary
+                </button>
+
+                <button type="button" data-tds-view="fd">
+                    FD-wise TDS Details
+                </button>
+
+                <button type="button" data-tds-view="bank">
+                    Bank-wise TDS Summary
+                </button>
+            </div>
+
+            <div id="tdsReportMessage"
+                style="margin:12px 0;color:#64748b;font-size:13px;">
+                Loading TDS records...
+            </div>
+
+            <div id="tdsReportContent"></div>
+
+        </div>
+    `;
+
+    const messageEl =
+        document.getElementById("tdsReportMessage");
+
+    const contentEl =
+        document.getElementById("tdsReportContent");
+
+    let tdsRows = [];
+    let activeTDSView = "summary";
+
+    const renderTDSReport = () => {
+
+        const totalTDS = tdsRows.reduce(
+            (sum, row) => sum + row.tdsAmount, 0
+        );
+
+        const totalGross = tdsRows.reduce(
+            (sum, row) => sum + row.grossInterest, 0
+        );
+
+        const uniqueFDs = new Set(
+            tdsRows.map(row => row.fdId)
+        ).size;
+
+        if (activeTDSView === "summary") {
+
+            contentEl.innerHTML = `
+
+                <div style="
+                    display:grid;
+                    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                    gap:14px;
+                ">
+
+                    <div style="
+                        background:white;
+                        border:1px solid #dbe3ee;
+                        border-radius:10px;
+                        padding:18px;
+                    ">
+                        <div style="color:#64748b;font-size:13px;">
+                            Total TDS Deducted
+                        </div>
+                        <h2 style="color:#b45309;">
+                            ${formatTDSAmount(totalTDS)}
+                        </h2>
+                    </div>
+
+                    <div style="
+                        background:white;
+                        border:1px solid #dbe3ee;
+                        border-radius:10px;
+                        padding:18px;
+                    ">
+                        <div style="color:#64748b;font-size:13px;">
+                            Gross Interest
+                        </div>
+                        <h2>
+                            ${formatTDSAmount(totalGross)}
+                        </h2>
+                    </div>
+
+                    <div style="
+                        background:white;
+                        border:1px solid #dbe3ee;
+                        border-radius:10px;
+                        padding:18px;
+                    ">
+                        <div style="color:#64748b;font-size:13px;">
+                            FD Records
+                        </div>
+                        <h2>${uniqueFDs}</h2>
+                    </div>
+
+                </div>
+
+                <div style="
+                    margin-top:18px;
+                    padding:18px;
+                    background:white;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                ">
+                    <h3 style="margin-top:0;">TDS Overview</h3>
+                    <p style="color:#64748b;font-size:13px;">
+                        This summary is based on recorded FD settlement
+                        transactions and their linked TDS records.
+                    </p>
+                    <strong>Total TDS: ${formatTDSAmount(totalTDS)}</strong>
+                </div>
+            `;
+
+            return;
+        }
+
+        if (activeTDSView === "fd") {
+
+            contentEl.innerHTML = `
+
+                <div style="
+                    background:white;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                    overflow:auto;
+                ">
+
+                    <div style="padding:16px;">
+                        <h3 style="margin:0;">FD-wise TDS Details</h3>
+                    </div>
+
+                    <table style="
+                        width:100%;
+                        border-collapse:collapse;
+                        min-width:750px;
+                        font-size:13px;
+                    ">
+                        <thead style="background:#f8fafc;">
+                            <tr>
+                                <th style="padding:12px;text-align:left;">Date</th>
+                                <th style="padding:12px;text-align:left;">Bank</th>
+                                <th style="padding:12px;text-align:left;">FD Name</th>
+                                <th style="padding:12px;text-align:right;">Gross Interest</th>
+                                <th style="padding:12px;text-align:right;">TDS</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            ${tdsRows.length ? tdsRows.map(row => `
+                                <tr style="border-top:1px solid #e2e8f0;">
+                                    <td style="padding:12px;">
+                                        ${escapeTDS(displayTDSDate(row.date))}
+                                    </td>
+                                    <td style="padding:12px;">
+                                        ${escapeTDS(row.bank)}
+                                    </td>
+                                    <td style="padding:12px;">
+                                        ${escapeTDS(row.fdName)}
+                                    </td>
+                                    <td style="padding:12px;text-align:right;">
+                                        ${formatTDSAmount(row.grossInterest)}
+                                    </td>
+                                    <td style="padding:12px;text-align:right;font-weight:600;">
+                                        ${formatTDSAmount(row.tdsAmount)}
+                                    </td>
+                                </tr>
+                            `).join("") : `
+                                <tr>
+                                    <td colspan="5"
+                                        style="padding:25px;text-align:center;color:#64748b;">
+                                        No FD TDS records found.
+                                    </td>
+                                </tr>
+                            `}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            return;
+        }
+
+        if (activeTDSView === "bank") {
+
+            const bankMap = new Map();
+
+            tdsRows.forEach(row => {
+
+                const bank = row.bank || "Unknown Bank";
+
+                if (!bankMap.has(bank)) {
+                    bankMap.set(bank, {
+                        bank,
+                        records: 0,
+                        grossInterest: 0,
+                        tdsAmount: 0
+                    });
+                }
+
+                const item = bankMap.get(bank);
+
+                item.records++;
+                item.grossInterest += row.grossInterest;
+                item.tdsAmount += row.tdsAmount;
+
+            });
+
+            const bankRows = Array.from(bankMap.values())
+                .sort((a, b) => b.tdsAmount - a.tdsAmount);
+
+            contentEl.innerHTML = `
+
+                <div style="
+                    background:white;
+                    border:1px solid #dbe3ee;
+                    border-radius:10px;
+                    overflow:auto;
+                ">
+
+                    <div style="padding:16px;">
+                        <h3 style="margin:0;">Bank-wise TDS Summary</h3>
+                    </div>
+
+                    <table style="
+                        width:100%;
+                        border-collapse:collapse;
+                        min-width:650px;
+                        font-size:13px;
+                    ">
+                        <thead style="background:#f8fafc;">
+                            <tr>
+                                <th style="padding:12px;text-align:left;">Bank</th>
+                                <th style="padding:12px;text-align:center;">FD Records</th>
+                                <th style="padding:12px;text-align:right;">Gross Interest</th>
+                                <th style="padding:12px;text-align:right;">Total TDS</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            ${bankRows.length ? bankRows.map(row => `
+                                <tr style="border-top:1px solid #e2e8f0;">
+                                    <td style="padding:12px;">
+                                        ${escapeTDS(row.bank)}
+                                    </td>
+                                    <td style="padding:12px;text-align:center;">
+                                        ${row.records}
+                                    </td>
+                                    <td style="padding:12px;text-align:right;">
+                                        ${formatTDSAmount(row.grossInterest)}
+                                    </td>
+                                    <td style="padding:12px;text-align:right;font-weight:600;">
+                                        ${formatTDSAmount(row.tdsAmount)}
+                                    </td>
+                                </tr>
+                            `).join("") : `
+                                <tr>
+                                    <td colspan="4"
+                                        style="padding:25px;text-align:center;color:#64748b;">
+                                        No bank-wise TDS records found.
+                                    </td>
+                                </tr>
+                            `}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    };
+
+    const loadTDSReports = async () => {
+
+        messageEl.textContent = "Loading TDS records...";
+        contentEl.innerHTML = "";
+
+        try {
+
+            const userRef = doc(db, "users", user.uid);
+
+            const [
+                transactionSnapshot,
+                tdsSnapshot,
+                fdSnapshot
+            ] = await Promise.all([
+
+                getDocs(collection(userRef, "transactions")),
+                getDocs(collection(userRef, "tdsReceivables")),
+                getDocs(collection(userRef, "fixedDeposits"))
+
+            ]);
+
+            const tdsByFD = new Map();
+
+            tdsSnapshot.forEach(item => {
+
+                const record = item.data() || {};
+                const key = record.fdId || item.id;
+
+                tdsByFD.set(String(key), record);
+
+            });
+
+            const fdById = new Map();
+
+            fdSnapshot.forEach(item => {
+                fdById.set(item.id, item.data() || {});
+            });
+
+            const rows = [];
+
+            transactionSnapshot.forEach(item => {
+
+                const transaction = item.data() || {};
+
+                if (
+                    transaction.type !== "income" ||
+                    String(transaction.category || "").toLowerCase() !== "interest" ||
+                    transaction.linkedModule !== "fixedDeposit" ||
+                    transaction.behavior !== "gross_interest_before_tds" ||
+                    !transaction.linkedRecordId
+                ) {
+                    return;
+                }
+
+                const fdId = String(transaction.linkedRecordId);
+
+                const tdsRecord = tdsByFD.get(fdId) || {};
+                const fdRecord = fdById.get(fdId) || {};
+
+                const settlementDate =
+                    transaction.date ||
+                    tdsRecord.settlementDate ||
+                    fdRecord.settlementDate;
+
+                const dateObject = parseTDSDate(settlementDate);
+
+                if (!dateObject) return;
+
+                const grossInterest = Number(
+                    transaction.amount ??
+                    tdsRecord.grossInterest ??
+                    fdRecord.settlementGrossInterest ??
+                    0
+                );
+
+                const tdsAmount = Number(
+                    tdsRecord.tdsAmount ??
+                    fdRecord.settlementTDS ??
+                    0
+                );
+
+                if (tdsAmount <= 0) return;
+
+                rows.push({
+
+                    fdId,
+                    date: settlementDate,
+
+                    bank:
+                        tdsRecord.bankName ||
+                        fdRecord.bank ||
+                        transaction.partyName ||
+                        "—",
+
+                    fdName:
+                        fdRecord.name ||
+                        tdsRecord.fdName ||
+                        transaction.investmentName ||
+                        transaction.partyName ||
+                        "Fixed Deposit",
+
+                    grossInterest,
+                    tdsAmount
+
+                });
+
+            });
+
+            rows.sort((a, b) =>
+                (parseTDSDate(b.date) || 0) -
+                (parseTDSDate(a.date) || 0)
+            );
+
+            tdsRows = rows;
+
+            messageEl.textContent =
+                `${rows.length} FD TDS record(s) found.`;
+
+            renderTDSReport();
+
+        } catch (error) {
+
+            console.error("TDS Reports error:", error);
+
+            messageEl.textContent =
+                "Unable to load TDS records.";
+
+            contentEl.innerHTML = `
+                <div style="
+                    padding:16px;
+                    background:#fff7ed;
+                    border:1px solid #fed7aa;
+                    border-radius:8px;
+                    color:#9a3412;
+                ">
+                    ${escapeTDS(error.message || "Please try again.")}
+                </div>
+            `;
+        }
+    };
+
+    reportWorkArea
+        .querySelectorAll("[data-tds-view]")
+        .forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                activeTDSView = button.dataset.tdsView;
+
+                renderTDSReport();
+
+            });
+        });
+
+    document.getElementById("refreshTDSReports")
+        ?.addEventListener("click", loadTDSReports);
+
+    loadTDSReports();
+
+    return;
+}
+
+
+// =====================================================
 // INCOME TAX / ITR — PERSONAL TAX PROFILE SETUP
 // =====================================================
 
