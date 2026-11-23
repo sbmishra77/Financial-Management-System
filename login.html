@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#173b70">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In & Create Account — Wealth Manager</title>
@@ -34,20 +37,20 @@
 
         .auth-shell {
             width: 100%;
-            max-width: 1020px;
+            max-width: 1000px;
             background: var(--card-bg);
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
+            grid-template-columns: 1.12fr 1fr;
         }
 
-        /* LEFT BRAND BANNER */
+        /* LEFT BRAND BANNER MATCHING IMAGE 2 (WITHOUT USER NAME) */
         .auth-brand-panel {
             background: linear-gradient(135deg, #e9e4f5 0%, #e4f1ec 52%, #f4efe0 100%);
             color: #0f172a;
-            padding: 32px 28px;
+            padding: 34px 28px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -58,7 +61,7 @@
         .brand-top-block {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
         .brand-header-row {
@@ -118,12 +121,12 @@
             background: rgba(255, 255, 255, 0.72);
             border: 1px solid rgba(148, 163, 184, 0.45);
             border-radius: 16px;
-            padding: 16px 18px;
+            padding: 18px;
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
             gap: 16px;
-            min-height: 136px;
+            min-height: 148px;
             position: relative;
             overflow: hidden;
         }
@@ -200,8 +203,7 @@
             line-height: 1;
         }
 
-        /* DEVELOPER CARD MATCHING ATTACHED IMAGE */
-        .dev-badge-card {
+.dev-badge-card {
             background: linear-gradient(180deg, #07224d 0%, #051938 100%);
             border: 1px solid rgba(251, 191, 36, 0.35);
             border-radius: 14px;
@@ -209,7 +211,6 @@
             text-align: center;
             box-shadow: 0 8px 20px rgba(5, 25, 56, 0.25);
         }
-
         .dev-avatar-ring {
             width: 74px;
             height: 74px;
@@ -217,44 +218,21 @@
             border-radius: 50%;
             padding: 3px;
             background: linear-gradient(135deg, #fde68a, #f59e0b, #b45309);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
         .dev-avatar-img {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
             object-position: top center;
-            background: #1e293b;
             display: block;
         }
-
-        .dev-by-line {
-            font-size: 13.5px;
-            font-weight: 500;
-            color: #ffffff;
-            line-height: 1.35;
-        }
-
-        .dev-name-line {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            line-height: 1.35;
-            margin-bottom: 4px;
-        }
-
-        .dev-contact-line {
-            font-size: 12.5px;
-            font-weight: 700;
-            color: #facc15;
-            letter-spacing: 0.2px;
-            line-height: 1.4;
-        }
+        .dev-by-line { font-size: 13.5px; color: #ffffff; line-height: 1.35; }
+        .dev-name-line { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+        .dev-contact-line { font-size: 12.5px; font-weight: 700; color: #facc15; }
 
         /* RIGHT AUTH FORM PANEL */
         .auth-form-panel {
@@ -537,19 +515,15 @@
                 </div>
             </div>
 
-            <div class="dev-badge-card">
+<div class="dev-badge-card">
                 <div class="dev-avatar-ring">
-                    <img
-                        src="assets/sbm-profile.jpg"
-                        alt="Dr. S.B. Mishra"
-                        class="dev-avatar-img"
-                        onerror="this.style.display='none';"
-                    >
+                    <img src="assets/sbm-profile.jpg" alt="Dr. S.B. Mishra" class="dev-avatar-img" onerror="this.style.display='none';">
                 </div>
                 <div class="dev-by-line">Developed by</div>
                 <div class="dev-name-line">Dr. S.B. Mishra</div>
                 <div class="dev-contact-line">AG-II, SGSITS, Indore-8982086150</div>
             </div>
+            
         </section>
 
         <section class="auth-form-panel">
@@ -866,5 +840,12 @@
             }
         });
     </script>
+    <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
