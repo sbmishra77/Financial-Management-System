@@ -3,33 +3,811 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SBM Wealth Manager</title>
+    <title>Sign In & Create Account — Wealth Manager</title>
+    <style>
+        :root {
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #dbe3ee;
+            --primary: #1d4ed8;
+            --success: #15803d;
+            --error: #b91c1c;
+        }
 
-    <link rel="stylesheet" href="css/style.css">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Roboto, Arial, sans-serif;
+            background: radial-gradient(circle at top left, #1e3a8a 0%, #0f172a 55%, #090d16 100%);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-shell {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+            display: grid;
+            grid-template-columns: 1.12fr 1fr;
+        }
+
+        /* LEFT BRAND BANNER MATCHING IMAGE 2 (WITHOUT USER NAME) */
+        .auth-brand-panel {
+            background: linear-gradient(135deg, #e9e4f5 0%, #e4f1ec 52%, #f4efe0 100%);
+            color: #0f172a;
+            padding: 34px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 20px;
+            border-right: 1px solid #cbd5e1;
+        }
+
+        .brand-top-block {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .brand-header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .coins-cluster {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .gold-coin {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fde68a, #f59e0b 65%, #b45309 100%);
+            border: 2px solid #fef3c7;
+            box-shadow: 0 4px 10px rgba(180, 83, 9, 0.28);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            color: #fffbeb;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+        }
+
+        .gold-coin + .gold-coin {
+            margin-left: -10px;
+        }
+
+        .brand-title {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 0.4px;
+            line-height: 1.15;
+            background: linear-gradient(180deg, #fbbf24 0%, #d97706 75%, #92400e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.15));
+        }
+
+        .brand-subtitle-line {
+            font-size: 11.5px;
+            font-weight: 800;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+            color: #1e293b;
+            line-height: 1.45;
+        }
+
+        /* RISING MONEY GRAPHIC */
+        .rising-money-card {
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            min-height: 148px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rising-money-caption {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-self: flex-start;
+            z-index: 2;
+        }
+
+        .rising-money-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #173b70;
+        }
+
+        .rising-money-sub {
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.4;
+        }
+
+        .rising-chart-visual {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            position: relative;
+            padding-right: 22px;
+            flex-shrink: 0;
+        }
+
+        .rupee-coin {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fde68a, #f59e0b 65%, #b45309 100%);
+            border: 2px solid #fef3c7;
+            box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            margin-right: -4px;
+            z-index: 3;
+        }
+
+        .growth-bar {
+            width: 14px;
+            border-radius: 5px 5px 2px 2px;
+            background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 65%, #1e3a8a 100%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        }
+
+        .growth-bar.b1 { height: 34px; }
+        .growth-bar.b2 { height: 54px; }
+        .growth-bar.b3 { height: 76px; }
+        .growth-bar.b4 { height: 98px; }
+
+        .growth-arrow {
+            position: absolute;
+            right: 2px;
+            top: -4px;
+            font-size: 24px;
+            font-weight: 900;
+            color: #d97706;
+            line-height: 1;
+        }
+
+        .brand-footer {
+            padding-top: 14px;
+            border-top: 1px solid rgba(15, 23, 42, 0.14);
+            font-size: 12px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        /* RIGHT AUTH FORM PANEL */
+        .auth-form-panel {
+            padding: 34px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mode-tab {
+            border: none;
+            background: transparent;
+            padding: 10px 14px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-tab.is-active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+        }
+
+        .form-heading {
+            font-size: 21px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .form-caption {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 44px;
+            padding: 0 42px 0 13px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-main);
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-input.no-toggle {
+            padding-right: 13px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+        }
+
+        .toggle-password-btn {
+            position: absolute;
+            right: 10px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 6px;
+        }
+
+        .form-row-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 16px;
+            font-size: 12.5px;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 12.5px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            width: 100%;
+            height: 46px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+        }
+
+        .submit-btn:disabled,
+        .google-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 16px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        .google-btn {
+            width: 100%;
+            height: 45px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #ffffff;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .google-btn:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .status-box {
+            margin-top: 14px;
+            padding: 11px 13px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.45;
+            display: none;
+        }
+
+        .status-box.is-visible {
+            display: block;
+        }
+
+        .status-box.info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+
+        .status-box.success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: var(--success);
+        }
+
+        .status-box.error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--error);
+        }
+
+        .hidden-field {
+            display: none;
+        }
+
+        @media (max-width: 860px) {
+            .auth-shell {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+            }
+
+            .auth-brand-panel {
+                border-right: none;
+                border-bottom: 1px solid #cbd5e1;
+                padding: 24px 20px;
+            }
+
+            .auth-form-panel {
+                padding: 26px 20px;
+            }
+
+            .brand-title {
+                font-size: 24px;
+            }
+
+            .rising-money-card {
+                min-height: 120px;
+                padding: 14px;
+            }
+        }
+    </style>
 </head>
-
 <body>
+    <main class="auth-shell">
+        <section class="auth-brand-panel">
+            <div class="brand-top-block">
+                <div class="brand-header-row">
+                    <div class="coins-cluster" aria-hidden="true">
+                        <span class="gold-coin">$</span>
+                        <span class="gold-coin">₿</span>
+                        <span class="gold-coin">M</span>
+                    </div>
+                    <h1 class="brand-title">Wealth Manager</h1>
+                </div>
 
-    <div class="container">
+                <div class="brand-subtitle-line">
+                    YOUR PERSONAL FINANCIAL MANAGEMENT SYSTEM
+                </div>
+            </div>
 
-        <h1>SBM Wealth Manager</h1>
+            <div class="rising-money-card">
+                <div class="rising-money-caption">
+                    <span class="rising-money-badge">📈 Growing Wealth</span>
+                    <span class="rising-money-sub">Accounts, investments, goals &amp; reports in one place</span>
+                </div>
 
-        <h2>Secure Login</h2>
+                <div class="rising-chart-visual" aria-hidden="true">
+                    <span class="rupee-coin">₹</span>
+                    <span class="growth-bar b1"></span>
+                    <span class="growth-bar b2"></span>
+                    <span class="growth-bar b3"></span>
+                    <span class="growth-bar b4"></span>
+                    <span class="growth-arrow">↗</span>
+                </div>
+            </div>
 
-        <p>
-            Please sign in with your Google account
-        </p>
+            <div class="brand-footer">
+                Developed by Dr. S.B. Mishra<br>
+                AG-II, SGSITS, Indore-8982086150
+            </div>
+        </section>
 
-        <button id="googleLoginButton">
-            Sign in with Google
-        </button>
+        <section class="auth-form-panel">
+            <div class="mode-tabs" role="tablist" aria-label="Authentication mode">
+                <button type="button" id="signInTab" class="mode-tab is-active" role="tab" aria-selected="true">
+                    Sign In
+                </button>
+                <button type="button" id="signUpTab" class="mode-tab" role="tab" aria-selected="false">
+                    Create Account
+                </button>
+            </div>
 
-        <p id="loginStatus"></p>
+            <h2 id="formHeading" class="form-heading">Welcome back</h2>
+            <p id="formCaption" class="form-caption">Enter your credentials to access your financial dashboard.</p>
 
-    </div>
+            <form id="authForm" novalidate>
+                <div id="fullNameGroup" class="form-group hidden-field">
+                    <label for="fullName">Full Name</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="text"
+                            id="fullName"
+                            class="form-input no-toggle"
+                            placeholder="Enter your full name"
+                            autocomplete="name"
+                        >
+                    </div>
+                </div>
 
-    <script type="module" src="js/firebase.js"></script>
-    <script type="module" src="js/login.js"></script>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="email"
+                            id="email"
+                            class="form-input no-toggle"
+                            placeholder="name@example.com"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+                </div>
 
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="button" id="togglePasswordBtn" class="toggle-password-btn">
+                            Show
+                        </button>
+                    </div>
+                </div>
+
+                <div id="confirmPasswordGroup" class="form-group hidden-field">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <div class="input-wrapper">
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            class="form-input no-toggle"
+                            placeholder="Re-enter your password"
+                            autocomplete="new-password"
+                        >
+                    </div>
+                </div>
+
+                <div class="form-row-meta">
+                    <span id="passwordHint" style="color: var(--text-muted);">Minimum 6 characters</span>
+                    <button type="button" id="forgotPasswordBtn" class="link-btn">
+                        Forgot Password?
+                    </button>
+                </div>
+
+                <button type="submit" id="submitAuthBtn" class="submit-btn">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="divider">OR</div>
+
+            <button type="button" id="googleLoginButton" class="google-btn">
+                <span>Continue with Google</span>
+            </button>
+
+            <div id="loginStatus" class="status-box" role="status" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <script type="module">
+        async function loadFirebaseAuth() {
+            try {
+                return await import("./js/firebase.js");
+            } catch (_) {
+                return await import("../js/firebase.js");
+            }
+        }
+
+        const { auth } = await loadFirebaseAuth();
+
+        const {
+            onAuthStateChanged,
+            signInWithEmailAndPassword,
+            createUserWithEmailAndPassword,
+            updateProfile,
+            sendPasswordResetEmail,
+            GoogleAuthProvider,
+            signInWithPopup
+        } = await import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js");
+
+        const signInTab = document.getElementById("signInTab");
+        const signUpTab = document.getElementById("signUpTab");
+        const formHeading = document.getElementById("formHeading");
+        const formCaption = document.getElementById("formCaption");
+        const authForm = document.getElementById("authForm");
+        const fullNameGroup = document.getElementById("fullNameGroup");
+        const fullNameInput = document.getElementById("fullName");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
+        const confirmPasswordInput = document.getElementById("confirmPassword");
+        const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+        const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+        const submitAuthBtn = document.getElementById("submitAuthBtn");
+        const googleLoginButton = document.getElementById("googleLoginButton");
+        const statusBox = document.getElementById("loginStatus");
+
+        let mode = "signin";
+        let redirecting = false;
+
+        function setStatus(message, type = "info") {
+            statusBox.textContent = message;
+            statusBox.className = `status-box is-visible ${type}`;
+        }
+
+        function clearStatus() {
+            statusBox.textContent = "";
+            statusBox.className = "status-box";
+        }
+
+        function setBusy(busy) {
+            submitAuthBtn.disabled = busy;
+            googleLoginButton.disabled = busy;
+            forgotPasswordBtn.disabled = busy;
+            signInTab.disabled = busy;
+            signUpTab.disabled = busy;
+        }
+
+        function getFriendlyErrorMessage(err) {
+            const code = err?.code || "";
+            switch (code) {
+                case "auth/invalid-email":
+                    return "Please enter a valid email address.";
+                case "auth/invalid-credential":
+                case "auth/user-not-found":
+                case "auth/wrong-password":
+                    return "Invalid email or password.";
+                case "auth/email-already-in-use":
+                    return "An account with this email already exists. Please switch to Sign In.";
+                case "auth/weak-password":
+                    return "Password should be at least 6 characters long.";
+                case "auth/too-many-requests":
+                    return "Too many attempts. Please wait a moment and try again.";
+                case "auth/popup-closed-by-user":
+                    return "Google sign-in popup was closed before completion.";
+                case "auth/operation-not-allowed":
+                    return "Email/Password sign-in is not enabled yet in Firebase Console.";
+                default:
+                    return err?.message || "Authentication failed. Please try again.";
+            }
+        }
+
+        function switchMode(nextMode) {
+            mode = nextMode;
+            clearStatus();
+            const isSignUp = mode === "signup";
+
+            signInTab.classList.toggle("is-active", !isSignUp);
+            signUpTab.classList.toggle("is-active", isSignUp);
+            signInTab.setAttribute("aria-selected", String(!isSignUp));
+            signUpTab.setAttribute("aria-selected", String(isSignUp));
+
+            fullNameGroup.classList.toggle("hidden-field", !isSignUp);
+            confirmPasswordGroup.classList.toggle("hidden-field", !isSignUp);
+            forgotPasswordBtn.style.display = isSignUp ? "none" : "inline";
+
+            passwordInput.setAttribute("autocomplete", isSignUp ? "new-password" : "current-password");
+
+            if (isSignUp) {
+                formHeading.textContent = "Create your account";
+                formCaption.textContent = "Register with your name, email, and password.";
+                submitAuthBtn.textContent = "Create Account";
+            } else {
+                formHeading.textContent = "Welcome back";
+                formCaption.textContent = "Enter your credentials to access your financial dashboard.";
+                submitAuthBtn.textContent = "Sign In";
+            }
+        }
+
+        function goToDashboard() {
+            if (redirecting) return;
+            redirecting = true;
+            setStatus("Signed in successfully. Redirecting to dashboard...", "success");
+            window.location.replace("./index.html");
+        }
+
+        signInTab.addEventListener("click", () => switchMode("signin"));
+        signUpTab.addEventListener("click", () => switchMode("signup"));
+
+        togglePasswordBtn.addEventListener("click", () => {
+            const showing = passwordInput.type === "text";
+            passwordInput.type = showing ? "password" : "text";
+            togglePasswordBtn.textContent = showing ? "Show" : "Hide";
+        });
+
+        forgotPasswordBtn.addEventListener("click", async () => {
+            clearStatus();
+            const email = emailInput.value.trim();
+            if (!email) {
+                setStatus("Please enter your email address first to reset password.", "error");
+                emailInput.focus();
+                return;
+            }
+
+            setBusy(true);
+            try {
+                await sendPasswordResetEmail(auth, email);
+                setStatus(`Password reset link sent to ${email}. Check your inbox or spam folder.`, "success");
+            } catch (err) {
+                setStatus(getFriendlyErrorMessage(err), "error");
+            } finally {
+                setBusy(false);
+            }
+        });
+
+        authForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            clearStatus();
+
+            const fullName = fullNameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+
+            if (!email) {
+                setStatus("Please enter your email address.", "error");
+                emailInput.focus();
+                return;
+            }
+
+            if (!password || password.length < 6) {
+                setStatus("Password must be at least 6 characters.", "error");
+                passwordInput.focus();
+                return;
+            }
+
+            if (mode === "signup") {
+                if (!fullName) {
+                    setStatus("Please enter your full name.", "error");
+                    fullNameInput.focus();
+                    return;
+                }
+                if (password !== confirmPassword) {
+                    setStatus("Password and Confirm Password do not match.", "error");
+                    confirmPasswordInput.focus();
+                    return;
+                }
+            }
+
+            setBusy(true);
+            try {
+                if (mode === "signup") {
+                    setStatus("Creating your account...", "info");
+                    const cred = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(cred.user, { displayName: fullName });
+                } else {
+                    setStatus("Signing in...", "info");
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                goToDashboard();
+            } catch (err) {
+                setStatus(getFriendlyErrorMessage(err), "error");
+            } finally {
+                if (!redirecting) setBusy(false);
+            }
+        });
+
+        googleLoginButton.addEventListener("click", async () => {
+            clearStatus();
+            setBusy(true);
+            setStatus("Connecting to Google...", "info");
+
+            try {
+                const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: "select_account" });
+                await signInWithPopup(auth, provider);
+                goToDashboard();
+            } catch (err) {
+                setStatus(getFriendlyErrorMessage(err), "error");
+            } finally {
+                if (!redirecting) setBusy(false);
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && !redirecting) {
+                goToDashboard();
+            }
+        });
+    </script>
 </body>
 </html>
