@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#173b70">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In & Create Account — Wealth Manager</title>
@@ -200,13 +203,36 @@
             line-height: 1;
         }
 
-        .brand-footer {
-            padding-top: 14px;
-            border-top: 1px solid rgba(15, 23, 42, 0.14);
-            font-size: 12px;
-            color: #334155;
-            line-height: 1.5;
+.dev-badge-card {
+            background: linear-gradient(180deg, #07224d 0%, #051938 100%);
+            border: 1px solid rgba(251, 191, 36, 0.35);
+            border-radius: 14px;
+            padding: 16px 14px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(5, 25, 56, 0.25);
         }
+        .dev-avatar-ring {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(135deg, #fde68a, #f59e0b, #b45309);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dev-avatar-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+        }
+        .dev-by-line { font-size: 13.5px; color: #ffffff; line-height: 1.35; }
+        .dev-name-line { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+        .dev-contact-line { font-size: 12.5px; font-weight: 700; color: #facc15; }
 
         /* RIGHT AUTH FORM PANEL */
         .auth-form-panel {
@@ -489,10 +515,15 @@
                 </div>
             </div>
 
-            <div class="brand-footer">
-                Developed by Dr. S.B. Mishra<br>
-                AG-II, SGSITS, Indore-8982086150
+<div class="dev-badge-card">
+                <div class="dev-avatar-ring">
+                    <img src="assets/sbm-profile.jpg" alt="Dr. S.B. Mishra" class="dev-avatar-img" onerror="this.style.display='none';">
+                </div>
+                <div class="dev-by-line">Developed by</div>
+                <div class="dev-name-line">Dr. S.B. Mishra</div>
+                <div class="dev-contact-line">AG-II, SGSITS, Indore-8982086150</div>
             </div>
+            
         </section>
 
         <section class="auth-form-panel">
@@ -809,5 +840,12 @@
             }
         });
     </script>
+    <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>
