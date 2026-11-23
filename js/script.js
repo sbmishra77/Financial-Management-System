@@ -13512,57 +13512,18 @@ button.style.whiteSpace =
             button.style.boxShadow =
                 "0 2px 5px rgba(0,0,0,0.12)";
 
-            // Button click
-            button.addEventListener(
-                "click",
-                function (event) {
+// Button click — सभी मॉड्यूल कार्ड्स के लिए ग्लोबल लिंक
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
 
-                    event.preventDefault();
+                const category = button.dataset.reportCategory;
+                if (!category) return;
 
-                    event.stopPropagation();
-
-                    const category =
-                        button.dataset.reportCategory;
-
-                    console.log(
-                        "📊 DASHBOARD REPORT:",
-                        category
-                    );
-
-button.addEventListener(
-    "click",
-    function (event) {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const category =
-            button.dataset.reportCategory;
-
-        console.log(
-            "📊 DASHBOARD REPORT:",
-            category
-        );
-
-        // अभी केवल Transactions Reports बनी है
-        if (category !== "transactions") {
-
-            console.log(
-                "⏳ Report अभी तैयार नहीं है:",
-                category
-            );
-
-            return;
-        }
-
-        // Transactions Reports
-        window.location.href =
-            "reports-module/reports.html?category=transactions";
-    }
-);
-                }
-            );
-
+                window.location.href =
+                    `reports-module/reports.html?category=${encodeURIComponent(category)}`;
+            });
+            
             document.body.appendChild(
                 button
             );

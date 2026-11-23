@@ -15,6 +15,35 @@
         rel="stylesheet"
         href="reports.css">
 
+        <style>
+    html.direct-report-mode .reports-header,
+    html.direct-report-mode .reports-search-section,
+    html.direct-report-mode .reports-categories-section {
+        display: none !important;
+    }
+    html.fg-direct-loading #reportWorkArea {
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+    html.fg-direct-ready #reportWorkArea {
+        opacity: 1 !important;
+        visibility: visible !important;
+        transition: opacity 0.12s ease;
+    }
+</style>
+<script>
+    (function () {
+        const cat = (new URLSearchParams(window.location.search).get("category") || "").toLowerCase();
+        if (cat) {
+            document.documentElement.classList.add("direct-report-mode");
+        }
+        if (cat === "financialgoals" || cat === "financial_goals" || cat === "myfinancialgoals") {
+            document.documentElement.classList.add("fg-direct-loading");
+        }
+    })();
+</script>
+
+
 </head>
 
 
@@ -523,6 +552,25 @@
         </div>
     </button>
 
+    <!-- FINANCIAL GOALS -->
+    <button type="button"
+        class="report-category-card report-card-networth">
+
+        <div class="report-category-icon">🎯</div>
+
+        <div class="report-category-title">
+            Financial Goals Reports
+        </div>
+
+        <div class="report-category-description">
+            Savings targets, goal progress, remaining amount and achievements
+        </div>
+
+        <div class="report-category-meta">
+            <span>Goal Reports</span>
+            <span>→</span>
+        </div>
+    </button>
 </div>
         </section>
 

@@ -7039,6 +7039,7 @@ if (
 // =================================
 
 if (
+    !editingTransactionId &&
     transactionBehavior === "money_out_non_expense" &&
     type === "expense" &&
     (

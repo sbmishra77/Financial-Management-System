@@ -41,12 +41,181 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentUser = null;
 
-
     // =====================================================
+    // MY FINANCIAL GOALS REPORT
+    // =====================================================
+
+    async function renderFinancialGoalsReport() {
+        hideReportModuleStartPage();
+        window.activeReportCategory = "Financial Goals";
+
+        const backBtn = document.getElementById("backToReportsDashboardButton");
+        if (backBtn) backBtn.style.display = "inline-block";
+
+        const user = auth.currentUser || currentUser;
+        if (!user) {
+            reportWorkArea.innerHTML = `
+                <div class="transaction-reports-container">
+                    <h2>🎯 Financial Goals Report</h2>
+                    <p>Please login first to view Financial Goals report.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const esc = v => String(v ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[ch]);
+
+        const fmt = v => new Intl.NumberFormat("en-IN", {
+            style: "currency", currency: "INR", maximumFractionDigits: 2
+        }).format(Number(v || 0));
+
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <div class="transaction-reports-header fs-dashboard-header">
+                    <div>
+                        <h2>🎯 Financial Goals Report</h2>
+                        <p>Savings targets, progress, remaining amounts and goal timeline</p>
+                    </div>
+                    <button type="button" id="refreshFGReport">↻ Refresh</button>
+                </div>
+                <div id="fgReportContent" style="margin-top:16px;color:#64748b;">
+                    Loading Financial Goals...
+                </div>
+            </div>
+        `;
+
+        const loadFG = async () => {
+            const contentEl = document.getElementById("fgReportContent");
+            if (!contentEl) return;
+
+            try {
+                const snap = await getDocs(collection(db, "users", user.uid, "financialGoals"));
+                let totalTarget = 0, totalSaved = 0, totalRemaining = 0;
+                const rows = [];
+
+                snap.docs.forEach(d => {
+                    const g = d.data() || {};
+                    const target = Number(g.targetAmount || 0);
+                    const initialSaved = Number(g.savedAmount || 0);
+                    const monthlyPlans = Array.isArray(g.monthlyPlans) ? g.monthlyPlans : [];
+                    const monthlyActual = monthlyPlans.reduce((s, p) => s + Number((p && p.actual) || 0), 0);
+
+                    const saved = Math.min(initialSaved + monthlyActual, target);
+                    const remaining = Math.max(target - saved, 0);
+                    const progress = target > 0 ? ((saved / target) * 100) : 0;
+                    const status = remaining <= 0 && target > 0 ? "Achieved" : progress > 0 ? "In Progress" : "Not Started";
+
+                    totalTarget += target;
+                    totalSaved += saved;
+                    totalRemaining += remaining;
+
+                    rows.push({
+                        name: g.name || "Unnamed Goal",
+                        priority: g.priority ? String(g.priority).toUpperCase() : "—",
+                        targetDate: g.targetDate ? formatDateDisplay(g.targetDate) : "—",
+                        target,
+                        saved,
+                        remaining,
+                        progress,
+                        status
+                    });
+                });
+
+                const overallPct = totalTarget > 0 ? ((totalSaved / totalTarget) * 100).toFixed(2) + "%" : "0.00%";
+
+                contentEl.innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                            <div style="color:#64748b;font-size:13px;">Total Goals</div>
+                            <h2 style="color:#173b70;margin-bottom:0;">${rows.length}</h2>
+                        </div>
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                            <div style="color:#64748b;font-size:13px;">Total Target Amount</div>
+                            <h2 style="color:#0f172a;margin-bottom:0;">${fmt(totalTarget)}</h2>
+                        </div>
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                            <div style="color:#64748b;font-size:13px;">Total Saved</div>
+                            <h2 style="color:#15803d;margin-bottom:0;">${fmt(totalSaved)}</h2>
+                        </div>
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                            <div style="color:#64748b;font-size:13px;">Remaining Amount</div>
+                            <h2 style="color:#b45309;margin-bottom:0;">${fmt(totalRemaining)}</h2>
+                        </div>
+                        <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                            <div style="color:#64748b;font-size:13px;">Overall Progress</div>
+                            <h2 style="color:#1d4ed8;margin-bottom:0;">${overallPct}</h2>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top:24px;color:#173b70;">Goal-wise Progress Register</h3>
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;overflow:auto;margin-top:12px;">
+                        <table class="report-export-table" style="width:100%;border-collapse:collapse;min-width:750px;font-size:13px;">
+                            <thead style="background:#f8fafc;">
+                                <tr>
+                                    <th style="padding:12px;text-align:left;">Goal Name</th>
+                                    <th style="padding:12px;text-align:center;">Priority</th>
+                                    <th style="padding:12px;text-align:center;">Target Date</th>
+                                    <th style="padding:12px;text-align:right;">Target Amount</th>
+                                    <th style="padding:12px;text-align:right;">Saved Amount</th>
+                                    <th style="padding:12px;text-align:right;">Remaining</th>
+                                    <th style="padding:12px;text-align:right;">Progress %</th>
+                                    <th style="padding:12px;text-align:center;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.length ? rows.map(r => `
+                                    <tr style="border-top:1px solid #e2e8f0;">
+                                        <td style="padding:12px;font-weight:600;">${esc(r.name)}</td>
+                                        <td style="padding:12px;text-align:center;">${esc(r.priority)}</td>
+                                        <td style="padding:12px;text-align:center;">${esc(r.targetDate)}</td>
+                                        <td style="padding:12px;text-align:right;">${fmt(r.target)}</td>
+                                        <td style="padding:12px;text-align:right;color:#15803d;font-weight:600;">${fmt(r.saved)}</td>
+                                        <td style="padding:12px;text-align:right;color:#b45309;">${fmt(r.remaining)}</td>
+                                        <td style="padding:12px;text-align:right;font-weight:700;">${r.progress.toFixed(1)}%</td>
+                                        <td style="padding:12px;text-align:center;font-weight:600;color:${r.status === "Achieved" ? "#15803d" : "#1d4ed8"};">${r.status}</td>
+                                    </tr>
+                                `).join("") : `
+                                    <tr>
+                                        <td colspan="8" style="padding:25px;text-align:center;color:#64748b;">
+                                            No Financial Goals added yet.
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (err) {
+                console.error("Financial Goals Report Error:", err);
+                contentEl.innerHTML = `<div style="color:#b91c1c;">Unable to load Financial Goals report.</div>`;
+            }
+        };
+
+        document.getElementById("refreshFGReport")?.addEventListener("click", loadFG);
+        await loadFG();
+    }
+
+// =====================================================
     // FIREBASE AUTH STATE
     // =====================================================
 
-    onAuthStateChanged(auth, (user) => {
+    let urlCategoryOpened = false;
+
+    function syncToolbarUserLabel(user) {
+        if (!user || !reportWorkArea) return;
+        const displayName = (user.displayName || user.email || "").trim();
+        if (!displayName) return;
+
+        reportWorkArea.querySelectorAll("*").forEach(el => {
+            if (el.children.length === 0 && el.textContent.trim() === "USER") {
+                el.textContent = displayName;
+            }
+        });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
 
         currentUser = user;
 
@@ -55,9 +224,89 @@ document.addEventListener("DOMContentLoaded", () => {
             user ? user.email : "No user logged in"
         );
 
+        if (!user) {
+            document.documentElement.classList.remove("fg-direct-loading", "direct-report-loading");
+            document.documentElement.classList.add("fg-direct-ready", "direct-report-ready");
+            return;
+        }
+
+        syncToolbarUserLabel(user);
+        if (typeof injectReportToolbar === "function") {
+            injectReportToolbar();
+            syncToolbarUserLabel(user);
+        }
+
+        if (!urlCategoryOpened) {
+            const params = new URLSearchParams(window.location.search);
+            const rawCategory = (params.get("category") || "").trim();
+            const normalizedUrlCategory = rawCategory.toLowerCase();
+
+            if (normalizedUrlCategory) {
+                urlCategoryOpened = true;
+
+                if (
+                    normalizedUrlCategory === "financialgoals" ||
+                    normalizedUrlCategory === "financial_goals" ||
+                    normalizedUrlCategory === "myfinancialgoals"
+                ) {
+                    document.documentElement.classList.add("fg-direct-loading");
+                    try {
+                        if (typeof renderFinancialGoalsReport === "function") {
+                            await renderFinancialGoalsReport();
+                        } else if (typeof window.renderFinancialGoalsReport === "function") {
+                            await window.renderFinancialGoalsReport();
+                        }
+                    } finally {
+                        document.documentElement.classList.remove("fg-direct-loading", "direct-report-loading");
+                        document.documentElement.classList.add("fg-direct-ready", "direct-report-ready");
+                        syncToolbarUserLabel(user);
+                    }
+                    return;
+                }
+
+                const categoryMap = {
+                    accounts: "Accounts",
+                    transactions: "Transactions",
+                    investments: "Investments",
+                    loans: "Loans & Borrowings",
+                    properties: "Properties",
+                    insurance: "Insurance",
+                    vehicles: "Vehicle Management",
+                    repairs: "Repairs & Maintenance",
+                    fundsavailable: "Cash Flow",
+                    funds_available: "Cash Flow",
+                    calendar: "Date & Period"
+                };
+
+                const targetKey = categoryMap[normalizedUrlCategory];
+
+                if (targetKey) {
+                    const cards = document.querySelectorAll(".report-category-card");
+                    const matchedCard = Array.from(cards).find(card => {
+                        const rawTitle = card.querySelector(".report-category-title")?.textContent?.trim() || "";
+                        const cleanTitle = rawTitle.replace(/\s+Reports$/i, "").trim();
+                        const normalized = cleanTitle === "Accounts & Banks" ? "Accounts" : cleanTitle;
+                        return normalized === targetKey;
+                    });
+
+                    if (matchedCard) {
+                        matchedCard.click();
+                        setTimeout(() => {
+                            syncToolbarUserLabel(user);
+                            document.documentElement.classList.remove("fg-direct-loading", "direct-report-loading");
+                            document.documentElement.classList.add("fg-direct-ready", "direct-report-ready");
+                        }, 120);
+                        return;
+                    }
+                }
+
+                document.documentElement.classList.remove("fg-direct-loading", "direct-report-loading");
+                document.documentElement.classList.add("fg-direct-ready", "direct-report-ready");
+            }
+        }
+
     });
-
-
+    
     // =====================================================
     // TRANSACTION REPORTS
     // =====================================================
@@ -339,7 +588,7 @@ function formatDateDisplay(value) {
 // -----------------------------------------------------
 
 function showReportModuleStartPage() {
-
+document.documentElement.classList.remove("direct-report-mode", "direct-report-loading", "direct-report-ready");
     const startPageElements = [
 
         document.querySelector(".reports-header"),
@@ -388,6 +637,46 @@ reportWorkArea.innerHTML = "";
         });
     }
 
+    // =====================================================
+    // EXPORT PDF के पास वाले "← Back to Reports" बटन का फंक्शन
+    // =====================================================
+    document.addEventListener("click", (event) => {
+        const btn = event.target.closest("button");
+        if (!btn) return;
+
+        if (
+            reportWorkArea &&
+            reportWorkArea.contains(btn) &&
+            btn.id !== "backToReportsDashboardButton" &&
+            btn.textContent.trim().includes("Back to Reports")
+        ) {
+            const directCategories = [
+                "Cash Flow",
+                "Financial Statements",
+                "TDS",
+                "Net Worth",
+                "Audit & Control",
+                "Financial Goals"
+            ];
+
+            if (directCategories.includes(window.activeReportCategory)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                // ऊपर दाहिने कोने वाले "Back to Reports" का ही फंक्शन चलाएँ
+                showReportModuleStartPage();
+
+                if (backToReportsDashboardButton) {
+                    backToReportsDashboardButton.style.display = "none";
+                }
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            }
+        }
+    }, true);
 
 
  // =====================================================
@@ -9998,6 +10287,1739 @@ if (backToReportsDashboardButton) {
     backToReportsDashboardButton.style.display = "inline-block";
 }
 
+// =====================================================
+// CASH FLOW REPORTS
+// 1. Cash Flow Summary
+// 2. Monthly Cash Flow
+// 3. Account-wise Movement
+// 4. Cash Flow Register
+// =====================================================
+
+if (title === "Cash Flow") {
+
+    hideReportModuleStartPage();
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>💸 Cash Flow Reports</h2>
+                <p>Please login first to view Cash Flow reports.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const escapeCF = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const formatCFAmount = value =>
+        new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+
+    const numCF = value => Number(value || 0);
+
+    const parseCFDate = value => {
+        if (!value) return null;
+        if (value?.toDate && typeof value.toDate === "function") return value.toDate();
+        if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+        const parsed = new Date(value);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const displayCFDate = value => {
+        const d = parseCFDate(value);
+        return d ? d.toLocaleDateString("en-IN") : "—";
+    };
+
+    const getCFMonthKey = value => {
+        const d = parseCFDate(value);
+        if (!d) return "Unknown";
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    };
+
+    const getCFMonthLabel = key => {
+        if (!key || key === "Unknown") return "Date Not Specified";
+        const [y, m] = key.split("-");
+        return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric"
+        });
+    };
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header fs-dashboard-header">
+                <div>
+                    <h2>💸 Cash Flow Reports</h2>
+                    <p>Cash inflow, outflow, account-wise movement and liquidity analysis</p>
+                </div>
+
+                <button type="button" id="refreshCFReports">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div class="fs-view-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+
+                <button type="button" class="fs-view-card is-active" data-cf-view="summary">
+                    <span class="fs-view-icon">📊</span>
+                    <span>
+                        <h3>Cash Flow Summary</h3>
+                        <p>Total inflow, outflow, net movement & liquidity</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-cf-view="monthly">
+                    <span class="fs-view-icon">📅</span>
+                    <span>
+                        <h3>Monthly Cash Flow</h3>
+                        <p>Month-wise cash inflow vs outflow trend</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-cf-view="accounts">
+                    <span class="fs-view-icon">🏦</span>
+                    <span>
+                        <h3>Account-wise Movement</h3>
+                        <p>Bank, cash and wallet inflow & outflow</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-cf-view="register">
+                    <span class="fs-view-icon">📑</span>
+                    <span>
+                        <h3>Cash Flow Register</h3>
+                        <p>Date-wise detailed cash inflow & outflow list</p>
+                    </span>
+                </button>
+
+            </div>
+
+            <div id="cfReportMessage" style="margin:12px 0;color:#64748b;font-size:13px;">
+                Loading cash flow data...
+            </div>
+
+            <div id="cfReportContent"></div>
+
+        </div>
+    `;
+
+    const messageEl = document.getElementById("cfReportMessage");
+    const contentEl = document.getElementById("cfReportContent");
+
+    let cfData = {
+        accounts: [],
+        movements: [],
+        liquidAccounts: [],
+        totalInflow: 0,
+        totalOutflow: 0,
+        netCashFlow: 0,
+        totalLiquidBalance: 0
+    };
+
+    let activeCFView = "summary";
+
+    const makeCFCard = (label, amount, color = "#0f172a") => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            padding:18px;
+        ">
+            <div style="color:#64748b;font-size:13px;">${escapeCF(label)}</div>
+            <h2 style="color:${color};margin-bottom:0;">${formatCFAmount(amount)}</h2>
+        </div>
+    `;
+
+    const makeCFTable = (headers, rows, emptyMsg) => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            overflow:auto;
+            margin-top:15px;
+        ">
+            <table class="report-export-table" style="
+                width:100%;
+                border-collapse:collapse;
+                min-width:650px;
+                font-size:13px;
+            ">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        ${headers.map(h => `
+                            <th style="padding:12px;text-align:${h.align || "left"};white-space:nowrap;">
+                                ${h.label}
+                            </th>
+                        `).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.length ? rows.join("") : `
+                        <tr>
+                            <td colspan="${headers.length}" style="padding:25px;text-align:center;color:#64748b;">
+                                ${escapeCF(emptyMsg)}
+                            </td>
+                        </tr>
+                    `}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const makeCFRow = cells => `
+        <tr style="border-top:1px solid #e2e8f0;">
+            ${cells.map(c => `
+                <td style="padding:12px;text-align:${c.align || "left"};white-space:nowrap;">
+                    ${c.html ?? escapeCF(c.text ?? "")}
+                </td>
+            `).join("")}
+        </tr>
+    `;
+
+    const renderCFReport = () => {
+
+        const kpiCards = `
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                gap:14px;
+            ">
+                ${makeCFCard("Total Cash Inflow", cfData.totalInflow, "#15803d")}
+                ${makeCFCard("Total Cash Outflow", cfData.totalOutflow, "#b91c1c")}
+                ${makeCFCard(
+                    "Net Cash Flow",
+                    cfData.netCashFlow,
+                    cfData.netCashFlow >= 0 ? "#15803d" : "#b91c1c"
+                )}
+                ${makeCFCard("Current Liquid Balance", cfData.totalLiquidBalance, "#1d4ed8")}
+            </div>
+        `;
+
+        // 1. SUMMARY VIEW
+        if (activeCFView === "summary") {
+            const categoryMap = new Map();
+
+            cfData.movements.forEach(m => {
+                const key = `${m.direction}::${m.category}`;
+                if (!categoryMap.has(key)) {
+                    categoryMap.set(key, {
+                        direction: m.direction,
+                        category: m.category,
+                        count: 0,
+                        amount: 0
+                    });
+                }
+                const item = categoryMap.get(key);
+                item.count++;
+                item.amount += m.amount;
+            });
+
+            const rows = Array.from(categoryMap.values())
+                .sort((a, b) => b.amount - a.amount)
+                .map(item => makeCFRow([
+                    {
+                        html: `<strong style="color:${item.direction === "Inflow" ? "#15803d" : "#b91c1c"};">${item.direction}</strong>`
+                    },
+                    { text: item.category },
+                    { text: item.count, align: "center" },
+                    { text: formatCFAmount(item.amount), align: "right" }
+                ]));
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Category-wise Cash Flow Summary</h3>
+                ${makeCFTable(
+                    [
+                        { label: "Flow Type" },
+                        { label: "Category" },
+                        { label: "Transactions", align: "center" },
+                        { label: "Total Amount", align: "right" }
+                    ],
+                    rows,
+                    "No cash flow records found."
+                )}
+                <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                    Includes Bank, Cash and Wallet movements only. Internal transfers and soft-deleted transactions are excluded.
+                </p>
+            `;
+            return;
+        }
+
+        // 2. MONTHLY VIEW
+        if (activeCFView === "monthly") {
+            const monthMap = new Map();
+
+            cfData.movements.forEach(m => {
+                const key = getCFMonthKey(m.date);
+                if (!monthMap.has(key)) {
+                    monthMap.set(key, { key, inflow: 0, outflow: 0, count: 0 });
+                }
+                const item = monthMap.get(key);
+                item.count++;
+                if (m.direction === "Inflow") item.inflow += m.amount;
+                else item.outflow += m.amount;
+            });
+
+            const rows = Array.from(monthMap.values())
+                .sort((a, b) => b.key.localeCompare(a.key))
+                .map(item => {
+                    const net = item.inflow - item.outflow;
+                    return makeCFRow([
+                        { text: getCFMonthLabel(item.key) },
+                        { text: item.count, align: "center" },
+                        { text: formatCFAmount(item.inflow), align: "right" },
+                        { text: formatCFAmount(item.outflow), align: "right" },
+                        {
+                            html: `<strong style="color:${net >= 0 ? "#15803d" : "#b91c1c"};">${formatCFAmount(net)}</strong>`,
+                            align: "right"
+                        }
+                    ]);
+                });
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Month-wise Cash Flow</h3>
+                ${makeCFTable(
+                    [
+                        { label: "Month" },
+                        { label: "Entries", align: "center" },
+                        { label: "Cash Inflow", align: "right" },
+                        { label: "Cash Outflow", align: "right" },
+                        { label: "Net Cash Flow", align: "right" }
+                    ],
+                    rows,
+                    "No monthly cash flow data found."
+                )}
+            `;
+            return;
+        }
+
+        // 3. ACCOUNT-WISE MOVEMENT
+        if (activeCFView === "accounts") {
+            const accMap = new Map();
+
+            cfData.liquidAccounts.forEach(acc => {
+                accMap.set(acc.id, {
+                    name: acc.name || "Account",
+                    type: acc.type || "—",
+                    inflow: 0,
+                    outflow: 0,
+                    balance: numCF(acc.balance)
+                });
+            });
+
+            cfData.movements.forEach(m => {
+                const acc = accMap.get(m.accountId);
+                if (!acc) return;
+                if (m.direction === "Inflow") acc.inflow += m.amount;
+                else acc.outflow += m.amount;
+            });
+
+            const rows = Array.from(accMap.values())
+                .sort((a, b) => b.balance - a.balance)
+                .map(acc => {
+                    const net = acc.inflow - acc.outflow;
+                    return makeCFRow([
+                        { text: acc.name },
+                        { text: acc.type.toUpperCase() },
+                        { text: formatCFAmount(acc.inflow), align: "right" },
+                        { text: formatCFAmount(acc.outflow), align: "right" },
+                        {
+                            html: `<strong style="color:${net >= 0 ? "#15803d" : "#b91c1c"};">${formatCFAmount(net)}</strong>`,
+                            align: "right"
+                        },
+                        { html: `<strong>${formatCFAmount(acc.balance)}</strong>`, align: "right" }
+                    ]);
+                });
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Account-wise Liquidity & Movement</h3>
+                ${makeCFTable(
+                    [
+                        { label: "Account Name" },
+                        { label: "Type" },
+                        { label: "Inflow", align: "right" },
+                        { label: "Outflow", align: "right" },
+                        { label: "Net Movement", align: "right" },
+                        { label: "Current Balance", align: "right" }
+                    ],
+                    rows,
+                    "No liquid accounts found."
+                )}
+            `;
+            return;
+        }
+
+        // 4. CASH FLOW REGISTER
+        const rows = cfData.movements.map(m => makeCFRow([
+            { text: displayCFDate(m.date) },
+            {
+                html: `<strong style="color:${m.direction === "Inflow" ? "#15803d" : "#b91c1c"};">${m.direction}</strong>`
+            },
+            { text: m.accountName },
+            { text: m.category },
+            { text: m.partyName },
+            { text: formatCFAmount(m.amount), align: "right" }
+        ]));
+
+        contentEl.innerHTML = `
+            ${kpiCards}
+            <h3 style="margin-top:24px;">Detailed Cash Flow Register</h3>
+            ${makeCFTable(
+                [
+                    { label: "Date" },
+                    { label: "Flow" },
+                    { label: "Account" },
+                    { label: "Category" },
+                    { label: "Party / Source" },
+                    { label: "Amount", align: "right" }
+                ],
+                rows,
+                "No cash flow transactions found."
+            )}
+        `;
+    };
+
+    const loadCFReports = async () => {
+        messageEl.textContent = "Loading cash flow data...";
+        contentEl.innerHTML = "";
+
+        try {
+            const userRef = doc(db, "users", user.uid);
+
+            const [txSnap, accSnap] = await Promise.all([
+                getDocs(collection(userRef, "transactions")),
+                getDocs(collection(userRef, "accounts"))
+            ]);
+
+            const accounts = accSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const liquidTypes = ["bank", "cash", "cashback", "cashback_wallet"];
+
+            const liquidAccounts = accounts.filter(a =>
+                liquidTypes.includes(String(a.type || "").toLowerCase())
+            );
+
+            const liquidMap = new Map(liquidAccounts.map(a => [a.id, a]));
+
+            const movements = [];
+            let totalInflow = 0;
+            let totalOutflow = 0;
+
+            txSnap.docs.forEach(d => {
+                const t = d.data();
+                if (t.deleted === true) return;
+                if (t.type === "transfer") return;
+
+                const amount = numCF(t.amount);
+                if (amount <= 0) return;
+
+                let direction = "";
+                let account = null;
+
+                if (t.type === "income" || t.type === "cashback") {
+                    account = liquidMap.get(t.toAccountId);
+                    direction = "Inflow";
+                } else if (
+                    (t.type === "expense" || t.type === "investment" || t.type === "wallet_payment") &&
+                    t.fromAccountId
+                ) {
+                    account = liquidMap.get(t.fromAccountId);
+                    direction = "Outflow";
+                }
+
+                if (!account) return;
+
+                if (direction === "Inflow") totalInflow += amount;
+                else totalOutflow += amount;
+
+                movements.push({
+                    date: t.date || "",
+                    direction,
+                    accountId: account.id,
+                    accountName: account.name || "Account",
+                    category: t.category || t.type || "Uncategorized",
+                    partyName: t.partyName || "—",
+                    amount
+                });
+            });
+
+            movements.sort((a, b) => (parseCFDate(b.date) || 0) - (parseCFDate(a.date) || 0));
+
+            const totalLiquidBalance = liquidAccounts.reduce(
+                (sum, a) => sum + numCF(a.balance),
+                0
+            );
+
+            cfData = {
+                accounts,
+                liquidAccounts,
+                movements,
+                totalInflow,
+                totalOutflow,
+                netCashFlow: totalInflow - totalOutflow,
+                totalLiquidBalance
+            };
+
+            messageEl.textContent =
+                `${movements.length} cash flow movement(s) across ${liquidAccounts.length} liquid account(s) loaded.`;
+
+            renderCFReport();
+
+        } catch (error) {
+            console.error("Cash Flow Reports error:", error);
+            messageEl.textContent = "Unable to load Cash Flow Reports.";
+            contentEl.innerHTML = `
+                <div style="padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;">
+                    ${escapeCF(error.message || "Please try again.")}
+                </div>
+            `;
+        }
+    };
+
+    reportWorkArea.querySelectorAll("[data-cf-view]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            activeCFView = btn.dataset.cfView;
+            reportWorkArea.querySelectorAll("[data-cf-view]").forEach(tab => {
+                tab.classList.toggle("is-active", tab === btn);
+            });
+            renderCFReport();
+        });
+    });
+
+    document.getElementById("refreshCFReports")?.addEventListener("click", loadCFReports);
+
+    loadCFReports();
+    return;
+}
+
+// =====================================================
+// NET WORTH REPORTS
+// 1. Net Worth Summary
+// 2. Assets Breakdown
+// 3. Liabilities Breakdown
+// 4. Asset Allocation
+// =====================================================
+
+if (title === "Net Worth") {
+
+    hideReportModuleStartPage();
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>💎 Net Worth Reports</h2>
+                <p>Please login first to view Net Worth reports.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const escapeNW = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const formatNWAmount = value =>
+        new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+
+    const numNW = value => {
+        const n = Number(value || 0);
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header fs-dashboard-header">
+                <div>
+                    <h2>💎 Net Worth Reports</h2>
+                    <p>Complete assets, liabilities, wealth position and asset allocation</p>
+                </div>
+
+                <button type="button" id="refreshNWReports">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div class="fs-view-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+
+                <button type="button" class="fs-view-card is-active" data-nw-view="summary">
+                    <span class="fs-view-icon">💎</span>
+                    <span>
+                        <h3>Net Worth Summary</h3>
+                        <p>Total assets, liabilities & net worth overview</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-nw-view="assets">
+                    <span class="fs-view-icon">📈</span>
+                    <span>
+                        <h3>Assets Breakdown</h3>
+                        <p>Accounts, FDs, shares, investments, properties & vehicles</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-nw-view="liabilities">
+                    <span class="fs-view-icon">📉</span>
+                    <span>
+                        <h3>Liabilities Breakdown</h3>
+                        <p>Active loans and credit card outstanding</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-nw-view="allocation">
+                    <span class="fs-view-icon">🥧</span>
+                    <span>
+                        <h3>Asset Allocation</h3>
+                        <p>Liquid vs fixed assets distribution</p>
+                    </span>
+                </button>
+
+            </div>
+
+            <div id="nwReportMessage" style="margin:12px 0;color:#64748b;font-size:13px;">
+                Loading net worth data...
+            </div>
+
+            <div id="nwReportContent"></div>
+
+        </div>
+    `;
+
+    const messageEl = document.getElementById("nwReportMessage");
+    const contentEl = document.getElementById("nwReportContent");
+
+    let nwData = {
+        assets: [],
+        liabilities: [],
+        categorySummary: [],
+        totalAssets: 0,
+        totalLiabilities: 0,
+        netWorth: 0,
+        liquidAssets: 0,
+        fixedAssets: 0
+    };
+
+    let activeNWView = "summary";
+
+    const makeNWCard = (label, valueText, color = "#0f172a") => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            padding:18px;
+        ">
+            <div style="color:#64748b;font-size:13px;">${escapeNW(label)}</div>
+            <h2 style="color:${color};margin-bottom:0;">${escapeNW(valueText)}</h2>
+        </div>
+    `;
+
+    const makeNWTable = (headers, rows, emptyMsg) => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            overflow:auto;
+            margin-top:15px;
+        ">
+            <table class="report-export-table" style="
+                width:100%;
+                border-collapse:collapse;
+                min-width:650px;
+                font-size:13px;
+            ">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        ${headers.map(h => `
+                            <th style="padding:12px;text-align:${h.align || "left"};white-space:nowrap;">
+                                ${h.label}
+                            </th>
+                        `).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.length ? rows.join("") : `
+                        <tr>
+                            <td colspan="${headers.length}" style="padding:25px;text-align:center;color:#64748b;">
+                                ${escapeNW(emptyMsg)}
+                            </td>
+                        </tr>
+                    `}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const makeNWRow = cells => `
+        <tr style="border-top:1px solid #e2e8f0;">
+            ${cells.map(c => `
+                <td style="padding:12px;text-align:${c.align || "left"};white-space:nowrap;">
+                    ${c.html ?? escapeNW(c.text ?? "")}
+                </td>
+            `).join("")}
+        </tr>
+    `;
+
+    const renderNWReport = () => {
+
+        const debtRatio = nwData.totalAssets > 0
+            ? ((nwData.totalLiabilities / nwData.totalAssets) * 100).toFixed(2) + "%"
+            : "0.00%";
+
+        const kpiCards = `
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                gap:14px;
+            ">
+                ${makeNWCard("Total Assets", formatNWAmount(nwData.totalAssets), "#15803d")}
+                ${makeNWCard("Total Liabilities", formatNWAmount(nwData.totalLiabilities), "#b91c1c")}
+                ${makeNWCard(
+                    "Net Worth",
+                    formatNWAmount(nwData.netWorth),
+                    nwData.netWorth >= 0 ? "#1d4ed8" : "#b91c1c"
+                )}
+                ${makeNWCard("Debt-to-Asset Ratio", debtRatio, "#b45309")}
+            </div>
+        `;
+
+        // 1. NET WORTH SUMMARY
+        if (activeNWView === "summary") {
+            const rows = nwData.categorySummary.map(item => {
+                const base = item.type === "Asset" ? nwData.totalAssets : nwData.totalLiabilities;
+                const share = base > 0 ? ((item.amount / base) * 100).toFixed(2) + "%" : "0.00%";
+                return makeNWRow([
+                    {
+                        html: `<strong style="color:${item.type === "Asset" ? "#15803d" : "#b91c1c"};">${item.type}</strong>`
+                    },
+                    { text: item.category },
+                    { text: item.count, align: "center" },
+                    { text: formatNWAmount(item.amount), align: "right" },
+                    { text: share, align: "right" }
+                ]);
+            });
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Category-wise Net Worth Summary</h3>
+                ${makeNWTable(
+                    [
+                        { label: "Class" },
+                        { label: "Category" },
+                        { label: "Records", align: "center" },
+                        { label: "Total Value", align: "right" },
+                        { label: "Share %", align: "right" }
+                    ],
+                    rows,
+                    "No asset or liability records found."
+                )}
+                <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                    Net Worth = Total Assets − Total Liabilities. Closed/renewed FDs, sold properties and closed loans are excluded.
+                </p>
+            `;
+            return;
+        }
+
+        // 2. ASSETS BREAKDOWN
+        if (activeNWView === "assets") {
+            const rows = nwData.assets.map(a => makeNWRow([
+                { text: a.category },
+                { text: a.name },
+                { text: a.liquidity },
+                { html: `<strong style="color:#15803d;">${formatNWAmount(a.amount)}</strong>`, align: "right" }
+            ]));
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Detailed Assets Breakdown (${nwData.assets.length})</h3>
+                ${makeNWTable(
+                    [
+                        { label: "Asset Category" },
+                        { label: "Asset / Account Name" },
+                        { label: "Liquidity Type" },
+                        { label: "Current Value", align: "right" }
+                    ],
+                    rows,
+                    "No assets found."
+                )}
+            `;
+            return;
+        }
+
+        // 3. LIABILITIES BREAKDOWN
+        if (activeNWView === "liabilities") {
+            const rows = nwData.liabilities.map(l => makeNWRow([
+                { text: l.category },
+                { text: l.name },
+                { text: l.details },
+                { html: `<strong style="color:#b91c1c;">${formatNWAmount(l.amount)}</strong>`, align: "right" }
+            ]));
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Detailed Liabilities Breakdown (${nwData.liabilities.length})</h3>
+                ${makeNWTable(
+                    [
+                        { label: "Liability Category" },
+                        { label: "Loan / Card Name" },
+                        { label: "Details" },
+                        { label: "Outstanding Amount", align: "right" }
+                    ],
+                    rows,
+                    "No active liabilities found."
+                )}
+            `;
+            return;
+        }
+
+        // 4. ASSET ALLOCATION
+        const liquidPct = nwData.totalAssets > 0
+            ? ((nwData.liquidAssets / nwData.totalAssets) * 100).toFixed(2) + "%"
+            : "0.00%";
+
+        const fixedPct = nwData.totalAssets > 0
+            ? ((nwData.fixedAssets / nwData.totalAssets) * 100).toFixed(2) + "%"
+            : "0.00%";
+
+        const allocRows = [
+            makeNWRow([
+                { html: `<strong style="color:#1d4ed8;">Liquid Assets</strong>` },
+                { text: "Bank, Cash, Wallets, Shares & Investments" },
+                { text: formatNWAmount(nwData.liquidAssets), align: "right" },
+                { text: liquidPct, align: "right" }
+            ]),
+            makeNWRow([
+                { html: `<strong style="color:#0f766e;">Fixed / Term Assets</strong>` },
+                { text: "Fixed Deposits, Properties & Vehicles" },
+                { text: formatNWAmount(nwData.fixedAssets), align: "right" },
+                { text: fixedPct, align: "right" }
+            ]),
+            makeNWRow([
+                { html: `<strong>Total Assets</strong>` },
+                { text: "Combined Asset Portfolio" },
+                { html: `<strong>${formatNWAmount(nwData.totalAssets)}</strong>`, align: "right" },
+                { html: `<strong>100.00%</strong>`, align: "right" }
+            ])
+        ];
+
+        contentEl.innerHTML = `
+            ${kpiCards}
+            <h3 style="margin-top:24px;">Liquid vs Fixed Asset Allocation</h3>
+            ${makeNWTable(
+                [
+                    { label: "Asset Group" },
+                    { label: "Included Categories" },
+                    { label: "Amount", align: "right" },
+                    { label: "Allocation %", align: "right" }
+                ],
+                allocRows,
+                "No asset allocation data available."
+            )}
+        `;
+    };
+
+    const loadNWReports = async () => {
+        messageEl.textContent = "Loading net worth data...";
+        contentEl.innerHTML = "";
+
+        try {
+            const userRef = doc(db, "users", user.uid);
+
+            const [
+                accSnap,
+                fdSnap,
+                invSnap,
+                shareSnap,
+                propSnap,
+                loanSnap
+            ] = await Promise.all([
+                getDocs(collection(userRef, "accounts")),
+                getDocs(collection(userRef, "fixedDeposits")),
+                getDocs(collection(userRef, "investments")),
+                getDocs(collection(userRef, "shares")),
+                getDocs(collection(userRef, "properties")),
+                getDocs(collection(userRef, "loans"))
+            ]);
+
+            const assets = [];
+            const liabilities = [];
+
+            // 1. Accounts (Liquid Assets + Credit Card Liabilities)
+            accSnap.docs.forEach(d => {
+                const a = d.data();
+                const type = String(a.type || "").toLowerCase();
+                const bal = numNW(a.balance);
+
+                if (["bank", "cash", "cashback", "cashback_wallet"].includes(type)) {
+                    if (bal !== 0) {
+                        assets.push({
+                            category: type === "bank" ? "Bank Accounts" : type === "cash" ? "Cash" : "Wallets",
+                            name: a.name || "Account",
+                            liquidity: "Liquid",
+                            amount: bal
+                        });
+                    }
+                } else if (type === "credit_card") {
+                    const due = Math.abs(bal);
+                    if (due > 0) {
+                        liabilities.push({
+                            category: "Credit Cards",
+                            name: a.name || "Credit Card",
+                            details: "Card Outstanding",
+                            amount: due
+                        });
+                    }
+                }
+            });
+
+            // 2. Active Fixed Deposits
+            fdSnap.docs.forEach(d => {
+                const fd = d.data();
+                const status = String(fd.status || "active").toLowerCase();
+                if (["renewed", "settled", "matured", "closed"].includes(status)) return;
+                const amt = numNW(fd.amount);
+                if (amt > 0) {
+                    assets.push({
+                        category: "Fixed Deposits",
+                        name: `${fd.name || "FD"} (${fd.bank || "Bank"})`,
+                        liquidity: "Fixed / Term",
+                        amount: amt
+                    });
+                }
+            });
+
+            // 3. Investments (MF, NPS, Gold, etc.)
+            invSnap.docs.forEach(d => {
+                const inv = d.data();
+                const val = numNW(inv.currentValue ?? inv.currentAmount ?? inv.amount ?? inv.investedAmount);
+                if (val > 0) {
+                    assets.push({
+                        category: "Investments",
+                        name: inv.name || inv.investmentName || "Investment",
+                        liquidity: "Liquid",
+                        amount: val
+                    });
+                }
+            });
+
+            // 4. Shares
+            shareSnap.docs.forEach(d => {
+                const s = d.data();
+                const qty = numNW(s.quantity);
+                const cmp = numNW(s.currentPrice || s.buyPrice);
+                const val = qty * cmp;
+                if (val > 0) {
+                    assets.push({
+                        category: "Shares / Stocks",
+                        name: `${s.companyName || s.symbol || "Share"} (${qty} qty)`,
+                        liquidity: "Liquid",
+                        amount: val
+                    });
+                }
+            });
+
+            // 5. Properties (Active)
+            propSnap.docs.forEach(d => {
+                const p = d.data();
+                if (String(p.status || "active").toLowerCase() === "sold") return;
+                const val = numNW(p.currentValue || p.purchaseValue);
+                if (val > 0) {
+                    assets.push({
+                        category: "Properties",
+                        name: p.propertyName || p.name || "Property",
+                        liquidity: "Fixed / Term",
+                        amount: val
+                    });
+                }
+            });
+
+            // 6. Vehicles (from localStorage)
+            try {
+                const vehicles = JSON.parse(localStorage.getItem("financialERP_vehicles") || "[]");
+                if (Array.isArray(vehicles)) {
+                    vehicles.forEach(v => {
+                        const val = numNW(v.currentValue || v.purchasePrice);
+                        if (val > 0) {
+                            const vName = [v.manufacturer, v.model].filter(Boolean).join(" ") || v.registrationNumber || "Vehicle";
+                            assets.push({
+                                category: "Vehicles",
+                                name: `${vName} (${v.registrationNumber || "—"})`,
+                                liquidity: "Fixed / Term",
+                                amount: val
+                            });
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn("Vehicles read skipped in Net Worth:", e);
+            }
+
+            // 7. Active Loans
+            loanSnap.docs.forEach(d => {
+                const l = d.data();
+                if (String(l.status || "active").toLowerCase() === "closed") return;
+                const due = numNW(l.outstandingBalance);
+                if (due > 0) {
+                    liabilities.push({
+                        category: "Loans & Borrowings",
+                        name: l.loanName || l.loanType || "Loan",
+                        details: `${l.lender || "Lender"} · EMI ${formatNWAmount(l.emi)}`,
+                        amount: due
+                    });
+                }
+            });
+
+            // Totals
+            assets.sort((a, b) => b.amount - a.amount);
+            liabilities.sort((a, b) => b.amount - a.amount);
+
+            const totalAssets = assets.reduce((sum, a) => sum + a.amount, 0);
+            const totalLiabilities = liabilities.reduce((sum, l) => sum + l.amount, 0);
+            const liquidAssets = assets.filter(a => a.liquidity === "Liquid").reduce((sum, a) => sum + a.amount, 0);
+            const fixedAssets = assets.filter(a => a.liquidity !== "Liquid").reduce((sum, a) => sum + a.amount, 0);
+
+            // Category Summary
+            const catMap = new Map();
+            assets.forEach(a => {
+                const key = `Asset::${a.category}`;
+                if (!catMap.has(key)) catMap.set(key, { type: "Asset", category: a.category, count: 0, amount: 0 });
+                const item = catMap.get(key);
+                item.count++;
+                item.amount += a.amount;
+            });
+            liabilities.forEach(l => {
+                const key = `Liability::${l.category}`;
+                if (!catMap.has(key)) catMap.set(key, { type: "Liability", category: l.category, count: 0, amount: 0 });
+                const item = catMap.get(key);
+                item.count++;
+                item.amount += l.amount;
+            });
+
+            const categorySummary = Array.from(catMap.values()).sort((a, b) => {
+                if (a.type !== b.type) return a.type === "Asset" ? -1 : 1;
+                return b.amount - a.amount;
+            });
+
+            nwData = {
+                assets,
+                liabilities,
+                categorySummary,
+                totalAssets,
+                totalLiabilities,
+                netWorth: totalAssets - totalLiabilities,
+                liquidAssets,
+                fixedAssets
+            };
+
+            messageEl.textContent =
+                `${assets.length} asset record(s) and ${liabilities.length} liability record(s) loaded.`;
+
+            renderNWReport();
+
+        } catch (error) {
+            console.error("Net Worth Reports error:", error);
+            messageEl.textContent = "Unable to load Net Worth Reports.";
+            contentEl.innerHTML = `
+                <div style="padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;">
+                    ${escapeNW(error.message || "Please try again.")}
+                </div>
+            `;
+        }
+    };
+
+    reportWorkArea.querySelectorAll("[data-nw-view]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            activeNWView = btn.dataset.nwView;
+            reportWorkArea.querySelectorAll("[data-nw-view]").forEach(tab => {
+                tab.classList.toggle("is-active", tab === btn);
+            });
+            renderNWReport();
+        });
+    });
+
+    document.getElementById("refreshNWReports")?.addEventListener("click", loadNWReports);
+
+    loadNWReports();
+    return;
+}
+
+// =====================================================
+// AUDIT & CONTROL REPORTS
+// 1. Audit Summary
+// 2. Duplicate Detection
+// 3. Deleted Records
+// 4. Missing Details
+// =====================================================
+
+if (title === "Audit & Control") {
+
+    hideReportModuleStartPage();
+
+    const user = auth.currentUser;
+
+    if (!user) {
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>🔍 Audit & Control Reports</h2>
+                <p>Please login first to view Audit & Control reports.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const escapeAC = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const formatACAmount = value =>
+        new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+
+    const numAC = value => {
+        const n = Number(value || 0);
+        return Number.isFinite(n) ? n : 0;
+    };
+
+    const parseACDate = value => {
+        if (!value) return null;
+        if (value?.toDate && typeof value.toDate === "function") return value.toDate();
+        if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+        const parsed = new Date(value);
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const displayACDate = value => {
+        const d = parseACDate(value);
+        return d ? d.toLocaleDateString("en-IN") : "—";
+    };
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+            <div class="transaction-reports-header fs-dashboard-header">
+                <div>
+                    <h2>🔍 Audit & Control Reports</h2>
+                    <p>Reconciliation, duplicate detection, deleted records and data quality audit</p>
+                </div>
+
+                <button type="button" id="refreshACReports">
+                    ↻ Refresh
+                </button>
+            </div>
+
+            <div class="fs-view-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+
+                <button type="button" class="fs-view-card is-active" data-ac-view="summary">
+                    <span class="fs-view-icon">🛡️</span>
+                    <span>
+                        <h3>Audit Summary</h3>
+                        <p>Overall data health, exceptions & audit score</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-ac-view="duplicates">
+                    <span class="fs-view-icon">👯</span>
+                    <span>
+                        <h3>Duplicate Detection</h3>
+                        <p>Matching date, type, category & amount entries</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-ac-view="deleted">
+                    <span class="fs-view-icon">🗑️</span>
+                    <span>
+                        <h3>Deleted Records</h3>
+                        <p>Audit log of soft-deleted transactions</p>
+                    </span>
+                </button>
+
+                <button type="button" class="fs-view-card" data-ac-view="missing">
+                    <span class="fs-view-icon">⚠️</span>
+                    <span>
+                        <h3>Missing Details</h3>
+                        <p>Entries missing category, party, account or notes</p>
+                    </span>
+                </button>
+
+            </div>
+
+            <div id="acReportMessage" style="margin:12px 0;color:#64748b;font-size:13px;">
+                Running audit checks...
+            </div>
+
+            <div id="acReportContent"></div>
+
+        </div>
+    `;
+
+    const messageEl = document.getElementById("acReportMessage");
+    const contentEl = document.getElementById("acReportContent");
+
+    let acData = {
+        activeCount: 0,
+        deletedRecords: [],
+        duplicateGroups: [],
+        duplicateEntryCount: 0,
+        missingRecords: [],
+        missingStats: {
+            noCategory: 0,
+            noParty: 0,
+            noAccount: 0,
+            noNotes: 0
+        }
+    };
+
+    let activeACView = "summary";
+
+    const makeACCard = (label, valueText, color = "#0f172a") => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            padding:18px;
+        ">
+            <div style="color:#64748b;font-size:13px;">${escapeAC(label)}</div>
+            <h2 style="color:${color};margin-bottom:0;">${escapeAC(valueText)}</h2>
+        </div>
+    `;
+
+    const makeACTable = (headers, rows, emptyMsg) => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            overflow:auto;
+            margin-top:15px;
+        ">
+            <table class="report-export-table" style="
+                width:100%;
+                border-collapse:collapse;
+                min-width:650px;
+                font-size:13px;
+            ">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        ${headers.map(h => `
+                            <th style="padding:12px;text-align:${h.align || "left"};white-space:nowrap;">
+                                ${h.label}
+                            </th>
+                        `).join("")}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.length ? rows.join("") : `
+                        <tr>
+                            <td colspan="${headers.length}" style="padding:25px;text-align:center;color:#64748b;">
+                                ${escapeAC(emptyMsg)}
+                            </td>
+                        </tr>
+                    `}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    const makeACRow = cells => `
+        <tr style="border-top:1px solid #e2e8f0;">
+            ${cells.map(c => `
+                <td style="padding:12px;text-align:${c.align || "left"};white-space:nowrap;">
+                    ${c.html ?? escapeAC(c.text ?? "")}
+                </td>
+            `).join("")}
+        </tr>
+    `;
+
+    const renderACReport = () => {
+
+        const kpiCards = `
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                gap:14px;
+            ">
+                ${makeACCard("Active Transactions", String(acData.activeCount), "#15803d")}
+                ${makeACCard("Suspected Duplicates", String(acData.duplicateEntryCount), acData.duplicateEntryCount > 0 ? "#b91c1c" : "#15803d")}
+                ${makeACCard("Deleted Records", String(acData.deletedRecords.length), "#b45309")}
+                ${makeACCard("Missing-Field Entries", String(acData.missingRecords.length), acData.missingRecords.length > 0 ? "#b45309" : "#15803d")}
+            </div>
+        `;
+
+        // 1. AUDIT SUMMARY
+        if (activeACView === "summary") {
+            const summaryRows = [
+                makeACRow([
+                    { text: "Duplicate Transactions Check" },
+                    { text: `${acData.duplicateGroups.length} group(s) / ${acData.duplicateEntryCount} entry(s)` },
+                    {
+                        html: acData.duplicateEntryCount === 0
+                            ? `<strong style="color:#15803d;">Clean</strong>`
+                            : `<strong style="color:#b91c1c;">Review Needed</strong>`
+                    }
+                ]),
+                makeACRow([
+                    { text: "Soft-Deleted Transactions" },
+                    { text: `${acData.deletedRecords.length} record(s)` },
+                    { html: `<strong style="color:#1d4ed8;">Logged</strong>` }
+                ]),
+                makeACRow([
+                    { text: "Transactions without Category" },
+                    { text: `${acData.missingStats.noCategory} record(s)` },
+                    {
+                        html: acData.missingStats.noCategory === 0
+                            ? `<strong style="color:#15803d;">Clean</strong>`
+                            : `<strong style="color:#b45309;">Attention</strong>`
+                    }
+                ]),
+                makeACRow([
+                    { text: "Transactions without Party / Merchant" },
+                    { text: `${acData.missingStats.noParty} record(s)` },
+                    {
+                        html: acData.missingStats.noParty === 0
+                            ? `<strong style="color:#15803d;">Clean</strong>`
+                            : `<strong style="color:#b45309;">Attention</strong>`
+                    }
+                ]),
+                makeACRow([
+                    { text: "Transactions without Linked Account" },
+                    { text: `${acData.missingStats.noAccount} record(s)` },
+                    {
+                        html: acData.missingStats.noAccount === 0
+                            ? `<strong style="color:#15803d;">Clean</strong>`
+                            : `<strong style="color:#b91c1c;">Check Required</strong>`
+                    }
+                ]),
+                makeACRow([
+                    { text: "Transactions without Notes" },
+                    { text: `${acData.missingStats.noNotes} record(s)` },
+                    { html: `<span style="color:#64748b;">Info Only</span>` }
+                ])
+            ];
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Data Quality & Control Checklist</h3>
+                ${makeACTable(
+                    [
+                        { label: "Audit Control Check" },
+                        { label: "Findings" },
+                        { label: "Status" }
+                    ],
+                    summaryRows,
+                    "No audit findings."
+                )}
+            `;
+            return;
+        }
+
+        // 2. DUPLICATE DETECTION
+        if (activeACView === "duplicates") {
+            const rows = acData.duplicateGroups.map(g => makeACRow([
+                { text: displayACDate(g.date) },
+                { text: g.type },
+                { text: g.category },
+                { text: g.parties.join(", ") || "—" },
+                { html: `<strong style="color:#b91c1c;">${g.count}x</strong>`, align: "center" },
+                { text: formatACAmount(g.amount), align: "right" }
+            ]));
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Suspected Duplicate Transaction Groups (${acData.duplicateGroups.length})</h3>
+                ${makeACTable(
+                    [
+                        { label: "Date" },
+                        { label: "Type" },
+                        { label: "Category" },
+                        { label: "Party / Source" },
+                        { label: "Occurrences", align: "center" },
+                        { label: "Amount", align: "right" }
+                    ],
+                    rows,
+                    "No duplicate transactions detected."
+                )}
+                <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                    Flags active transactions sharing the exact same Date, Type, Category and Amount.
+                </p>
+            `;
+            return;
+        }
+
+        // 3. DELETED RECORDS
+        if (activeACView === "deleted") {
+            const rows = acData.deletedRecords.map(r => makeACRow([
+                { text: displayACDate(r.date) },
+                { text: r.type || "—" },
+                { text: r.category || "—" },
+                { text: r.partyName || "—" },
+                { text: formatACAmount(r.amount), align: "right" },
+                { text: displayACDate(r.deletedAt) }
+            ]));
+
+            contentEl.innerHTML = `
+                ${kpiCards}
+                <h3 style="margin-top:24px;">Soft-Deleted Transactions Log (${acData.deletedRecords.length})</h3>
+                ${makeACTable(
+                    [
+                        { label: "Transaction Date" },
+                        { label: "Type" },
+                        { label: "Category" },
+                        { label: "Party" },
+                        { label: "Amount", align: "right" },
+                        { label: "Deleted On" }
+                    ],
+                    rows,
+                    "No deleted transactions found."
+                )}
+            `;
+            return;
+        }
+
+        // 4. MISSING DETAILS
+        const rows = acData.missingRecords.map(r => makeACRow([
+            { text: displayACDate(r.date) },
+            { text: r.type || "—" },
+            { text: r.category || "—" },
+            { text: r.partyName || "—" },
+            { text: formatACAmount(r.amount), align: "right" },
+            { html: `<span style="color:#b45309;font-weight:600;">${escapeAC(r.issues.join(", "))}</span>` }
+        ]));
+
+        contentEl.innerHTML = `
+            ${kpiCards}
+            <h3 style="margin-top:24px;">Transactions with Missing Details (${acData.missingRecords.length})</h3>
+            ${makeACTable(
+                [
+                    { label: "Date" },
+                    { label: "Type" },
+                    { label: "Category" },
+                    { label: "Party" },
+                    { label: "Amount", align: "right" },
+                    { label: "Missing Fields" }
+                ],
+                rows,
+                "All active transactions have complete details."
+            )}
+        `;
+    };
+
+    const loadACReports = async () => {
+        messageEl.textContent = "Running audit checks...";
+        contentEl.innerHTML = "";
+
+        try {
+            const userRef = doc(db, "users", user.uid);
+            const txSnap = await getDocs(collection(userRef, "transactions"));
+
+            const activeList = [];
+            const deletedRecords = [];
+
+            txSnap.docs.forEach(d => {
+                const t = { id: d.id, ...d.data() };
+                if (t.deleted === true) {
+                    deletedRecords.push(t);
+                } else {
+                    activeList.push(t);
+                }
+            });
+
+            deletedRecords.sort((a, b) => (parseACDate(b.deletedAt || b.date) || 0) - (parseACDate(a.deletedAt || a.date) || 0));
+
+            // Duplicate Detection
+            const dupMap = new Map();
+            activeList.forEach(t => {
+                const key = [
+                    String(t.date || "").trim(),
+                    String(t.type || "").trim().toLowerCase(),
+                    String(t.category || "").trim().toLowerCase(),
+                    numAC(t.amount).toFixed(2)
+                ].join("::");
+
+                if (!dupMap.has(key)) {
+                    dupMap.set(key, {
+                        date: t.date || "",
+                        type: t.type || "—",
+                        category: t.category || "—",
+                        amount: numAC(t.amount),
+                        count: 0,
+                        parties: new Set()
+                    });
+                }
+
+                const g = dupMap.get(key);
+                g.count++;
+                if (t.partyName) g.parties.add(t.partyName);
+            });
+
+            const duplicateGroups = Array.from(dupMap.values())
+                .filter(g => g.count > 1)
+                .map(g => ({ ...g, parties: Array.from(g.parties) }))
+                .sort((a, b) => (parseACDate(b.date) || 0) - (parseACDate(a.date) || 0));
+
+            const duplicateEntryCount = duplicateGroups.reduce((sum, g) => sum + g.count, 0);
+
+            // Missing Details Audit
+            const missingRecords = [];
+            const missingStats = { noCategory: 0, noParty: 0, noAccount: 0, noNotes: 0 };
+
+            activeList.forEach(t => {
+                const issues = [];
+                if (!String(t.category || "").trim()) {
+                    missingStats.noCategory++;
+                    issues.push("Category");
+                }
+                if (!String(t.partyName || "").trim()) {
+                    missingStats.noParty++;
+                    issues.push("Party");
+                }
+                if (!t.fromAccountId && !t.toAccountId && t.behavior !== "gross_interest_before_tds" && t.behavior !== "credit_card_bill_discount") {
+                    missingStats.noAccount++;
+                    issues.push("Account");
+                }
+                if (!String(t.notes || "").trim()) {
+                    missingStats.noNotes++;
+                }
+
+                if (issues.length > 0) {
+                    missingRecords.push({ ...t, issues });
+                }
+            });
+
+            missingRecords.sort((a, b) => (parseACDate(b.date) || 0) - (parseACDate(a.date) || 0));
+
+            acData = {
+                activeCount: activeList.length,
+                deletedRecords,
+                duplicateGroups,
+                duplicateEntryCount,
+                missingRecords,
+                missingStats
+            };
+
+            messageEl.textContent =
+                `Audit completed on ${activeList.length} active and ${deletedRecords.length} deleted transaction(s).`;
+
+            renderACReport();
+
+        } catch (error) {
+            console.error("Audit & Control Reports error:", error);
+            messageEl.textContent = "Unable to run Audit & Control Reports.";
+            contentEl.innerHTML = `
+                <div style="padding:16px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;">
+                    ${escapeAC(error.message || "Please try again.")}
+                </div>
+            `;
+        }
+    };
+
+    reportWorkArea.querySelectorAll("[data-ac-view]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            activeACView = btn.dataset.acView;
+            reportWorkArea.querySelectorAll("[data-ac-view]").forEach(tab => {
+                tab.classList.toggle("is-active", tab === btn);
+            });
+            renderACReport();
+        });
+    });
+
+    document.getElementById("refreshACReports")?.addEventListener("click", loadACReports);
+
+    loadACReports();
+    return;
+}
+
+// =====================================================
+// MY FINANCIAL GOALS REPORT (Direct from Dashboard Card)
+// =====================================================
+
+async function renderFinancialGoalsReport() {
+    hideReportModuleStartPage();
+    window.activeReportCategory = "Financial Goals";
+
+    const backBtn = document.getElementById("backToReportsDashboardButton");
+    if (backBtn) backBtn.style.display = "inline-block";
+
+    const user = auth.currentUser || currentUser;
+    if (!user) {
+        reportWorkArea.innerHTML = `
+            <div class="transaction-reports-container">
+                <h2>🎯 Financial Goals Report</h2>
+                <p>Please login first to view Financial Goals report.</p>
+            </div>
+        `;
+        document.documentElement.classList.remove("direct-report-loading");
+        document.documentElement.classList.add("direct-report-ready");
+        return;
+    }
+
+    const esc = v => String(v ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[ch]);
+
+    const fmt = v => new Intl.NumberFormat("en-IN", {
+        style: "currency", currency: "INR", maximumFractionDigits: 2
+    }).format(Number(v || 0));
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+            <div class="transaction-reports-header fs-dashboard-header">
+                <div>
+                    <h2>🎯 Financial Goals Report</h2>
+                    <p>Savings targets, progress, remaining amounts and goal timeline</p>
+                </div>
+                <button type="button" id="refreshFGReport">↻ Refresh</button>
+            </div>
+            <div id="fgReportContent" style="margin-top:16px;color:#64748b;">
+                Loading Financial Goals...
+            </div>
+        </div>
+    `;
+
+    const loadFG = async () => {
+        const contentEl = document.getElementById("fgReportContent");
+        if (!contentEl) return;
+
+        try {
+            const snap = await getDocs(collection(db, "users", user.uid, "financialGoals"));
+            let totalTarget = 0, totalSaved = 0, totalRemaining = 0;
+            const rows = [];
+
+            snap.docs.forEach(d => {
+                const g = d.data();
+                const target = Number(g.targetAmount || 0);
+                const initialSaved = Number(g.savedAmount || 0);
+                const monthlyPlans = Array.isArray(g.monthlyPlans) ? g.monthlyPlans : [];
+                const monthlyActual = monthlyPlans.reduce((s, p) => s + Number(p.actual || 0), 0);
+
+                const saved = Math.min(initialSaved + monthlyActual, target);
+                const remaining = Math.max(target - saved, 0);
+                const progress = target > 0 ? ((saved / target) * 100) : 0;
+                const status = remaining <= 0 && target > 0 ? "Achieved" : progress > 0 ? "In Progress" : "Not Started";
+
+                totalTarget += target;
+                totalSaved += saved;
+                totalRemaining += remaining;
+
+                rows.push({
+                    name: g.name || "Unnamed Goal",
+                    priority: g.priority ? String(g.priority).toUpperCase() : "—",
+                    targetDate: g.targetDate ? formatDateDisplay(g.targetDate) : "—",
+                    target,
+                    saved,
+                    remaining,
+                    progress,
+                    status
+                });
+            });
+
+            const overallPct = totalTarget > 0 ? ((totalSaved / totalTarget) * 100).toFixed(2) + "%" : "0.00%";
+
+            contentEl.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                        <div style="color:#64748b;font-size:13px;">Total Goals</div>
+                        <h2 style="color:#173b70;margin-bottom:0;">${rows.length}</h2>
+                    </div>
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                        <div style="color:#64748b;font-size:13px;">Total Target Amount</div>
+                        <h2 style="color:#0f172a;margin-bottom:0;">${fmt(totalTarget)}</h2>
+                    </div>
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                        <div style="color:#64748b;font-size:13px;">Total Saved</div>
+                        <h2 style="color:#15803d;margin-bottom:0;">${fmt(totalSaved)}</h2>
+                    </div>
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                        <div style="color:#64748b;font-size:13px;">Remaining Amount</div>
+                        <h2 style="color:#b45309;margin-bottom:0;">${fmt(totalRemaining)}</h2>
+                    </div>
+                    <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;padding:18px;">
+                        <div style="color:#64748b;font-size:13px;">Overall Progress</div>
+                        <h2 style="color:#1d4ed8;margin-bottom:0;">${overallPct}</h2>
+                    </div>
+                </div>
+
+                <h3 style="margin-top:24px;color:#173b70;">Goal-wise Progress Register</h3>
+                <div style="background:white;border:1px solid #dbe3ee;border-radius:10px;overflow:auto;margin-top:12px;">
+                    <table class="report-export-table" style="width:100%;border-collapse:collapse;min-width:750px;font-size:13px;">
+                        <thead style="background:#f8fafc;">
+                            <tr>
+                                <th style="padding:12px;text-align:left;">Goal Name</th>
+                                <th style="padding:12px;text-align:center;">Priority</th>
+                                <th style="padding:12px;text-align:center;">Target Date</th>
+                                <th style="padding:12px;text-align:right;">Target Amount</th>
+                                <th style="padding:12px;text-align:right;">Saved Amount</th>
+                                <th style="padding:12px;text-align:right;">Remaining</th>
+                                <th style="padding:12px;text-align:right;">Progress %</th>
+                                <th style="padding:12px;text-align:center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.length ? rows.map(r => `
+                                <tr style="border-top:1px solid #e2e8f0;">
+                                    <td style="padding:12px;font-weight:600;">${esc(r.name)}</td>
+                                    <td style="padding:12px;text-align:center;">${esc(r.priority)}</td>
+                                    <td style="padding:12px;text-align:center;">${esc(r.targetDate)}</td>
+                                    <td style="padding:12px;text-align:right;">${fmt(r.target)}</td>
+                                    <td style="padding:12px;text-align:right;color:#15803d;font-weight:600;">${fmt(r.saved)}</td>
+                                    <td style="padding:12px;text-align:right;color:#b45309;">${fmt(r.remaining)}</td>
+                                    <td style="padding:12px;text-align:right;font-weight:700;">${r.progress.toFixed(1)}%</td>
+                                    <td style="padding:12px;text-align:center;font-weight:600;color:${r.status === "Achieved" ? "#15803d" : "#1d4ed8"};">${r.status}</td>
+                                </tr>
+                            `).join("") : `
+                                <tr>
+                                    <td colspan="8" style="padding:25px;text-align:center;color:#64748b;">
+                                        No Financial Goals added yet.
+                                    </td>
+                                </tr>
+                            `}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } catch (err) {
+            console.error("Financial Goals Report Error:", err);
+            contentEl.innerHTML = `<div style="color:#b91c1c;">Unable to load Financial Goals report.</div>`;
+        } finally {
+            document.documentElement.classList.remove("direct-report-loading");
+            document.documentElement.classList.add("direct-report-ready");
+        }
+    };
+
+    document.getElementById("refreshFGReport")?.addEventListener("click", loadFG);
+    await loadFG();
+}
+
 
 // =====================================================
 // TDS REPORTS
@@ -10006,6 +12028,16 @@ if (backToReportsDashboardButton) {
 // 3. Bank-wise TDS Summary
 // Source: transactions + tdsReceivables + fixedDeposits
 // =====================================================
+
+// =====================================================
+// FINANCIAL GOALS REPORTS (Category Card Click)
+// =====================================================
+
+if (title === "Financial Goals") {
+    renderFinancialGoalsReport();
+    return;
+}
+
 
 if (title === "TDS") {
 
@@ -10517,6 +12549,1224 @@ if (title === "TDS") {
     return;
 }
 
+
+// =====================================================
+// FINANCIAL STATEMENT REPORTS
+// 1. Profit & Loss Account
+// 2. Balance Sheet
+// 3. Receipt & Payment Account
+// 4. Cash Flow Statement
+// 5. Party-wise Ledger
+// 6. Simplified Trial Balance
+// =====================================================
+console.log("REPORT TITLE RECEIVED:", title);
+
+if (title === "Financial Statements") {
+
+    hideReportModuleStartPage();
+
+    const user = auth.currentUser;
+
+    console.log("FS USER NULL CHECK:", user === null);
+console.log("FS USER UID:", user?.uid);
+
+    console.log("FS AUTH CHECK:", {
+    authExists: !!auth,
+    currentUser: !!auth.currentUser,
+    email: auth.currentUser?.email,
+    uid: auth.currentUser?.uid
+});
+
+    if (!auth.currentUser) {
+    console.error("FS: Firebase user session missing.");
+    return;
+}
+
+    const escapeFS = value =>
+        String(value ?? "").replace(/[&<>"']/g, ch => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[ch]);
+
+    const formatFSAmount = value =>
+        new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
+
+    const numberFS = value =>
+        Number(value || 0);
+
+    const dateFS = value => {
+
+        if (!value) return null;
+
+        if (value?.toDate && typeof value.toDate === "function") {
+            return value.toDate();
+        }
+
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? null : value;
+        }
+
+        const parsed = new Date(value);
+
+        return isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const displayFSDate = value => {
+        const date = dateFS(value);
+        return date ? date.toLocaleDateString("en-IN") : "—";
+    };
+
+    reportWorkArea.innerHTML = `
+        <div class="transaction-reports-container">
+
+
+<div class="transaction-reports-header fs-dashboard-header">
+    <div>
+        <h2>📊 Financial Statements</h2>
+        <p>Financial position, income, expenses and account movements</p>
+    </div>
+
+    <button type="button" id="refreshFSReports">
+        ↻ Refresh
+    </button>
+</div>
+
+<style>
+    .fs-dashboard-header {
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .fs-dashboard-header h2 {
+        font-size: 25px;
+        font-weight: 750;
+        color: #173b70;
+        margin: 0 0 7px;
+        letter-spacing: -0.4px;
+    }
+
+    .fs-dashboard-header p {
+        color: #64748b;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .fs-view-cards {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        margin: 22px 0;
+    }
+
+    .fs-view-card {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 13px;
+        width: 100%;
+        min-height: 112px;
+        padding: 19px;
+        text-align: left;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 13px;
+        cursor: pointer;
+        transition: all .2s ease;
+        box-shadow: 0 3px 10px rgba(15, 23, 42, .045);
+    }
+
+    .fs-view-card:hover {
+        transform: translateY(-3px);
+        border-color: #93b4e8;
+        box-shadow: 0 9px 22px rgba(37, 99, 235, .11);
+    }
+
+    .fs-view-card.is-active {
+        border: 2px solid #2563eb;
+        background: #f5f8ff;
+        box-shadow: 0 5px 15px rgba(37, 99, 235, .10);
+    }
+
+    .fs-view-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 43px;
+        height: 43px;
+        border-radius: 11px;
+        background: #eff6ff;
+        font-size: 22px;
+    }
+
+    .fs-view-card:nth-child(2) .fs-view-icon,
+    .fs-view-card:nth-child(5) .fs-view-icon {
+        background: #ecfdf5;
+    }
+
+    .fs-view-card:nth-child(3) .fs-view-icon,
+    .fs-view-card:nth-child(6) .fs-view-icon {
+        background: #fff7ed;
+    }
+
+    .fs-view-card:nth-child(4) .fs-view-icon {
+        background: #f5f3ff;
+    }
+
+    .fs-view-card h3 {
+        margin: 1px 0 6px;
+        color: #1e293b;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .fs-view-card p {
+        margin: 0;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 850px) {
+        .fs-view-cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 520px) {
+        .fs-view-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .fs-dashboard-header h2 {
+            font-size: 21px;
+        }
+    }
+</style>
+
+<div class="fs-view-cards">
+
+    <button type="button" class="fs-view-card is-active" data-fs-view="pnl">
+        <span class="fs-view-icon">📈</span>
+        <span>
+            <h3>Profit &amp; Loss</h3>
+            <p>Income, expenses and net profit or loss</p>
+        </span>
+    </button>
+
+    <button type="button" class="fs-view-card" data-fs-view="balance">
+        <span class="fs-view-icon">🏦</span>
+        <span>
+            <h3>Balance Sheet</h3>
+            <p>Assets, liabilities and net worth</p>
+        </span>
+    </button>
+
+    <button type="button" class="fs-view-card" data-fs-view="receipt">
+        <span class="fs-view-icon">💰</span>
+        <span>
+            <h3>Receipt &amp; Payment</h3>
+            <p>Money received and money paid</p>
+        </span>
+    </button>
+
+    <button type="button" class="fs-view-card" data-fs-view="cashflow">
+        <span class="fs-view-icon">🔄</span>
+        <span>
+            <h3>Cash Flow Statement</h3>
+            <p>Cash inflows, outflows and movement</p>
+        </span>
+    </button>
+
+    <button type="button" class="fs-view-card" data-fs-view="party">
+        <span class="fs-view-icon">👥</span>
+        <span>
+            <h3>Party-wise Ledger</h3>
+            <p>Party transactions, debit and credit</p>
+        </span>
+    </button>
+
+    <button type="button" class="fs-view-card" data-fs-view="trial">
+        <span class="fs-view-icon">📑</span>
+        <span>
+            <h3>Simplified Trial Balance</h3>
+            <p>Account-wise debit and credit balances</p>
+        </span>
+    </button>
+
+</div>
+
+<div id="fsReportMessage"
+    style="margin:12px 0;color:#64748b;font-size:13px;">
+    Loading financial data...
+</div>
+
+<div id="fsReportContent"></div>
+
+            <div id="fsReportContent"></div>
+
+        </div>
+    `;
+
+    const messageEl =
+        document.getElementById("fsReportMessage");
+
+    const contentEl =
+        document.getElementById("fsReportContent");
+
+    let fsData = {
+        transactions: [],
+        accounts: [],
+        fixedDeposits: [],
+        investments: [],
+        properties: []
+    };
+
+    let activeFSView = "pnl";
+
+    const makeFSTable = (headers, rows, emptyMessage) => {
+
+        return `
+            <div style="
+                background:white;
+                border:1px solid #dbe3ee;
+                border-radius:10px;
+                overflow:auto;
+                margin-top:15px;
+            ">
+                <table style="
+                    width:100%;
+                    border-collapse:collapse;
+                    min-width:650px;
+                    font-size:13px;
+                ">
+                    <thead style="background:#f8fafc;">
+                        <tr>
+                            ${headers.map(header => `
+                                <th style="
+                                    padding:12px;
+                                    text-align:${header.align || "left"};
+                                    white-space:nowrap;
+                                ">${header.label}</th>
+                            `).join("")}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${rows.length ? rows.join("") : `
+                            <tr>
+                                <td colspan="${headers.length}"
+                                    style="padding:25px;text-align:center;color:#64748b;">
+                                    ${escapeFS(emptyMessage)}
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    };
+
+    const makeFSRow = values => `
+        <tr style="border-top:1px solid #e2e8f0;">
+            ${values.map(value => `
+                <td style="
+                    padding:12px;
+                    text-align:${value.align || "left"};
+                    white-space:nowrap;
+                ">${value.html ?? escapeFS(value.text ?? "")}</td>
+            `).join("")}
+        </tr>
+    `;
+
+    const makeFSCard = (label, amount, color = "#0f172a") => `
+        <div style="
+            background:white;
+            border:1px solid #dbe3ee;
+            border-radius:10px;
+            padding:18px;
+        ">
+            <div style="color:#64748b;font-size:13px;">
+                ${escapeFS(label)}
+            </div>
+            <h2 style="color:${color};margin-bottom:0;">
+                ${formatFSAmount(amount)}
+            </h2>
+        </div>
+    `;
+
+    // =========================================
+    // REPORT CALCULATIONS
+    // =========================================
+
+    const getFSFigures = () => {
+
+        const transactions = fsData.transactions;
+
+        const validExpenses = transactions.filter(t =>
+            t.type === "expense" &&
+            t.behavior !== "money_out_non_expense"
+        );
+
+        const validIncome = transactions.filter(t =>
+            t.type === "income"
+        );
+
+        const totalIncome = validIncome.reduce(
+            (sum, t) => sum + numberFS(t.amount), 0
+        );
+
+        const totalExpenses = validExpenses.reduce(
+            (sum, t) => sum + numberFS(t.amount), 0
+        );
+
+        return {
+            totalIncome,
+            totalExpenses,
+            netProfit: totalIncome - totalExpenses
+        };
+    };
+
+    // =========================================
+    // 1. PROFIT & LOSS
+    // =========================================
+
+    const renderFSProfitLoss = () => {
+
+        const figures = getFSFigures();
+
+        const incomeMap = new Map();
+        const expenseMap = new Map();
+
+        fsData.transactions.forEach(t => {
+
+            const category = t.category || "Uncategorized";
+            const amount = numberFS(t.amount);
+
+            if (t.type === "income") {
+                incomeMap.set(
+                    category,
+                    (incomeMap.get(category) || 0) + amount
+                );
+            }
+
+            if (
+                t.type === "expense" &&
+                t.behavior !== "money_out_non_expense"
+            ) {
+                expenseMap.set(
+                    category,
+                    (expenseMap.get(category) || 0) + amount
+                );
+            }
+        });
+
+        const categoryRows = (map, type) =>
+            Array.from(map.entries())
+                .sort((a, b) => b[1] - a[1])
+                .map(([category, amount]) =>
+                    makeFSRow([
+                        { text: category },
+                        { text: formatFSAmount(amount), align: "right" }
+                    ])
+                );
+
+        contentEl.innerHTML = `
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:14px;
+            ">
+                ${makeFSCard("Total Income", figures.totalIncome, "#15803d")}
+                ${makeFSCard("Total Expenses", figures.totalExpenses, "#b91c1c")}
+                ${makeFSCard(
+                    figures.netProfit >= 0 ? "Net Profit" : "Net Loss",
+                    Math.abs(figures.netProfit),
+                    figures.netProfit >= 0 ? "#15803d" : "#b91c1c"
+                )}
+            </div>
+
+            <h3 style="margin-top:24px;">Income Details</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Income Category" },
+                    { label: "Amount", align: "right" }
+                ],
+                categoryRows(incomeMap, "income"),
+                "No income transactions found."
+            )}
+
+            <h3 style="margin-top:24px;">Expense Details</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Expense Category" },
+                    { label: "Amount", align: "right" }
+                ],
+                categoryRows(expenseMap, "expense"),
+                "No expense transactions found."
+            )}
+
+            <div style="
+                margin-top:18px;
+                padding:18px;
+                background:#f8fafc;
+                border:1px solid #dbe3ee;
+                border-radius:10px;
+                display:flex;
+                justify-content:space-between;
+                gap:15px;
+                flex-wrap:wrap;
+            ">
+                <strong>Net ${figures.netProfit >= 0 ? "Profit" : "Loss"}</strong>
+                <strong style="color:${figures.netProfit >= 0 ? "#15803d" : "#b91c1c"};">
+                    ${formatFSAmount(Math.abs(figures.netProfit))}
+                </strong>
+            </div>
+
+            <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                Based on recorded income and expense transactions.
+                Transfers, investments and credit-card bill payments
+                are not treated as expenses.
+            </p>
+        `;
+    };
+
+    // =========================================
+    // 2. BALANCE SHEET
+    // =========================================
+
+    const renderFSBalanceSheet = () => {
+
+        const assetRows = [];
+        const liabilityRows = [];
+
+        let totalAssets = 0;
+        let totalLiabilities = 0;
+
+        // Bank, Cash, Cashback and Credit Card accounts
+        fsData.accounts.forEach(account => {
+
+            const type = String(account.type || "").toLowerCase();
+            const balance = numberFS(account.balance);
+
+            if (
+                ["bank", "cash", "cashback", "cashback_wallet"].includes(type)
+            ) {
+                totalAssets += balance;
+
+                assetRows.push(makeFSRow([
+                    { text: account.name || "Account" },
+                    { text: "Account Balance" },
+                    { text: formatFSAmount(balance), align: "right" }
+                ]));
+            }
+
+            if (type === "credit_card") {
+
+                totalLiabilities += Math.abs(balance);
+
+                liabilityRows.push(makeFSRow([
+                    { text: account.name || "Credit Card" },
+                    { text: "Credit Card Outstanding" },
+                    { text: formatFSAmount(Math.abs(balance)), align: "right" }
+                ]));
+            }
+        });
+
+        // Fixed Deposits
+        fsData.fixedDeposits.forEach(fd => {
+
+            const amount = numberFS(fd.amount);
+
+            if (
+                String(fd.status || "active").toLowerCase() !== "closed"
+            ) {
+                totalAssets += amount;
+
+                assetRows.push(makeFSRow([
+                    { text: fd.name || "Fixed Deposit" },
+                    { text: "FD Principal" },
+                    { text: formatFSAmount(amount), align: "right" }
+                ]));
+            }
+        });
+
+        // Investments
+        fsData.investments.forEach(investment => {
+
+            const amount = numberFS(
+                investment.currentValue ??
+                investment.currentAmount ??
+                investment.amount ??
+                investment.investedAmount ??
+                0
+            );
+
+            if (amount > 0) {
+
+                totalAssets += amount;
+
+                assetRows.push(makeFSRow([
+                    { text: investment.name || investment.investmentName || "Investment" },
+                    { text: "Investment Value" },
+                    { text: formatFSAmount(amount), align: "right" }
+                ]));
+            }
+        });
+
+        // Properties
+        fsData.properties.forEach(property => {
+
+            const amount = numberFS(
+                property.currentValue ??
+                property.marketValue ??
+                property.purchaseValue ??
+                property.value ??
+                0
+            );
+
+            if (amount > 0) {
+
+                totalAssets += amount;
+
+                assetRows.push(makeFSRow([
+                    { text: property.name || property.propertyName || "Property" },
+                    { text: "Recorded Property Value" },
+                    { text: formatFSAmount(amount), align: "right" }
+                ]));
+            }
+        });
+
+        const netWorth = totalAssets - totalLiabilities;
+
+        contentEl.innerHTML = `
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:14px;
+            ">
+                ${makeFSCard("Total Assets", totalAssets, "#15803d")}
+                ${makeFSCard("Total Liabilities", totalLiabilities, "#b91c1c")}
+                ${makeFSCard("Net Worth", netWorth, "#1d4ed8")}
+            </div>
+
+            <h3 style="margin-top:24px;">Assets</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Asset / Account" },
+                    { label: "Type" },
+                    { label: "Amount", align: "right" }
+                ],
+                assetRows,
+                "No asset records found."
+            )}
+
+            <h3 style="margin-top:24px;">Liabilities</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Liability" },
+                    { label: "Type" },
+                    { label: "Amount", align: "right" }
+                ],
+                liabilityRows,
+                "No credit card liabilities found."
+            )}
+
+            <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                This is an indicative balance sheet based on available
+                account and asset records. Loans, other liabilities,
+                depreciation and ownership adjustments are not included
+                unless recorded in supported data.
+            </p>
+        `;
+    };
+
+    // =========================================
+    // 3. RECEIPT & PAYMENT ACCOUNT
+    // =========================================
+
+    const renderFSReceiptPayment = () => {
+
+        let receipts = 0;
+        let payments = 0;
+
+        const rows = [];
+
+        fsData.transactions.forEach(t => {
+
+            const amount = numberFS(t.amount);
+            let direction = "";
+
+            if (
+                t.type === "income" ||
+                t.type === "cashback"
+            ) {
+                direction = "Receipt";
+                receipts += amount;
+            }
+
+            else if (
+                t.type === "expense" &&
+                t.fromAccountId
+            ) {
+                direction = "Payment";
+                payments += amount;
+            }
+
+            else if (
+                t.type === "investment" &&
+                t.fromAccountId
+            ) {
+                direction = "Payment";
+                payments += amount;
+            }
+
+            if (!direction) return;
+
+            rows.push({
+                date: t.date,
+                direction,
+                category: t.category || t.type,
+                party: t.partyName || "—",
+                amount
+            });
+        });
+
+        rows.sort((a, b) =>
+            (dateFS(b.date) || 0) - (dateFS(a.date) || 0)
+        );
+
+        contentEl.innerHTML = `
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:14px;
+            ">
+                ${makeFSCard("Total Receipts", receipts, "#15803d")}
+                ${makeFSCard("Total Payments", payments, "#b91c1c")}
+                ${makeFSCard("Net Receipts", receipts - payments, "#1d4ed8")}
+            </div>
+
+            <h3 style="margin-top:24px;">Receipt & Payment Details</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Date" },
+                    { label: "Type" },
+                    { label: "Category" },
+                    { label: "Party" },
+                    { label: "Amount", align: "right" }
+                ],
+                rows.map(row => makeFSRow([
+                    { text: displayFSDate(row.date) },
+                    {
+                        html: `<strong style="color:${row.direction === "Receipt" ? "#15803d" : "#b91c1c"};">${row.direction}</strong>`
+                    },
+                    { text: row.category },
+                    { text: row.party },
+                    { text: formatFSAmount(row.amount), align: "right" }
+                ])),
+                "No receipt or payment transactions found."
+            )}
+
+            <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                Transfers between own accounts are excluded.
+                Credit-card purchases are not treated as bank/cash payments;
+                recorded credit-card bill payments are included.
+            </p>
+        `;
+    };
+
+    // =========================================
+    // 4. CASH FLOW STATEMENT
+    // =========================================
+
+    const renderFSCashFlow = () => {
+
+        const accountMap = new Map(
+            fsData.accounts.map(account => [
+                account.id,
+                account
+            ])
+        );
+
+        let cashInflow = 0;
+        let cashOutflow = 0;
+
+        const rows = [];
+
+        fsData.transactions.forEach(t => {
+
+            const amount = numberFS(t.amount);
+
+            if (t.type === "transfer") return;
+
+            let direction = "";
+            let account = null;
+
+            if (
+                t.type === "income" ||
+                t.type === "cashback"
+            ) {
+                account = accountMap.get(t.toAccountId);
+                direction = "Inflow";
+            }
+
+            else if (
+                t.type === "expense" &&
+                t.fromAccountId
+            ) {
+                account = accountMap.get(t.fromAccountId);
+                direction = "Outflow";
+            }
+
+            else if (
+                t.type === "investment" &&
+                t.fromAccountId
+            ) {
+                account = accountMap.get(t.fromAccountId);
+                direction = "Outflow";
+            }
+
+            if (!account) return;
+
+            const accountType =
+                String(account.type || "").toLowerCase();
+
+            if (
+                !["bank", "cash", "cashback", "cashback_wallet"].includes(accountType)
+            ) {
+                return;
+            }
+
+            if (direction === "Inflow") cashInflow += amount;
+            if (direction === "Outflow") cashOutflow += amount;
+
+            rows.push({
+                date: t.date,
+                direction,
+                account: account.name || "Account",
+                category: t.category || t.type,
+                amount
+            });
+        });
+
+        const closingCash = fsData.accounts
+            .filter(account =>
+                ["bank", "cash", "cashback", "cashback_wallet"].includes(
+                    String(account.type || "").toLowerCase()
+                )
+            )
+            .reduce((sum, account) =>
+                sum + numberFS(account.balance), 0
+            );
+
+        const netMovement = cashInflow - cashOutflow;
+
+        rows.sort((a, b) =>
+            (dateFS(b.date) || 0) - (dateFS(a.date) || 0)
+        );
+
+        contentEl.innerHTML = `
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:14px;
+            ">
+                ${makeFSCard("Total Cash Inflow", cashInflow, "#15803d")}
+                ${makeFSCard("Total Cash Outflow", cashOutflow, "#b91c1c")}
+                ${makeFSCard("Net Cash Movement", netMovement, "#1d4ed8")}
+                ${makeFSCard("Current Cash & Bank Balance", closingCash)}
+            </div>
+
+            <h3 style="margin-top:24px;">Cash Flow Details</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Date" },
+                    { label: "Inflow / Outflow" },
+                    { label: "Account" },
+                    { label: "Category" },
+                    { label: "Amount", align: "right" }
+                ],
+                rows.map(row => makeFSRow([
+                    { text: displayFSDate(row.date) },
+                    {
+                        html: `<strong style="color:${row.direction === "Inflow" ? "#15803d" : "#b91c1c"};">${row.direction}</strong>`
+                    },
+                    { text: row.account },
+                    { text: row.category },
+                    { text: formatFSAmount(row.amount), align: "right" }
+                ])),
+                "No cash flow records found."
+            )}
+
+            <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                Current Cash & Bank Balance is taken directly from account
+                balances. Net Cash Movement is calculated from recorded
+                transactions; opening balances are not inferred.
+            </p>
+        `;
+    };
+
+    // =========================================
+    // 5. PARTY-WISE LEDGER
+    // =========================================
+
+    const renderFSPartyLedger = () => {
+
+        const partyMap = new Map();
+
+        fsData.transactions.forEach(t => {
+
+            if (!t.partyId && !t.partyName) return;
+
+            const key = String(
+                t.partyId || t.partyName
+            );
+
+            if (!partyMap.has(key)) {
+                partyMap.set(key, {
+                    partyId: t.partyId || "",
+                    partyName: t.partyName || "Unnamed Party",
+                    debit: 0,
+                    credit: 0,
+                    transactions: []
+                });
+            }
+
+            const party = partyMap.get(key);
+            const amount = numberFS(t.amount);
+
+            let debit = 0;
+            let credit = 0;
+
+            if (t.type === "expense" || t.type === "investment") {
+                debit = amount;
+            }
+
+            else if (
+                t.type === "income" ||
+                t.type === "cashback"
+            ) {
+                credit = amount;
+            }
+
+            else if (t.type === "transfer") {
+                debit = amount;
+            }
+
+            party.debit += debit;
+            party.credit += credit;
+
+            party.transactions.push({
+                date: t.date,
+                category: t.category || t.type,
+                type: t.type,
+                debit,
+                credit,
+                amount
+            });
+        });
+
+        const parties = Array.from(partyMap.values())
+            .sort((a, b) =>
+                a.partyName.localeCompare(b.partyName)
+            );
+
+        contentEl.innerHTML = `
+
+            <h3>Party-wise Ledger Summary</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Party Name" },
+                    { label: "Transactions", align: "center" },
+                    { label: "Debit", align: "right" },
+                    { label: "Credit", align: "right" },
+                    { label: "Net Balance", align: "right" }
+                ],
+                parties.map(party => {
+
+                    const net = party.debit - party.credit;
+
+                    return makeFSRow([
+                        { text: party.partyName },
+                        { text: party.transactions.length, align: "center" },
+                        { text: formatFSAmount(party.debit), align: "right" },
+                        { text: formatFSAmount(party.credit), align: "right" },
+                        {
+                            html: `<strong>${formatFSAmount(net)}</strong>`,
+                            align: "right"
+                        }
+                    ]);
+                }),
+                "No party-linked transactions found."
+            )}
+
+            <p style="font-size:12px;color:#64748b;margin-top:12px;">
+                Debit and credit are classified from transaction types.
+                Opening balances and formal ledger postings are not available
+                in the current transaction structure.
+            </p>
+        `;
+    };
+
+    // =========================================
+    // 6. SIMPLIFIED TRIAL BALANCE
+    // =========================================
+
+    const renderFSTrialBalance = () => {
+
+        let totalDebit = 0;
+        let totalCredit = 0;
+
+        const rows = [];
+
+        fsData.accounts.forEach(account => {
+
+            const type = String(account.type || "").toLowerCase();
+            const balance = numberFS(account.balance);
+
+            if (!balance) return;
+
+            let debit = 0;
+            let credit = 0;
+
+            if (
+                ["bank", "cash", "cashback", "cashback_wallet"].includes(type)
+            ) {
+                if (balance >= 0) debit = balance;
+                else credit = Math.abs(balance);
+            }
+
+            else if (type === "credit_card") {
+                if (balance >= 0) credit = balance;
+                else debit = Math.abs(balance);
+            }
+
+            else {
+                return;
+            }
+
+            totalDebit += debit;
+            totalCredit += credit;
+
+            rows.push(makeFSRow([
+                { text: account.name || "Account" },
+                { text: account.type || "—" },
+                { text: formatFSAmount(debit), align: "right" },
+                { text: formatFSAmount(credit), align: "right" }
+            ]));
+        });
+
+        contentEl.innerHTML = `
+
+            <div style="
+                padding:14px;
+                background:#fff7ed;
+                border:1px solid #fed7aa;
+                border-radius:9px;
+                color:#9a3412;
+                margin-bottom:16px;
+                font-size:13px;
+            ">
+                <strong>Important:</strong> This is a simplified account
+                balance view, not a formal double-entry Trial Balance.
+                The current system does not maintain complete ledger-wise
+                debit and credit postings.
+            </div>
+
+            <div style="
+                display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:14px;
+            ">
+                ${makeFSCard("Debit Balances", totalDebit)}
+                ${makeFSCard("Credit Balances", totalCredit)}
+                ${makeFSCard("Difference", totalDebit - totalCredit)}
+            </div>
+
+            <h3 style="margin-top:24px;">Account Balance Summary</h3>
+
+            ${makeFSTable(
+                [
+                    { label: "Account" },
+                    { label: "Account Type" },
+                    { label: "Debit Balance", align: "right" },
+                    { label: "Credit Balance", align: "right" }
+                ],
+                rows,
+                "No account balances found."
+            )}
+        `;
+    };
+
+    // =========================================
+    // RENDER SELECTED REPORT
+    // =========================================
+
+    const renderFSReport = () => {
+
+        switch (activeFSView) {
+
+            case "pnl":
+                renderFSProfitLoss();
+                break;
+
+            case "balance":
+                renderFSBalanceSheet();
+                break;
+
+            case "receipt":
+                renderFSReceiptPayment();
+                break;
+
+            case "cashflow":
+                renderFSCashFlow();
+                break;
+
+            case "party":
+                renderFSPartyLedger();
+                break;
+
+            case "trial":
+                renderFSTrialBalance();
+                break;
+
+            default:
+                renderFSProfitLoss();
+        }
+    };
+
+    // =========================================
+    // LOAD FINANCIAL DATA
+    // =========================================
+
+    const loadFSReports = async () => {
+
+        messageEl.textContent = "Loading financial data...";
+        contentEl.innerHTML = "";
+
+        try {
+
+            const userRef = doc(db, "users", user.uid);
+
+            const [
+                transactionSnapshot,
+                accountSnapshot,
+                fdSnapshot,
+                investmentSnapshot,
+                propertySnapshot
+            ] = await Promise.all([
+
+                getDocs(collection(userRef, "transactions")),
+                getDocs(collection(userRef, "accounts")),
+                getDocs(collection(userRef, "fixedDeposits")),
+                getDocs(collection(userRef, "investments")),
+                getDocs(collection(userRef, "properties"))
+
+            ]);
+
+            fsData.transactions = transactionSnapshot.docs.map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+            fsData.accounts = accountSnapshot.docs.map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+            fsData.fixedDeposits = fdSnapshot.docs.map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+            fsData.investments = investmentSnapshot.docs.map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+            fsData.properties = propertySnapshot.docs.map(item => ({
+                id: item.id,
+                ...item.data()
+            }));
+
+            messageEl.textContent =
+                `${fsData.transactions.length} transactions, ` +
+                `${fsData.accounts.length} accounts and asset records loaded.`;
+
+            renderFSReport();
+
+        } catch (error) {
+
+            console.error("Financial Statement Reports error:", error);
+
+            messageEl.textContent =
+                "Unable to load Financial Statement Reports.";
+
+            contentEl.innerHTML = `
+                <div style="
+                    padding:16px;
+                    background:#fff7ed;
+                    border:1px solid #fed7aa;
+                    border-radius:8px;
+                    color:#9a3412;
+                ">
+                    ${escapeFS(error.message || "Please try again.")}
+                    <br><br>
+                    Check that the required Firestore collections are accessible.
+                </div>
+            `;
+        }
+    };
+
+    // =========================================
+    // TAB EVENTS
+    // =========================================
+
+    reportWorkArea
+        .querySelectorAll("[data-fs-view]")
+        .forEach(button => {
+
+            button.addEventListener("click", () => {
+
+                activeFSView = button.dataset.fsView;
+
+                reportWorkArea
+    .querySelectorAll("[data-fs-view]")
+    .forEach(tab => {
+        tab.classList.toggle(
+            "is-active",
+            tab === button
+        );
+    });
+                renderFSReport();
+            });
+        });
+
+    document.getElementById("refreshFSReports")
+        ?.addEventListener("click", loadFSReports);
+
+    loadFSReports();
+
+    return;
+}
 
 // =====================================================
 // INCOME TAX / ITR — PERSONAL TAX PROFILE SETUP
@@ -27736,12 +30986,33 @@ else if (report?.number === 23) {
 
 
 
+
 // =================================================
 // DYNAMIC REPORT TITLE
-// Reads the actual heading from the opened report
+// Financial Statements: use selected report card name
 // =================================================
 
 let fallbackReportName = "";
+
+const activeFSCard =
+    reportContainer.querySelector(
+        "[data-fs-view].is-active"
+    );
+
+const fsReportTitles = {
+    pnl: "Profit & Loss Statements",
+    balance: "Balance Sheet",
+    receipt: "Receipt & Payment Account",
+    cashflow: "Cash Flow Statement",
+    party: "Party-wise Ledger",
+    trial: "Simplified Trial Balance"
+};
+
+const activeFSView =
+    activeFSCard?.dataset.fsView || "";
+
+const financialStatementTitle =
+    fsReportTitles[activeFSView] || "";
 
 const reportHeading =
     reportContainer.querySelector(
@@ -27763,14 +31034,15 @@ const isFixedDepositReport =
         "#fixedDepositReportContent"
     );
 
-
-const finalReportTitle = fallbackReportName
-    ? `Financial Report - ${fallbackReportName}`
-    : isFixedDepositReport
-        ? "Financial Report - Fixed Deposit Report"
-        : report
-            ? `Financial Report - ${report.name} — ${reportPeriod}`
-            : "Financial Report";
+const finalReportTitle = financialStatementTitle
+    ? `Financial Report - ${financialStatementTitle}`
+    : fallbackReportName
+        ? `Financial Report - ${fallbackReportName}`
+        : isFixedDepositReport
+            ? "Financial Report - Fixed Deposit Report"
+            : report
+                ? `Financial Report - ${report.name} — ${reportPeriod}`
+                : "Financial Report";
 
 if (
     userName &&
@@ -27778,7 +31050,6 @@ if (
 ) {
     userName.textContent = finalUserName;
 }
-
 
 if (
     reportTitle &&
