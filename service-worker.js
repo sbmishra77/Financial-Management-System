@@ -1,4 +1,4 @@
-const CACHE_NAME = "wealth-manager-pwa-v1";
+const CACHE_NAME = "wealth-manager-pwa-v2";
 
 const STATIC_ASSETS = [
   "./",
