@@ -14515,3 +14515,31 @@ body {
         font-size: 16px !important;
     }
 }
+
+* {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* जहाँ बटन या हेडर साथ-साथ हैं (जैसे Reports, + Add Account, View All Accounts) */
+.header-row,
+.action-buttons,
+.button-group,
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
